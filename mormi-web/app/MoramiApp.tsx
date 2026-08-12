@@ -30,13 +30,6 @@ type TeachMessage = {
   text: string;
 };
 
-const areaImages: Record<string, string> = {
-  "number-operations": "/math-areas/add-subtract.webp",
-  "change-relations": "/math-areas/patterns.webp",
-  "geometry-measurement": "/math-areas/measure-geometry.webp",
-  "data-chance": "/math-areas/data-chance.webp",
-};
-
 type MoramiEvent = "session_start" | "drill_correct" | "drill_retry" | "teach_prompt" | "teach_message" | "teach_correct" | "teach_retry" | "homework_correct" | "session_complete";
 
 type MoramiTurnOptions = {
@@ -741,8 +734,8 @@ function CurriculumCourseButton({ session, index, completed, cafeRequired = fals
   return (
     <button className={completed ? "is-complete" : ""} onClick={() => onOpen(index)}>
       <i>{completed ? "완료" : session.level}</i>
-      <span><b>{session.title}{cafeRequired && <mark className="cafe-course-mark">카페에 필요해요</mark>}</b><small>{alignment.gradeBand} · {alignment.code} · {session.unit} {session.level}단계</small></span>
-      <em>시작</em>
+      <span><b>{session.title}</b><small>{alignment.gradeBand} · {alignment.code} · {session.unit} {session.level}단계</small>{cafeRequired && <mark className="cafe-course-mark">완료하면 카페에 갈 수 있어요!</mark>}</span>
+      <em>{completed ? "다시 보기" : "시작"}</em>
     </button>
   );
 }
@@ -773,17 +766,39 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
 }
 
 function Onboarding({ onStart }: { onStart: () => void }) {
+  const [page, setPage] = useState<"hello" | "promise">("hello");
+
+  if (page === "promise") {
+    const steps = [
+      ["1", "집에서 연습해요", "카페에 가려고 돈 계산을 여러 번 해봐요"],
+      ["2", "모르미에게 알려줘요", "내가 아는 방법을 모르미에게 말로 설명해요"],
+      ["3", "카페에 가요", "직접 주문하고 내 손으로 계산해요"],
+    ];
+    return (
+      <section className="onboarding-promise">
+        <div className="scene-balance">🪙 6,000원</div>
+        <div className="promise-panel">
+          <p className="eyebrow">오늘의 약속</p>
+          <h1>카페에 가려면?</h1>
+          <p>순서대로 하면 카페에 갈 수 있어요</p>
+          <div className="promise-steps">
+            {steps.map(([number, title, description]) => <article key={number}><i>{number}</i><div><h2>{title}</h2><p>{description}</p></div></article>)}
+          </div>
+          <button className="promise-cta" onClick={onStart}><span>모르미가 이해하면 카페에 가요!</span><b>집으로 가기 →</b></button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="onboarding-scene">
-      <div className="onboarding-copy">
-        <p className="eyebrow">처음 만나는 친구</p>
-        <h1>안녕,<br /><em>나 모르미야!</em></h1>
-        <p>나는 아직 모르는 게 많아. 집에서 수학을 익힌 다음 나한테 알려 줄래? 준비가 되면 우리 같이 밖으로 나가자.</p>
-        <button className="primary-button" onClick={onStart}>모르미와 시작하기 <span className="button-arrow" /></button>
-      </div>
       <div className="onboarding-morami"><Morami expression="happy" /></div>
-      <span className="onboarding-shape onboarding-shape--one" aria-hidden="true" />
-      <span className="onboarding-shape onboarding-shape--two" aria-hidden="true" />
+      <div className="onboarding-greeting">
+        <span>모르미</span>
+        <h1>안녕, 나 모르미야!</h1>
+        <p>우리 집에서 준비하고 같이 카페에 가자.</p>
+        <button className="primary-button" onClick={() => setPage("promise")}>다음으로 <span className="button-arrow" /></button>
+      </div>
     </section>
   );
 }
@@ -796,35 +811,19 @@ function HomeHub({ completedSessionIds, onOpenSession, onCurriculum, onOutside }
 
   return (
     <section className="journey-hub journey-hub--home">
-      <div className="journey-hero">
-        <div>
-          <p className="eyebrow">우리 집</p>
-          <h1>밖에 나갈 준비를<br /><em>집에서 차근차근.</em></h1>
-          <p>모르미와 카페에 가기 전에 필요한 돈 공부를 모두 마쳐요. 끝낸 과정은 새싹이 자라요.</p>
-          <div className="cafe-ready-meter">
-            <span><i style={{ width: `${(done / requiredSessions.length) * 100}%` }} /></span>
-            <strong>{done}/{requiredSessions.length} 완료</strong>
+      <div className="scene-balance">🪙 6,000원</div>
+      <div className="home-room-main">
+        <div className="home-room-copy">
+          <p className="eyebrow">모르미의 생활 수학</p>
+          <h1>오늘은 어떤 걸 할까?</h1>
+          <div className="home-main-actions">
+            <button onClick={onCurriculum}><span>🏠</span><b>집에서 복습하기</b><small>개념을 익히고 모르미에게 알려줘요</small></button>
+            <button onClick={onOutside}><span>{unlocked ? "☕" : "🔒"}</span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
           </div>
-          {nextSession ? (
-            <button className="primary-button" onClick={() => onOpenSession(sessions.findIndex((session) => session.id === nextSession.id))}>다음 준비: {nextSession.title} <span className="button-arrow" /></button>
-          ) : (
-            <button className="primary-button" onClick={onOutside}>카페로 나가기 <span className="button-arrow" /></button>
-          )}
         </div>
-        <div className="home-window"><Morami expression={unlocked ? "celebrate" : "bright"} size="small" /><span>{unlocked ? "카페 문이 열렸어!" : "같이 준비하자!"}</span></div>
+        <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
       </div>
-
-      <div className="home-section-heading"><div><p className="eyebrow">카페 준비 과정</p><h2>이 네 가지를 알면 돼요</h2></div><button onClick={onCurriculum}>전체 수학 과정 보기 →</button></div>
-      <div className="home-session-grid">
-        {requiredSessions.map((session, index) => {
-          const completed = completedSessionIds.includes(session.id);
-          return (
-            <button key={session.id} className={completed ? "is-complete" : ""} onClick={() => onOpenSession(sessions.findIndex((candidate) => candidate.id === session.id))}>
-              <i>{completed ? "✓" : index + 1}</i><span><small>{completed ? "새싹이 자랐어요" : "카페에 필요해요"}</small><b>{session.title}</b></span><em>{completed ? "다시 보기" : "시작"}</em>
-            </button>
-          );
-        })}
-      </div>
+      {!unlocked && nextSession && <button className="home-next-lesson" onClick={() => onOpenSession(sessions.findIndex((session) => session.id === nextSession.id))}><span>카페까지 {requiredSessions.length - done}개 남았어요</span><b>다음 필수 개념: {nextSession.title} →</b></button>}
     </section>
   );
 }
@@ -832,15 +831,15 @@ function HomeHub({ completedSessionIds, onOpenSession, onCurriculum, onOutside }
 function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: () => void; onCafe: () => void }) {
   return (
     <section className="journey-hub journey-hub--outside">
-      <div className="outside-heading"><p className="eyebrow">모르미와 외출</p><h1>오늘은 어디로 갈까?</h1><p>{unlocked ? "집에서 준비를 모두 마쳤어. 카페에서 직접 주문하고 계산해 보자!" : "집에서 필요한 준비를 끝내면 목적지가 하나씩 열려요."}</p></div>
+      <div className="outside-scene-head"><div><p className="eyebrow">🌱 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div><button onClick={onHome} aria-label="집으로">⌂</button></div>
+      <div className="outside-morami-talk"><Morami expression={unlocked ? "happy" : "confused"} size="small" /><p>{unlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
       <div className="destination-grid">
         <button className={`destination-card destination-card--cafe ${unlocked ? "is-unlocked" : "is-locked"}`} onClick={unlocked ? onCafe : onHome}>
           <Image src="/life-missions/cafe.webp" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{unlocked ? "지금 갈 수 있어요" : "집에서 준비 중"}</small><h2>동네 카페</h2><p>{unlocked ? "주문하고 알맞은 돈 내기" : "돈 과정 4개를 마치면 열려요"}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집으로 돌아가기 →"}</strong></div>
+          <div><small>{unlocked ? "진행" : "잠김"}</small><h2>{unlocked ? "카페 가기" : "🔒 카페 가기"}</h2><p>{unlocked ? "줄을 서고, 메뉴를 골라 계산해요" : "필수 개념 4개를 끝내야 열려요"}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
         </button>
-        <article className="destination-card destination-card--soon"><span>다음 외출</span><h2>마트</h2><p>장보기 목록과 예산을 챙겨요.</p><b>곧 만나요</b></article>
-        <article className="destination-card destination-card--soon"><span>다음 외출</span><h2>버스 정류장</h2><p>시간표를 보고 약속 시간에 맞춰요.</p><b>곧 만나요</b></article>
+        <article className="destination-card destination-card--soon"><Image src="/life-missions/market.webp" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
     </section>
   );
@@ -1275,45 +1274,36 @@ export function MoramiApp() {
       {stage === "cafe" && <CafeJourney onBack={showOutside} onComplete={showHome} />}
 
       {stage === "curriculum" && (
-        <section className="curriculum-home">
+        <section className="curriculum-home curriculum-home--room">
+          <div className="scene-balance">🪙 6,000원</div>
           {!selectedArea ? (
             <>
-              <div className="curriculum-hero">
-                <div><p className="eyebrow">2022 개정 수학과 교육과정 연계</p><h1>오늘 배울<br /><em>수학 영역을 골라 봐요.</em></h1><p>교육부 수학과의 공식 4개 영역과 성취기준을 바탕으로, 집에서 기초 개념을 작은 단계로 익혀요. 먼저 혼자 10번 해 본 뒤 모르미에게 가르칩니다.</p><div className="curriculum-summary"><strong>{mathAreas.length}<span>개 공식 영역</span></strong><strong>{sessions.length}<span>개 기초 과정</span></strong><strong>{completedSessionIds.length}<span>개 완료</span></strong></div></div>
-                <Morami expression="bright" size="small" />
-              </div>
-              <div className="area-picker-heading"><p className="eyebrow">교육과정 4개 영역</p><h2>무엇을 공부할까요?</h2></div>
-              <div className="math-area-grid">
-                {mathAreas.map((area, areaIndex) => {
+              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>어떤 개념을 연습할까?</h1><p>카페 표시가 붙은 개념 4개를 모두 끝내면 외출할 수 있어요.</p></div>
+              <div className="room-area-list">
+                {mathAreas.map((area) => {
                   const done = area.sessionIds.filter((id) => completedSessionIds.includes(id)).length;
+                  const required = area.sessionIds.filter((id) => cafeRequiredSessionIds.includes(id as (typeof cafeRequiredSessionIds)[number])).length;
                   return (
-                    <button className="math-area-card" key={area.id} style={{ "--area-color": area.color } as React.CSSProperties} onClick={() => showArea(area.id)}>
-                      <div className="math-area-visual"><Image src={areaImages[area.id]} alt={`${area.title} 대단원을 나타내는 학습 그림`} width={640} height={640} unoptimized priority={areaIndex === 0} /><span>1~6학년</span></div>
-                      <div className="math-area-heading"><p>{area.title}</p><small>{area.description}</small></div>
-                      <div className="math-area-footer"><span>{done ? `학습 진행 · ${done}개 완료` : "3개 학년군 정규 범위"}</span><em>교육과정 보기 <b>›</b></em></div>
+                    <button key={area.id} style={{ "--area-color": area.color } as React.CSSProperties} onClick={() => showArea(area.id)}>
+                      <i>{done === area.sessionIds.length ? "✓" : done}</i><span><b>{area.title}</b><small>{area.description}</small>{required > 0 && <mark>☕ 카페 필수 개념 {required}개</mark>}</span><em>{done}/{area.sessionIds.length}<b>›</b></em>
                     </button>
                   );
                 })}
               </div>
             </>
           ) : (
-            <div className="area-detail" style={{ "--area-color": selectedArea.color } as React.CSSProperties}>
-              <button className="area-back" onClick={showAreaList}><span>‹</span> 4개 영역으로</button>
-              <div className="area-detail-heading">
-                <div className="area-detail-visual"><Image src={areaImages[selectedArea.id]} alt={`${selectedArea.title} 대단원을 나타내는 학습 그림`} width={640} height={640} unoptimized /><span>정규 영역</span></div>
-                <div><p className="eyebrow">2022 개정 수학과 공식 영역</p><h1>{selectedArea.title}</h1><p>{selectedArea.description}</p></div>
-              </div>
-              <div className="grade-band-roadmap">
-                {selectedArea.gradeBands.map((band) => <article key={band.label}><b>{band.label}</b><p>{band.topics}</p></article>)}
-              </div>
-              <div className="area-detail-label"><strong>{groupLongArea ? "6개 학습 묶음" : "지금 열려 있는 맞춤 연습"}</strong><span>{groupLongArea ? `${selectedAreaSessions.length}개 세부 연습을 비슷한 내용끼리 모았어요` : `${selectedAreaSessions.length}개 · 정규 범위를 작은 단계로 나눴어요`}</span></div>
+            <div className="area-detail area-detail--room" style={{ "--area-color": selectedArea.color } as React.CSSProperties}>
+              <button className="area-back" onClick={showAreaList}><span>‹</span> 개념 영역으로</button>
+              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>{selectedArea.title}</h1><p>{selectedArea.description}</p></div>
+              {selectedAreaSessions.some((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])) && <div className="cafe-required-banner"><span>☕</span><div><b>카페에 가려면 이 표시를 찾아요</b><p>`완료하면 카페에 갈 수 있어요!`가 붙은 개념을 모두 끝내야 카페가 열려요.</p></div></div>}
+              {selectedAreaSessions.some((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])) && <div className="cafe-required-lessons"><div><strong>카페 준비 개념</strong><span>{cafeRequiredSessionIds.filter((id) => completedSessionIds.includes(id)).length}/{cafeRequiredSessionIds.length} 완료</span></div>{selectedAreaSessions.filter((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])).map((session) => <CurriculumCourseButton key={`cafe-${session.id}`} session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired onOpen={openSession} />)}</div>}
               {groupLongArea ? (
                 <div className="course-unit-list">
                   {selectedUnitGroups.map((group, groupIndex) => {
                     const completedCount = group.sessions.filter((session) => completedSessionIds.includes(session.id)).length;
                     return (
                       <details className="course-unit-card" key={group.unit} open={groupIndex === 0}>
-                        <summary><span><b>{group.unit}</b><small>{group.sessions.length}개 연습</small></span><em>{completedCount ? `${completedCount}/${group.sessions.length} 완료` : "눌러서 보기"}</em><i aria-hidden="true">›</i></summary>
+                        <summary><span><b>{group.unit}</b><small>{group.sessions.length}개 개념</small></span><em>{completedCount ? `${completedCount}/${group.sessions.length} 완료` : "눌러서 보기"}</em><i aria-hidden="true">›</i></summary>
                         <div className="math-course-list math-course-list--nested">
                           {group.sessions.map((session) => <CurriculumCourseButton key={session.id} session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])} onOpen={openSession} />)}
                         </div>

@@ -5,144 +5,97 @@ import { useMemo, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { cafeMoney, cafeStations } from "./journey-config";
 
-type CafeStep = "intro" | "order" | "pay" | "done";
+type CafeStep = "overview" | "queue" | "note" | "menu" | "sum" | "pay" | "change" | "done";
 
 const menu = [
-  { id: "juice", name: "딸기 주스", price: 6600, image: "/life-missions/juice.webp" },
-  { id: "coffee", name: "따뜻한 라테", price: 5100, image: "/life-missions/coffee.webp" },
+  { id: "tea", name: "아이스티", price: 3500, image: "/life-missions/juice.webp" },
+  { id: "cookie", name: "쿠키", price: 1500, image: "/life-missions/snackshop.jpg" },
 ] as const;
 
-type Props = {
-  onBack: () => void;
-  onComplete: () => void;
-};
+const stationCopy = [
+  ["줄 서기", "차례를 지키며 내 순서를 기다려요."],
+  ["음료 선택하기", "메뉴를 보고 마시고 싶은 음료를 골라요."],
+  ["음료 계산하기", "가격을 확인하고 알맞은 돈을 내요."],
+  ["거스름돈 받기", "받은 돈과 영수증을 천천히 확인해요."],
+] as const;
+
+type Props = { onBack: () => void; onComplete: () => void };
 
 export function CafeJourney({ onBack, onComplete }: Props) {
-  const [step, setStep] = useState<CafeStep>("intro");
-  const [selectedId, setSelectedId] = useState<(typeof menu)[number]["id"]>("juice");
+  const [step, setStep] = useState<CafeStep>("overview");
+  const [queueHelp, setQueueHelp] = useState(false);
+  const [queueFeedback, setQueueFeedback] = useState("");
+  const [selectedMenu, setSelectedMenu] = useState<string[]>([]);
+  const [sumFeedback, setSumFeedback] = useState("");
   const [counts, setCounts] = useState<Record<number, number>>({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
-  const [feedback, setFeedback] = useState("");
-  const [paymentAttempts, setPaymentAttempts] = useState(0);
-  const selected = menu.find((item) => item.id === selectedId) ?? menu[0];
-  const total = useMemo(() => cafeMoney.reduce((sum, money) => sum + money.value * counts[money.value], 0), [counts]);
+  const [paymentFeedback, setPaymentFeedback] = useState("");
+  const [changeFeedback, setChangeFeedback] = useState("");
+  const selectedTotal = menu.filter((item) => selectedMenu.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
+  const paid = useMemo(() => cafeMoney.reduce((sum, money) => sum + money.value * counts[money.value], 0), [counts]);
+
+  const stationIndex = step === "overview" || step === "queue" || step === "note" ? 0 : step === "menu" ? 1 : step === "sum" || step === "pay" ? 2 : 3;
+
+  function chooseQueue(answer: number) {
+    if (answer === 2) {
+      setQueueFeedback("맞아! 사람이 더 적은 오른쪽 줄에 서면 돼.");
+      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp });
+      window.setTimeout(() => setStep("note"), 650);
+    } else {
+      setQueueFeedback("사람 수를 한 명씩 다시 세어 볼까?");
+      setQueueHelp(true);
+      captureMormeyEvent("cafe_queue_answered", { correct: false, answer });
+    }
+  }
+
+  function toggleMenu(id: string) {
+    setSelectedMenu((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  }
 
   function changeMoney(value: number, amount: number) {
-    setCounts((current) => ({ ...current, [value]: Math.max(0, Math.min(9, current[value] + amount)) }));
-    setFeedback("");
+    setCounts((current) => ({ ...current, [value]: Math.max(0, Math.min(10, current[value] + amount)) }));
+    setPaymentFeedback("");
   }
 
   function checkPayment() {
-    const nextAttempt = paymentAttempts + 1;
-    setPaymentAttempts(nextAttempt);
-    captureMormeyEvent("payment_submitted", {
-      menu_id: selected.id,
-      target_amount: selected.price,
-      paid_amount: total,
-      difference: total - selected.price,
-      attempt: nextAttempt,
-      is_exact: total === selected.price,
-      count_100: counts[100],
-      count_500: counts[500],
-      count_1000: counts[1000],
-      count_5000: counts[5000],
-    });
-    if (total === selected.price) {
-      setFeedback("딱 맞게 냈어! 주문 번호를 받아 가자.");
-      setStep("done");
-      return;
+    captureMormeyEvent("payment_submitted", { target_amount: 10000, paid_amount: paid, order_total: 5000, difference: paid - 10000, ...Object.fromEntries(cafeMoney.map((money) => [`count_${money.value}`, counts[money.value]])) });
+    if (paid === 10000) {
+      setPaymentFeedback("좋아! 직원에게 10,000원을 냈어.");
+      window.setTimeout(() => setStep("change"), 650);
+    } else {
+      setPaymentFeedback(paid < 10000 ? `${(10000 - paid).toLocaleString("ko-KR")}원이 더 필요해.` : `${(paid - 10000).toLocaleString("ko-KR")}원을 다시 넣어 두자.`);
     }
-    setFeedback(total < selected.price
-      ? `${(selected.price - total).toLocaleString("ko-KR")}원이 더 필요해.`
-      : `${(total - selected.price).toLocaleString("ko-KR")}원이 많아. 돈을 조금 넣어 두자.`);
   }
 
   return (
-    <section className="cafe-journey">
-      <div className="cafe-journey__backdrop" aria-hidden="true" />
+    <section className={`cafe-journey cafe-journey--${step}`}>
       <div className="cafe-journey__top">
-        <button className="journey-back" onClick={onBack}>← 밖으로</button>
-        <div className="cafe-station-track" aria-label="카페에서 할 일">
-          {cafeStations.map((station, index) => {
-            const activeIndex = step === "intro" ? 0 : step === "order" ? 1 : step === "pay" ? 2 : 3;
-            return <span key={station} className={index <= activeIndex ? "is-active" : ""}><i>{index + 1}</i>{station}</span>;
-          })}
-        </div>
+        <button className="journey-back" onClick={onBack}>← 외출 장소</button>
+        <div className="cafe-station-track" aria-label="카페에서 할 일">{cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index + 1}</i>{station}</span>)}</div>
       </div>
 
-      {step === "intro" && (
-        <div className="cafe-story-card cafe-story-card--intro">
-          <div>
-            <p className="eyebrow">오늘의 외출 · 카페</p>
-            <h1>카페에 가려면?</h1>
-            <p>차례를 기다리고, 마실 것을 고른 다음, 가격에 맞게 돈을 내면 돼. 모르미가 옆에서 같이 해 볼게!</p>
-            <ol>{cafeStations.map((station, index) => <li key={station}><i>{index + 1}</i><b>{station}</b></li>)}</ol>
-            <button className="primary-button" onClick={() => { captureMormeyEvent("cafe_started"); setStep("order"); }}>카페 문 열기 <span className="button-arrow" /></button>
-          </div>
-          <Image src="/morami/happy-cutout.png" alt="카페에 함께 온 모르미" width={600} height={600} priority unoptimized />
-        </div>
-      )}
+      {step === "overview" && <div className="cafe-overview-card">
+        <p className="eyebrow">오늘의 외출 · 카페</p><h1>카페에서는 이렇게 해요</h1><p>차례대로 따라가면 카페 이용이 어렵지 않아요.</p>
+        <div className="cafe-process-grid">{stationCopy.map(([title, description], index) => <article key={title}><i>{index + 1}</i><span>{["👥", "🥤", "🪙", "🧾"][index]}</span><h2>{title}</h2><p>{description}</p></article>)}</div>
+        <div className="cafe-help-banner">💡 모르는 순간에는 천천히 다시 보고, 직원에게 도움을 요청해도 괜찮아요!</div>
+        <button className="primary-button" onClick={() => { captureMormeyEvent("cafe_started"); setStep("queue"); }}>카페 들어가기 <span className="button-arrow" /></button>
+      </div>}
 
-      {step === "order" && (
-        <div className="cafe-story-card">
-          <div className="cafe-counter-copy">
-            <p className="eyebrow">어서 오세요!</p>
-            <h1>무엇을 마실까요?</h1>
-            <p>마시고 싶은 메뉴 하나를 골라 주문해요.</p>
-          </div>
-          <div className="cafe-menu-grid">
-            {menu.map((item) => (
-              <button key={item.id} className={selectedId === item.id ? "is-selected" : ""} onClick={() => { setSelectedId(item.id); setCounts({ 100: 0, 500: 0, 1000: 0, 5000: 0 }); setFeedback(""); setPaymentAttempts(0); captureMormeyEvent("cafe_menu_selected", { menu_id: item.id, price: item.price }); }}>
-                <Image src={item.image} alt={item.name} width={320} height={240} unoptimized />
-                <span><b>{item.name}</b><strong>{item.price.toLocaleString("ko-KR")}원</strong></span>
-              </button>
-            ))}
-          </div>
-          <button className="primary-button" onClick={() => setStep("pay")}>“{selected.name} 주세요” <span className="button-arrow" /></button>
-        </div>
-      )}
+      {step === "queue" && <div className="cafe-station-scene cafe-station-scene--queue">
+        <div className="queue-people" aria-label="왼쪽 줄 세 명, 오른쪽 줄 두 명"><div><span>●</span><span>●</span><span>●</span><b>왼쪽 줄</b></div><div><span>●</span><span>●</span><b>오른쪽 줄</b></div></div>
+        <div className="cafe-dialogue"><Image src="/morami/confused-cutout.png" alt="고민하는 모르미" width={360} height={360} unoptimized /><div><b>모르미</b><p>어? 주문하려면 줄을 서야 하나 봐. 어느 줄에 서면 좋을지 모르겠어…</p><strong>왼쪽 줄과 오른쪽 줄에는 각각 사람이 몇 명씩 있어?</strong>{queueHelp && <small>사람이 더 적은 줄을 찾아보자.</small>}<div>{[1, 2, 3].map((answer) => <button key={answer} onClick={() => chooseQueue(answer)}>{answer}명 있어</button>)}</div><button className="cafe-help-link" onClick={() => setQueueHelp(true)}>잘 모르겠어</button>{queueFeedback && <em role="status">{queueFeedback}</em>}</div></div>
+      </div>}
 
-      {step === "pay" && (
-        <div className="cafe-payment-card">
-          <div className="cafe-receipt">
-            <span>주문한 메뉴</span>
-            <Image src={selected.image} alt="주문한 음료" width={220} height={170} unoptimized />
-            <h2>{selected.name}</h2>
-            <strong>{selected.price.toLocaleString("ko-KR")}원</strong>
-          </div>
-          <div className="money-wallet">
-            <p className="eyebrow">지갑에서 돈을 꺼내요</p>
-            <h1>얼마를 내면 될까?</h1>
-            <div className="money-picker">
-              {cafeMoney.map((money) => (
-                <article key={money.value} className={`money-picker__item money-picker__item--${money.kind}`}>
-                  <div><Image src={money.image} alt={money.label} width={420} height={250} unoptimized /></div>
-                  <b>{money.label}</b>
-                  <div className="money-stepper" aria-label={`${money.label} 개수`}>
-                    <button onClick={() => changeMoney(money.value, -1)} disabled={counts[money.value] === 0} aria-label={`${money.label} 한 개 빼기`}>−</button>
-                    <output>{counts[money.value]}개</output>
-                    <button onClick={() => changeMoney(money.value, 1)} aria-label={`${money.label} 한 개 더하기`}>＋</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="payment-total"><span>내가 꺼낸 돈</span><strong>{total.toLocaleString("ko-KR")}원</strong></div>
-            {feedback && <p className="payment-feedback" role="status">{feedback}</p>}
-            <button className="primary-button" onClick={checkPayment} disabled={total === 0}>이대로 낼게요 <span className="button-arrow" /></button>
-          </div>
-        </div>
-      )}
+      {step === "note" && <div className="star-note-card"><Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={360} height={360} unoptimized /><div><span>⭐ 모르미의 별노트</span><h1>줄 설 때는 사람이 더 적은 줄에 서면 좋아!</h1><p>오른쪽 줄이 더 사람이 적다는 걸 네가 알려줬어. 잊지 않게 적어둘게!</p><button className="primary-button" onClick={() => setStep("menu")}>메뉴 고르기 →</button></div></div>}
 
-      {step === "done" && (
-        <div className="cafe-story-card cafe-story-card--done">
-          <Image src="/morami/celebrate-cutout.png" alt="함께 기뻐하는 모르미" width={600} height={600} unoptimized />
-          <div>
-            <p className="eyebrow">주문 번호 17번</p>
-            <h1>주문했어!</h1>
-            <p>{feedback} 이제 음료를 받고 모르미와 자리에 앉아요.</p>
-            <button className="primary-button" onClick={() => { captureMormeyEvent("cafe_journey_completed", { menu_id: selected.id, payment_attempts: paymentAttempts }); onComplete(); }}>모르미와 집으로 <span className="button-arrow" /></button>
-          </div>
-        </div>
-      )}
+      {step === "menu" && <div className="cafe-mission-card"><div className="mission-title"><div><p className="eyebrow">오늘의 카페 미션</p><h1>10,000원으로 주문해요</h1><p>모르미가 먹고 싶은 아이스티와 쿠키를 담아줘요.</p></div><strong>받은 돈<br /><b>10,000원</b></strong></div><div className="cafe-menu-grid">{menu.map((item) => <button key={item.id} className={selectedMenu.includes(item.id) ? "is-selected" : ""} onClick={() => toggleMenu(item.id)}><Image src={item.image} alt={item.name} width={360} height={240} unoptimized /><span><b>{item.name}</b><strong>{item.price.toLocaleString("ko-KR")}원</strong></span></button>)}</div><div className="menu-running-total"><span>담은 메뉴</span><strong>{selectedTotal.toLocaleString("ko-KR")}원</strong></div><button className="primary-button" disabled={selectedMenu.length !== menu.length} onClick={() => { captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal }); setStep("sum"); }}>주문하기 →</button></div>}
+
+      {step === "sum" && <div className="cafe-explain-card"><div className="cafe-dialogue cafe-dialogue--sum"><Image src="/morami/confused-cutout.png" alt="합계가 궁금한 모르미" width={360} height={360} unoptimized /><div><b>모르미</b><h1>왜 5,000원일까요?</h1><p>아이스티랑 쿠키를 담았는데 왜 5,000원이 됐어? 나 궁금해!</p><div className="sum-expression"><span>3,500</span><b>＋</b><span>1,500</span><b>=</b><strong>?</strong></div><div className="sum-choices">{[4500, 5000, 5500].map((answer) => <button key={answer} onClick={() => { if (answer === 5000) { setSumFeedback("맞아! 두 메뉴 값을 더하면 5,000원이야."); window.setTimeout(() => setStep("pay"), 650); } else setSumFeedback("천 원과 백 원 자리끼리 다시 더해 보자."); }}>{answer.toLocaleString("ko-KR")}원</button>)}</div>{sumFeedback && <em role="status">{sumFeedback}</em>}</div></div></div>}
+
+      {step === "pay" && <div className="cafe-payment-card"><div className="cafe-receipt"><span>주문 합계</span>{menu.map((item) => <p key={item.id}>{item.name}<b>{item.price.toLocaleString("ko-KR")}원</b></p>)}<strong>5,000원</strong></div><div className="money-wallet"><p className="eyebrow">음료 계산하기</p><h1>받은 돈 10,000원을 내요</h1><p>돈 아래의 +와 −를 눌러 낼 돈을 직접 만들어요.</p><div className="money-picker">{cafeMoney.map((money) => <article key={money.value} className={`money-picker__item money-picker__item--${money.kind}`}><div><Image src={money.image} alt={money.label} width={420} height={250} unoptimized /></div><b>{money.label}</b><div className="money-stepper"><button onClick={() => changeMoney(money.value, -1)} disabled={!counts[money.value]}>−</button><output>{counts[money.value]}개</output><button onClick={() => changeMoney(money.value, 1)}>＋</button></div></article>)}</div><div className="payment-total"><span>내가 낼 돈</span><strong>{paid.toLocaleString("ko-KR")}원</strong></div>{paymentFeedback && <p className="payment-feedback" role="status">{paymentFeedback}</p>}<button className="primary-button" onClick={checkPayment} disabled={!paid}>직원에게 내기 →</button></div></div>}
+
+      {step === "change" && <div className="change-card"><Image src="/morami/surprised-cutout.png" alt="거스름돈을 확인하는 모르미" width={380} height={380} unoptimized /><div><p className="eyebrow">거스름돈 받기</p><h1>얼마를 돌려받아야 할까?</h1><div className="change-equation"><span>낸 돈 10,000원</span><b>−</b><span>메뉴 5,000원</span><b>=</b><strong>?</strong></div><div className="change-choices">{[4000, 5000, 6000].map((answer) => <button key={answer} onClick={() => { if (answer === 5000) { setChangeFeedback("맞아! 5,000원과 영수증을 받으면 돼."); window.setTimeout(() => setStep("done"), 700); } else setChangeFeedback("낸 돈에서 메뉴 값을 빼 보자."); }}>{answer.toLocaleString("ko-KR")}원</button>)}</div>{changeFeedback && <p role="status">{changeFeedback}</p>}</div></div>}
+
+      {step === "done" && <div className="cafe-story-card cafe-story-card--done"><Image src="/morami/celebrate-cutout.png" alt="카페 이용을 마친 모르미" width={600} height={600} unoptimized /><div><p className="eyebrow">카페 미션 완료</p><h1>우리 힘으로 주문했어!</h1><p>줄을 서고, 메뉴를 고르고, 계산하고, 거스름돈까지 확인했어요.</p><button className="primary-button" onClick={() => { captureMormeyEvent("cafe_journey_completed", { order_total: 5000, paid: 10000, change: 5000 }); onComplete(); }}>모르미와 집으로 →</button></div></div>}
     </section>
   );
 }

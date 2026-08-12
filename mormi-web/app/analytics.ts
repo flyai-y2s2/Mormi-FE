@@ -10,6 +10,7 @@ export type MormeyAnalyticsEvent =
   | "session_completed"
   | "theme_unlocked"
   | "cafe_started"
+  | "cafe_queue_answered"
   | "cafe_menu_selected"
   | "payment_submitted"
   | "cafe_journey_completed";

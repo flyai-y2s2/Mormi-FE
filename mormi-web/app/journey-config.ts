@@ -5,7 +5,7 @@ export const cafeRequiredSessionIds = [
   "money-mission",
 ] as const;
 
-export const cafeStations = ["줄 서기", "메뉴 고르기", "계산하기", "음료 받기"] as const;
+export const cafeStations = ["줄 서기", "음료 선택하기", "음료 계산하기", "거스름돈 받기"] as const;
 
 export const cafeMoney = [
   { value: 100, label: "100원", image: "/cafe-money/100.png", kind: "coin" },

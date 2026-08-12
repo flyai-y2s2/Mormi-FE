@@ -22,7 +22,7 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
-  assert.match(html, /모르미와 시작하기/);
+  assert.match(html, /다음으로/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
@@ -47,14 +47,14 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /useState<Stage>\("onboarding"\)/);
   assert.match(app, /morami-completed-sessions/);
   assert.match(app, /morami-onboarding-complete/);
-  assert.match(app, /카페 준비 과정/);
-  assert.match(app, /카페에 필요해요/);
+  assert.match(app, /완료하면 카페에 갈 수 있어요!/);
+  assert.match(app, /카페 필수 개념/);
   assert.match(journey, /"money-count"/);
   assert.match(journey, /"money-price"/);
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"money-mission"/);
-  assert.match(cafe, /카페에 가려면\?/);
-  assert.match(cafe, /이대로 낼게요/);
+  assert.match(cafe, /카페에서는 이렇게 해요/);
+  assert.match(cafe, /직원에게 내기/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
   assert.doesNotMatch(cafe, /연습용/);
@@ -74,10 +74,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /problem\.visual\.type === "money" \? <StoreOrder/);
   assert.doesNotMatch(app, /story\.scene === "cafe" \? <CafeOrder/);
   assert.match(app, /selectedAreaId/);
-  assert.match(app, /math-areas\/add-subtract\.webp/);
-  assert.match(app, /math-area-visual/);
-  assert.match(app, /4개 영역으로/);
-  assert.match(app, /지금 열려 있는 맞춤 연습/);
+  assert.match(app, /room-area-list/);
+  assert.match(app, /개념 영역으로/);
+  assert.match(app, /집에서 복습하기/);
   assert.match(curriculum, /gradeBands/);
   assert.match(curriculum, /3~4학년군/);
   assert.match(curriculum, /5~6학년군/);
