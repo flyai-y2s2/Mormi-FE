@@ -54,7 +54,12 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"money-mission"/);
   assert.match(cafe, /카페 스테이지 선택/);
-  assert.match(cafe, /data-figma-node="70:303"/);
+  assert.match(cafe, /CAFE QUEST/);
+  assert.match(cafe, /cafe-stages\/queue-v2\.png/);
+  assert.match(cafe, /cafe-stages\/menu-v2\.png/);
+  assert.match(cafe, /cafe-stages\/payment-v2\.png/);
+  assert.match(cafe, /cafe-stages\/change-v2\.png/);
+  assert.match(cafe, /스테이지 시작/);
   assert.match(cafe, /data-figma-node="74:4"/);
   assert.match(cafe, /data-figma-node="74:6"/);
   assert.match(cafe, /data-figma-node="74:8"/);

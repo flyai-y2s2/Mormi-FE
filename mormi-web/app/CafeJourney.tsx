@@ -17,10 +17,10 @@ const menu = [
 ] as const;
 
 const stationCopy = [
-  { title: "줄 서기", description: ["줄이 짧은 곳에 서야 해요", "다른 사람의 차례를 기다려요."], image: "/figma/cafe/stage-queue.png" },
-  { title: "메뉴 고르기", description: ["가진 돈 안에서 메뉴를 골라요", "먹고 싶은 메뉴 두 개를 담아요."], image: "/figma/cafe/stage-menu.png" },
-  { title: "계산하기", description: ["메뉴 값을 더해서 합계를 구해요", "돈을 직접 골라 직원에게 내요."], image: "/figma/cafe/stage-calculator.png" },
-  { title: "거스름돈 받기", description: ["낸 돈에서 메뉴 값을 빼요", "받을 돈을 직접 골라 담아요."], image: "/figma/cafe/stage-change.png" },
+  { title: "줄 서기", description: "더 짧은 줄을 찾아요", image: "/cafe-stages/queue-v2.png" },
+  { title: "메뉴 고르기", description: "먹고 싶은 메뉴를 골라요", image: "/cafe-stages/menu-v2.png" },
+  { title: "계산하기", description: "돈을 골라 직접 계산해요", image: "/cafe-stages/payment-v2.png" },
+  { title: "거스름돈 받기", description: "받을 돈을 확인해요", image: "/cafe-stages/change-v2.png" },
 ] as const;
 
 type Props = { onBack: () => void; onComplete: () => void };
@@ -146,21 +146,26 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       </div>
 
       {step === "overview" && (
-        <main className="figma-cafe-map" data-figma-node="70:303">
+        <main className="figma-cafe-map">
+          <header className="figma-cafe-map__heading">
+            <span>CAFE QUEST</span>
+            <h1>모르미와 카페에 왔어요!</h1>
+            <p>스테이지를 하나씩 완료하고 주문에 성공해 봐요.</p>
+          </header>
           <div className="figma-cafe-map__stones" aria-label="카페 스테이지 선택">
             {stationCopy.map((station, index) => (
               <button key={station.title} className={`${index === journeyProgress ? "is-current" : ""} ${index < journeyProgress ? "is-complete" : ""}`} disabled={index > journeyProgress} onClick={() => { if (index === 0 && journeyProgress === 0) captureMormeyEvent("cafe_started"); openStation(index); }}>
-                <strong>{index + 1}. {station.title}</strong>
-                <span><Image src={station.image} alt="" width={360} height={250} unoptimized /></span>
-                {index > journeyProgress && <em>🔒</em>}
+                <span className="figma-cafe-map__image"><Image src={station.image} alt={`${station.title} 스테이지`} width={360} height={270} unoptimized /></span>
+                <span className="figma-cafe-map__copy"><small>STAGE {index + 1}</small><strong>{station.title}</strong><p>{station.description}</p></span>
+                <em>{index < journeyProgress ? "완료 ✓" : index > journeyProgress ? "잠김 🔒" : "도전하기"}</em>
               </button>
             ))}
           </div>
           <div className="figma-cafe-map__path" aria-hidden="true" />
           <div className="figma-cafe-map__guide">
-            <span><Image src={stationCopy[Math.min(journeyProgress, 3)].image} alt="" width={150} height={120} unoptimized /></span>
-            <div><h1>{stationCopy[Math.min(journeyProgress, 3)].title}</h1>{stationCopy[Math.min(journeyProgress, 3)].description.map((line) => <p key={line}>{line}</p>)}</div>
-            <button onClick={() => openStation(Math.min(journeyProgress, 3))}>연습하기</button>
+            <span>{Math.min(journeyProgress, 3) + 1}</span>
+            <div><small>지금 할 미션</small><h2>{stationCopy[Math.min(journeyProgress, 3)].title}</h2><p>{stationCopy[Math.min(journeyProgress, 3)].description}</p></div>
+            <button onClick={() => openStation(Math.min(journeyProgress, 3))}>스테이지 시작</button>
           </div>
         </main>
       )}
