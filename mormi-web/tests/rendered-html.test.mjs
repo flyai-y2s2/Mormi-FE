@@ -53,7 +53,15 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(journey, /"money-price"/);
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"money-mission"/);
-  assert.match(cafe, /돌다리를 따라 카페 미션/);
+  assert.match(cafe, /카페 스테이지 선택/);
+  assert.match(cafe, /data-figma-node="70:303"/);
+  assert.match(cafe, /data-figma-node="74:4"/);
+  assert.match(cafe, /data-figma-node="74:6"/);
+  assert.match(cafe, /data-figma-node="74:8"/);
+  assert.match(cafe, /data-figma-node="74:10"/);
+  assert.match(cafe, /figma\/cafe\/strawberry-juice\.png/);
+  assert.match(cafe, /changePaymentMoney/);
+  assert.match(cafe, /changeChangeMoney/);
   assert.match(cafe, /직원에게 내기/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
@@ -112,7 +120,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /mormey-learner/);
   assert.match(app, /너의 이름을 알려줄래/);
   assert.match(app, /TEACH_REWARD = 500/);
-  assert.match(cafe, /cafe-stage-map/);
+  assert.match(cafe, /figma-cafe-map/);
   assert.match(app, /의 설명이 맞아요/);
   assert.match(app, /의 설명을 기다리고 있어요/);
   assert.match(curriculum, /item: "strawberry"/);

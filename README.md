@@ -6,7 +6,8 @@
 
 ```text
 온보딩 → 집에서 반복 학습 → 카페 필수 과정 4개 완료 → 외부의 카페 해금
-       → 카페 입장 → 메뉴 선택 → 실제 금액 구성 → 주문 완료
+       → 카페 입장 → 줄 비교 → 예산 안에서 메뉴 선택 → 메뉴값 합산
+       → 실제 금액 구성 → 거스름돈 구성 → 주문 완료
 ```
 
 Figma는 화면 디자인이 아니라 사용자 흐름만 참고했으며, UI는 기존 `mormy_v3`의 둥근 카드, 민트·크림 팔레트, 3D 모르미 스타일을 유지합니다.
@@ -25,8 +26,9 @@ npm run dev:vercel
 ## 주요 경로
 
 - `mormi-web/app/MoramiApp.tsx`: 온보딩, 집, 커리큘럼, 반복 학습, 가르치기, 완료 상태
-- `mormi-web/app/CafeJourney.tsx`: 카페 설명, 메뉴 선택, 돈 조합, 결제 완료
+- `mormi-web/app/CafeJourney.tsx`: Figma 돌다리, 줄 비교, 메뉴 선택, 합계 입력, 돈·거스름돈 조합
 - `mormi-web/app/journey-config.ts`: 카페 해금에 필요한 과정과 화폐 정의
+- `mormi-web/public/figma/cafe/`: Figma에서 내려받은 카페 메뉴와 스테이지 원본 PNG
 - `mormi-web/app/api/morami/respond/route.ts`: Anthropic 응답과 로컬 대체 응답
 - `mormi-web/instrumentation-client.ts`: 개인정보 보호형 PostHog 초기화
 - `mormi-web/public/cafe-money/`: 100원, 500원, 1,000원, 5,000원 투명 PNG
