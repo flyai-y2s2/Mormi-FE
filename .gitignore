@@ -1,0 +1,10 @@
+.DS_Store
+
+# 기획·조사 문서 (레포에는 코드만 둔다)
+/documents
+
+# AI Hub 원본 데이터 — 앱은 이걸 직접 읽지 않는다.
+# scripts/build_curriculum.py 로 정제한 결과물(mormi-web/content/curriculum/)만 커밋한다.
+# 원본은 파일당 100MB 를 넘어 GitHub 가 거부하며, 재배포 조건도 별도 확인이 필요하다.
+# 받는 곳: https://aihub.or.kr  「교과 단계별 교과 데이터」(dataSetSn=71855)
+/data
