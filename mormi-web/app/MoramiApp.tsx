@@ -125,7 +125,13 @@ function playCoinRewardSound(reward: number) {
     ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextClass) return;
   const context = new AudioContextClass();
-  const notes = reward === 200 ? [783.99, 1046.5, 1318.51] : reward === 100 ? [659.25, 880] : [523.25, 659.25];
+  const notes = reward === 200
+    ? [783.99, 1046.5, 1318.51]
+    : reward === 150
+      ? [698.46, 880, 1046.5]
+      : reward === 100
+        ? [659.25, 880]
+        : [523.25, 659.25];
   notes.forEach((frequency, index) => {
     const start = context.currentTime + index * 0.09;
     const oscillator = context.createOscillator();
@@ -1106,7 +1112,13 @@ export function MoramiApp() {
     setDrillAttempts((count) => count + 1);
     if (answer === currentDrill.correct) {
       const nextCorrect = drillCorrect + 1;
-      const reward = wrongDrillAnswers.length === 0 ? 200 : wrongDrillAnswers.length <= 2 ? 100 : 50;
+      const reward = wrongDrillAnswers.length === 0
+        ? 200
+        : wrongDrillAnswers.length === 1
+          ? 150
+          : wrongDrillAnswers.length === 2
+            ? 100
+            : 50;
       setDrillCorrect(nextCorrect);
       setSessionCoins((coins) => coins + reward);
       setCoinReward(reward);
@@ -1460,7 +1472,7 @@ export function MoramiApp() {
               </div>
             ) : (
               <div className="practice-card">
-                {coinReward !== null && <div className={`coin-reward-effect coin-reward-effect--${coinReward}`} key={`${drillIndex}-${coinReward}`}><i /><i /><i /><Image src="/cafe-money/100.png" alt="획득한 돈" width={120} height={120} unoptimized /><strong>+{coinReward}원!</strong><span>{coinReward === 200 ? "한 번에 정답!" : coinReward === 100 ? "다시 생각해서 성공!" : "끝까지 포기하지 않았어!"}</span></div>}
+                {coinReward !== null && <div className={`coin-reward-effect coin-reward-effect--${coinReward}`} key={`${drillIndex}-${coinReward}`}><i /><i /><i /><Image src="/cafe-money/100.png" alt="획득한 돈" width={120} height={120} unoptimized /><strong>+{coinReward}원!</strong><span>{coinReward === 200 ? "한 번에 정답!" : coinReward === 150 ? "한 번 더 생각해서 성공!" : coinReward === 100 ? "두 번 다시 생각해서 성공!" : "끝까지 포기하지 않았어!"}</span></div>}
                 <ProblemCard problem={currentDrill} />
                 <div className="answer-grid">
                   {currentDrill.answers.map((answer) => {
