@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type CSSProperties, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { cafeMoney, cafeStations } from "./journey-config";
 
@@ -23,13 +23,16 @@ const stationCopy = [
   { title: "거스름돈 받기", description: "받을 돈을 확인해요", image: "/cafe-stages/change-v2.png" },
 ] as const;
 
-type Props = { onBack: () => void; onComplete: () => void };
+type Props = { learnerName: string; onBack: () => void; onComplete: () => void };
+type QueueScene = "intro" | "count-both" | "count-left" | "note" | "clear";
 
-export function CafeJourney({ onBack, onComplete }: Props) {
+export function CafeJourney({ learnerName, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueHelp, setQueueHelp] = useState(false);
   const [queueFeedback, setQueueFeedback] = useState("");
+  const [queueScene, setQueueScene] = useState<QueueScene>("intro");
+  const [queueCountAnswer, setQueueCountAnswer] = useState("");
   const [selectedMenu, setSelectedMenu] = useState<string[]>([]);
   const [menuFeedback, setMenuFeedback] = useState("");
   const [paymentCounts, setPaymentCounts] = useState<Record<number, number>>({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
@@ -51,6 +54,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
   function openStation(index: number) {
     if (index > journeyProgress) return;
+    if (index === 0) {
+      setQueueScene("intro");
+      setQueueCountAnswer("");
+      setQueueFeedback("");
+      setQueueHelp(false);
+    }
     if (index === 2) {
       setPaymentCounts({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
       setPaymentFeedback("");
@@ -59,17 +68,27 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
   }
 
-  function chooseQueue(side: "left" | "right") {
-    if (side === "right") {
-      setQueueFeedback("맞아. 두 명이 있는 오른쪽 줄이 더 짧아!");
-      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp });
-      setJourneyProgress((progress) => Math.max(progress, 1));
-      window.setTimeout(returnToMap, 700);
+  function submitQueueCounts() {
+    if (!queueCountAnswer.trim()) return;
+    setQueueFeedback("");
+    setQueueScene("count-left");
+  }
+
+  function chooseLeftCount(count: number) {
+    if (count === 3) {
+      setQueueFeedback("");
+      setQueueScene("note");
+      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp, left_count: 3, learner_answer: queueCountAnswer });
       return;
     }
-    setQueueFeedback("왼쪽에는 네 명이 있어. 더 적은 쪽을 다시 골라 볼까?");
+    setQueueFeedback("사람을 앞에서부터 한 명씩 다시 세어 볼까?");
     setQueueHelp(true);
-    captureMormeyEvent("cafe_queue_answered", { correct: false, answer: 4 });
+    captureMormeyEvent("cafe_queue_answered", { correct: false, answer: count });
+  }
+
+  function finishQueueStory() {
+    setJourneyProgress((progress) => Math.max(progress, 1));
+    setQueueScene("clear");
   }
 
   function toggleMenu(id: string) {
@@ -171,23 +190,44 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       )}
 
       {step === "queue" && (
-        <main className="figma-cafe-panel figma-cafe-queue" data-figma-node="74:4">
-          <div className="figma-cafe-mission-title"><span>MISSION 1</span><h1>카페에 줄서기</h1><p>사람이 적은 줄을 찾아 주문대로 가요</p></div>
-          <div className="figma-cafe-queue__choice">
-            {([{"side":"left","label":"왼쪽 줄","count":4},{"side":"right","label":"오른쪽 줄","count":2}] as const).map((lane) => (
-              <button key={lane.side} className={`queue-lane queue-lane--${lane.side}`} onClick={() => chooseQueue(lane.side)}>
-                <span className="queue-lane__counter"><i aria-hidden="true">☕</i><b>주문대 {lane.side === "left" ? "A" : "B"}</b></span>
-                <strong>{lane.label}<small>{lane.count}명이 기다려요</small></strong>
-                <span className="queue-lane__people" aria-label={`${lane.count}명`}>
-                  {Array.from({ length: lane.count }, (_, index) => <i key={index} style={{ "--person": index } as CSSProperties}><em /><b /></i>)}
-                </span>
-                <span className="queue-lane__pick">여기에 설래요 <b>→</b></span>
-              </button>
-            ))}
-          </div>
-          <div className="figma-cafe-guide"><Image src="/morami/bright-cutout.png" alt="생각하는 모르미" width={90} height={90} unoptimized /><button className="figma-cafe-hint" onClick={() => setQueueHelp(true)}>힌트가 필요해? 사람 수를 하나씩 세어 봐!</button></div>
-          {queueHelp && <p className="figma-cafe-help-text">네 명과 두 명 중 어느 쪽이 더 적을까?</p>}
-          {queueFeedback && <p className="figma-cafe-feedback" role="status">{queueFeedback}</p>}
+        <main className={`figma-cafe-panel figma-cafe-queue-story is-${queueScene}`} data-figma-node="74:4">
+          {queueScene !== "clear" && <button className="queue-star-note" aria-label="별노트">⭐<span>별노트</span></button>}
+
+          {queueScene !== "note" && queueScene !== "clear" && (
+            <section className="queue-story-scene" aria-label="카페의 두 줄">
+              <Image className="queue-story-morami" src={queueScene === "intro" ? "/morami/confused-cutout.png" : "/morami/bright-cutout.png"} alt={queueScene === "intro" ? "어느 줄에 설지 고민하는 모르미" : "질문하는 모르미"} width={320} height={360} unoptimized />
+              <div className="queue-story-lines">
+                <div aria-label="왼쪽 줄 3명">{Array.from({ length: 3 }, (_, index) => <i key={index}><b /><span /></i>)}</div>
+                <div aria-label="오른쪽 줄 2명">{Array.from({ length: 2 }, (_, index) => <i key={index}><b /><span /></i>)}</div>
+              </div>
+              {queueScene === "count-both" && <form className="queue-story-input" onSubmit={(event) => { event.preventDefault(); submitQueueCounts(); }}><input aria-label="양쪽 줄의 사람 수" value={queueCountAnswer} onChange={(event) => setQueueCountAnswer(event.target.value)} placeholder="답변을 입력해주세요..." /><button type="submit" disabled={!queueCountAnswer.trim()}>완료!</button></form>}
+              {queueScene === "count-left" && <div className="queue-story-options" aria-label="왼쪽 줄 사람 수 선택">{[1, 2, 3].map((count) => <button key={count} onClick={() => chooseLeftCount(count)}>{count}명 있어</button>)}</div>}
+            </section>
+          )}
+
+          {queueScene === "note" && (
+            <section className="queue-note-scene">
+              <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
+              <article><span>모르미의 공부노트</span><h2>줄 설 때는 사람이 더 적은 줄에 서는 게 좋아</h2><p>— {learnerName}가 알려줌</p><small>빠뜨빼똘 손글씨로</small></article>
+            </section>
+          )}
+
+          {queueScene === "clear" && (
+            <section className="queue-clear-scene">
+              <Image src="/morami/celebrate-cutout.png" alt="별을 들고 기뻐하는 모르미" width={370} height={410} unoptimized />
+              <div><span>STAGE 1 CLEAR!</span><h1>얏호~! 덕분에 빠른 줄에<br />서는 방법을 알았어!</h1><button onClick={returnToMap}>나가기</button></div>
+            </section>
+          )}
+
+          {queueScene !== "clear" && <section className="queue-story-dialogue">
+            <b>모르미</b>
+            <p>{queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : queueScene === "count-left" ? "왼쪽 줄에는 사람들이 몇 명 있어?" : `아~! 오른쪽 줄이 더 사람이 적으니까 거기에 서는 게 좋은거구나! ${learnerName}가 가르쳐준 내용 잊지 않게 노트에 적어둬야겠다!`}</p>
+            {queueFeedback && <small role="status">{queueFeedback}</small>}
+            {queueScene === "intro" && <button onClick={() => setQueueScene("count-both")}>다음으로 ▶</button>}
+            {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); setQueueScene("count-left"); }}>잘 모르겠어</button>}
+            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); setQueueFeedback("사람을 앞에서부터 하나씩 세어 봐. 왼쪽 줄은 세 자리야."); }}>잘 모르겠어</button>}
+            {queueScene === "note" && <button onClick={finishQueueStory}>다음으로 ▶</button>}
+          </section>}
         </main>
       )}
 

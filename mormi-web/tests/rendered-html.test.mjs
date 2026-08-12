@@ -69,9 +69,15 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
   assert.doesNotMatch(cafe, /sumAnswer|메뉴 합계|천 원짜리/);
-  assert.match(cafe, /queue-lane__people/);
+  assert.match(cafe, /type QueueScene = "intro" \| "count-both" \| "count-left" \| "note" \| "clear"/);
+  assert.match(cafe, /어\? 주문하려면 줄을 서야 하나봐/);
+  assert.match(cafe, /왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어\?/);
+  assert.match(cafe, /왼쪽 줄에는 사람들이 몇 명 있어\?/);
+  assert.match(cafe, /모르미의 공부노트/);
+  assert.match(cafe, /가 가르쳐준 내용 잊지 않게 노트에 적어둬야겠다/);
+  assert.match(cafe, /learnerName/);
   assert.match(cafe, /내 주문 바구니/);
-  assert.match(cafe, /MISSION 1/);
+  assert.match(cafe, /STAGE 1 CLEAR!/);
   assert.match(cafe, /figma-cafe-sum__equation[\s\S]{0,800}<Image src=\{item\.image\}/);
   assert.match(cafe, /figma-cafe-sum-wallet[\s\S]{0,1000}cafeMoney\.map/);
   assert.match(cafe, /\$\{money\.label\} 빼기/);

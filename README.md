@@ -30,7 +30,7 @@ npm run dev:vercel
 - `mormi-web/app/journey-config.ts`: 카페 해금에 필요한 과정과 화폐 정의
 - `mormi-web/public/figma/cafe/`: Figma에서 내려받은 카페 메뉴와 스테이지 원본 PNG
 - `mormi-web/public/cafe-stages/`: 통일된 단순 3D 클레이 스타일의 카페 스테이지 카드 이미지
-- 카페는 Figma의 학습 순서만 유지하고 시각 디자인은 모르미의 크림·민트 게임 카드 UI로 구현합니다. 스테이지 화면은 `줄 서기 → 메뉴 고르기 → 계산하기 → 거스름돈 받기` 네 카드가 순서대로 열립니다.
+- 카페는 Figma의 학습 순서와 제공된 화면별 문구를 유지하고 시각 디자인은 모르미의 크림·민트 게임 UI로 통일합니다. 스테이지 화면은 `줄 서기 → 메뉴 고르기 → 계산하기 → 거스름돈 받기` 네 카드가 순서대로 열리며, 줄 서기는 대화·자유 입력·선택·별노트·성공 화면의 5단계로 진행됩니다.
 - `mormi-web/app/api/morami/respond/route.ts`: Anthropic 응답과 로컬 대체 응답
 - `mormi-web/instrumentation-client.ts`: 개인정보 보호형 PostHog 초기화
 - `mormi-web/public/cafe-money/`: 100원, 500원, 1,000원, 5,000원 투명 PNG
