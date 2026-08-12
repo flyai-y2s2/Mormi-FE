@@ -75,7 +75,7 @@ function simpleTeachPrompt(session: Session) {
   return `이 문제를 잘 모르겠어. ${session.dictionaryProblem.prompt}`;
 }
 
-async function requestMoramiTurn(session: Session, event: MoramiEvent, fallbackDialogue: string, ladderLevel = 3, options: MoramiTurnOptions = {}) {
+async function requestMoramiTurn(session: Session, event: MoramiEvent, fallbackDialogue: string, ladderLevel = 4, options: MoramiTurnOptions = {}) {
   try {
     const response = await fetch("/api/morami/respond", {
       method: "POST",
@@ -644,17 +644,111 @@ function teachResponseMatches(response: string, session: Session) {
   return concepts.filter((word) => normalized.includes(clean(word))).length >= 2;
 }
 
-type RecognitionResultLike = { results: { 0: { 0: { transcript: string } } } };
-type RecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onresult: ((event: RecognitionResultLike) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
+type TeachingStep = { prompt: string; options: string[]; correct: string };
+type TeachingScaffold = {
+  freePrompt: string;
+  shortPrompt: string;
+  reasonPrompt: string;
+  reasonOptions: string[];
+  reasonCorrect: string;
+  reasonKeywords: string[];
+  guidedSteps: TeachingStep[];
+  modelLines: string[];
 };
-type RecognitionConstructor = new () => RecognitionLike;
+
+function teachingNumberOptions(value: number, suffix = "", step = 1) {
+  return [Math.max(0, value - step), value, value + step].map((candidate) => `${candidate.toLocaleString("ko-KR")}${suffix}`);
+}
+
+function teachingScaffoldFor(session: Session, problem: Problem): TeachingScaffold {
+  const answerStep: TeachingStep = { prompt: problem.prompt, options: problem.answers, correct: problem.correct };
+  if (session.id === "number-count" && problem.visual.type === "ten-frame") {
+    const count = problem.visual.count;
+    return {
+      freePrompt: "모두 몇 개인지, 어떻게 빠뜨리지 않고 셌는지 알려 줘.",
+      shortPrompt: "모두 몇 개야? 왜 그렇게 생각했어?",
+      reasonPrompt: "어떻게 세면 빠뜨리지 않을까?",
+      reasonOptions: ["하나씩 가리키며 세어", "한꺼번에 눈으로 봐", "아무 데서나 다시 세어"],
+      reasonCorrect: "하나씩 가리키며 세어",
+      reasonKeywords: ["하나씩", "가리키", "마지막", "빠뜨리지"],
+      guidedSteps: [
+        { prompt: "어떻게 세기 시작할까?", options: ["하나씩 가리키기", "눈 감고 세기", "두 번씩 세기"], correct: "하나씩 가리키기" },
+        { prompt: "마지막에 말한 수는 무엇일까?", options: ["전체 개수", "첫 번째 수", "남은 수"], correct: "전체 개수" },
+        { ...answerStep, options: teachingNumberOptions(count) },
+      ],
+      modelLines: ["모르미가 점을 하나씩 가리킬게.", `하나, 둘, 셋… 마지막 수는 ${count}이야.`, `그래서 모두 ${count}개야.`],
+    };
+  }
+  if (session.id === "number-compare" && problem.visual.type === "ten-frame" && typeof problem.visual.secondCount === "number") {
+    const left = problem.visual.count;
+    const right = problem.visual.secondCount;
+    const relation = left === right ? "같아" : left < right ? "작아" : "커";
+    return {
+      freePrompt: "어느 쪽을 골라야 하는지, 두 수를 비교한 이유까지 알려 줘.",
+      shortPrompt: `${problem.prompt} 왜 그렇게 생각했어?`,
+      reasonPrompt: "두 줄은 어떻게 비교하면 될까?",
+      reasonOptions: ["사람 수를 세고 비교해", "줄 간격만 봐", "사람 옷 색을 봐"],
+      reasonCorrect: "사람 수를 세고 비교해",
+      reasonKeywords: ["사람", "적", "많", "작", "짝", "세"],
+      guidedSteps: [
+        { prompt: "왼쪽에는 몇 명이 있어?", options: teachingNumberOptions(left, "명"), correct: `${left}명` },
+        { prompt: "오른쪽에는 몇 명이 있어?", options: teachingNumberOptions(right, "명"), correct: `${right}명` },
+        { prompt: `${left}은 ${right}보다 어때?`, options: ["작아", "커", "같아"], correct: relation },
+        answerStep,
+      ],
+      modelLines: [`왼쪽을 세면 ${left}명이야.`, `오른쪽을 세면 ${right}명이야.`, `${left}은 ${right}보다 ${relation}.`, `그래서 답은 ${problem.correct}이야.`],
+    };
+  }
+  if ((session.id === "money-count" || session.id === "money-price") && problem.visual.type === "money") {
+    const [first = 0, second = 0] = problem.visual.amounts;
+    const labels = problem.visual.labels ?? ["첫 번째 돈", "두 번째 돈"];
+    const reasonCorrect = session.id === "money-count" ? "돈에 적힌 값을 모두 더해" : "두 물건값을 더해";
+    return {
+      freePrompt: "모두 얼마인지, 어떤 계산을 했는지 함께 알려 줘.",
+      shortPrompt: "모두 얼마야? 어떤 계산을 했어?",
+      reasonPrompt: "어떤 방법으로 계산하면 될까?",
+      reasonOptions: [reasonCorrect, "큰 값 하나만 봐", "두 값을 빼"],
+      reasonCorrect,
+      reasonKeywords: ["더", "합", "모두", "값"],
+      guidedSteps: [
+        { prompt: `${labels[0] ?? "첫 번째"}의 값은?`, options: teachingNumberOptions(first, "원", first >= 1000 ? 500 : 100), correct: `${first.toLocaleString("ko-KR")}원` },
+        { prompt: `${labels[1] ?? "두 번째"}의 값은?`, options: teachingNumberOptions(second, "원", second >= 1000 ? 500 : 100), correct: `${second.toLocaleString("ko-KR")}원` },
+        { prompt: "두 값은 어떻게 할까?", options: ["더해", "빼", "큰 값만 골라"], correct: "더해" },
+        answerStep,
+      ],
+      modelLines: [`첫 번째 값은 ${first.toLocaleString("ko-KR")}원이야.`, `두 번째 값은 ${second.toLocaleString("ko-KR")}원이야.`, "두 값을 더하면 돼.", `그래서 모두 ${problem.correct}이야.`],
+    };
+  }
+  if (session.id === "money-budget" && problem.visual.type === "money") {
+    const paid = problem.visual.paid ?? 0;
+    const price = problem.visual.amounts.reduce((sum, value) => sum + value, 0);
+    return {
+      freePrompt: "얼마가 남는지, 왜 빼야 하는지 함께 알려 줘.",
+      shortPrompt: "얼마를 돌려받아? 어떤 계산을 했어?",
+      reasonPrompt: "남는 돈은 어떻게 구할까?",
+      reasonOptions: ["낸 돈에서 물건값을 빼", "낸 돈과 물건값을 더해", "물건값만 말해"],
+      reasonCorrect: "낸 돈에서 물건값을 빼",
+      reasonKeywords: ["빼", "남", "거스름", "낸 돈"],
+      guidedSteps: [
+        { prompt: "낸 돈은 얼마야?", options: teachingNumberOptions(paid, "원", 500), correct: `${paid.toLocaleString("ko-KR")}원` },
+        { prompt: "물건값은 얼마야?", options: teachingNumberOptions(price, "원", 500), correct: `${price.toLocaleString("ko-KR")}원` },
+        { prompt: "어떤 계산을 해야 할까?", options: ["낸 돈 - 물건값", "낸 돈 + 물건값", "물건값 - 낸 돈"], correct: "낸 돈 - 물건값" },
+        answerStep,
+      ],
+      modelLines: [`낸 돈은 ${paid.toLocaleString("ko-KR")}원이야.`, `물건값은 ${price.toLocaleString("ko-KR")}원이야.`, "낸 돈에서 물건값을 빼면 돼.", `그래서 ${problem.correct}을 돌려받아.`],
+    };
+  }
+  return {
+    freePrompt: "답과 그 이유를 네 말로 알려 줘.", shortPrompt: "답은 무엇이야? 왜 그렇게 생각했어?", reasonPrompt: activeSessionReasonPrompt(session),
+    reasonOptions: session.oneWordOptions, reasonCorrect: session.oneWordCorrect, reasonKeywords: [session.fillCorrect, session.oneWordCorrect],
+    guidedSteps: [{ prompt: session.oneWordPrompt, options: session.oneWordOptions, correct: session.oneWordCorrect }, answerStep],
+    modelLines: [session.hint, simpleLearnedLine(session), `그래서 답은 ${problem.correct}이야.`],
+  };
+}
+
+function activeSessionReasonPrompt(session: Session) {
+  return session.oneWordPrompt || "어떤 방법으로 풀까?";
+}
 
 type MissionScene = "cafe" | "market" | "stationery" | "toyshop" | "snackshop" | "giftshop" | "workshop" | "fair";
 type ProductScene = Extract<MissionScene, "cafe" | "market" | "stationery" | "toyshop" | "snackshop" | "giftshop">;
@@ -1051,9 +1145,13 @@ export function MoramiApp() {
   const [coinReward, setCoinReward] = useState<number | null>(null);
   const [drillLocked, setDrillLocked] = useState(false);
   const [mastered, setMastered] = useState(false);
-  const [ladder, setLadder] = useState(3);
+  const [ladder, setLadder] = useState(4);
   const [teachText, setTeachText] = useState("");
-  const [speechStatus, setSpeechStatus] = useState("");
+  const [teachReason, setTeachReason] = useState("");
+  const [selectedTeachAnswer, setSelectedTeachAnswer] = useState("");
+  const [selectedTeachReason, setSelectedTeachReason] = useState("");
+  const [guidedTeachStep, setGuidedTeachStep] = useState(0);
+  const [modelTeachStep, setModelTeachStep] = useState(0);
   const [teachMessages, setTeachMessages] = useState<TeachMessage[]>([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[0]) }]);
   const [teachSending, setTeachSending] = useState(false);
   const [teachSolved, setTeachSolved] = useState(false);
@@ -1092,6 +1190,7 @@ export function MoramiApp() {
     () => shuffleWords(Array.from(new Set([teachingProblem.correct, ...teachingProblem.answers])), variantSeed + sessionIndex * 61).slice(0, 3),
     [sessionIndex, teachingProblem, variantSeed],
   );
+  const teachingScaffold = useMemo(() => teachingScaffoldFor(activeSession, teachingProblem), [activeSession, teachingProblem]);
 
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
     setDialogue(fallbackDialogue);
@@ -1219,9 +1318,13 @@ export function MoramiApp() {
     setStage("teach");
     setExpression("confused");
     setDialogue(prompt);
-    setLadder(3);
+    setLadder(4);
     setTeachText("");
-    setSpeechStatus("");
+    setTeachReason("");
+    setSelectedTeachAnswer("");
+    setSelectedTeachReason("");
+    setGuidedTeachStep(0);
+    setModelTeachStep(0);
     setTeachSending(false);
     teachMessageId.current = 2;
     setTeachMessages([{ id: 1, role: "morami", text: prompt }]);
@@ -1231,7 +1334,7 @@ export function MoramiApp() {
     setExpression("confused");
     setDialogue(message);
     appendTeachMessage("morami", message);
-    if (ladder > 1) setLadder((level) => level - 1);
+    if (ladder > 0) setLadder((level) => level - 1);
   }
 
   function solveTeaching(level: number, reply = `응! ${childName}가 알려 줘서 이제 알겠어.`, nextExpression: Expression = "happy", askForReply = true) {
@@ -1245,14 +1348,14 @@ export function MoramiApp() {
   }
 
   async function submitTeachText() {
-    const response = teachText.trim();
+    const response = [teachText.trim(), teachReason.trim()].filter(Boolean).join(". ");
     if (!response || teachSending) return;
     const prompt = simpleTeachPrompt(activeSession);
     const conversation = [...teachMessages.map(({ role, text }) => ({ role, text })), { role: "child" as const, text: response }];
     appendTeachMessage("child", response);
     setTeachText("");
+    setTeachReason("");
     setTeachSending(true);
-    setSpeechStatus("모르미가 생각하고 있어요…");
     const turn = await requestMoramiTurn(activeSession, "teach_message", "무엇을 먼저 하면 될까?", ladder, {
       childMessage: response,
       teachPrompt: prompt,
@@ -1261,71 +1364,66 @@ export function MoramiApp() {
     });
     setTeachSending(false);
     const directAnswerMatches = answersMatch(response, teachingProblem.correct);
+    const reasonInput = ladder === 4 ? teachText : teachReason;
+    const reasonMatches = teachingScaffold.reasonKeywords.some((keyword) => reasonInput.replaceAll(" ", "").includes(keyword.replaceAll(" ", "")));
+    const levelEvidenceMatches = ladder === 4 ? directAnswerMatches && reasonMatches : directAnswerMatches || reasonMatches;
     const understood = turn?.source === "anthropic" && typeof turn.understood === "boolean"
-      ? directAnswerMatches || turn.understood
-      : teachResponseMatches(response, activeSession);
+      ? levelEvidenceMatches || (ladder < 4 && turn.understood)
+      : levelEvidenceMatches || (ladder < 4 && teachResponseMatches(response, activeSession));
     if (understood) {
-      solveTeaching(3, turn?.dialogue, turn?.expression ?? "happy", false);
-      setSpeechStatus(`모르미가 ${childName}의 설명을 이해했어요!`);
+      solveTeaching(ladder, turn?.dialogue, turn?.expression ?? "happy", false);
     } else {
       const retry = turn?.dialogue || "아직 잘 모르겠어. 무엇을 먼저 하면 될까?";
       setExpression(turn?.expression ?? "confused");
       setDialogue(retry);
-      setSpeechStatus("모르미의 질문에 짧게 답해 줘요.");
       appendTeachMessage("morami", retry);
     }
   }
 
   function askForTeachHelp() {
-    if (ladder === 3) {
-      lowerLadder("괜찮아! 답을 보기에서 같이 골라 보자.");
-      return;
-    }
-    if (ladder === 2) {
-      lowerLadder("그럼 계산 방법부터 하나씩 생각해 보자.");
-      return;
-    }
-    setExpression("calm");
-    setDialogue(activeSession.hint);
-    appendTeachMessage("morami", `힌트야. ${activeSession.hint}`);
-  }
-
-  function startSpeechInput() {
-    const speechWindow = window as typeof window & { SpeechRecognition?: RecognitionConstructor; webkitSpeechRecognition?: RecognitionConstructor };
-    const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
-    if (!Recognition) {
-      setSpeechStatus("이 기기에서는 말하기가 안 돼요. 아래 칸에 써 줘요.");
-      return;
-    }
-    const recognition = new Recognition();
-    recognition.lang = "ko-KR";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    setSpeechStatus("듣고 있어요. 천천히 말해 줘요.");
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setTeachText(transcript);
-      setSpeechStatus("잘 들었어요! 확인하고 보내 줘요.");
+    const messages: Record<number, string> = {
+      4: "괜찮아! 답과 이유를 짧게 나눠서 적어 보자.",
+      3: "이제 준비된 보기에서 답과 이유를 골라 보자.",
+      2: "하나씩 세고 비교하면서 차례대로 같이 풀어 보자.",
+      1: "이번에는 내가 먼저 보여 줄게. 같은 순서로 같이 해 보자.",
     };
-    recognition.onerror = () => setSpeechStatus("잘 못 들었어요. 다시 말하거나 써 줘요.");
-    recognition.onend = () => undefined;
-    recognition.start();
+    if (ladder > 0) lowerLadder(messages[ladder]);
   }
 
-  function answerLadder(answer: string, correct: string) {
-    if (answersMatch(answer, correct)) {
-      solveTeaching(ladder);
+  function submitTeachChoices() {
+    if (!selectedTeachAnswer || !selectedTeachReason) return;
+    if (answersMatch(selectedTeachAnswer, teachingProblem.correct) && selectedTeachReason === teachingScaffold.reasonCorrect) {
+      solveTeaching(2);
       return;
     }
-    if (floorFails === 0) {
-      setFloorFails(1);
+    setExpression("confused");
+    setDialogue("답과 이유를 다시 한 번 이어서 골라 볼까?");
+  }
+
+  function answerGuidedTeaching(answer: string) {
+    const step = teachingScaffold.guidedSteps[guidedTeachStep];
+    if (!answersMatch(answer, step.correct)) {
       setExpression("confused");
-      setDialogue("한 번 더 생각해 볼래? 아직 정답은 남아 있어.");
-    } else {
-      setFloorFails((count) => count + 1);
-      setExpression("calm");
-      setDialogue(`힌트야. ${activeSession.hint}`);
+      setDialogue("이 단계만 다시 천천히 생각해 보자.");
+      return;
     }
+    if (guidedTeachStep >= teachingScaffold.guidedSteps.length - 1) {
+      solveTeaching(1);
+      return;
+    }
+    setGuidedTeachStep((current) => current + 1);
+    setExpression("calm");
+    setDialogue("맞아! 다음 단계도 같이 해 보자.");
+  }
+
+  function advanceModelTeaching() {
+    if (modelTeachStep >= teachingScaffold.modelLines.length - 1) {
+      solveTeaching(0, "같이 끝까지 해냈어! 이제 나도 방법을 알겠어.", "happy", false);
+      return;
+    }
+    setModelTeachStep((current) => current + 1);
+    setExpression("calm");
+    setDialogue("내가 하는 순서를 보고 다음도 같이 눌러 줘.");
   }
 
   function goWrap() {
@@ -1404,9 +1502,13 @@ export function MoramiApp() {
     setCoinReward(null);
     setDrillLocked(false);
     setMastered(false);
-    setLadder(3);
+    setLadder(4);
     setTeachText("");
-    setSpeechStatus("");
+    setTeachReason("");
+    setSelectedTeachAnswer("");
+    setSelectedTeachReason("");
+    setGuidedTeachStep(0);
+    setModelTeachStep(0);
     setTeachSending(false);
     teachMessageId.current = 2;
     setTeachMessages([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[nextIndex]) }]);
@@ -1576,11 +1678,15 @@ export function MoramiApp() {
           </div>
           <div className="chat-window teaching-stage">
             <div className="teaching-levels" aria-label={`도움 단계 L${ladder}`}>
-              <span className={ladder === 3 ? "is-active" : "is-complete"}><b>L3</b> 직접 답하기</span>
+              <span className={ladder === 4 ? "is-active" : "is-complete"}><b>L4</b> 자유 설명</span>
               <i />
-              <span className={ladder === 2 ? "is-active" : ladder < 2 ? "is-complete" : ""}><b>L2</b> 답 고르기</span>
+              <span className={ladder === 3 ? "is-active" : ladder < 3 ? "is-complete" : ""}><b>L3</b> 짧은 답</span>
               <i />
-              <span className={ladder === 1 ? "is-active" : ""}><b>L1</b> 방법 고르기</span>
+              <span className={ladder === 2 ? "is-active" : ladder < 2 ? "is-complete" : ""}><b>L2</b> 선택 설명</span>
+              <i />
+              <span className={ladder === 1 ? "is-active" : ladder < 1 ? "is-complete" : ""}><b>L1</b> 단계 완성</span>
+              <i />
+              <span className={ladder === 0 ? "is-active" : ""}><b>L0</b> 같이 하기</span>
             </div>
             <div className="teaching-playground">
               <div className="teaching-morami"><Morami expression={expression} /></div>
@@ -1591,14 +1697,32 @@ export function MoramiApp() {
               </article>
               {!teachSolved && !brightCarry && (
                 <div className={`teaching-answer teaching-answer--l${ladder}`}>
-                  <p className="teaching-answer-label"><b>L{ladder}</b>{ladder === 3 ? "답을 직접 알려 줘" : ladder === 2 ? "맞는 답을 골라 줘" : "어떤 방법으로 풀까?"}</p>
-                  {ladder === 3 && <div className="teach-free-response">
-                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="답을 입력해 주세요" rows={2} />
-                    <div><button type="button" className="speech-button" onClick={startSpeechInput} disabled={teachSending}>● 말로 알려주기</button><button type="button" className="send-teach-button" disabled={!teachText.trim() || teachSending} onClick={submitTeachText}>{teachSending ? "생각하는 중…" : "완료!"}</button></div>
-                    {speechStatus && <small>{speechStatus}</small>}
+                  <p className="teaching-answer-label"><b>L{ladder}</b>{ladder === 4 ? "판단과 이유를 네 말로 설명해 줘" : ladder === 3 ? "답과 이유를 짧게 알려 줘" : ladder === 2 ? "답과 이유를 골라서 이어 줘" : ladder === 1 ? "한 단계씩 같이 완성해 보자" : "모르미를 따라 같이 해 보자"}</p>
+                  {ladder === 4 && <div className="teach-free-response">
+                    <p>{teachingScaffold.freePrompt}</p>
+                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="답과 이유를 함께 적어 주세요" rows={3} />
+                    <button type="button" className="send-teach-button" disabled={!teachText.trim() || teachSending} onClick={submitTeachText}>{teachSending ? "생각하는 중…" : "모르미에게 알려주기"}</button>
                   </div>}
-                  {ladder === 2 && <div className="teaching-choice-list">{teachingAnswerOptions.map((answer) => <button key={answer} onClick={() => answerLadder(answer, teachingProblem.correct)}>{readableChoice(answer)}</button>)}</div>}
-                  {ladder === 1 && <div className="teaching-choice-list">{activeSession.oneWordOptions.map((answer) => <button key={answer} onClick={() => answerLadder(answer, activeSession.oneWordCorrect)}>{answer}</button>)}</div>}
+                  {ladder === 3 && <div className="teach-free-response teach-free-response--short">
+                    <label>{teachingProblem.prompt}<input value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="짧은 답" /></label>
+                    <label>왜 그렇게 생각했어?<input value={teachReason} onChange={(event) => setTeachReason(event.target.value)} placeholder="예: 사람이 더 적어서" /></label>
+                    <button type="button" className="send-teach-button" disabled={(!teachText.trim() && !teachReason.trim()) || teachSending} onClick={submitTeachText}>{teachSending ? "생각하는 중…" : "완료!"}</button>
+                  </div>}
+                  {ladder === 2 && <div className="teaching-choice-pair">
+                    <fieldset><legend>1. {teachingProblem.prompt}</legend><div className="teaching-choice-list">{teachingAnswerOptions.map((answer) => <button className={selectedTeachAnswer === answer ? "is-selected" : ""} key={answer} onClick={() => setSelectedTeachAnswer(answer)}>{readableChoice(answer)}</button>)}</div></fieldset>
+                    <fieldset><legend>2. {teachingScaffold.reasonPrompt}</legend><div className="teaching-choice-list">{teachingScaffold.reasonOptions.map((answer) => <button className={selectedTeachReason === answer ? "is-selected" : ""} key={answer} onClick={() => setSelectedTeachReason(answer)}>{answer}</button>)}</div></fieldset>
+                    <button className="send-teach-button" disabled={!selectedTeachAnswer || !selectedTeachReason} onClick={submitTeachChoices}>답과 이유 이어서 알려주기</button>
+                  </div>}
+                  {ladder === 1 && <div className="guided-teaching">
+                    <div className="guided-progress">{teachingScaffold.guidedSteps.map((_, index) => <i key={index} className={index < guidedTeachStep ? "is-done" : index === guidedTeachStep ? "is-current" : ""}>{index < guidedTeachStep ? "✓" : index + 1}</i>)}</div>
+                    <h3>{teachingScaffold.guidedSteps[guidedTeachStep].prompt}</h3>
+                    <div className="teaching-choice-list">{teachingScaffold.guidedSteps[guidedTeachStep].options.map((answer) => <button key={answer} onClick={() => answerGuidedTeaching(answer)}>{readableChoice(answer)}</button>)}</div>
+                  </div>}
+                  {ladder === 0 && <div className="model-teaching">
+                    <span>모르미가 먼저 보여 줄게</span>
+                    <ol>{teachingScaffold.modelLines.slice(0, modelTeachStep + 1).map((line, index) => <li key={line} className={index === modelTeachStep ? "is-current" : "is-done"}><b>{index + 1}</b>{line}</li>)}</ol>
+                    <button className="send-teach-button" onClick={advanceModelTeaching}>{modelTeachStep >= teachingScaffold.modelLines.length - 1 ? "같이 끝내기" : "다음도 같이 하기"}</button>
+                  </div>}
                 </div>
               )}
               {(teachSolved || brightCarry) && (
@@ -1612,7 +1736,7 @@ export function MoramiApp() {
             </div>
             <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
               <div><b>모르미</b><p>{dialogue}</p></div>
-              {!teachSolved && !brightCarry && <button type="button" onClick={askForTeachHelp}>{ladder > 1 ? "잘 모르겠어" : "힌트 보기"}</button>}
+              {!teachSolved && !brightCarry && ladder > 0 && <button type="button" onClick={askForTeachHelp}>한 단계 도움받기</button>}
             </div>
             <div className="teaching-chat-history" aria-hidden="true">
               {teachMessages.map((message) => <span key={message.id}>{message.role}: {message.text}</span>)}
