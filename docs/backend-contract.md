@@ -2,6 +2,8 @@
 
 프런트엔드와 백엔드는 분리 배포합니다. Next.js는 화면과 즉시 피드백을 담당하고, FastAPI는 인증·진행도·시도 기록·리포트를 담당합니다.
 
+AI 대화의 교육적 판단과 턴 상태는 일반 학습 기록 API와 분리합니다. 세부 합의안은 [`frontend-ai-dialogue-reply.md`](./frontend-ai-dialogue-reply.md)를 기준으로 협의합니다.
+
 ## 권장 테이블
 
 | 테이블 | 핵심 컬럼 |
@@ -13,7 +15,7 @@
 | `cafe_visits` | `id`, `learner_id`, `menu_id`, `target_amount`, `paid_amount`, `attempts`, `completed_at` |
 | `reward_ledger` | `id`, `learner_id`, `learning_session_id`, `source`, `amount`, `idempotency_key`, `created_at` |
 
-`answer_meta`에는 화폐별 개수 같은 구조 데이터만 넣고, 아이 이름·음성·자유 입력 원문은 저장하지 않습니다. 모든 아동 데이터 테이블에는 `learner_id` 인덱스와 접근 정책을 둡니다.
+`answer_meta`에는 화폐별 개수 같은 구조 데이터만 넣고, 아이 이름·음성·자유 입력 원문은 저장하지 않습니다. AI 대화 원문이 필요한 경우 일반 `attempts`가 아닌 별도 암호화 저장소에 동의 상태·접근 권한·보존 기간을 적용해 저장합니다. 음성 파일은 저장하지 않습니다. 모든 아동 데이터 테이블에는 `learner_id` 인덱스와 접근 정책을 둡니다.
 
 ## 권장 API
 
@@ -30,6 +32,19 @@ POST /v1/cafe-visits/{id}/payments
 POST /v1/cafe-visits/{id}/complete
 GET  /v1/reports/summary
 ```
+
+AI 대화 API는 별도 경로를 사용합니다.
+
+```text
+POST /v1/practice-results
+POST /v1/conversations
+POST /v1/conversations/{conversation_id}/responses
+GET  /v1/conversations/{conversation_id}
+GET  /v1/learners/{learner_id}/skill-profiles
+GET  /v1/learners/{learner_id}/star-notes
+```
+
+브라우저는 서비스 키를 보유하지 않으며 Next.js BFF를 통해 AI 대화 API를 호출합니다.
 
 ### 최초 학습자 생성
 
