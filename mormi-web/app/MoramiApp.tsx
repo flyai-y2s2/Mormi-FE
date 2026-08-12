@@ -661,8 +661,8 @@ type MissionScene = "cafe" | "market" | "stationery" | "toyshop" | "snackshop" |
 type ProductScene = Extract<MissionScene, "cafe" | "market" | "stationery" | "toyshop" | "snackshop" | "giftshop">;
 
 const missionBackgrounds: Record<MissionScene, string> = {
-  cafe: "/life-missions/cafe.webp",
-  market: "/life-missions/market.webp",
+  cafe: "/scenes/cafe-bakery-cute-v4.png",
+  market: "/scenes/market-cute-v4.png",
   stationery: "/life-missions/stationery.jpg",
   toyshop: "/life-missions/toyshop.jpg",
   snackshop: "/life-missions/snackshop.jpg",
@@ -942,11 +942,11 @@ function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: (
       <div className="outside-morami-talk"><Morami expression={unlocked ? "happy" : "confused"} size="small" /><p>{unlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
       <div className="destination-grid">
         <button className={`destination-card destination-card--cafe ${unlocked ? "is-unlocked" : "is-locked"}`} onClick={unlocked ? onCafe : onHome}>
-          <Image src="/life-missions/cafe.webp" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
+          <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
           <div><small>{unlocked ? "진행" : "잠김"}</small><h2>{unlocked ? "카페 가기" : "🔒 카페 가기"}</h2><p>{unlocked ? "줄을 서고, 메뉴를 골라 계산해요" : "필수 개념 4개를 끝내야 열려요"}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
         </button>
-        <article className="destination-card destination-card--soon"><Image src="/life-missions/market.webp" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
+        <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
     </section>
   );

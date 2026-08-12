@@ -60,8 +60,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(cafe, /연습용/);
   assert.match(app, /현장 미션/);
   assert.match(app, /LifeMissionGame/);
-  assert.match(app, /life-missions\/cafe\.webp/);
-  assert.match(app, /life-missions\/market\.webp/);
+  assert.match(app, /scenes\/cafe-bakery-cute-v4\.png/);
+  assert.match(app, /scenes\/market-cute-v4\.png/);
   assert.match(app, /life-missions\/stationery\.jpg/);
   assert.match(app, /life-missions\/toyshop\.jpg/);
   assert.match(app, /life-missions\/snackshop\.jpg/);
