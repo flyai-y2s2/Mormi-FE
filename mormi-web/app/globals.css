@@ -608,3 +608,35 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-change__equation{margin-top:36px;border:4px solid #fff;border-radius:24px;background:#f5e4c8;box-shadow:0 8px 0 #dfc39a;font-weight:850}.figma-cafe-change>p:not(.figma-cafe-feedback){font-weight:850}.figma-cafe-change__builder article{border:4px solid #fff;border-radius:25px;background:#dff1dc;box-shadow:0 8px 0 #aed1aa}.figma-cafe-change__builder article.is-500{background:#f8e3a5;box-shadow:0 8px 0 #ddbf68}.figma-cafe-change__builder aside{border:4px solid #fff;border-radius:25px;background:#e7efff;box-shadow:0 8px 0 #bdcce8}.figma-cafe-change__builder aside span{color:#60708e;font-weight:900}
 @media(max-width:760px){.figma-cafe__bar{grid-template-columns:78px 1fr}.figma-cafe__place{display:none}.figma-cafe__bar .figma-cafe__steps{justify-content:center}.figma-cafe-panel{padding:25px 17px}.figma-cafe-queue__choice{gap:10px}.figma-cafe-queue__choice .queue-lane{height:330px;padding:15px 12px}.queue-lane__people{gap:3px!important}.queue-lane__people>i{transform:scale(.75);margin:0 -6px}.figma-cafe-menu__layout{grid-template-columns:1fr}.figma-cafe-menu aside{min-height:280px}.figma-cafe-sum__equation{grid-template-columns:1fr 28px 1fr}.figma-cafe-sum__equation label{grid-column:1/4}}
 @media(max-width:430px){.figma-cafe__bar .figma-cafe__steps{display:flex}.figma-cafe-panel{border-radius:24px}.figma-cafe-mission-title h1,.figma-cafe-panel__heading h1{font-size:25px}.figma-cafe-queue__choice{grid-template-columns:1fr}.figma-cafe-queue__choice .queue-lane{height:260px}.queue-lane__people{margin:8px 0}.figma-cafe-menu__grid{grid-template-columns:1fr 1fr}.figma-cafe-menu__grid button{height:175px;grid-template-rows:95px 1fr}.figma-cafe-menu__grid img{height:95px}}
+
+/* Mission 3: selected food photos + tactile money picker */
+.figma-cafe-sum__equation{
+  width:min(930px,100%);margin:30px auto 0;display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.figma-cafe-sum__equation>div{display:flex;align-items:center;gap:12px}
+.figma-cafe-sum__equation article{
+  width:205px;min-height:185px;padding:13px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.figma-cafe-sum__equation article img{width:130px;height:82px;margin-bottom:3px;object-fit:contain;filter:drop-shadow(0 7px 6px rgba(81,52,28,.16))}
+.figma-cafe-sum__equation article span{font-size:17px}.figma-cafe-sum__equation article strong{margin-top:8px;font-size:22px}
+.figma-cafe-sum__equation .figma-cafe-sum__total{width:175px;min-height:138px;background:#e7f7e7;box-shadow:0 9px 0 #b9dbbb,0 16px 25px rgba(60,97,65,.1)}
+.figma-cafe-sum__equation .figma-cafe-sum__total span{color:#56745d;font-size:14px}.figma-cafe-sum__equation .figma-cafe-sum__total strong{color:#3d7250;font-size:25px}
+.figma-cafe-sum-wallet{
+  width:min(1000px,100%);margin:34px auto 0;padding:20px;border:4px solid #fff;border-radius:28px;
+  background:rgba(234,241,255,.93);box-shadow:0 10px 0 #c6d4eb,0 18px 32px rgba(69,88,122,.12);
+}
+.figma-cafe-sum-wallet__heading{margin-bottom:15px;text-align:center}.figma-cafe-sum-wallet__heading>span{display:inline-block;padding:4px 10px;border-radius:999px;color:#586c8d;background:#fff;font-size:11px;font-weight:950}.figma-cafe-sum-wallet__heading h2{margin:5px 0 1px;color:#4c5e7b;font-size:22px}.figma-cafe-sum-wallet__heading p{margin:0;color:#70809b;font-size:12px}
+.figma-cafe-sum-wallet .figma-cafe-wallet{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.figma-cafe-sum-wallet .figma-cafe-wallet article{min-width:0;padding:12px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;background:#fffaf0}
+.figma-cafe-sum-wallet .figma-cafe-wallet img{width:100%;height:76px;object-fit:contain}.figma-cafe-sum-wallet .figma-cafe-wallet article>b{color:#60483a;font-size:14px}
+.figma-cafe-sum-wallet .figma-cafe-wallet article>div{grid-template-columns:38px 52px 38px}.figma-cafe-sum-wallet .figma-cafe-wallet output{color:#4f3528;font-size:14px}
+.figma-cafe-sum-wallet .figma-cafe-total{margin-top:16px;padding:13px 20px;align-items:center}.figma-cafe-sum-wallet .figma-cafe-total span{font-weight:850}.figma-cafe-sum-wallet .figma-cafe-total strong{color:#3d7250;font-size:27px}
+.figma-cafe-sum .figma-cafe-action{margin-top:25px}
+@media(max-width:760px){
+  .figma-cafe-sum__equation{gap:7px;flex-wrap:wrap}.figma-cafe-sum__equation>div{gap:7px}.figma-cafe-sum__equation article{width:145px;min-height:160px;padding:9px}.figma-cafe-sum__equation article img{width:100px;height:68px}.figma-cafe-sum__equation .figma-cafe-sum__total{width:155px;min-height:105px}
+  .figma-cafe-sum-wallet{padding:14px}.figma-cafe-sum-wallet .figma-cafe-wallet{grid-template-columns:1fr 1fr;gap:9px}.figma-cafe-sum-wallet .figma-cafe-wallet article{min-height:155px}.figma-cafe-sum-wallet .figma-cafe-wallet img{height:66px}
+}
+@media(max-width:430px){
+  .figma-cafe-sum__equation article{width:124px;min-height:145px}.figma-cafe-sum__equation article span{font-size:14px}.figma-cafe-sum__equation article strong{font-size:17px}.figma-cafe-sum__equation .figma-cafe-sum__total{width:145px}
+  .figma-cafe-sum-wallet__heading h2{font-size:18px}.figma-cafe-sum-wallet .figma-cafe-wallet article>div{grid-template-columns:34px 43px 34px}.figma-cafe-sum-wallet .figma-cafe-wallet button{width:34px;height:34px}
+}

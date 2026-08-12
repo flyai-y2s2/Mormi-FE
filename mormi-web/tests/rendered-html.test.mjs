@@ -63,11 +63,14 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /id: "strawberry-juice", name: "딸기주스"[^\n]+strawberry-juice\.png\?v=2/);
   assert.match(cafe, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
-  assert.match(cafe, /<span key=\{index\}>1,000원<\/span>/);
+  assert.doesNotMatch(cafe, /sumAnswer|메뉴 합계|천 원짜리/);
   assert.match(cafe, /queue-lane__people/);
   assert.match(cafe, /내 주문 바구니/);
   assert.match(cafe, /MISSION 1/);
-  assert.doesNotMatch(cafe, /figma-cafe-sum__equation[\s\S]{0,600}<Image src=\{item\.image\}/);
+  assert.match(cafe, /figma-cafe-sum__equation[\s\S]{0,800}<Image src=\{item\.image\}/);
+  assert.match(cafe, /figma-cafe-sum-wallet[\s\S]{0,1000}cafeMoney\.map/);
+  assert.match(cafe, /\$\{money\.label\} 빼기/);
+  assert.match(cafe, /\$\{money\.label\} 더하기/);
   assert.match(cafe, /changePaymentMoney/);
   assert.match(cafe, /changeChangeMoney/);
   assert.match(cafe, /직원에게 내기/);

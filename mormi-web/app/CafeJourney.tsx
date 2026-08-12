@@ -5,7 +5,7 @@ import { type CSSProperties, useMemo, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { cafeMoney, cafeStations } from "./journey-config";
 
-type CafeStep = "overview" | "queue" | "menu" | "sum" | "pay" | "change" | "done";
+type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
 const menu = [
   { id: "americano", name: "아메리카노", price: 3000, image: "/figma/cafe/americano.png?v=2" },
@@ -32,8 +32,6 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const [queueFeedback, setQueueFeedback] = useState("");
   const [selectedMenu, setSelectedMenu] = useState<string[]>([]);
   const [menuFeedback, setMenuFeedback] = useState("");
-  const [sumAnswer, setSumAnswer] = useState("");
-  const [sumFeedback, setSumFeedback] = useState("");
   const [paymentCounts, setPaymentCounts] = useState<Record<number, number>>({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
   const [paymentFeedback, setPaymentFeedback] = useState("");
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
@@ -44,7 +42,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const paid = useMemo(() => cafeMoney.reduce((sum, money) => sum + money.value * paymentCounts[money.value], 0), [paymentCounts]);
   const changeTotal = 1000 * changeCounts[1000] + 500 * changeCounts[500];
   const changeTarget = 10000 - selectedTotal;
-  const stationIndex = step === "overview" ? Math.min(journeyProgress, 3) : step === "queue" ? 0 : step === "menu" ? 1 : step === "sum" || step === "pay" ? 2 : 3;
+  const stationIndex = step === "overview" ? Math.min(journeyProgress, 3) : step === "queue" ? 0 : step === "menu" ? 1 : step === "sum" ? 2 : 3;
 
   function returnToMap() {
     setStep("overview");
@@ -53,6 +51,10 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
   function openStation(index: number) {
     if (index > journeyProgress) return;
+    if (index === 2) {
+      setPaymentCounts({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
+      setPaymentFeedback("");
+    }
     setStep((["queue", "menu", "sum", "change"] as CafeStep[])[index]);
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
   }
@@ -94,16 +96,6 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal });
     setJourneyProgress((progress) => Math.max(progress, 2));
     returnToMap();
-  }
-
-  function checkSum() {
-    const answer = Number(sumAnswer.replaceAll(",", ""));
-    if (answer === selectedTotal) {
-      setSumFeedback("맞아. 두 메뉴의 값을 모두 더했어!");
-      window.setTimeout(() => setStep("pay"), 650);
-    } else {
-      setSumFeedback("두 메뉴의 천 원 자리를 다시 더해 보자.");
-    }
   }
 
   function changePaymentMoney(value: number, amount: number) {
@@ -209,26 +201,18 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
       {step === "sum" && (
         <main className="figma-cafe-panel figma-cafe-sum" data-figma-node="74:8">
-          <div className="figma-cafe-mission-title"><span>MISSION 3</span><h1>주문 금액 계산하기</h1><p>고른 메뉴의 가격을 모두 더해 봐!</p></div>
+          <div className="figma-cafe-mission-title"><span>MISSION 3</span><h1>주문 금액 계산하고 돈 내기</h1><p>고른 메뉴를 확인하고, 실제 돈을 골라 10,000원을 만들어 봐!</p></div>
           <div className="figma-cafe-sum__equation">
-            {selectedItems.map((item, index) => <div key={item.id}><article><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index < selectedItems.length - 1 && <b aria-hidden="true">＋</b>}</div>)}
-            <b aria-hidden="true">=</b><label><span>내가 계산한 금액</span><div><input aria-label="메뉴 합계" inputMode="numeric" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value.replace(/[^0-9]/g, "")); setSumFeedback(""); }} placeholder="?" /><small>원</small></div></label>
+            {selectedItems.map((item, index) => <div key={item.id}><article><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index < selectedItems.length - 1 && <b aria-hidden="true">＋</b>}</div>)}
+            <b aria-hidden="true">=</b><article className="figma-cafe-sum__total"><span>주문 합계</span><strong>{selectedTotal.toLocaleString("ko-KR")}원</strong></article>
           </div>
-          <div className="figma-cafe-money-hint" aria-label={`천 원짜리 ${Math.ceil(selectedTotal / 1000)}장`}><b>💡 천 원씩 세어 볼까?</b>
-            {Array.from({ length: Math.ceil(selectedTotal / 1000) }, (_, index) => <span key={index}>1,000원</span>)}
-          </div>
-          {sumFeedback && <p className="figma-cafe-feedback" role="status">{sumFeedback}</p>}
-          <button className="figma-cafe-action" onClick={checkSum} disabled={!sumAnswer}>합계 확인</button>
-        </main>
-      )}
-
-      {step === "pay" && (
-        <main className="figma-cafe-panel figma-cafe-pay">
-          <div className="figma-cafe-mission-title"><span>MISSION 3 · 결제</span><h1>직원에게 돈 내기</h1><p>지갑에서 돈을 골라 10,000원을 만들어요</p></div>
-          <div className="figma-cafe-pay__layout">
-            <aside><span>주문한 메뉴</span>{selectedItems.map((item) => <p key={item.id}>{item.name}<b>{item.price.toLocaleString("ko-KR")}원</b></p>)}<strong>합계 {selectedTotal.toLocaleString("ko-KR")}원</strong><small>내는 돈 10,000원</small></aside>
-            <div><div className="figma-cafe-wallet">{cafeMoney.map((money) => <article key={money.value}><Image src={money.image} alt={money.label} width={220} height={120} unoptimized /><b>{money.label}</b><div><button onClick={() => changePaymentMoney(money.value, -1)} disabled={!paymentCounts[money.value]}>−</button><output>{paymentCounts[money.value]}개</output><button onClick={() => changePaymentMoney(money.value, 1)}>＋</button></div></article>)}</div><div className="figma-cafe-total"><span>내가 낼 돈</span><strong>{paid.toLocaleString("ko-KR")}원</strong></div></div>
-          </div>
+          <section className="figma-cafe-sum-wallet" aria-label="직원에게 낼 돈 고르기">
+            <div className="figma-cafe-sum-wallet__heading"><span>내 지갑</span><h2>직원에게 낼 10,000원을 만들어 봐</h2><p>돈마다 −와 ＋를 눌러 개수를 바꿀 수 있어요.</p></div>
+            <div className="figma-cafe-wallet">
+              {cafeMoney.map((money) => <article key={money.value}><Image src={money.image} alt={money.label} width={220} height={120} unoptimized /><b>{money.label}</b><div><button aria-label={`${money.label} 빼기`} onClick={() => changePaymentMoney(money.value, -1)} disabled={!paymentCounts[money.value]}>−</button><output aria-label={`${money.label} 개수`}>{paymentCounts[money.value]}개</output><button aria-label={`${money.label} 더하기`} onClick={() => changePaymentMoney(money.value, 1)}>＋</button></div></article>)}
+            </div>
+            <div className="figma-cafe-total"><span>내가 낼 돈</span><strong>{paid.toLocaleString("ko-KR")}원</strong></div>
+          </section>
           {paymentFeedback && <p className="figma-cafe-feedback" role="status">{paymentFeedback}</p>}
           <button className="figma-cafe-action" onClick={checkPayment} disabled={!paid}>직원에게 내기</button>
         </main>

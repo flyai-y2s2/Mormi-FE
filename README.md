@@ -26,7 +26,7 @@ npm run dev:vercel
 ## 주요 경로
 
 - `mormi-web/app/MoramiApp.tsx`: 온보딩, 집, 커리큘럼, 반복 학습, 가르치기, 완료 상태
-- `mormi-web/app/CafeJourney.tsx`: Figma 돌다리, 줄 비교, 메뉴 선택, 합계 입력, 돈·거스름돈 조합
+- `mormi-web/app/CafeJourney.tsx`: Figma 돌다리, 줄 비교, 메뉴 선택, 선택 메뉴 사진·합계 확인, 실제 화폐 PNG의 `− / ＋` 결제, 거스름돈 조합
 - `mormi-web/app/journey-config.ts`: 카페 해금에 필요한 과정과 화폐 정의
 - `mormi-web/public/figma/cafe/`: Figma에서 내려받은 카페 메뉴와 스테이지 원본 PNG
 - 카페는 Figma의 단계와 학습 흐름만 유지하고 시각 디자인은 모르미의 게임 UI로 구현합니다. 줄서기는 사람 캐릭터, 메뉴는 진열대·주문 바구니, 계산은 주문서 형태이며 메뉴 PNG는 이름과 순서를 고정 관리합니다.
