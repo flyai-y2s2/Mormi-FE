@@ -28,3 +28,12 @@ export function captureMormeyEvent(event: MormeyAnalyticsEvent, properties: Reco
   if (!process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN || typeof window === "undefined") return;
   posthog.capture(event, properties);
 }
+
+/**
+ * 서버가 발급한 가명 id 로만 식별한다.
+ * 학습자의 정수 id, 이름, 참여 번호는 PostHog 로 보내지 않는다.
+ */
+export function identifyLearner(analyticsId: string | undefined) {
+  if (!analyticsId || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN || typeof window === "undefined") return;
+  posthog.identify(analyticsId);
+}

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { captureMormeyEvent } from "./analytics";
+import { captureMormeyEvent, identifyLearner } from "./analytics";
+import { api, apiEnabled, ApiError, fireAndForget, readStoredLearner, storeSession } from "./api-client";
 import { CafeJourney } from "./CafeJourney";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { areaForSession, curriculumForSession, masteryTarget, mathAreas, sessions, transferTarget } from "./math-curriculum";
@@ -23,6 +24,10 @@ const expressions: Record<Expression, string> = {
 
 const stageLabels = ["혼자 연습", "가르치기", "별노트", "생활 게임"];
 const TEACH_REWARD = 500;
+
+// 시계 읽기는 렌더가 아니라 이벤트 핸들러와 이펙트에서만 일어난다.
+// 모듈 스코프에 두어 렌더 중 호출로 오해되지 않게 한다.
+const nowMs = () => Date.now();
 
 type LearnerProfile = {
   id: number;
@@ -883,16 +888,21 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
   );
 }
 
-function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void }) {
+function Onboarding({ onStart, submitting, submitError }: {
+  onStart: (name: string, researchCode: string) => void;
+  submitting: boolean;
+  submitError: string;
+}) {
   const [page, setPage] = useState<"hello" | "name" | "promise" | "tutorial">("hello");
   const [name, setName] = useState("");
+  const [researchCode, setResearchCode] = useState("");
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialFeedback, setTutorialFeedback] = useState("");
-  const profile = { id: 1, name: name.trim() || "친구" };
+  const profile = { name: name.trim() || "친구" };
 
   function finishOnboarding(status: "completed" | "skipped") {
     captureMormeyEvent(status === "completed" ? "onboarding_tutorial_completed" : "onboarding_tutorial_skipped", { tutorial_step: tutorialStep + 1 });
-    onStart(profile);
+    onStart(profile.name, researchCode.trim());
   }
 
   function answerTutorial(answer: string) {
@@ -915,13 +925,20 @@ function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void })
     return (
       <section className="onboarding-scene onboarding-scene--name">
         <div className="onboarding-morami"><Morami expression="happy" /></div>
-        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (name.trim()) setPage("promise"); }}>
+        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (name.trim() && (!apiEnabled || researchCode.trim())) setPage("promise"); }}>
           <span>모르미</span>
           <h1>너의 이름을 알려줄래?</h1>
           <p>앞으로 내가 이름을 불러 줄게!</p>
           <label htmlFor="learner-name">이름</label>
           <input id="learner-name" value={name} onChange={(event) => setName(event.target.value.slice(0, 12))} placeholder="이름을 적어 주세요" autoComplete="name" />
-          <button className="primary-button" type="submit" disabled={!name.trim()}>내 이름 알려주기 <span className="button-arrow" /></button>
+          {apiEnabled && (
+            <>
+              {/* 연구 코드가 아이를 구분한다. 같은 코드로 다시 들어오면 진행도가 이어진다. */}
+              <label htmlFor="research-code">참여 번호</label>
+              <input id="research-code" value={researchCode} onChange={(event) => setResearchCode(event.target.value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40))} placeholder="선생님이 알려준 번호" autoComplete="off" />
+            </>
+          )}
+          <button className="primary-button" type="submit" disabled={!name.trim() || (apiEnabled && !researchCode.trim())}>내 이름 알려주기 <span className="button-arrow" /></button>
         </form>
       </section>
     );
@@ -945,8 +962,9 @@ function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void })
           </div>
           <div className="promise-actions">
             <button className="promise-cta" onClick={() => { captureMormeyEvent("onboarding_tutorial_started"); setPage("tutorial"); }}><span>모르미가 이해하면 카페에 가요!</span><b>한 번 따라 해보기 →</b></button>
-            <button className="onboarding-skip" onClick={() => finishOnboarding("skipped")}>설명은 알겠어 · 건너뛰기</button>
+            <button className="onboarding-skip" onClick={() => finishOnboarding("skipped")} disabled={submitting}>{submitting ? "준비 중…" : "설명은 알겠어 · 건너뛰기"}</button>
           </div>
+          {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
         </div>
       </section>
     );
@@ -960,7 +978,8 @@ function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void })
     ][tutorialStep];
     return (
       <section className="onboarding-tutorial">
-        <button className="onboarding-skip onboarding-skip--top" onClick={() => finishOnboarding("skipped")}>튜토리얼 건너뛰기</button>
+        <button className="onboarding-skip onboarding-skip--top" onClick={() => finishOnboarding("skipped")} disabled={submitting}>튜토리얼 건너뛰기</button>
+        {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
         <div className="tutorial-progress" aria-label={`튜토리얼 ${tutorialStep + 1}/3`}>{[0, 1, 2].map((step) => <i key={step} className={step <= tutorialStep ? "is-active" : ""} />)}</div>
         <div className="tutorial-card">
           <Morami expression={tutorial.expression} size="small" />
@@ -1030,6 +1049,11 @@ function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: (
 
 export function MoramiApp() {
   const [learner, setLearner] = useState<LearnerProfile>(defaultLearner);
+  // 서버 학습 세션 id. 시도·완료 전송의 대상이며, API 미설정이면 null 로 남는다.
+  const learningSessionId = useRef<string | null>(null);
+  const attemptCounter = useRef(0);
+  const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
+  const [onboardingError, setOnboardingError] = useState("");
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
   const activeSession = useMemo(() => {
@@ -1083,7 +1107,7 @@ export function MoramiApp() {
   const [timedOut, setTimedOut] = useState(false);
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [coinBalance, setCoinBalance] = useState(6000);
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(0);
   const elapsedSeconds = useRef(0);
   const teachMessageId = useRef(2);
   const teachThreadRef = useRef<HTMLDivElement>(null);
@@ -1120,6 +1144,23 @@ export function MoramiApp() {
   }, []);
 
   useEffect(() => {
+    // 서버가 붙어 있으면 진행도의 기준은 서버다. localStorage 는 오프라인 표시용으로만 남긴다.
+    if (apiEnabled && readStoredLearner()) {
+      void api.progress().then((snapshot) => {
+        setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
+        setCompletedSessionIds(snapshot.completed_session_ids);
+        setCoinBalance(snapshot.wallet_balance);
+        setStage("home");
+        // 이름과 원문은 보내지 않고, 서버가 발급한 가명 id 로만 식별한다.
+        identifyLearner(snapshot.analytics_id);
+      }).catch((error: unknown) => {
+        // 토큰이 만료·삭제되었으면 온보딩부터 다시 시작한다.
+        if (error instanceof ApiError && (error.status === 401 || error.status === 404)) return;
+        console.warn("[mormi-api] 진행도 조회 실패", error);
+      });
+      return;
+    }
+
     try {
       const saved = JSON.parse(localStorage.getItem("morami-completed-sessions") || "[]") as string[];
       const savedCoins = Number(localStorage.getItem("mormey-coins") || "6000");
@@ -1137,7 +1178,7 @@ export function MoramiApp() {
   useEffect(() => {
     if (!["drill", "teach", "wrap", "homework"].includes(stage)) return;
     const timer = window.setInterval(() => {
-      elapsedSeconds.current = Math.floor((Date.now() - startedAt.current) / 1000);
+      elapsedSeconds.current = Math.floor((nowMs() - startedAt.current) / 1000);
       if (elapsedSeconds.current >= 480 && !["wrap", "complete"].includes(stage)) {
         setTimedOut(true);
         setStage("wrap");
@@ -1185,10 +1226,40 @@ export function MoramiApp() {
     }
   }, [activeSession, brightCarry, drillAttempts, floorFails, learner, sessionCoins, solvedAtLevel, teachRewardGranted, timedOut]);
 
+  /**
+   * 정답이든 오답이든 한 건씩 서버에 남긴다.
+   * attempt_no 는 세션 안에서 단조 증가하고, 재전송 시 서버가 중복으로 처리한다.
+   */
+  function postDrillAttempt(answer: string, isCorrect: boolean) {
+    const sessionId = learningSessionId.current;
+    if (!sessionId) return;
+    attemptCounter.current += 1;
+    const attemptNo = attemptCounter.current;
+    const elapsedMs = nowMs() - startedAt.current;
+    fireAndForget(() => api.recordAttempt(sessionId, {
+      activity: "drill",
+      attempt_no: attemptNo,
+      item_id: `${activeSession.id}:${drillIndex}`,
+      question_index: drillIndex,
+      is_correct: isCorrect,
+      elapsed_ms: Math.min(elapsedMs, 600000),
+      answer_meta: {
+        // 아이가 무엇을 골랐는지, 그때까지 무엇이 잠겼는지 남긴다.
+        selected_answer: answer,
+        locked_answers: wrongDrillAnswers,
+        wrong_count_before: wrongDrillAnswers.length,
+        correct_answer: currentDrill.correct,
+        visual_type: currentDrill.visual.type,
+        misconception: activeSession.misconception,
+      },
+    }), "시도 기록");
+  }
+
   function answerDrill(answer: string) {
     if (drillLocked || mastered) return;
     setSelectedDrillAnswer({ question: drillIndex, answer });
     setDrillAttempts((count) => count + 1);
+    postDrillAttempt(answer, answer === currentDrill.correct);
     if (answer === currentDrill.correct) {
       const nextCorrect = drillCorrect + 1;
       const reward = wrongDrillAnswers.length === 0
@@ -1379,6 +1450,23 @@ export function MoramiApp() {
     saveReport(transfer);
     const next = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
     localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
+
+    // 세션 종료와 보상 확정. 완료 목록·지갑·카페 해금은 서버 응답을 기준으로 덮어쓴다.
+    const sessionId = learningSessionId.current;
+    if (sessionId) {
+      learningSessionId.current = null;
+      fireAndForget(async () => {
+        const result = await api.completeSession(sessionId, {
+          transfer_solved: transfer,
+          timed_out: timedOut,
+          scaffold_level: solvedAtLevel,
+          elapsed_seconds: elapsedSeconds.current,
+        });
+        setCompletedSessionIds(result.completed_session_ids);
+        setCoinBalance(result.wallet_balance);
+      }, "세션 완료");
+    }
+
     captureMormeyEvent("session_completed", {
       session_id: activeSession.id,
       elapsed_seconds: elapsedSeconds.current,
@@ -1433,8 +1521,18 @@ export function MoramiApp() {
     setHomeworkIndex(0);
     setHomeworkCorrect(0);
     setTimedOut(false);
-    startedAt.current = Date.now();
+    startedAt.current = nowMs();
     elapsedSeconds.current = 0;
+
+    // 서버 세션을 연다. variant_seed 를 함께 보내야 나중에 아이가 본 문제를 재구성할 수 있다.
+    learningSessionId.current = null;
+    attemptCounter.current = 0;
+    const seed = variantSeed + 97 + nextIndex * 13;
+    fireAndForget(async () => {
+      const started = await api.startSession(sessions[nextIndex].id, seed);
+      learningSessionId.current = started.learning_session_id;
+    }, "학습 세션 시작");
+
     captureMormeyEvent("lesson_started", { session_id: sessions[nextIndex].id, theme: "home" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1444,13 +1542,43 @@ export function MoramiApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function completeOnboarding(profile: LearnerProfile) {
-    setLearner(profile);
-    localStorage.setItem("mormey-learner", JSON.stringify(profile));
-    localStorage.setItem("morami-onboarding-complete", "true");
-    captureMormeyEvent("onboarding_completed", { tutorial_available: true });
-    setStage("home");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  async function completeOnboarding(name: string, researchCode: string) {
+    if (!apiEnabled) {
+      // 서버가 없는 로컬 데모. 기존 동작 그대로 진행한다.
+      const profile = { id: 1, name };
+      setLearner(profile);
+      localStorage.setItem("mormey-learner", JSON.stringify(profile));
+      localStorage.setItem("morami-onboarding-complete", "true");
+      captureMormeyEvent("onboarding_completed", { tutorial_available: true });
+      setStage("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setOnboardingSubmitting(true);
+    setOnboardingError("");
+    try {
+      // 같은 참여 번호면 서버가 기존 학습자를 찾아 진행도를 이어 준다.
+      const created = await api.createLearner(name, researchCode);
+      const profile = { id: created.id, name: created.display_name };
+      storeSession(created.access_token, { ...profile, researchCode: created.research_code, analyticsId: created.analytics_id });
+      setLearner(profile);
+      identifyLearner(created.analytics_id);
+
+      const snapshot = await api.progress();
+      setCompletedSessionIds(snapshot.completed_session_ids);
+      setCoinBalance(snapshot.wallet_balance);
+
+      captureMormeyEvent("onboarding_completed", { tutorial_available: true });
+      setStage("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setOnboardingError(error instanceof ApiError
+        ? error.message
+        : "연결이 잘 되지 않았어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setOnboardingSubmitting(false);
+    }
   }
 
   function showHome() {
@@ -1500,7 +1628,7 @@ export function MoramiApp() {
         </div>
       </header>}
 
-      {stage === "onboarding" && <Onboarding onStart={completeOnboarding} />}
+      {stage === "onboarding" && <Onboarding onStart={(name, code) => { void completeOnboarding(name, code); }} submitting={onboardingSubmitting} submitError={onboardingError} />}
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 

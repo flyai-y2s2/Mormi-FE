@@ -1,11 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
+import { api, fireAndForget } from "./api-client";
 import { cafeMoney, cafeStations } from "./journey-config";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
+
+// 시계 읽기는 렌더가 아니라 이벤트 핸들러와 이펙트에서만 일어난다.
+const nowMs = () => Date.now();
 
 const menu = [
   { id: "americano", name: "아메리카노", price: 3000, image: "/figma/cafe/americano.png?v=2" },
@@ -37,6 +41,38 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
   const [changeFeedback, setChangeFeedback] = useState("");
 
+  // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
+  const visitId = useRef<string | null>(null);
+  // 스테이지별 시도 번호. 틀린 시도도 각각 한 건으로 남는다.
+  const attemptNos = useRef<Record<string, number>>({ queue: 0, menu: 0, calculate: 0, change: 0 });
+  const stageStartedAt = useRef(0);
+
+  useEffect(() => {
+    stageStartedAt.current = nowMs();
+    // 방문을 열고, 새로고침으로 돌아온 경우에는 진행 중인 방문을 이어받는다.
+    fireAndForget(async () => {
+      const visit = await api.startCafeVisit();
+      visitId.current = visit.cafe_visit_id;
+      if (visit.stage === "menu") setJourneyProgress((progress) => Math.max(progress, 1));
+      if (visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 2));
+      if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 3));
+      if (visit.stage === "complete") setJourneyProgress(4);
+      if (visit.order_total !== null) setMenuFeedback("");
+    }, "카페 방문 시작");
+  }, []);
+
+  function nextAttemptNo(stage: "queue" | "menu" | "calculate" | "change") {
+    attemptNos.current[stage] += 1;
+    return attemptNos.current[stage];
+  }
+
+  function stageElapsedMs() {
+    const now = nowMs();
+    const elapsed = stageStartedAt.current ? now - stageStartedAt.current : 0;
+    stageStartedAt.current = now;
+    return Math.min(Math.max(elapsed, 0), 600000);
+  }
+
   const selectedItems = menu.filter((item) => selectedMenu.includes(item.id));
   const selectedTotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
   const paid = useMemo(() => cafeMoney.reduce((sum, money) => sum + money.value * paymentCounts[money.value], 0), [paymentCounts]);
@@ -60,6 +96,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   }
 
   function chooseQueue(side: "left" | "right") {
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("queue");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeQueue(id, side, queueHelp, attemptNo, elapsedMs), "카페 줄 서기");
+    }
     if (side === "right") {
       setQueueFeedback("맞아. 두 명이 있는 오른쪽 줄이 더 짧아!");
       captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp });
@@ -93,6 +135,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
   function orderMenu() {
     if (selectedMenu.length !== 2) return;
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("menu");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeMenu(id, selectedMenu, attemptNo, elapsedMs), "카페 메뉴 선택");
+    }
     captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal });
     setJourneyProgress((progress) => Math.max(progress, 2));
     returnToMap();
@@ -104,6 +152,13 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   }
 
   function checkPayment() {
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("calculate");
+      const elapsedMs = stageElapsedMs();
+      // 맞든 틀리든 화폐별 최종 구성을 그대로 남긴다.
+      fireAndForget(() => api.cafePayment(id, paymentCounts, attemptNo, elapsedMs), "카페 결제");
+    }
     captureMormeyEvent("payment_submitted", {
       target_amount: 10000,
       paid_amount: paid,
@@ -126,6 +181,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   }
 
   function checkChange() {
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("change");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeChange(id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
+    }
     if (changeTotal === changeTarget) {
       setChangeFeedback("맞아. 받아야 할 거스름돈을 정확히 담았어!");
       setJourneyProgress(4);
@@ -235,7 +296,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 서고, 메뉴를 고르고, 돈을 내고, 거스름돈까지 직접 확인했어.</p><button onClick={() => { captureMormeyEvent("cafe_journey_completed", { order_total: selectedTotal, paid: 10000, change: changeTarget }); onComplete(); }}>모르미와 집으로</button></div>
+          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 서고, 메뉴를 고르고, 돈을 내고, 거스름돈까지 직접 확인했어.</p><button onClick={() => {
+            const id = visitId.current;
+            if (id) fireAndForget(() => api.cafeComplete(id), "카페 방문 완료");
+            captureMormeyEvent("cafe_journey_completed", { order_total: selectedTotal, paid: 10000, change: changeTarget });
+            onComplete();
+          }}>모르미와 집으로</button></div>
         </main>
       )}
     </section>
