@@ -1,0 +1,257 @@
+"use client";
+
+/**
+ * Mormi 학습 백엔드(Spring) 클라이언트.
+ *
+ * 진행도·보상·해금은 서버가 확정한다. 이 파일은 전송과 토큰 보관만 담당하고
+ * 정오 판정이나 보상 계산을 다시 하지 않는다.
+ *
+ * NEXT_PUBLIC_API_BASE_URL 이 비어 있으면 모든 호출이 조용히 비활성화되고
+ * 화면은 기존 localStorage 동작으로 계속 진행된다(로컬 데모용).
+ */
+
+const BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+const TOKEN_KEY = "mormi-access-token";
+const LEARNER_KEY = "mormi-learner";
+
+export const apiEnabled = Boolean(BASE_URL);
+
+export type LearnerProfile = {
+  id: number;
+  name: string;
+  researchCode?: string;
+  analyticsId?: string;
+};
+
+export type ProgressSnapshot = {
+  learner_id: number;
+  display_name: string;
+  analytics_id: string;
+  onboarding_complete: boolean;
+  completed_session_ids: string[];
+  wallet_balance: number;
+  level: number;
+  stars: number;
+  cafe_unlocked: boolean;
+  cafe_required_session_ids: string[];
+  active_learning_session_id: string | null;
+  active_cafe_visit_id: string | null;
+};
+
+export type AttemptResult = {
+  attempt_id: number;
+  duplicate: boolean;
+  reward_granted: number;
+  session_reward_subtotal: number;
+  correct_count: number;
+  mastery_target: number;
+  drill_completed: boolean;
+};
+
+export type CompleteResult = {
+  learning_session_id: string;
+  practice_result_id: string;
+  drill_reward: number;
+  teach_reward: number;
+  total_reward: number;
+  wallet_balance: number;
+  teach_reward_eligible: boolean;
+  completed_session_ids: string[];
+  cafe_unlocked: boolean;
+};
+
+export type StageResult = {
+  cafe_visit_id: string;
+  stage: string;
+  is_correct: boolean;
+  next_stage: string;
+  next_stage_unlocked: boolean;
+  attempts: number;
+  expected_amount: number | null;
+  submitted_amount: number | null;
+  difference: number | null;
+  feedback_code: string;
+};
+
+export type CafeVisitState = {
+  cafe_visit_id: string;
+  stage: string;
+  target_amount: number;
+  order_total: number | null;
+  paid_amount: number | null;
+  change_amount: number | null;
+  change_target: number | null;
+};
+
+export class ApiError extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) {
+    super(message);
+  }
+}
+
+function readToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function storeSession(token: string, learner: LearnerProfile) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(LEARNER_KEY, JSON.stringify(learner));
+}
+
+export function readStoredLearner(): LearnerProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    // 새 mormi-* 키를 먼저 읽고, 없으면 기존 mormey-* 값을 한 번만 옮긴다.
+    const current = localStorage.getItem(LEARNER_KEY);
+    if (current) return JSON.parse(current) as LearnerProfile;
+    const legacy = localStorage.getItem("mormey-learner");
+    if (legacy) {
+      localStorage.setItem(LEARNER_KEY, legacy);
+      return JSON.parse(legacy) as LearnerProfile;
+    }
+  } catch { /* 손상된 값은 무시하고 온보딩부터 다시 */ }
+  return null;
+}
+
+export function clearSession() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(LEARNER_KEY);
+}
+
+async function request<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
+  if (!apiEnabled) throw new ApiError(0, "api_disabled", "API base URL is not configured");
+
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (auth) {
+    const token = readToken();
+    if (!token) throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    headers.authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (!response.ok) {
+    let code = "http_error";
+    let message = `요청이 실패했습니다 (${response.status})`;
+    try {
+      const body = await response.json() as { code?: string; message?: string };
+      code = body.code || code;
+      message = body.message || message;
+    } catch { /* 본문이 없을 수 있다 */ }
+    throw new ApiError(response.status, code, message);
+  }
+  if (response.status === 204) return undefined as T;
+  return await response.json() as T;
+}
+
+export const api = {
+  createLearner(displayName: string, researchCode: string) {
+    return request<{
+      id: number; display_name: string; research_code: string;
+      analytics_id: string; access_token: string;
+    }>("/v1/learners", {
+      method: "POST",
+      body: JSON.stringify({ display_name: displayName, research_code: researchCode }),
+    }, false);
+  },
+
+  restoreLearner(researchCode: string) {
+    return request<{
+      id: number; display_name: string; research_code: string;
+      analytics_id: string; access_token: string;
+    }>("/v1/learners/auth", {
+      method: "POST",
+      body: JSON.stringify({ research_code: researchCode }),
+    }, false);
+  },
+
+  progress() {
+    return request<ProgressSnapshot>("/v1/progress");
+  },
+
+  startSession(curriculumSessionId: string, variantSeed: number) {
+    return request<{ learning_session_id: string; variant_seed: number }>("/v1/learning-sessions", {
+      method: "POST",
+      body: JSON.stringify({ curriculum_session_id: curriculumSessionId, variant_seed: variantSeed }),
+    });
+  },
+
+  /**
+   * 정답·오답 모두 보낸다. attemptNo 는 세션 안에서 1부터 단조 증가해야 하며,
+   * 같은 번호를 다시 보내면 서버가 중복으로 처리해 보상을 두 번 주지 않는다.
+   */
+  recordAttempt(sessionId: string, body: {
+    activity: "drill" | "teach" | "transfer";
+    attempt_no: number;
+    item_id: string;
+    question_index: number;
+    is_correct: boolean;
+    elapsed_ms?: number;
+    answer_meta?: Record<string, unknown>;
+  }) {
+    return request<AttemptResult>(`/v1/learning-sessions/${sessionId}/attempts`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  completeSession(sessionId: string, body: {
+    conversation_id?: string;
+    transfer_solved: boolean;
+    timed_out: boolean;
+    scaffold_level?: number | null;
+    elapsed_seconds?: number;
+  }) {
+    return request<CompleteResult>(`/v1/learning-sessions/${sessionId}/complete`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  startCafeVisit() {
+    return request<CafeVisitState>("/v1/cafe-visits", { method: "POST" });
+  },
+
+  cafeQueue(visitId: string, choiceId: "left" | "right", scaffoldUsed: boolean, attemptNo: number, elapsedMs?: number) {
+    return request<StageResult>(`/v1/cafe-visits/${visitId}/queue`, {
+      method: "POST",
+      body: JSON.stringify({ choice_id: choiceId, scaffold_used: scaffoldUsed, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+    });
+  },
+
+  cafeMenu(visitId: string, menuIds: string[], attemptNo: number, elapsedMs?: number) {
+    return request<StageResult>(`/v1/cafe-visits/${visitId}/menu`, {
+      method: "POST",
+      body: JSON.stringify({ menu_ids: menuIds, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+    });
+  },
+
+  cafePayment(visitId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
+    return request<StageResult>(`/v1/cafe-visits/${visitId}/payments`, {
+      method: "POST",
+      body: JSON.stringify({ counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+    });
+  },
+
+  cafeChange(visitId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
+    return request<StageResult>(`/v1/cafe-visits/${visitId}/change`, {
+      method: "POST",
+      body: JSON.stringify({ counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+    });
+  },
+
+  cafeComplete(visitId: string) {
+    return request<CafeVisitState>(`/v1/cafe-visits/${visitId}/complete`, { method: "POST" });
+  },
+};
+
+/**
+ * 화면을 멈추지 않는 전송. 실패해도 아이의 진행은 계속되고 오류만 콘솔에 남는다.
+ * 대화 턴처럼 다음 화면이 응답에 의존하는 호출에는 쓰지 않는다.
+ */
+export function fireAndForget<T>(work: () => Promise<T>, label: string): void {
+  if (!apiEnabled) return;
+  void work().catch((error: unknown) => {
+    console.warn(`[mormi-api] ${label} 실패`, error instanceof Error ? error.message : error);
+  });
+}

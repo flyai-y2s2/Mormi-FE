@@ -1,11 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
+import { api, fireAndForget } from "./api-client";
 import { cafeStations } from "./journey-config";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
+
+// 시계 읽기는 렌더가 아니라 이벤트 핸들러와 이펙트에서만 일어난다.
+const nowMs = () => Date.now();
 
 const menu = [
   { id: "americano", name: "아메리카노", price: 3000, image: "/figma/cafe/americano.png?v=2" },
@@ -60,6 +64,38 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const [changeMenuId, setChangeMenuId] = useState<string>("americano");
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
   const [changeFeedback, setChangeFeedback] = useState("");
+
+  // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
+  const visitId = useRef<string | null>(null);
+  // 스테이지별 시도 번호. 틀린 시도도 각각 한 건으로 남는다.
+  const attemptNos = useRef<Record<string, number>>({ queue: 0, menu: 0, calculate: 0, change: 0 });
+  const stageStartedAt = useRef(0);
+
+  useEffect(() => {
+    stageStartedAt.current = nowMs();
+    // 방문을 열고, 새로고침으로 돌아온 경우에는 진행 중인 방문을 이어받는다.
+    fireAndForget(async () => {
+      const visit = await api.startCafeVisit();
+      visitId.current = visit.cafe_visit_id;
+      if (visit.stage === "menu") setJourneyProgress((progress) => Math.max(progress, 1));
+      if (visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 2));
+      if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 3));
+      if (visit.stage === "complete") setJourneyProgress(4);
+      if (visit.order_total !== null) setMenuFeedback("");
+    }, "카페 방문 시작");
+  }, []);
+
+  function nextAttemptNo(stage: "queue" | "menu" | "calculate" | "change") {
+    attemptNos.current[stage] += 1;
+    return attemptNos.current[stage];
+  }
+
+  function stageElapsedMs() {
+    const now = nowMs();
+    const elapsed = stageStartedAt.current ? now - stageStartedAt.current : 0;
+    stageStartedAt.current = now;
+    return Math.min(Math.max(elapsed, 0), 600000);
+  }
 
   const selectedItems = menu.filter((item) => selectedMenu.includes(item.id));
   const selectedTotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
@@ -121,6 +157,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     setQueueScene("count-left");
   }
 
+  // TODO(백엔드): 줄 서기 시도를 서버에 남기지 못하고 있다.
+  // POST /v1/cafe-visits/{id}/queue 는 choiceId("left"/"right")를 받고
+  // CurriculumCatalog.QUEUE_CORRECT_CHOICE = "right" 와 비교해 정오를 판정한다.
+  // 이 화면은 좌우 인원이 매번 랜덤이라 정답 줄이 고정이 아니고, 아이가 고르는 값도
+  // 방향이 아니라 "더 짧은 줄의 인원수"다. 서버가 좌우 인원과 답을 함께 받아
+  // 판정하도록 계약이 바뀌어야 계측을 붙일 수 있다.
   function chooseLeftCount(count: number) {
     const shorterCount = Math.min(queueCounts.left, queueCounts.right);
     if (count === shorterCount) {
@@ -160,9 +202,17 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   function orderMenu() {
     if (selectedMenu.length !== 2) return;
     if (selectedTotal > menuBudget) {
+      // 예산 초과는 서버에 남기지 않는다. MenuRequest 에 예산 필드가 없어
+      // 초과 시도를 정상 주문과 구분할 방법이 없다.
       setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
       captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: true });
       return;
+    }
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("menu");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeMenu(id, selectedMenu, attemptNo, elapsedMs), "카페 메뉴 선택");
     }
     captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: false });
     setMenuScene("thanks");
@@ -173,6 +223,11 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     returnToMap();
   }
 
+  // TODO(백엔드): 계산 단계 시도를 서버에 남기지 못하고 있다.
+  // POST /v1/cafe-visits/{id}/payments 는 화폐 액면가→개수 맵을 받아 합계가
+  // CAFE_TARGET_AMOUNT(10,000원)와 같은지로 판정한다. 이 화면에서는 돈을 직접 고르는
+  // 단계가 사라지고 "두 메뉴 값의 합"을 숫자로 입력하는 방식이라 보낼 counts 가 없다.
+  // 서버가 숫자 답과 기대 합계를 받도록 계약이 바뀌어야 계측을 붙일 수 있다.
   function checkSum() {
     const answer = Number(sumAnswer.replace(/[^0-9]/g, ""));
     if (answer === sumTarget) {
@@ -190,6 +245,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   }
 
   function checkChange() {
+    const id = visitId.current;
+    if (id) {
+      const attemptNo = nextAttemptNo("change");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeChange(id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
+    }
     if (changeTotal === changeTarget) {
       setChangeFeedback("맞아. 받아야 할 거스름돈을 정확히 담았어!");
       setJourneyProgress(4);
@@ -329,7 +390,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p><button onClick={() => { captureMormeyEvent("cafe_journey_completed", { order_total: changeMenu.price, paid: 10000, change: changeTarget }); onComplete(); }}>모르미와 집으로</button></div>
+          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p><button onClick={() => {
+            const id = visitId.current;
+            if (id) fireAndForget(() => api.cafeComplete(id), "카페 방문 완료");
+            captureMormeyEvent("cafe_journey_completed", { order_total: changeMenu.price, paid: 10000, change: changeTarget });
+            onComplete();
+          }}>모르미와 집으로</button></div>
         </main>
       )}
     </section>
