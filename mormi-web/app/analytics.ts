@@ -7,6 +7,8 @@ export type MormeyAnalyticsEvent =
   | "home_opened"
   | "outside_opened"
   | "lesson_started"
+  | "drill_answer_wrong"
+  | "drill_reward_earned"
   | "session_completed"
   | "theme_unlocked"
   | "cafe_started"

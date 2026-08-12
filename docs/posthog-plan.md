@@ -14,6 +14,8 @@
 | `onboarding_completed` | 없음 | 처음 만남을 끝냈는가 |
 | `home_opened` | 없음 | 집 허브로 돌아오는가 |
 | `lesson_started` | `session_id`, `theme` | 어떤 준비 과정을 시작했는가 |
+| `drill_answer_wrong` | 세션, 문제 번호, 누적 오답 수 | 어떤 문제에서 선택지를 다시 골랐는가 |
+| `drill_reward_earned` | 세션, 문제 번호, 오답 수, 획득 금액 | 첫 정답률과 보상 구간은 어떻게 분포하는가 |
 | `session_completed` | 시간, 반복 시도, 사다리 단계 | 어느 정도 도움으로 끝냈는가 |
 | `theme_unlocked` | `theme` | 카페까지 도달했는가 |
 | `outside_opened` | `cafe_unlocked` | 해금 후 외부를 탐색하는가 |
@@ -25,7 +27,7 @@
 ## 첫 대시보드
 
 1. 퍼널: `onboarding_completed → lesson_started → theme_unlocked → cafe_started → cafe_journey_completed`
-2. 카페 준비: 세션별 시작 대비 완료율, 평균 반복 시도, 평균 사다리 단계
+2. 카페 준비: 세션별 시작 대비 완료율, 5문제 첫 정답률, 평균 획득 금액, 평균 사다리 단계
 3. 결제 정확도: 첫 시도 정답률, 완료까지 평균 시도, 부족/초과 금액 분포
 4. 전이: 집의 네 과정 완료 여부에 따른 카페 첫 시도 정답률 비교
 5. 유지: 첫 완료 이벤트 이후 D1/D7 재방문 및 다시 학습 비율

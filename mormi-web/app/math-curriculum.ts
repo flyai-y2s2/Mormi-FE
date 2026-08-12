@@ -397,7 +397,7 @@ const addedById = new Map(addedSessions.map((session) => [session.id, session]))
 export const mathAreas: MathArea[] = [
   {
     id: "number-operations", title: "수와 연산", description: "수를 세고 비교하는 기초부터 덧셈·뺄셈·곱셈·나눗셈을 생활 장면에 연결해요.", color: "#2f9f77",
-    sessionIds: ["number-count", "number-compare", "number-make-ten", "number-place-value", "add-pictures", "add-place", "add-make-ten", "sub-pictures", "sub-place", "sub-borrow", "multiply-groups", "multiply-addition", "multiply-easy-tables", "multiply-tables", "divide-share", "divide-group", "money-count", "money-price", "money-budget", "money-mission"],
+    sessionIds: ["number-count", "number-compare", "money-count", "number-make-ten", "number-place-value", "add-pictures", "money-price", "add-place", "add-make-ten", "sub-pictures", "money-budget", "sub-place", "sub-borrow", "multiply-groups", "multiply-addition", "money-mission", "multiply-easy-tables", "multiply-tables", "divide-share", "divide-group"],
     gradeBands: [
       { label: "1~2학년군", topics: "네 자리 이하 수 · 덧셈과 뺄셈 · 곱셈" },
       { label: "3~4학년군", topics: "큰 수 · 사칙계산 · 분수와 소수" },
@@ -480,5 +480,5 @@ export function curriculumForSession(session: Session): CurriculumAlignment {
 }
 
 export const areaForSession = (sessionId: string) => mathAreas.find((area) => area.sessionIds.includes(sessionId));
-export const masteryTarget = 10;
+export const masteryTarget = 5;
 export const transferTarget = 3;

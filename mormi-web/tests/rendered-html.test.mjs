@@ -122,7 +122,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /const notes = \[659\.25, 783\.99, 1046\.5\]/);
   assert.match(app, /if \(soundOn\) playLearningChime\(\)/);
   assert.doesNotMatch(app, /speechSynthesis|SpeechSynthesisUtterance/);
-  assert.match(curriculum, /export const masteryTarget = 10/);
+  assert.match(curriculum, /export const masteryTarget = 5/);
+  assert.match(app, /wrongDrillAnswers/);
+  assert.match(app, /wrongDrillAnswers\.length === 0 \? 200/);
+  assert.match(app, /wrongDrillAnswers\.length <= 2 \? 100 : 50/);
+  assert.match(app, /원을 얻었어!/);
+  assert.match(app, /useGameMusic/);
+  assert.doesNotMatch(app, /cafe-required-lessons/);
   assert.match(app, /const stageLabels = \["혼자 연습"/);
   assert.match(app, /setStage\("drill"\)/);
   assert.match(app, /drill-board drill-board--solo/);

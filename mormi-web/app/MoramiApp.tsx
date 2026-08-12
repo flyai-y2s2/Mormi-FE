@@ -119,6 +119,110 @@ function playLearningChime() {
   window.setTimeout(() => void context.close(), 750);
 }
 
+function playCoinRewardSound(reward: number) {
+  if (typeof window === "undefined") return;
+  const AudioContextClass = window.AudioContext
+    ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextClass) return;
+  const context = new AudioContextClass();
+  const notes = reward === 200 ? [783.99, 1046.5, 1318.51] : reward === 100 ? [659.25, 880] : [523.25, 659.25];
+  notes.forEach((frequency, index) => {
+    const start = context.currentTime + index * 0.09;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.11, start + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(start + 0.26);
+  });
+  window.setTimeout(() => void context.close(), 700);
+}
+
+function useGameMusic(enabled: boolean) {
+  const contextRef = useRef<AudioContext | null>(null);
+  const loopRef = useRef<number | null>(null);
+
+  const stopMusic = useCallback(() => {
+    if (loopRef.current !== null) window.clearInterval(loopRef.current);
+    loopRef.current = null;
+    const context = contextRef.current;
+    contextRef.current = null;
+    if (context) void context.close();
+  }, []);
+
+  const startMusic = useCallback((force = false) => {
+    if ((!enabled && !force) || contextRef.current || typeof window === "undefined") return;
+    const AudioContextClass = window.AudioContext
+      ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.setValueAtTime(0.038, context.currentTime);
+    master.connect(context.destination);
+    contextRef.current = context;
+
+    const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46];
+    const bass = [130.81, 164.81, 146.83, 174.61];
+    const scheduleBar = () => {
+      const now = context.currentTime + 0.06;
+      melody.forEach((frequency, index) => {
+        const start = now + index * 0.36;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(index % 2 === 0 ? 0.2 : 0.13, start + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.31);
+        oscillator.connect(gain);
+        gain.connect(master);
+        oscillator.start(start);
+        oscillator.stop(start + 0.34);
+      });
+      bass.forEach((frequency, index) => {
+        const start = now + index * 0.72;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.62);
+        oscillator.connect(gain);
+        gain.connect(master);
+        oscillator.start(start);
+        oscillator.stop(start + 0.66);
+      });
+    };
+
+    scheduleBar();
+    loopRef.current = window.setInterval(scheduleBar, 2880);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
+      stopMusic();
+      return;
+    }
+    const beginAfterInteraction = () => startMusic();
+    document.addEventListener("pointerdown", beginAfterInteraction, { once: true });
+    document.addEventListener("keydown", beginAfterInteraction, { once: true });
+    return () => {
+      document.removeEventListener("pointerdown", beginAfterInteraction);
+      document.removeEventListener("keydown", beginAfterInteraction);
+    };
+  }, [enabled, startMusic, stopMusic]);
+
+  useEffect(() => () => stopMusic(), [stopMusic]);
+  return { startMusic, stopMusic };
+}
+
 type UiIconName = "sound" | "mute" | "book" | "star" | "sprout" | "bulb" | "sun" | "clip" | "bag" | "refresh";
 
 function UiIcon({ name, size = "medium" }: { name: UiIconName; size?: "small" | "medium" | "large" }) {
@@ -733,9 +837,9 @@ function CurriculumCourseButton({ session, index, completed, cafeRequired = fals
   const alignment = curriculumForSession(session);
   return (
     <button className={completed ? "is-complete" : ""} onClick={() => onOpen(index)}>
-      <i>{completed ? "완료" : session.level}</i>
+      <i>{completed ? "완료" : cafeRequired ? "🔑" : session.level}</i>
       <span><b>{session.title}</b><small>{alignment.gradeBand} · {alignment.code} · {session.unit} {session.level}단계</small>{cafeRequired && <mark className="cafe-course-mark">완료하면 카페에 갈 수 있어요!</mark>}</span>
-      <em>{completed ? "다시 보기" : "시작"}</em>
+      <em>{completed ? "★ 다시 보기" : cafeRequired ? "열쇠 얻기" : "시작"}</em>
     </button>
   );
 }
@@ -803,21 +907,24 @@ function Onboarding({ onStart }: { onStart: () => void }) {
   );
 }
 
-function HomeHub({ completedSessionIds, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
+function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
   const requiredSessions = cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session));
   const done = requiredSessions.filter((session) => completedSessionIds.includes(session.id)).length;
   const unlocked = done === requiredSessions.length;
   const nextSession = requiredSessions.find((session) => !completedSessionIds.includes(session.id));
+  const level = Math.floor(completedSessionIds.length / 4) + 1;
+  const stars = completedSessionIds.length * 3;
 
   return (
     <section className="journey-hub journey-hub--home">
-      <div className="scene-balance">🪙 6,000원</div>
+      <div className="player-hud"><span>LV.{level}</span><b>⭐ {stars}</b><strong>🪙 {coinBalance.toLocaleString("ko-KR")}원</strong></div>
       <div className="home-room-main">
         <div className="home-room-copy">
           <p className="eyebrow">모르미의 생활 수학</p>
           <h1>오늘은 어떤 걸 할까?</h1>
+          <div className="daily-quest"><span>오늘의 퀘스트</span><b>🔑 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
           <div className="home-main-actions">
-            <button onClick={onCurriculum}><span>🏠</span><b>집에서 복습하기</b><small>개념을 익히고 모르미에게 알려줘요</small></button>
+            <button onClick={onCurriculum}><span>🏠</span><b>집에서 복습하기</b><small>개념 완료 보상 ⭐ 3개</small></button>
             <button onClick={onOutside}><span>{unlocked ? "☕" : "🔒"}</span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
           </div>
         </div>
@@ -869,12 +976,16 @@ export function MoramiApp() {
   const [expression, setExpression] = useState<Expression>("happy");
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
   const [soundOn, setSoundOn] = useState(true);
+  const { startMusic, stopMusic } = useGameMusic(soundOn);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const [drillIndex, setDrillIndex] = useState(0);
   const [drillCorrect, setDrillCorrect] = useState(0);
   const [drillAttempts, setDrillAttempts] = useState(0);
   const [drillFeedback, setDrillFeedback] = useState("");
   const [selectedDrillAnswer, setSelectedDrillAnswer] = useState<{ question: number; answer: string } | null>(null);
+  const [wrongDrillAnswers, setWrongDrillAnswers] = useState<string[]>([]);
+  const [sessionCoins, setSessionCoins] = useState(0);
+  const [coinReward, setCoinReward] = useState<number | null>(null);
   const [drillLocked, setDrillLocked] = useState(false);
   const [mastered, setMastered] = useState(false);
   const [ladder, setLadder] = useState(3);
@@ -893,6 +1004,7 @@ export function MoramiApp() {
   const [homeworkCorrect, setHomeworkCorrect] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
+  const [coinBalance, setCoinBalance] = useState(6000);
   const startedAt = useRef(Date.now());
   const elapsedSeconds = useRef(0);
   const teachMessageId = useRef(2);
@@ -910,12 +1022,6 @@ export function MoramiApp() {
   const activeArea = areaForSession(activeSession.id);
   const selectedArea = mathAreas.find((area) => area.id === selectedAreaId) ?? null;
   const selectedAreaSessions = useMemo(() => selectedArea?.sessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)) ?? [], [selectedArea]);
-  const selectedUnitGroups = useMemo(() => {
-    const groups = new Map<string, Session[]>();
-    selectedAreaSessions.forEach((session) => groups.set(session.unit, [...(groups.get(session.unit) ?? []), session]));
-    return Array.from(groups, ([unit, unitSessions]) => ({ unit, sessions: unitSessions }));
-  }, [selectedAreaSessions]);
-  const groupLongArea = selectedAreaSessions.length > 12;
   const sentenceBank = useMemo(() => activeSession.sentenceWords.map((word, index) => ({ id: `${variantSeed}-${sessionIndex}-${index}`, word })), [activeSession.sentenceWords, sessionIndex, variantSeed]);
 
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
@@ -937,9 +1043,11 @@ export function MoramiApp() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("morami-completed-sessions") || "[]") as string[];
+      const savedCoins = Number(localStorage.getItem("mormey-coins") || "6000");
       const onboarded = localStorage.getItem("morami-onboarding-complete") === "true";
       window.requestAnimationFrame(() => {
         setCompletedSessionIds(saved);
+        setCoinBalance(Number.isFinite(savedCoins) ? savedCoins : 6000);
         if (onboarded) setStage("home");
       });
     } catch { /* device-local progress is optional */ }
@@ -981,6 +1089,7 @@ export function MoramiApp() {
       transfer,
       ladder: solvedAtLevel ?? 0,
       timedOut,
+      earnedCoins: sessionCoins,
     };
     localStorage.setItem("morami-report", JSON.stringify(report));
     try {
@@ -989,7 +1098,7 @@ export function MoramiApp() {
     } catch {
       localStorage.setItem("morami-report-history", JSON.stringify([report]));
     }
-  }, [activeSession, brightCarry, drillAttempts, floorFails, solvedAtLevel, timedOut]);
+  }, [activeSession, brightCarry, drillAttempts, floorFails, sessionCoins, solvedAtLevel, timedOut]);
 
   function answerDrill(answer: string) {
     if (drillLocked || mastered) return;
@@ -997,21 +1106,30 @@ export function MoramiApp() {
     setDrillAttempts((count) => count + 1);
     if (answer === currentDrill.correct) {
       const nextCorrect = drillCorrect + 1;
+      const reward = wrongDrillAnswers.length === 0 ? 200 : wrongDrillAnswers.length <= 2 ? 100 : 50;
       setDrillCorrect(nextCorrect);
-      setDrillFeedback("맞았어요! 잘했어요.");
+      setSessionCoins((coins) => coins + reward);
+      setCoinReward(reward);
+      setDrillFeedback(`맞았어요! +${reward}원을 얻었어요.`);
       setDrillLocked(true);
+      captureMormeyEvent("drill_reward_earned", { session_id: activeSession.id, question_number: drillIndex + 1, wrong_answers: wrongDrillAnswers.length, reward });
+      if (soundOn) playCoinRewardSound(reward);
       window.setTimeout(() => {
         setDrillFeedback("");
         setSelectedDrillAnswer(null);
+        setWrongDrillAnswers([]);
+        setCoinReward(null);
         setDrillLocked(false);
         if (nextCorrect >= masteryTarget) {
           setMastered(true);
         } else {
           setDrillIndex((index) => index + 1);
         }
-      }, 850);
+      }, 1150);
     } else {
-      setDrillFeedback("괜찮아요. 그림을 다시 보고 골라 봐요.");
+      setWrongDrillAnswers((answers) => answers.includes(answer) ? answers : [...answers, answer]);
+      setDrillFeedback("이 답은 잠겼어요. 다른 답을 골라 봐요.");
+      captureMormeyEvent("drill_answer_wrong", { session_id: activeSession.id, question_number: drillIndex + 1, wrong_answers: wrongDrillAnswers.length + 1 });
     }
   }
 
@@ -1172,6 +1290,11 @@ export function MoramiApp() {
       captureMormeyEvent("theme_unlocked", { theme: "cafe" });
     }
     setCompletedSessionIds(next);
+    setCoinBalance((balance) => {
+      const nextBalance = balance + sessionCoins;
+      localStorage.setItem("mormey-coins", String(nextBalance));
+      return nextBalance;
+    });
     setStage("complete");
     void askMorami("session_complete", "오늘도 나를 가르쳐 줘서 고마워!", "celebrate");
   }
@@ -1188,6 +1311,9 @@ export function MoramiApp() {
     setDrillAttempts(0);
     setDrillFeedback("");
     setSelectedDrillAnswer(null);
+    setWrongDrillAnswers([]);
+    setSessionCoins(0);
+    setCoinReward(null);
     setDrillLocked(false);
     setMastered(false);
     setLadder(3);
@@ -1246,6 +1372,12 @@ export function MoramiApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function toggleSound() {
+    if (soundOn) stopMusic();
+    else startMusic(true);
+    setSoundOn(!soundOn);
+  }
+
   const attribution = teachSolved && solvedAtLevel === 3 ? "지우가 알려줌" : "지우와 같이 공부함";
   const completedAfterLesson = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
   const cafeUnlockedAfterLesson = isCafeUnlocked(completedAfterLesson);
@@ -1259,7 +1391,7 @@ export function MoramiApp() {
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
         </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}>집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}>외부</button></nav>}
         <div className="top-actions">
-          <button className="round-control" onClick={() => setSoundOn((value) => !value)} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
+          <button className={`round-control ${soundOn ? "is-music-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "배경 음악과 효과음 끄기" : "배경 음악과 효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /><span className="music-note" aria-hidden="true">♪</span></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
           <Link className="report-link" href="/report">어른 리포트 <span className="link-arrow" /></Link>
         </div>
@@ -1267,7 +1399,7 @@ export function MoramiApp() {
 
       {stage === "onboarding" && <Onboarding onStart={completeOnboarding} />}
 
-      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
+      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
       {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} onHome={showHome} onCafe={() => setStage("cafe")} />}
 
@@ -1275,7 +1407,7 @@ export function MoramiApp() {
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">
-          <div className="scene-balance">🪙 6,000원</div>
+          <div className="scene-balance">🪙 {coinBalance.toLocaleString("ko-KR")}원</div>
           {!selectedArea ? (
             <>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>어떤 개념을 연습할까?</h1><p>카페 표시가 붙은 개념 4개를 모두 끝내면 외출할 수 있어요.</p></div>
@@ -1296,26 +1428,9 @@ export function MoramiApp() {
               <button className="area-back" onClick={showAreaList}><span>‹</span> 개념 영역으로</button>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>{selectedArea.title}</h1><p>{selectedArea.description}</p></div>
               {selectedAreaSessions.some((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])) && <div className="cafe-required-banner"><span>☕</span><div><b>카페에 가려면 이 표시를 찾아요</b><p>`완료하면 카페에 갈 수 있어요!`가 붙은 개념을 모두 끝내야 카페가 열려요.</p></div></div>}
-              {selectedAreaSessions.some((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])) && <div className="cafe-required-lessons"><div><strong>카페 준비 개념</strong><span>{cafeRequiredSessionIds.filter((id) => completedSessionIds.includes(id)).length}/{cafeRequiredSessionIds.length} 완료</span></div>{selectedAreaSessions.filter((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])).map((session) => <CurriculumCourseButton key={`cafe-${session.id}`} session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired onOpen={openSession} />)}</div>}
-              {groupLongArea ? (
-                <div className="course-unit-list">
-                  {selectedUnitGroups.map((group, groupIndex) => {
-                    const completedCount = group.sessions.filter((session) => completedSessionIds.includes(session.id)).length;
-                    return (
-                      <details className="course-unit-card" key={group.unit} open={groupIndex === 0}>
-                        <summary><span><b>{group.unit}</b><small>{group.sessions.length}개 개념</small></span><em>{completedCount ? `${completedCount}/${group.sessions.length} 완료` : "눌러서 보기"}</em><i aria-hidden="true">›</i></summary>
-                        <div className="math-course-list math-course-list--nested">
-                          {group.sessions.map((session) => <CurriculumCourseButton key={session.id} session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])} onOpen={openSession} />)}
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="math-course-list math-course-list--detail">
-                  {selectedAreaSessions.map((session) => <CurriculumCourseButton key={session.id} session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])} onOpen={openSession} />)}
-                </div>
-              )}
+              <div className="curriculum-path-list math-course-list math-course-list--detail">
+                {selectedAreaSessions.map((session, index) => <div className={`curriculum-path-row ${cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number]) ? "is-cafe-quest" : ""}`} key={session.id}>{(index === 0 || selectedAreaSessions[index - 1]?.unit !== session.unit) && <div className="curriculum-unit-marker"><span>{session.unit}</span><i>STAGE {index + 1}</i></div>}<CurriculumCourseButton session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])} onOpen={openSession} /></div>)}
+              </div>
             </div>
           )}
         </section>
@@ -1328,26 +1443,30 @@ export function MoramiApp() {
               <p className="eyebrow">{activeSession.unit} 탐험 · {Math.min(drillCorrect + 1, masteryTarget)}/{masteryTarget}</p>
               <h1>{mastered ? "준비 끝!" : currentDrill.prompt}</h1>
             </div>
-            <div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
+            <div className="drill-game-status"><div className="drill-wallet"><Image src="/cafe-money/100.png" alt="획득한 돈" width={50} height={50} unoptimized /><span>이번 세션</span><strong>{sessionCoins.toLocaleString("ko-KR")}/1,000원</strong></div><div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
               {Array.from({ length: masteryTarget }, (_, index) => <span key={index} className={index < drillCorrect ? "filled" : ""}>{index < drillCorrect ? <UiIcon name="sprout" size="small" /> : <i className="seed-empty" />}</span>)}
+            </div>
             </div>
           </div>
           <div className="drill-board drill-board--solo">
             {mastered ? (
               <div className="mastery-card">
                 <div className="mastery-stars"><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /></div>
-                <h2>10번 연습 끝!</h2>
+                <h2>5번 반복학습 끝!</h2>
+                <div className="mastery-coin-total"><Image src="/cafe-money/100.png" alt="세션에서 얻은 돈" width={74} height={74} unoptimized /><span>반복학습 보상</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원</strong></div>
                 <p>이제 모르미가 처음 찾아올 거야.<br />방금 익힌 걸 {childName}가 가르쳐 줘.</p>
                 <button className="primary-button" onClick={beginTeaching}>모르미 가르치기 <span className="button-arrow" /></button>
                 <button className="dictionary-link" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 먼저 사전 보기</button>
               </div>
             ) : (
               <div className="practice-card">
+                {coinReward !== null && <div className={`coin-reward-effect coin-reward-effect--${coinReward}`} key={`${drillIndex}-${coinReward}`}><i /><i /><i /><Image src="/cafe-money/100.png" alt="획득한 돈" width={120} height={120} unoptimized /><strong>+{coinReward}원!</strong><span>{coinReward === 200 ? "한 번에 정답!" : coinReward === 100 ? "다시 생각해서 성공!" : "끝까지 포기하지 않았어!"}</span></div>}
                 <ProblemCard problem={currentDrill} />
                 <div className="answer-grid">
                   {currentDrill.answers.map((answer) => {
-                    const result = currentSelectedDrillAnswer === answer ? (answer === currentDrill.correct ? "is-correct" : "is-wrong") : "";
-                    return <button key={`${drillIndex}-${answer}`} className={result} onClick={() => answerDrill(answer)} disabled={drillLocked} aria-pressed={currentSelectedDrillAnswer === answer}>{answer}</button>;
+                    const isWrong = wrongDrillAnswers.includes(answer);
+                    const result = answer === currentDrill.correct && currentSelectedDrillAnswer === answer ? "is-correct" : isWrong ? "is-wrong is-answer-locked" : "";
+                    return <button key={`${drillIndex}-${answer}`} className={result} onClick={() => answerDrill(answer)} disabled={drillLocked || isWrong} aria-pressed={currentSelectedDrillAnswer === answer}>{answer}</button>;
                   })}
                 </div>
                 <div className={`gentle-feedback ${drillFeedback && currentSelectedDrillAnswer ? "is-visible" : ""} ${currentSelectedDrillAnswer === currentDrill.correct ? "is-correct" : currentSelectedDrillAnswer ? "is-wrong" : ""}`} role="status" aria-live="polite">{currentSelectedDrillAnswer ? drillFeedback : ""}</div>
@@ -1473,6 +1592,7 @@ export function MoramiApp() {
           <div className="complete-copy">
             <p className="eyebrow">집에서 오늘의 준비 완료</p>
             <h1>모르미와<br /><em>오늘도 해냈어!</em></h1>
+            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>이번 세션을 통해</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원</small></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
               <span><UiIcon name="star" size="small" /><strong>1개</strong><small>별노트</small></span>
