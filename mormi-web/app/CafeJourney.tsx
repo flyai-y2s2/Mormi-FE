@@ -18,9 +18,9 @@ const menu = [
 
 const stationCopy = [
   { title: "줄 서기", description: "더 짧은 줄을 찾아요", image: "/cafe-stages/queue-v2.png" },
-  { title: "메뉴 고르기", description: "먹고 싶은 메뉴를 골라요", image: "/cafe-stages/menu-v2.png" },
-  { title: "계산하기", description: "돈을 골라 직접 계산해요", image: "/cafe-stages/payment-v2.png" },
-  { title: "거스름돈 받기", description: "받을 돈을 확인해요", image: "/cafe-stages/change-v2.png" },
+  { title: "메뉴 고르기", description: "먹고 싶은 메뉴를 골라요", image: "/cafe-stages/menu-v3.png" },
+  { title: "계산하기", description: "돈을 골라 직접 계산해요", image: "/cafe-stages/payment-v3.png" },
+  { title: "거스름돈 받기", description: "받을 돈을 확인해요", image: "/cafe-stages/change-v3.png" },
 ] as const;
 
 type Props = { learnerName: string; onBack: () => void; onComplete: () => void };
