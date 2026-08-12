@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { captureMormeyEvent } from "./analytics";
-import { cafeMoney, cafeStations } from "./journey-config";
+import { cafeStations } from "./journey-config";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
@@ -12,20 +12,33 @@ const menu = [
   { id: "milk", name: "우유", price: 2000, image: "/figma/cafe/milk.png?v=2" },
   { id: "strawberry-juice", name: "딸기주스", price: 4000, image: "/figma/cafe/strawberry-juice.png?v=2" },
   { id: "cookie", name: "쿠키", price: 2000, image: "/figma/cafe/cookie.png?v=2" },
-  { id: "strawberry-cake", name: "딸기케이크", price: 3000, image: "/figma/cafe/strawberry-cake.png?v=2" },
-  { id: "sandwich", name: "샌드위치", price: 4000, image: "/figma/cafe/sandwich.png?v=2" },
+  { id: "strawberry-cake", name: "딸기케이크", price: 4500, image: "/figma/cafe/strawberry-cake.png?v=2" },
+  { id: "sandwich", name: "샌드위치", price: 5000, image: "/figma/cafe/sandwich.png?v=2" },
 ] as const;
 
 const stationCopy = [
   { title: "줄 서기", description: "더 짧은 줄을 찾아요", image: "/cafe-stages/queue-v2.png" },
-  { title: "메뉴 고르기", description: "먹고 싶은 메뉴를 골라요", image: "/cafe-stages/menu-v3.png" },
-  { title: "계산하기", description: "돈을 골라 직접 계산해요", image: "/cafe-stages/payment-v3.png" },
-  { title: "거스름돈 받기", description: "받을 돈을 확인해요", image: "/cafe-stages/change-v3.png" },
+  { title: "메뉴 고르기", description: "예산 안에서 메뉴를 골라요", image: "/cafe-stages/menu-v3.png" },
+  { title: "메뉴 값 계산하기", description: "두 메뉴 가격을 더해요", image: "/cafe-stages/payment-v3.png" },
+  { title: "거스름돈 받기", description: "10,000원에서 메뉴값을 빼요", image: "/cafe-stages/change-v3.png" },
 ] as const;
 
 type Props = { learnerName: string; onBack: () => void; onComplete: () => void };
 type QueueScene = "intro" | "count-both" | "count-left" | "note" | "clear";
 type MenuScene = "brief" | "mormey-pick" | "choose" | "thanks";
+const budgets = [8000, 9000, 10000] as const;
+
+function randomItem<T>(items: readonly T[], excluded?: T) {
+  const candidates = excluded === undefined ? items : items.filter((item) => item !== excluded);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function randomQueueCounts() {
+  const left = 1 + Math.floor(Math.random() * 5);
+  let right = 1 + Math.floor(Math.random() * 5);
+  while (right === left) right = 1 + Math.floor(Math.random() * 5);
+  return { left, right };
+}
 
 export function CafeJourney({ onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
@@ -34,19 +47,29 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const [queueFeedback, setQueueFeedback] = useState("");
   const [queueScene, setQueueScene] = useState<QueueScene>("intro");
   const [queueCountAnswer, setQueueCountAnswer] = useState("");
+  const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [menuScene, setMenuScene] = useState<MenuScene>("brief");
+  const [menuBudget, setMenuBudget] = useState<number>(10000);
+  const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
   const [selectedMenu, setSelectedMenu] = useState<string[]>([]);
   const [menuFeedback, setMenuFeedback] = useState("");
-  const [paymentCounts, setPaymentCounts] = useState<Record<number, number>>({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
-  const [paymentFeedback, setPaymentFeedback] = useState("");
+  const [sumMormeyMenuId, setSumMormeyMenuId] = useState<string>("americano");
+  const [sumChildMenuId, setSumChildMenuId] = useState<string>("");
+  const [sumAnswer, setSumAnswer] = useState("");
+  const [sumFeedback, setSumFeedback] = useState("");
+  const [changeMenuId, setChangeMenuId] = useState<string>("americano");
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
   const [changeFeedback, setChangeFeedback] = useState("");
 
   const selectedItems = menu.filter((item) => selectedMenu.includes(item.id));
   const selectedTotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
-  const paid = useMemo(() => cafeMoney.reduce((sum, money) => sum + money.value * paymentCounts[money.value], 0), [paymentCounts]);
+  const mormeyMenu = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
+  const sumMormeyMenu = menu.find((item) => item.id === sumMormeyMenuId) ?? menu[0];
+  const sumChildMenu = menu.find((item) => item.id === sumChildMenuId);
+  const sumTarget = sumMormeyMenu.price + (sumChildMenu?.price ?? 0);
+  const changeMenu = menu.find((item) => item.id === changeMenuId) ?? menu[0];
   const changeTotal = 1000 * changeCounts[1000] + 500 * changeCounts[500];
-  const changeTarget = 10000 - selectedTotal;
+  const changeTarget = 10000 - changeMenu.price;
   const stationIndex = step === "overview" ? Math.min(journeyProgress, 3) : step === "queue" ? 0 : step === "menu" ? 1 : step === "sum" ? 2 : 3;
 
   function returnToMap() {
@@ -57,19 +80,30 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   function openStation(index: number) {
     if (index > journeyProgress) return;
     if (index === 0) {
+      setQueueCounts(randomQueueCounts());
       setQueueScene("intro");
       setQueueCountAnswer("");
       setQueueFeedback("");
       setQueueHelp(false);
     }
     if (index === 1) {
+      const nextMormeyMenu = randomItem(menu);
+      setMenuBudget(randomItem(budgets));
+      setMormeyMenuId(nextMormeyMenu.id);
       setMenuScene("brief");
       setSelectedMenu([]);
       setMenuFeedback("");
     }
     if (index === 2) {
-      setPaymentCounts({ 100: 0, 500: 0, 1000: 0, 5000: 0 });
-      setPaymentFeedback("");
+      setSumMormeyMenuId(randomItem(menu).id);
+      setSumChildMenuId("");
+      setSumAnswer("");
+      setSumFeedback("");
+    }
+    if (index === 3) {
+      setChangeMenuId(randomItem(menu).id);
+      setChangeCounts({ 500: 0, 1000: 0 });
+      setChangeFeedback("");
     }
     setStep((["queue", "menu", "sum", "change"] as CafeStep[])[index]);
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
@@ -77,15 +111,22 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
   function submitQueueCounts() {
     if (!queueCountAnswer.trim()) return;
+    const numbers = queueCountAnswer.match(/[1-5]/g)?.map(Number) ?? [];
+    if (numbers.length < 2 || numbers[0] !== queueCounts.left || numbers[1] !== queueCounts.right) {
+      setQueueFeedback(`왼쪽부터 차례로 다시 세어 볼까? 왼쪽과 오른쪽 숫자를 둘 다 적어 줘.`);
+      setQueueHelp(true);
+      return;
+    }
     setQueueFeedback("");
     setQueueScene("count-left");
   }
 
   function chooseLeftCount(count: number) {
-    if (count === 3) {
+    const shorterCount = Math.min(queueCounts.left, queueCounts.right);
+    if (count === shorterCount) {
       setQueueFeedback("");
       setQueueScene("note");
-      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp, left_count: 3, learner_answer: queueCountAnswer });
+      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp, left_count: queueCounts.left, right_count: queueCounts.right, learner_answer: queueCountAnswer });
       return;
     }
     setQueueFeedback("사람을 앞에서부터 한 명씩 다시 세어 볼까?");
@@ -101,8 +142,8 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   function toggleMenu(id: string) {
     setMenuFeedback("");
     setSelectedMenu((current) => {
-      if (id === "strawberry-juice") {
-        setMenuFeedback("딸기주스는 모르미가 먼저 골랐어요. 다른 메뉴 하나를 골라 주세요!");
+      if (id === mormeyMenuId) {
+        setMenuFeedback(`${mormeyMenu.name}는 모르미가 먼저 골랐어요. 다른 메뉴 하나를 골라 주세요!`);
         return current;
       }
       if (current.includes(id)) return current.filter((item) => item !== id);
@@ -112,18 +153,18 @@ export function CafeJourney({ onBack, onComplete }: Props) {
         setMenuFeedback("메뉴는 두 개까지 고를 수 있어요.");
         return current;
       }
-      const nextTotal = menu.filter((candidate) => [...current, id].includes(candidate.id)).reduce((sum, candidate) => sum + candidate.price, 0);
-      if (nextTotal > 10000) {
-        setMenuFeedback("가진 돈 10,000원 안에서 골라 주세요.");
-        return current;
-      }
       return [...current, id];
     });
   }
 
   function orderMenu() {
     if (selectedMenu.length !== 2) return;
-    captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal });
+    if (selectedTotal > menuBudget) {
+      setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
+      captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: true });
+      return;
+    }
+    captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: false });
     setMenuScene("thanks");
   }
 
@@ -132,25 +173,14 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     returnToMap();
   }
 
-  function changePaymentMoney(value: number, amount: number) {
-    setPaymentCounts((current) => ({ ...current, [value]: Math.max(0, Math.min(20, current[value] + amount)) }));
-    setPaymentFeedback("");
-  }
-
-  function checkPayment() {
-    captureMormeyEvent("payment_submitted", {
-      target_amount: 10000,
-      paid_amount: paid,
-      order_total: selectedTotal,
-      difference: paid - 10000,
-      ...Object.fromEntries(cafeMoney.map((money) => [`count_${money.value}`, paymentCounts[money.value]])),
-    });
-    if (paid === 10000) {
-      setPaymentFeedback("좋아. 직원에게 10,000원을 냈어!");
+  function checkSum() {
+    const answer = Number(sumAnswer.replace(/[^0-9]/g, ""));
+    if (answer === sumTarget) {
+      setSumFeedback("맞아! 두 메뉴의 값을 정확히 더했어.");
       setJourneyProgress((progress) => Math.max(progress, 3));
       window.setTimeout(returnToMap, 700);
     } else {
-      setPaymentFeedback(paid < 10000 ? `${(10000 - paid).toLocaleString("ko-KR")}원이 더 필요해.` : `${(paid - 10000).toLocaleString("ko-KR")}원을 다시 넣어 두자.`);
+      setSumFeedback("두 메뉴 가격을 천 원 단위부터 차례로 더해 볼까?");
     }
   }
 
@@ -213,11 +243,11 @@ export function CafeJourney({ onBack, onComplete }: Props) {
               <Image className="queue-story-morami" src={queueScene === "intro" ? "/morami/confused-cutout.png" : "/morami/bright-cutout.png"} alt={queueScene === "intro" ? "어느 줄에 설지 고민하는 모르미" : "질문하는 모르미"} width={320} height={360} unoptimized />
               <div className="queue-story-task">
                 <div className="queue-story-lines">
-                  <div aria-label="왼쪽 줄 3명"><strong>왼쪽 줄</strong>{Array.from({ length: 3 }, (_, index) => <i key={index}><b /><span /><em /><small /></i>)}</div>
-                  <div aria-label="오른쪽 줄 2명"><strong>오른쪽 줄</strong>{Array.from({ length: 2 }, (_, index) => <i key={index}><b /><span /><em /><small /></i>)}</div>
+                  <div aria-label={`왼쪽 줄 ${queueCounts.left}명`}><strong>왼쪽 줄</strong>{Array.from({ length: queueCounts.left }, (_, index) => <i key={index}><b /><span /><em /><small /></i>)}</div>
+                  <div aria-label={`오른쪽 줄 ${queueCounts.right}명`}><strong>오른쪽 줄</strong>{Array.from({ length: queueCounts.right }, (_, index) => <i key={index}><b /><span /><em /><small /></i>)}</div>
                 </div>
                 {queueScene === "count-both" && <form className="queue-story-input" onSubmit={(event) => { event.preventDefault(); submitQueueCounts(); }}><input aria-label="양쪽 줄의 사람 수" value={queueCountAnswer} onChange={(event) => setQueueCountAnswer(event.target.value)} placeholder="답변을 입력해 주세요" /><button type="submit" disabled={!queueCountAnswer.trim()}>완료</button></form>}
-                {queueScene === "count-left" && <div className="queue-story-options" aria-label="왼쪽 줄 사람 수 선택">{[1, 2, 3].map((count) => <button key={count} onClick={() => chooseLeftCount(count)}>{count}명 있어</button>)}</div>}
+                {queueScene === "count-left" && <div className="queue-story-options" aria-label="더 짧은 줄 사람 수 선택">{[1, 2, 3, 4, 5].map((count) => <button key={count} onClick={() => chooseLeftCount(count)}>{count}명</button>)}</div>}
               </div>
             </section>
           )}
@@ -238,11 +268,11 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
           {queueScene !== "clear" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            <p>{queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : queueScene === "count-left" ? "왼쪽 줄에는 사람들이 몇 명 있어?" : "아~! 오른쪽 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!"}</p>
+            <p>{queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : queueScene === "count-left" ? "더 짧은 줄에는 몇 명이 있어?" : `${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
             {queueFeedback && <small role="status">{queueFeedback}</small>}
             {queueScene === "intro" && <button className="queue-story-next" onClick={() => setQueueScene("count-both")}>다음으로</button>}
             {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); setQueueScene("count-left"); }}>잘 모르겠어</button>}
-            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); setQueueFeedback("사람을 앞에서부터 하나씩 세어 봐. 왼쪽 줄은 세 자리야."); }}>잘 모르겠어</button>}
+            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); setQueueFeedback("양쪽 줄을 하나씩 세고, 더 작은 수를 골라 봐."); }}>잘 모르겠어</button>}
             {queueScene === "note" && <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>}
           </section>}
         </main>
@@ -250,14 +280,14 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
       {step === "menu" && (
         <main className="figma-cafe-panel figma-cafe-menu" data-figma-node="74:6">
-          {menuScene === "brief" && <section className="cafe-menu-brief"><div><span>TODAY&apos;S MISSION</span><h1>10,000원으로 주문해요</h1><p>모르미와 메뉴를 하나씩 골라 예산 안에서 주문해 봐요.</p><ol><li><b>1</b>모르미가 먹고 싶은 걸 먼저 골라요</li><li><b>2</b>남은 돈을 보고 내 메뉴를 골라요</li><li><b>3</b>장바구니에서 합계를 확인해요</li></ol><button onClick={() => { setSelectedMenu(["strawberry-juice"]); setMenuScene("mormey-pick"); }}>미션 시작</button></div><Image src="/morami/bright-cutout.png" alt="카페 주문을 기대하는 모르미" width={320} height={360} unoptimized /></section>}
-          {menuScene === "mormey-pick" && <section className="cafe-menu-mormey"><Image src="/morami/bright-cutout.png" alt="딸기주스를 고른 모르미" width={300} height={340} unoptimized /><div><span>모르미가 먼저 골랐어요</span><h1>“나는 딸기주스가 먹고 싶어!”</h1><div><Image src="/figma/cafe/strawberry-juice.png?v=2" alt="딸기주스" width={180} height={120} unoptimized /><strong>딸기주스 <b>4,000원</b></strong></div><p>남은 6,000원 안에서 네 메뉴 하나를 골라 줄래?</p><button onClick={() => setMenuScene("choose")}>메뉴 골라 주기</button></div></section>}
-          {menuScene === "choose" && <><div className="figma-cafe-panel__heading"><div><span>MISSION 2</span><h1>진열대에서 메뉴 고르기</h1><p>모르미의 딸기주스와 함께 먹을 메뉴 하나를 골라 봐!</p></div><strong>남은 예산 <b>{(10000 - selectedTotal).toLocaleString("ko-KR")}원</b></strong></div>
+          {menuScene === "brief" && <section className="cafe-menu-brief"><div><span>TODAY&apos;S MISSION</span><h1>{menuBudget.toLocaleString("ko-KR")}원으로 주문해요</h1><p>모르미와 메뉴를 하나씩 골라 예산 안에서 주문해 봐요.</p><ol><li><b>1</b>모르미가 먹고 싶은 걸 무작위로 골라요</li><li><b>2</b>내가 실제 메뉴판에서 하나를 골라요</li><li><b>3</b>장바구니가 합계를 자동으로 계산해요</li></ol><button onClick={() => { setSelectedMenu([mormeyMenuId]); setMenuScene("mormey-pick"); }}>미션 시작</button></div><Image src="/morami/bright-cutout.png" alt="카페 주문을 기대하는 모르미" width={320} height={360} unoptimized /></section>}
+          {menuScene === "mormey-pick" && <section className="cafe-menu-mormey"><Image src="/morami/bright-cutout.png" alt={`${mormeyMenu.name}을 고른 모르미`} width={300} height={340} unoptimized /><div><span>모르미가 먼저 골랐어요</span><h1>“나는 {mormeyMenu.name} 고를래!”</h1><div><Image src={mormeyMenu.image} alt={mormeyMenu.name} width={180} height={120} unoptimized /><strong>{mormeyMenu.name} <b>{mormeyMenu.price.toLocaleString("ko-KR")}원</b></strong></div><p>남은 {(menuBudget - mormeyMenu.price).toLocaleString("ko-KR")}원 안에서 네 메뉴 하나를 골라 줄래?</p><button onClick={() => setMenuScene("choose")}>메뉴 골라 주기</button></div></section>}
+          {menuScene === "choose" && <><div className="figma-cafe-panel__heading"><div><span>MISSION 2</span><h1>진열대에서 메뉴 고르기</h1><p>모르미가 고른 메뉴와 함께 먹을 메뉴 하나를 골라 봐!</p></div><strong>주어진 예산 <b>{menuBudget.toLocaleString("ko-KR")}원</b></strong></div>
           <div className="figma-cafe-menu__layout">
             <div className="figma-cafe-menu__grid">
-              {menu.map((item) => <button key={item.id} aria-label={item.id === "strawberry-juice" ? "모르미가 고른 딸기주스" : `${item.name} 고르기`} className={`${selectedMenu.includes(item.id) ? "is-selected" : ""} ${item.id === "strawberry-juice" ? "is-mormey-pick" : ""}`} onClick={() => toggleMenu(item.id)}><i className="menu-check">✓</i><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span><b>{item.name}</b><strong>{item.price.toLocaleString("ko-KR")}원</strong>{item.id === "strawberry-juice" && <small>모르미가 골랐어요</small>}</span></button>)}
+              {menu.map((item) => <button key={item.id} aria-label={item.id === mormeyMenuId ? `모르미가 고른 ${item.name}` : `${item.name} 고르기`} className={`${selectedMenu.includes(item.id) ? "is-selected" : ""} ${item.id === mormeyMenuId ? "is-mormey-pick" : ""}`} onClick={() => toggleMenu(item.id)}><i className="menu-check">✓</i><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span><b>{item.name}</b><strong>{item.price.toLocaleString("ko-KR")}원</strong>{item.id === mormeyMenuId && <small>모르미가 골랐어요</small>}</span></button>)}
             </div>
-            <aside><span className="order-tray-icon">🧺</span><h2>우리 장바구니</h2><ul>{selectedItems.map((item) => <li key={item.id}><span>{item.name}{item.id === "strawberry-juice" ? " · 모르미" : " · 나"}</span><b>{item.price.toLocaleString("ko-KR")}원</b></li>)}</ul><div className="order-tray-total"><span>현재 합계</span><strong>{selectedTotal.toLocaleString("ko-KR")}원</strong><span>남은 돈</span><b>{(10000 - selectedTotal).toLocaleString("ko-KR")}원</b></div><button disabled={selectedMenu.length !== 2} onClick={orderMenu}>장바구니 확인</button></aside>
+            <aside><span className="order-tray-icon">🧺</span><h2>우리 장바구니</h2><ul>{selectedItems.map((item) => <li key={item.id}><span>{item.name}{item.id === mormeyMenuId ? " · 모르미" : " · 나"}</span><b>{item.price.toLocaleString("ko-KR")}원</b></li>)}</ul><div className="order-tray-total"><span>자동 계산 합계</span><strong className={selectedTotal > menuBudget ? "is-over" : ""}>{selectedTotal.toLocaleString("ko-KR")}원</strong><span>{selectedTotal > menuBudget ? "초과 금액" : "남은 돈"}</span><b className={selectedTotal > menuBudget ? "is-over" : ""}>{Math.abs(menuBudget - selectedTotal).toLocaleString("ko-KR")}원</b></div><button disabled={selectedMenu.length !== 2} onClick={orderMenu}>{selectedTotal > menuBudget ? "예산 확인하기" : "장바구니 확인"}</button></aside>
           </div>
           {menuFeedback && <p className="figma-cafe-feedback" role="status">{menuFeedback}</p>}</>}
           {menuScene === "thanks" && <section className="cafe-menu-thanks"><Image src="/morami/celebrate-cutout.png" alt="메뉴를 골라 줘서 기뻐하는 모르미" width={350} height={390} unoptimized /><div><span>주문 준비 완료!</span><h1>내 메뉴 골라 줘서 고마워!</h1><p>{selectedItems.map((item) => item.name).join(" + ")}<br /><strong>합계 {selectedTotal.toLocaleString("ko-KR")}원</strong></p><button onClick={finishMenuStory}>돌다리로 돌아가기</button></div></section>}
@@ -266,27 +296,26 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
       {step === "sum" && (
         <main className="figma-cafe-panel figma-cafe-sum" data-figma-node="74:8">
-          <div className="figma-cafe-mission-title"><span>MISSION 3</span><h1>주문 금액 계산하고 돈 내기</h1><p>고른 메뉴를 확인하고, 실제 돈을 골라 10,000원을 만들어 봐!</p></div>
-          <div className="figma-cafe-sum__equation">
-            {selectedItems.map((item, index) => <div key={item.id}><article><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index < selectedItems.length - 1 && <b aria-hidden="true">＋</b>}</div>)}
-            <b aria-hidden="true">=</b><article className="figma-cafe-sum__total"><span>주문 합계</span><strong>{selectedTotal.toLocaleString("ko-KR")}원</strong></article>
-          </div>
-          <section className="figma-cafe-sum-wallet" aria-label="직원에게 낼 돈 고르기">
-            <div className="figma-cafe-sum-wallet__heading"><span>내 지갑</span><h2>직원에게 낼 10,000원을 만들어 봐</h2><p>돈마다 −와 ＋를 눌러 개수를 바꿀 수 있어요.</p></div>
-            <div className="figma-cafe-wallet">
-              {cafeMoney.map((money) => <article key={money.value}><Image src={money.image} alt={money.label} width={220} height={120} unoptimized /><b>{money.label}</b><div><button aria-label={`${money.label} 빼기`} onClick={() => changePaymentMoney(money.value, -1)} disabled={!paymentCounts[money.value]}>−</button><output aria-label={`${money.label} 개수`}>{paymentCounts[money.value]}개</output><button aria-label={`${money.label} 더하기`} onClick={() => changePaymentMoney(money.value, 1)}>＋</button></div></article>)}
-            </div>
-            <div className="figma-cafe-total"><span>내가 낼 돈</span><strong>{paid.toLocaleString("ko-KR")}원</strong></div>
+          <div className="figma-cafe-mission-title"><span>MISSION 3</span><h1>메뉴 값 계산하기</h1><p>모르미가 하나 골랐어요. 너도 메뉴 하나를 고르고 두 가격을 더해 봐!</p></div>
+          <section className="cafe-sum-menu-picker" aria-label="내 메뉴 고르기">
+            <div><Image src={sumMormeyMenu.image} alt={sumMormeyMenu.name} width={160} height={105} unoptimized /><span>모르미가 고른 메뉴</span><strong>{sumMormeyMenu.name} · {sumMormeyMenu.price.toLocaleString("ko-KR")}원</strong></div>
+            <div className="cafe-sum-menu-picker__choices">{menu.filter((item) => item.id !== sumMormeyMenuId).map((item) => <button key={item.id} className={sumChildMenuId === item.id ? "is-selected" : ""} onClick={() => { setSumChildMenuId(item.id); setSumAnswer(""); setSumFeedback(""); }}><Image src={item.image} alt={item.name} width={110} height={75} unoptimized /><span>{item.name}</span><b>{item.price.toLocaleString("ko-KR")}원</b></button>)}</div>
           </section>
-          {paymentFeedback && <p className="figma-cafe-feedback" role="status">{paymentFeedback}</p>}
-          <button className="figma-cafe-action" onClick={checkPayment} disabled={!paid}>직원에게 내기</button>
+          {sumChildMenu && <>
+          <div className="figma-cafe-sum__equation">
+            {[sumMormeyMenu, sumChildMenu].map((item, index) => <div key={item.id}><article><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index === 0 && <b aria-hidden="true">＋</b>}</div>)}
+            <b aria-hidden="true">=</b><label className="figma-cafe-sum__answer"><span>내가 계산한 합계</span><input inputMode="numeric" aria-label="두 메뉴 가격의 합계" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value); setSumFeedback(""); }} placeholder="?" /><b>원</b></label>
+          </div>
+          {sumFeedback && <p className="figma-cafe-feedback" role="status">{sumFeedback}</p>}
+          <button className="figma-cafe-action" onClick={checkSum} disabled={!sumAnswer.trim()}>합계 확인</button></>}
         </main>
       )}
 
       {step === "change" && (
         <main className="figma-cafe-panel figma-cafe-change" data-figma-node="74:10">
-          <div className="figma-cafe-mission-title"><span>MISSION 4</span><h1>거스름돈 챙기기</h1><p>받아야 할 돈을 직접 골라 담아 봐!</p></div>
-          <div className="figma-cafe-change__equation">낸 돈 10,000원&nbsp; − &nbsp;메뉴 값 {selectedTotal.toLocaleString("ko-KR")}원&nbsp; = &nbsp;?</div>
+          <div className="figma-cafe-mission-title"><span>MISSION 4</span><h1>거스름돈 받기</h1><p>모르미가 메뉴 하나를 골랐어요. 10,000원을 내면 얼마를 받아야 할까요?</p></div>
+          <section className="cafe-change-order"><Image src="/morami/bright-cutout.png" alt="메뉴를 고른 모르미" width={220} height={240} unoptimized /><div><span>모르미의 주문</span><Image src={changeMenu.image} alt={changeMenu.name} width={170} height={105} unoptimized /><strong>{changeMenu.name} · {changeMenu.price.toLocaleString("ko-KR")}원</strong></div></section>
+          <div className="figma-cafe-change__equation">가진 돈 10,000원&nbsp; − &nbsp;{changeMenu.name} {changeMenu.price.toLocaleString("ko-KR")}원&nbsp; = &nbsp;?</div>
           <p>받을 돈을 눌러 담아요</p>
           <div className="figma-cafe-change__builder">
             {([1000, 500] as const).map((value) => <article key={value} className={`is-${value}`}><Image src={`/cafe-money/${value}.png`} alt={`${value.toLocaleString("ko-KR")}원`} width={180} height={100} unoptimized /><strong>{value.toLocaleString("ko-KR")}원</strong><div><button onClick={() => changeChangeMoney(value, -1)} disabled={!changeCounts[value]}>−</button><output>{changeCounts[value]}개</output><button onClick={() => changeChangeMoney(value, 1)}>＋</button></div></article>)}
@@ -300,7 +329,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 서고, 메뉴를 고르고, 돈을 내고, 거스름돈까지 직접 확인했어.</p><button onClick={() => { captureMormeyEvent("cafe_journey_completed", { order_total: selectedTotal, paid: 10000, change: changeTarget }); onComplete(); }}>모르미와 집으로</button></div>
+          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p><button onClick={() => { captureMormeyEvent("cafe_journey_completed", { order_total: changeMenu.price, paid: 10000, change: changeTarget }); onComplete(); }}>모르미와 집으로</button></div>
         </main>
       )}
     </section>

@@ -1020,7 +1020,7 @@ function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: (
         <button className={`destination-card destination-card--cafe ${unlocked ? "is-unlocked" : "is-locked"}`} onClick={unlocked ? onCafe : onHome}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{unlocked ? "진행" : "잠김"}</small><h2>{unlocked ? "카페 가기" : "🔒 카페 가기"}</h2><p>{unlocked ? "줄을 서고, 메뉴를 골라 계산해요" : "필수 개념 4개를 끝내야 열려요"}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
+          <div><small>{unlocked ? "진행" : "잠김"}</small><h2>{unlocked ? "카페 가기" : "🔒 카페 가기"}</h2><p>{unlocked ? "줄을 서고, 메뉴를 골라 계산해요" : `필수 개념 ${cafeRequiredSessionIds.length}개를 끝내야 열려요`}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
         </button>
         <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
@@ -1052,6 +1052,7 @@ export function MoramiApp() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expression, setExpression] = useState<Expression>("happy");
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
+  const [showOtherConcepts, setShowOtherConcepts] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const { startMusic, stopMusic } = useGameMusic(soundOn);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
@@ -1101,6 +1102,8 @@ export function MoramiApp() {
   const activeArea = areaForSession(activeSession.id);
   const selectedArea = mathAreas.find((area) => area.id === selectedAreaId) ?? null;
   const selectedAreaSessions = useMemo(() => selectedArea?.sessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)) ?? [], [selectedArea]);
+  const cafeConceptSessions = useMemo(() => cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
+  const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
   const sentenceBank = useMemo(() => activeSession.sentenceWords.map((word, index) => ({ id: `${variantSeed}-${sessionIndex}-${index}`, word })), [activeSession.sentenceWords, sessionIndex, variantSeed]);
 
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
@@ -1440,6 +1443,8 @@ export function MoramiApp() {
   }
 
   function showCurriculum() {
+    setSelectedAreaId(null);
+    setShowOtherConcepts(false);
     setStage("curriculum");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1513,26 +1518,28 @@ export function MoramiApp() {
           <div className="scene-balance">🪙 {coinBalance.toLocaleString("ko-KR")}원</div>
           {!selectedArea ? (
             <>
-              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>어떤 개념을 연습할까?</h1><p>카페 표시가 붙은 개념 4개를 모두 끝내면 외출할 수 있어요.</p></div>
-              <div className="room-area-list">
+              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>
+              <section className="cafe-required-lessons">
+                <div><strong>☕ 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
+                {cafeConceptSessions.map((session) => <button key={session.id} className={completedSessionIds.includes(session.id) ? "is-complete" : ""} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{session.title}</b><small>{session.id === "number-count" ? "줄의 사람을 1~5명까지 정확히 세어요" : session.id === "number-compare" ? "두 줄 중 사람이 더 적은 쪽을 찾아요" : session.id === "money-count" ? "100원·500원·1,000원·5,000원의 값을 읽어요" : session.id === "money-price" ? "모르미와 내가 고른 두 메뉴값을 더해요" : "예산과 합계를 비교하고 10,000원에서 메뉴값을 빼요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+              </section>
+              <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
+              {showOtherConcepts && <div className="room-area-list other-concepts-list">
                 {mathAreas.map((area) => {
-                  const done = area.sessionIds.filter((id) => completedSessionIds.includes(id)).length;
-                  const required = area.sessionIds.filter((id) => cafeRequiredSessionIds.includes(id as (typeof cafeRequiredSessionIds)[number])).length;
-                  return (
-                    <button key={area.id} style={{ "--area-color": area.color } as React.CSSProperties} onClick={() => showArea(area.id)}>
-                      <i>{done === area.sessionIds.length ? "✓" : done}</i><span><b>{area.title}</b><small>{area.description}</small>{required > 0 && <mark>☕ 카페 필수 개념 {required}개</mark>}</span><em>{done}/{area.sessionIds.length}<b>›</b></em>
-                    </button>
-                  );
+                  const areaSessions = area.sessionIds.filter((id) => !cafeRequiredSessionIds.includes(id as (typeof cafeRequiredSessionIds)[number]));
+                  const done = areaSessions.filter((id) => completedSessionIds.includes(id)).length;
+                  if (!areaSessions.length) return null;
+                  return <button key={area.id} style={{ "--area-color": area.color } as React.CSSProperties} onClick={() => showArea(area.id)}><i>{done === areaSessions.length ? "✓" : done}</i><span><b>{area.title}</b><small>{area.description}</small></span><em>{done}/{areaSessions.length}<b>›</b></em></button>;
                 })}
               </div>
+              }
             </>
           ) : (
             <div className="area-detail area-detail--room" style={{ "--area-color": selectedArea.color } as React.CSSProperties}>
               <button className="area-back" onClick={showAreaList}><span>‹</span> 개념 영역으로</button>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>{selectedArea.title}</h1><p>{selectedArea.description}</p></div>
-              {selectedAreaSessions.some((session) => cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])) && <div className="cafe-required-banner"><span>☕</span><div><b>카페에 가려면 이 표시를 찾아요</b><p>`완료하면 카페에 갈 수 있어요!`가 붙은 개념을 모두 끝내야 카페가 열려요.</p></div></div>}
               <div className="curriculum-path-list math-course-list math-course-list--detail">
-                {selectedAreaSessions.map((session, index) => <div className={`curriculum-path-row ${cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number]) ? "is-cafe-quest" : ""}`} key={session.id}>{(index === 0 || selectedAreaSessions[index - 1]?.unit !== session.unit) && <div className="curriculum-unit-marker"><span>{session.unit}</span><i>STAGE {index + 1}</i></div>}<CurriculumCourseButton session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])} onOpen={openSession} /></div>)}
+                {selectedAreaSessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])).map((session, index, visibleSessions) => <div className="curriculum-path-row" key={session.id}>{(index === 0 || visibleSessions[index - 1]?.unit !== session.unit) && <div className="curriculum-unit-marker"><span>{session.unit}</span><i>STAGE {index + 1}</i></div>}<CurriculumCourseButton session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={false} onOpen={openSession} /></div>)}
               </div>
             </div>
           )}

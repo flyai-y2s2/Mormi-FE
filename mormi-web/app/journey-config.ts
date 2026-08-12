@@ -1,11 +1,12 @@
 export const cafeRequiredSessionIds = [
+  "number-count",
+  "number-compare",
   "money-count",
   "money-price",
   "money-budget",
-  "money-mission",
 ] as const;
 
-export const cafeStations = ["줄 서기", "메뉴 고르기", "계산하기", "거스름돈 받기"] as const;
+export const cafeStations = ["줄 서기", "메뉴 고르기", "메뉴 값 계산하기", "거스름돈 받기"] as const;
 
 export const cafeMoney = [
   { value: 100, label: "100원", image: "/cafe-money/100.png", kind: "coin" },
