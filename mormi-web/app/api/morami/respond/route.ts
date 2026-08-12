@@ -15,6 +15,7 @@ type TurnRequest = {
   learnedLine?: string;
   fallbackDialogue?: string;
   teachPrompt?: string;
+  learnerName?: string;
   childMessage?: string;
   conversation?: ConversationMessage[];
 };
@@ -44,12 +45,13 @@ function mockTurn(input: TurnRequest): TurnResponse {
 }
 
 function safeTeachDialogue(input: TurnRequest, understood: boolean) {
-  if (understood) return "아하! 지우가 알려 줘서 이제 알겠어. 고마워!";
+  const learnerName = input.learnerName?.trim() || "친구";
+  if (understood) return `아하! ${learnerName}가 알려 줘서 이제 알겠어. 고마워!`;
   const childMessage = input.childMessage?.trim() || "";
-  if (/^(응|엉|그래|맞아|ㅇㅇ|네|예)[.!?~ ]*$/i.test(childMessage)) return "응 말고, 지우의 생각을 들려줄래?";
+  if (/^(응|엉|그래|맞아|ㅇㅇ|네|예)[.!?~ ]*$/i.test(childMessage)) return `응 말고, ${learnerName}의 생각을 들려줄래?`;
   const childTurns = (input.conversation || []).filter((message) => message.role === "child").length;
   const questions = [
-    "지우는 어떻게 생각했어?",
+    `${learnerName}는 어떻게 생각했어?`,
     "왜 그렇게 생각했는지 말해 줄래?",
     "어디부터 살펴보면 좋을까?",
   ];

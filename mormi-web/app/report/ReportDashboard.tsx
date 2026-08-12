@@ -22,6 +22,11 @@ type Report = {
   ladder: number;
   timedOut: boolean;
   learnedLine: string;
+  learnerName?: string;
+  learnerId?: number;
+  earnedCoins?: number;
+  drillCoins?: number;
+  teachCoins?: number;
 };
 
 const fallback: Report = {
@@ -30,7 +35,7 @@ const fallback: Report = {
   sessionTitle: "30분 시계",
   sessionUnit: "시계",
   sessionLevel: 1,
-  masteryTarget: 10,
+  masteryTarget: 5,
   repetitions: 5,
   masterySeconds: 142,
   misconception: "긴 바늘 숫자를 그대로 ‘분’으로 읽음",
@@ -60,7 +65,7 @@ export function ReportDashboard() {
       </header>
       <section className="report-container">
         <div className="report-title-row">
-          <div><p>{report.date} · {report.sessionUnit} {report.sessionLevel}단계</p><h1>지우의 {report.sessionTitle}</h1></div>
+          <div><p>{report.date} · {report.sessionUnit} {report.sessionLevel}단계</p><h1>{report.learnerName || "지우"}의 {report.sessionTitle}</h1></div>
           <div className="session-status"><i /> 세션 완료</div>
         </div>
         <div className="report-metrics">
@@ -82,7 +87,7 @@ export function ReportDashboard() {
           <article className="report-panel note-panel">
             <span>별노트 기록</span>
             <div className="mini-star-note"><ReportIcon name="star" /><p>{report.learnedLine}</p></div>
-            <small>{report.ladder === 3 ? "지우가 알려줌" : "지우와 같이 공부함"}</small>
+            <small>{report.ladder === 3 ? `${report.learnerName || "지우"}가 알려줌` : `${report.learnerName || "지우"}와 같이 공부함`}</small>
           </article>
         </div>
         <article className="next-card"><div className="next-icon"><ReportIcon name="refresh" /></div><div><span>다음 세션 제안</span><h3>{report.transfer ? `${report.sessionUnit} 다음 단계로 이어가기` : `${report.sessionTitle} 실생활 문제 다시 보기`}</h3><p>{report.transfer ? "현재 전략을 한 번 확인한 뒤 더 복잡한 생활 문제로 확장합니다." : "같은 개념을 돈·시간·물건 그림으로 바꾸어 다시 연습합니다."}</p></div><b>다음 코스 반영</b></article>

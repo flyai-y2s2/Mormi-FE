@@ -22,7 +22,7 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
-  assert.match(html, /다음으로/);
+  assert.match(html, /내 이름 알려주기/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
@@ -53,7 +53,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(journey, /"money-price"/);
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"money-mission"/);
-  assert.match(cafe, /카페에서는 이렇게 해요/);
+  assert.match(cafe, /돌다리를 따라 카페 미션/);
   assert.match(cafe, /직원에게 내기/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
@@ -108,7 +108,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teachMessages\.map/);
   assert.match(app, /teachResponseMatches/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
-  assert.match(app, /childName = "지우"/);
+  assert.match(app, /const childName = learner\.name/);
+  assert.match(app, /mormey-learner/);
+  assert.match(app, /너의 이름을 알려줄래/);
+  assert.match(app, /TEACH_REWARD = 500/);
+  assert.match(cafe, /cafe-stage-map/);
   assert.match(app, /의 설명이 맞아요/);
   assert.match(app, /의 설명을 기다리고 있어요/);
   assert.match(curriculum, /item: "strawberry"/);

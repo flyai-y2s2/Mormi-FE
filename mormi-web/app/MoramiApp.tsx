@@ -10,7 +10,7 @@ import { areaForSession, curriculumForSession, masteryTarget, mathAreas, session
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
-type Stage = "onboarding" | "home" | "outside" | "cafe" | "curriculum" | "drill" | "teach" | "wrap" | "homework" | "complete";
+type Stage = "onboarding" | "home" | "outside" | "cafe" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
 
 const expressions: Record<Expression, string> = {
   calm: "/morami/calm-cutout.png",
@@ -22,7 +22,14 @@ const expressions: Record<Expression, string> = {
 };
 
 const stageLabels = ["혼자 연습", "가르치기", "별노트", "생활 게임"];
-const childName = "지우";
+const TEACH_REWARD = 500;
+
+type LearnerProfile = {
+  id: number;
+  name: string;
+};
+
+const defaultLearner: LearnerProfile = { id: 1, name: "지우" };
 
 type TeachMessage = {
   id: number;
@@ -35,6 +42,7 @@ type MoramiEvent = "session_start" | "drill_correct" | "drill_retry" | "teach_pr
 type MoramiTurnOptions = {
   childMessage?: string;
   teachPrompt?: string;
+  learnerName?: string;
   conversation?: Array<{ role: "morami" | "child"; text: string }>;
 };
 
@@ -773,7 +781,7 @@ function StoreOrder({ problem }: { problem: Problem }) {
   );
 }
 
-function LifeMissionGame({ session, problem, progress, solved, expression, dialogue, onAnswer, onFinish }: { session: Session; problem: Problem; progress: string; solved: boolean; expression: Expression; dialogue: string; onAnswer: (answer: string) => void; onFinish: () => void }) {
+function LifeMissionGame({ session, problem, progress, solved, expression, dialogue, childName, onAnswer, onFinish }: { session: Session; problem: Problem; progress: string; solved: boolean; expression: Expression; dialogue: string; childName: string; onAnswer: (answer: string) => void; onFinish: () => void }) {
   const story = missionStory(session, problem);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [showChoices, setShowChoices] = useState(false);
@@ -875,8 +883,49 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
   );
 }
 
-function Onboarding({ onStart }: { onStart: () => void }) {
-  const [page, setPage] = useState<"hello" | "promise">("hello");
+function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void }) {
+  const [page, setPage] = useState<"hello" | "name" | "promise" | "tutorial">("hello");
+  const [name, setName] = useState("");
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialFeedback, setTutorialFeedback] = useState("");
+  const profile = { id: 1, name: name.trim() || "친구" };
+
+  function finishOnboarding(status: "completed" | "skipped") {
+    captureMormeyEvent(status === "completed" ? "onboarding_tutorial_completed" : "onboarding_tutorial_skipped", { tutorial_step: tutorialStep + 1 });
+    onStart(profile);
+  }
+
+  function answerTutorial(answer: string) {
+    const correct = ["1,500원", "돈에 적힌 수를 더해", "카페로 출발"][tutorialStep];
+    if (answer !== correct) {
+      setTutorialFeedback("괜찮아. 한 번 더 천천히 골라 보자!");
+      return;
+    }
+    setTutorialFeedback(tutorialStep === 2 ? "준비 끝! 이제 진짜 집에서 시작해요." : "좋아! 다음 순서로 가 볼까?");
+    window.setTimeout(() => {
+      if (tutorialStep === 2) finishOnboarding("completed");
+      else {
+        setTutorialStep((step) => step + 1);
+        setTutorialFeedback("");
+      }
+    }, 650);
+  }
+
+  if (page === "name") {
+    return (
+      <section className="onboarding-scene onboarding-scene--name">
+        <div className="onboarding-morami"><Morami expression="happy" /></div>
+        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (name.trim()) setPage("promise"); }}>
+          <span>모르미</span>
+          <h1>너의 이름을 알려줄래?</h1>
+          <p>앞으로 내가 이름을 불러 줄게!</p>
+          <label htmlFor="learner-name">이름</label>
+          <input id="learner-name" value={name} onChange={(event) => setName(event.target.value.slice(0, 12))} placeholder="이름을 적어 주세요" autoComplete="name" />
+          <button className="primary-button" type="submit" disabled={!name.trim()}>내 이름 알려주기 <span className="button-arrow" /></button>
+        </form>
+      </section>
+    );
+  }
 
   if (page === "promise") {
     const steps = [
@@ -894,7 +943,28 @@ function Onboarding({ onStart }: { onStart: () => void }) {
           <div className="promise-steps">
             {steps.map(([number, title, description]) => <article key={number}><i>{number}</i><div><h2>{title}</h2><p>{description}</p></div></article>)}
           </div>
-          <button className="promise-cta" onClick={onStart}><span>모르미가 이해하면 카페에 가요!</span><b>집으로 가기 →</b></button>
+          <div className="promise-actions">
+            <button className="promise-cta" onClick={() => { captureMormeyEvent("onboarding_tutorial_started"); setPage("tutorial"); }}><span>모르미가 이해하면 카페에 가요!</span><b>한 번 따라 해보기 →</b></button>
+            <button className="onboarding-skip" onClick={() => finishOnboarding("skipped")}>설명은 알겠어 · 건너뛰기</button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (page === "tutorial") {
+    const tutorial = [
+      { eyebrow: "1단계 · 집에서 연습", title: "1,000원과 500원은 모두 얼마일까?", expression: "calm" as Expression, choices: ["500원", "1,500원", "5,000원"] },
+      { eyebrow: "2단계 · 모르미 가르치기", title: "모르미에게 돈 세는 방법을 알려 줘!", expression: "confused" as Expression, choices: ["돈 개수를 세어", "돈에 적힌 수를 더해", "큰 돈만 보면 돼"] },
+      { eyebrow: "3단계 · 카페에 가기", title: `${profile.name}, 이제 무엇을 하면 될까?`, expression: "happy" as Expression, choices: ["카페로 출발", "처음부터 다시", "그만하기"] },
+    ][tutorialStep];
+    return (
+      <section className="onboarding-tutorial">
+        <button className="onboarding-skip onboarding-skip--top" onClick={() => finishOnboarding("skipped")}>튜토리얼 건너뛰기</button>
+        <div className="tutorial-progress" aria-label={`튜토리얼 ${tutorialStep + 1}/3`}>{[0, 1, 2].map((step) => <i key={step} className={step <= tutorialStep ? "is-active" : ""} />)}</div>
+        <div className="tutorial-card">
+          <Morami expression={tutorial.expression} size="small" />
+          <div><p className="eyebrow">{tutorial.eyebrow}</p><h1>{tutorial.title}</h1><div className="tutorial-choices">{tutorial.choices.map((choice) => <button key={choice} onClick={() => answerTutorial(choice)}>{choice}</button>)}</div>{tutorialFeedback && <p className="tutorial-feedback" role="status">{tutorialFeedback}</p>}</div>
         </div>
       </section>
     );
@@ -907,7 +977,7 @@ function Onboarding({ onStart }: { onStart: () => void }) {
         <span>모르미</span>
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
-        <button className="primary-button" onClick={() => setPage("promise")}>다음으로 <span className="button-arrow" /></button>
+        <button className="primary-button" onClick={() => setPage("name")}>내 이름 알려주기 <span className="button-arrow" /></button>
       </div>
     </section>
   );
@@ -959,6 +1029,7 @@ function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: (
 }
 
 export function MoramiApp() {
+  const [learner, setLearner] = useState<LearnerProfile>(defaultLearner);
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
   const activeSession = useMemo(() => {
@@ -1002,6 +1073,7 @@ export function MoramiApp() {
   const [teachMessages, setTeachMessages] = useState<TeachMessage[]>([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[0]) }]);
   const [teachSending, setTeachSending] = useState(false);
   const [teachSolved, setTeachSolved] = useState(false);
+  const [teachRewardGranted, setTeachRewardGranted] = useState(false);
   const [solvedAtLevel, setSolvedAtLevel] = useState<number | null>(null);
   const [floorFails, setFloorFails] = useState(0);
   const [brightCarry, setBrightCarry] = useState(false);
@@ -1016,8 +1088,9 @@ export function MoramiApp() {
   const teachMessageId = useRef(2);
   const teachThreadRef = useRef<HTMLDivElement>(null);
 
-  const currentStep = stage === "drill" ? 0 : stage === "teach" ? 1 : stage === "wrap" ? 2 : 3;
-  const learningStage = ["drill", "teach", "wrap", "homework"].includes(stage);
+  const childName = learner.name;
+  const currentStep = stage === "drill" ? 0 : stage === "teach" || stage === "teachReward" ? 1 : stage === "wrap" ? 2 : 3;
+  const learningStage = ["drill", "teach", "teachReward", "wrap", "homework"].includes(stage);
   const currentDrill = activeSession.drills[drillIndex % activeSession.drills.length];
   const currentSelectedDrillAnswer = selectedDrillAnswer?.question === drillIndex ? selectedDrillAnswer.answer : null;
   const homeworkBase = homeworkIndex < activeSession.homework.length ? activeSession.homework[homeworkIndex] : extraLifeProblem(activeSession, variantSeed + homeworkIndex * 17);
@@ -1033,12 +1106,12 @@ export function MoramiApp() {
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
     setDialogue(fallbackDialogue);
     setExpression(fallbackExpression);
-    const turn = await requestMoramiTurn(activeSession, event, fallbackDialogue, ladderLevel);
+    const turn = await requestMoramiTurn(activeSession, event, fallbackDialogue, ladderLevel, { learnerName: childName });
     if (turn) {
       setDialogue(turn.dialogue);
       setExpression(turn.expression);
     }
-  }, [activeSession, ladder]);
+  }, [activeSession, childName, ladder]);
 
   const appendTeachMessage = useCallback((role: TeachMessage["role"], text: string) => {
     const nextMessage = { id: teachMessageId.current, role, text };
@@ -1051,10 +1124,12 @@ export function MoramiApp() {
       const saved = JSON.parse(localStorage.getItem("morami-completed-sessions") || "[]") as string[];
       const savedCoins = Number(localStorage.getItem("mormey-coins") || "6000");
       const onboarded = localStorage.getItem("morami-onboarding-complete") === "true";
+      const savedLearner = JSON.parse(localStorage.getItem("mormey-learner") || "null") as LearnerProfile | null;
       window.requestAnimationFrame(() => {
         setCompletedSessionIds(saved);
         setCoinBalance(Number.isFinite(savedCoins) ? savedCoins : 6000);
-        if (onboarded) setStage("home");
+        if (savedLearner?.id && savedLearner.name) setLearner(savedLearner);
+        if (onboarded && savedLearner?.id && savedLearner.name) setStage("home");
       });
     } catch { /* device-local progress is optional */ }
   }, []);
@@ -1096,6 +1171,10 @@ export function MoramiApp() {
       ladder: solvedAtLevel ?? 0,
       timedOut,
       earnedCoins: sessionCoins,
+      drillCoins: sessionCoins - (teachRewardGranted ? TEACH_REWARD : 0),
+      teachCoins: teachRewardGranted ? TEACH_REWARD : 0,
+      learnerId: learner.id,
+      learnerName: learner.name,
     };
     localStorage.setItem("morami-report", JSON.stringify(report));
     try {
@@ -1104,7 +1183,7 @@ export function MoramiApp() {
     } catch {
       localStorage.setItem("morami-report-history", JSON.stringify([report]));
     }
-  }, [activeSession, brightCarry, drillAttempts, floorFails, sessionCoins, solvedAtLevel, timedOut]);
+  }, [activeSession, brightCarry, drillAttempts, floorFails, learner, sessionCoins, solvedAtLevel, teachRewardGranted, timedOut]);
 
   function answerDrill(answer: string) {
     if (drillLocked || mastered) return;
@@ -1193,6 +1272,7 @@ export function MoramiApp() {
     const turn = await requestMoramiTurn(activeSession, "teach_message", "무엇을 먼저 하면 될까?", ladder, {
       childMessage: response,
       teachPrompt: prompt,
+      learnerName: childName,
       conversation,
     });
     setTeachSending(false);
@@ -1261,6 +1341,14 @@ export function MoramiApp() {
   }
 
   function goWrap() {
+    if (teachSolved && !teachRewardGranted) {
+      setTeachRewardGranted(true);
+      setSessionCoins((coins) => coins + TEACH_REWARD);
+      captureMormeyEvent("teach_reward_earned", { session_id: activeSession.id, reward: TEACH_REWARD, scaffold_level: solvedAtLevel });
+      if (soundOn) playCoinRewardSound(200);
+      setStage("teachReward");
+      return;
+    }
     setStage("wrap");
     void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy");
   }
@@ -1337,6 +1425,7 @@ export function MoramiApp() {
     teachMessageId.current = 2;
     setTeachMessages([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[nextIndex]) }]);
     setTeachSolved(false);
+    setTeachRewardGranted(false);
     setSolvedAtLevel(null);
     setFloorFails(0);
     setBrightCarry(false);
@@ -1355,9 +1444,11 @@ export function MoramiApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function completeOnboarding() {
+  function completeOnboarding(profile: LearnerProfile) {
+    setLearner(profile);
+    localStorage.setItem("mormey-learner", JSON.stringify(profile));
     localStorage.setItem("morami-onboarding-complete", "true");
-    captureMormeyEvent("onboarding_completed");
+    captureMormeyEvent("onboarding_completed", { tutorial_available: true });
     setStage("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1390,7 +1481,7 @@ export function MoramiApp() {
     setSoundOn(!soundOn);
   }
 
-  const attribution = teachSolved && solvedAtLevel === 3 ? "지우가 알려줌" : "지우와 같이 공부함";
+  const attribution = teachSolved && solvedAtLevel === 3 ? `${childName}가 알려줌` : `${childName}와 같이 공부함`;
   const completedAfterLesson = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
   const cafeUnlockedAfterLesson = isCafeUnlocked(completedAfterLesson);
   const cafeReadyCountAfterLesson = cafeRequiredSessionIds.filter((id) => completedAfterLesson.includes(id)).length;
@@ -1497,7 +1588,7 @@ export function MoramiApp() {
           <div className="chat-window">
             <div className="morami-chat-row">
               <Morami expression={expression} size="small" />
-              <div ref={teachThreadRef} className="teach-chat-thread" role="log" aria-label="모르미와 지우의 대화" aria-live="polite">
+              <div ref={teachThreadRef} className="teach-chat-thread" role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                 {teachMessages.map((message) => (
                   <div className={`teach-message teach-message--${message.role}`} key={message.id}>
                     <b>{message.role === "morami" ? "모르미" : childName}</b>
@@ -1573,6 +1664,19 @@ export function MoramiApp() {
         </section>
       )}
 
+      {stage === "teachReward" && (
+        <section className="teach-reward-scene">
+          <div className="scene-balance">🪙 {(coinBalance + sessionCoins).toLocaleString("ko-KR")}원</div>
+          <div className="teach-reward-morami"><Morami expression="celebrate" /></div>
+          <div className="teach-reward-copy">
+            <div className="teach-reward-dialogue"><b>모르미</b><p>{childName}, 알려줘서 고마워~!</p></div>
+            <h1>모르미를 도와줘서<br /><em>500원을 받았어요!</em></h1>
+            <div className="teach-reward-coins" aria-label="500원 보상">{Array.from({ length: 5 }, (_, index) => <Image key={index} src="/cafe-money/100.png" alt="100원" width={110} height={110} unoptimized />)}</div>
+            <button className="primary-button" onClick={() => { setStage("wrap"); void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy"); }}>별노트에 적기 <span className="button-arrow" /></button>
+          </div>
+        </section>
+      )}
+
       {stage === "wrap" && (
         <section className="scene scene--wrap">
           <div className="character-column"><Morami expression={expression} /></div>
@@ -1593,7 +1697,7 @@ export function MoramiApp() {
 
       {stage === "homework" && (
         <section className="scene scene--homework">
-          <LifeMissionGame key={`${activeSession.id}-${homeworkIndex}`} session={activeSession} problem={currentHomework} progress={`${Math.min(homeworkCorrect + 1, transferTarget)}/${transferTarget}`} solved={homeworkSolved} expression={expression} dialogue={dialogue} onAnswer={answerHomework} onFinish={() => finish(true)} />
+          <LifeMissionGame key={`${activeSession.id}-${homeworkIndex}`} session={activeSession} problem={currentHomework} progress={`${Math.min(homeworkCorrect + 1, transferTarget)}/${transferTarget}`} solved={homeworkSolved} expression={expression} dialogue={dialogue} childName={childName} onAnswer={answerHomework} onFinish={() => finish(true)} />
         </section>
       )}
 
@@ -1604,7 +1708,7 @@ export function MoramiApp() {
           <div className="complete-copy">
             <p className="eyebrow">집에서 오늘의 준비 완료</p>
             <h1>모르미와<br /><em>오늘도 해냈어!</em></h1>
-            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>이번 세션을 통해</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원</small></div></div>
+            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원 · 가르치기 +{teachRewardGranted ? TEACH_REWARD : 0}원</small></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
               <span><UiIcon name="star" size="small" /><strong>1개</strong><small>별노트</small></span>
