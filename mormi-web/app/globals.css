@@ -259,6 +259,44 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .learned-card { padding: 26px; text-align: center; background: linear-gradient(145deg, #fff, #fff9dc); }
 .learned-card > .ui-icon { margin-bottom:6px; }.learned-card h2 { margin: 7px 0; font-size: 29px; }.learned-card p { color: var(--muted); font-weight: 700; }.learned-card .primary-button { margin-top: 10px; }
 
+/* L3 → L2 → L1 Mormey teaching flow */
+.app-shell--teach { background:#f6f1e9 url('/scenes/home-room-cute-v3.png') center/cover fixed; }
+.app-shell--teach::before { content:""; position:fixed; inset:0; pointer-events:none; background:rgba(255,252,244,.34); }
+.teaching-scene { max-width:1180px; position:relative; z-index:1; }
+.teaching-scene .chat-title { align-items:center; }
+.teaching-stage { min-height:690px; padding:22px 28px 28px; border:4px solid rgba(255,255,255,.78); border-radius:38px; background:rgba(255,252,244,.9); }
+.teaching-levels { max-width:760px; margin:0 auto 18px; display:grid; grid-template-columns:1fr 28px 1fr 28px 1fr; align-items:center; gap:7px; }
+.teaching-levels span { min-height:46px; padding:8px 10px; display:flex; align-items:center; justify-content:center; gap:7px; border:2px solid #d9dedb; border-radius:16px; color:#8d9892; background:rgba(255,255,255,.7); font-size:12px; font-weight:900; }
+.teaching-levels span b { width:31px; height:31px; display:grid; place-items:center; border-radius:10px; color:#fff; background:#aeb7b2; font-size:11px; }
+.teaching-levels span.is-active { border-color:#70c9a2; color:#286f53; background:#effaf4; box-shadow:0 5px 0 #c4e8d7; }
+.teaching-levels span.is-active b { background:#47aa7d; }
+.teaching-levels span.is-complete { color:#6c7b74; background:#fff; }
+.teaching-levels > i { height:3px; border-radius:3px; background:#d9dedb; }
+.teaching-playground { min-height:435px; padding:24px; display:grid; grid-template-columns:190px minmax(310px,1fr) 260px; align-items:center; gap:20px; border-radius:30px; background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(246,240,224,.92)); box-shadow:inset 0 0 0 2px rgba(91,145,119,.08); }
+.teaching-morami .morami-frame { width:190px; height:250px; }
+.teaching-problem { min-height:360px; padding:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:4px solid #e5dbbf; border-radius:30px; background:#fffdf6; box-shadow:0 10px 0 #e8ddc4,0 20px 35px rgba(82,70,44,.1); text-align:center; }
+.teaching-problem > span { padding:6px 10px; border-radius:9px; color:#755ea8; background:#eee8ff; font-size:11px; font-weight:950; }
+.teaching-problem h2 { margin:12px 0 4px; font-size:20px; line-height:1.4; }
+.teaching-problem .problem-visual { min-height:220px; padding:6px; display:grid; place-items:center; }
+.teaching-problem .money-visual { transform:scale(.88); }
+.teaching-answer { min-width:0; padding:17px; border:3px solid #7bcda8; border-radius:24px; background:#fff; box-shadow:0 8px 0 #c6e8d8; }
+.teaching-answer-label { margin:0 0 12px; color:#3b5c4d; font-size:14px; font-weight:950; }
+.teaching-answer-label b { margin-right:7px; padding:5px 7px; border-radius:8px; color:#fff; background:#49ac7f; font-size:11px; }
+.teaching-answer .teach-free-response { margin:0; padding:0; border:0; background:transparent; }
+.teaching-answer .teach-free-response textarea { min-height:90px; border-color:#b8dfcd; background:#fffefb; }
+.teaching-answer .teach-free-response > div { grid-template-columns:1fr; }
+.teaching-choice-list { display:grid; gap:9px; }
+.teaching-choice-list button { min-height:58px; padding:8px 12px; border:3px solid #8ad2b1; border-radius:17px; color:#304c3f; background:#fff; box-shadow:0 4px 0 #cae9da; cursor:pointer; font-size:17px; font-weight:950; }
+.teaching-choice-list button:hover { transform:translateY(-2px); background:#eefaf4; }
+.teaching-playground > .learned-card { width:100%; margin:0; padding:24px 14px; border-radius:28px; }
+.teaching-dialogue { min-height:112px; margin-top:18px; padding:18px 20px; display:grid; grid-template-columns:1fr auto; align-items:end; gap:16px; border:4px solid #78cda6; border-radius:25px; background:#fff; box-shadow:0 7px 0 #c2e5d5; }
+.teaching-dialogue b { display:block; margin-bottom:5px; font-size:20px; }
+.teaching-dialogue p { margin:0; color:#263c33; font-size:18px; line-height:1.45; font-weight:850; }
+.teaching-dialogue > button { min-width:112px; min-height:48px; border:0; border-radius:15px; color:#50615a; background:#eef2ef; cursor:pointer; font-weight:900; }
+.teaching-chat-history { display:none; }
+.won-mark { width:24px; height:24px; display:inline-grid; place-items:center; border:2px solid #d7b849; border-radius:50%; color:#8a6b15; background:#fff3b5; font-size:9px; font-style:normal; font-weight:950; vertical-align:middle; }
+.complete-secondary-actions { grid-template-columns:1fr; }
+
 /* Dictionary */
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; padding: 22px; display: grid; place-items: center; background: rgba(49,42,68,.38); backdrop-filter: blur(7px); animation: modalFade .22s ease; }
 @keyframes modalFade { from { opacity: 0; } }
@@ -692,3 +730,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .order-tray-total .is-over{color:#d95847}.figma-cafe-menu aside:has(.is-over){background:#fff1ec;box-shadow:0 9px 0 #efb7ac,0 16px 28px rgba(120,64,52,.1)}
 .cafe-sum-menu-picker{width:min(1000px,100%);margin:25px auto 0;padding:18px;display:grid;grid-template-columns:220px 1fr;gap:16px;border:4px solid #fff;border-radius:27px;background:#f4ead9;box-shadow:0 8px 0 #ddc8a8}.cafe-sum-menu-picker>div:first-child{padding:12px;display:flex;flex-direction:column;align-items:center;border-radius:20px;background:#fff}.cafe-sum-menu-picker>div:first-child img{width:150px;height:95px;object-fit:contain}.cafe-sum-menu-picker>div:first-child span{color:#6d796f;font-size:11px}.cafe-sum-menu-picker>div:first-child strong{margin-top:5px;text-align:center}.cafe-sum-menu-picker__choices{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.cafe-sum-menu-picker__choices button{min-width:0;padding:7px 4px;display:flex;flex-direction:column;align-items:center;border:3px solid #fff;border-radius:16px;color:#4f3528;background:#fff8e9;box-shadow:0 4px 0 #dfcfb4}.cafe-sum-menu-picker__choices button.is-selected{border-color:#73bd8b;background:#ebf8ed;box-shadow:0 4px 0 #73a982}.cafe-sum-menu-picker__choices img{width:90px;height:65px;object-fit:contain}.cafe-sum-menu-picker__choices span{font-size:11px;font-weight:900}.cafe-sum-menu-picker__choices b{margin-top:3px;color:#9b5f31;font-size:11px}.figma-cafe-sum__answer{width:190px;min-height:145px;padding:15px;display:grid;grid-template-columns:1fr auto;align-items:center;border:4px solid #fff;border-radius:25px;background:#e7f7e7;box-shadow:0 9px 0 #b9dbbb}.figma-cafe-sum__answer span{grid-column:1/3;color:#56745d;font-size:13px;font-weight:900}.figma-cafe-sum__answer input{width:120px;min-width:0;border:0;border-bottom:3px solid #78aa82;color:#3d7250;background:transparent;font-size:28px;font-weight:950;text-align:center;outline:none}.figma-cafe-sum__answer b{color:#3d7250}.cafe-change-order{width:min(610px,100%);margin:25px auto 0;padding:12px 24px;display:grid;grid-template-columns:180px 1fr;align-items:center;border:4px solid #fff;border-radius:27px;background:#fff3dd;box-shadow:0 8px 0 #e2cba3}.cafe-change-order>img{width:170px;height:190px;object-fit:contain}.cafe-change-order>div{display:grid;grid-template-columns:130px 1fr;align-items:center}.cafe-change-order>div>span{grid-column:1/3;color:#8e6244;font-size:12px;font-weight:950}.cafe-change-order>div img{width:120px;height:90px;object-fit:contain}.cafe-change-order>div strong{font-size:18px}
 @media(max-width:760px){.cafe-sum-menu-picker{grid-template-columns:1fr}.cafe-sum-menu-picker__choices{grid-template-columns:repeat(3,1fr)}.cafe-change-order{grid-template-columns:120px 1fr;padding:10px}.cafe-change-order>img{width:120px;height:150px}.cafe-change-order>div{grid-template-columns:90px 1fr}.cafe-change-order>div img{width:85px}.queue-story-lines i{height:64px;flex-basis:64px;transform:scale(.72);margin:-6px}}
+
+@media(max-width:760px){
+  .teaching-scene{padding:34px 10px 40px}.teaching-scene .chat-title h1{font-size:25px}.teaching-stage{min-height:0;padding:13px 9px 18px;border-radius:27px}.teaching-levels{grid-template-columns:1fr 12px 1fr 12px 1fr;gap:3px;margin-bottom:12px}.teaching-levels span{min-height:42px;padding:4px;flex-direction:column;gap:2px;font-size:9px;text-align:center}.teaching-levels span b{width:25px;height:20px;border-radius:6px;font-size:9px}.teaching-playground{min-height:0;padding:14px 10px;display:grid;grid-template-columns:100px 1fr;gap:10px}.teaching-morami .morami-frame{width:100px;height:145px}.teaching-problem{min-width:0;min-height:270px;padding:13px;grid-column:2}.teaching-problem h2{font-size:15px}.teaching-problem .problem-visual{min-height:170px;transform:scale(.78)}.teaching-answer,.teaching-playground>.learned-card{grid-column:1/3;width:100%;padding:13px}.teaching-choice-list{grid-template-columns:repeat(3,1fr);gap:6px}.teaching-choice-list button{min-height:54px;padding:5px;font-size:13px}.teaching-dialogue{min-height:125px;padding:15px;grid-template-columns:1fr}.teaching-dialogue b{font-size:17px}.teaching-dialogue p{font-size:15px}.teaching-dialogue>button{min-height:42px}.won-mark{width:21px;height:21px}
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { CafeJourney } from "./CafeJourney";
@@ -73,7 +72,7 @@ function simpleLearnedLine(session: Session) {
 }
 
 function simpleTeachPrompt(session: Session) {
-  return `‘${session.title}’가 헷갈려. 어떻게 하는지 쉽게 알려 줘.`;
+  return `이 문제를 잘 모르겠어. ${session.dictionaryProblem.prompt}`;
 }
 
 async function requestMoramiTurn(session: Session, event: MoramiEvent, fallbackDialogue: string, ladderLevel = 3, options: MoramiTurnOptions = {}) {
@@ -259,20 +258,6 @@ function Clock({ hour, minute, small = false }: { hour: number; minute: number; 
       ))}
       <i className="clock-hand clock-hand--hour" style={{ transform: `rotate(${hourDegrees}deg)` }} />
       <i className="clock-hand clock-hand--minute" style={{ transform: `rotate(${minuteDegrees}deg)` }} />
-      <i className="clock-center" />
-    </div>
-  );
-}
-
-function PointingClock({ onPick, marker }: { onPick: (number: number) => void; marker: number }) {
-  return (
-    <div className={`point-clock point-clock--${marker}`} aria-label={`시계에서 숫자 ${marker}을 눌러 보세요`}>
-      {[12, 3, 6, 9].map((number) => (
-        <button key={number} className={`point-number point-number--${number}`} onClick={() => onPick(number)}>
-          {number}
-        </button>
-      ))}
-      <i className="point-hand" />
       <i className="clock-center" />
     </div>
   );
@@ -653,7 +638,7 @@ function teachResponseMatches(response: string, session: Session) {
   const clean = (value: string) => value.replace(/[\s,._!?]/g, "").toLowerCase();
   const normalized = clean(response);
   if (!normalized) return false;
-  if ([session.fillCorrect, session.oneWordCorrect].some((word) => clean(word) === normalized)) return true;
+  if ([session.dictionaryProblem.correct, session.pointCorrect, session.fillCorrect, session.oneWordCorrect].some((word) => answersMatch(response, word) || clean(word) === normalized)) return true;
   const concepts = Array.from(new Set([session.fillCorrect, session.oneWordCorrect, ...session.targetSentence]))
     .filter((word) => clean(word).length >= 2 && !genericTeachWords.has(word));
   return concepts.filter((word) => normalized.includes(clean(word))).length >= 2;
@@ -935,7 +920,7 @@ function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void })
     ];
     return (
       <section className="onboarding-promise">
-        <div className="scene-balance">🪙 6,000원</div>
+        <div className="scene-balance"><span className="won-mark">원</span> 6,000원</div>
         <div className="promise-panel">
           <p className="eyebrow">오늘의 약속</p>
           <h1>카페에 가려면?</h1>
@@ -993,7 +978,7 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
 
   return (
     <section className="journey-hub journey-hub--home">
-      <div className="player-hud"><span>LV.{level}</span><b>⭐ {stars}</b><strong>🪙 {coinBalance.toLocaleString("ko-KR")}원</strong></div>
+      <div className="player-hud"><span>LV.{level}</span><b>⭐ {stars}</b><strong><i className="won-mark">원</i> {coinBalance.toLocaleString("ko-KR")}원</strong></div>
       <div className="home-room-main">
         <div className="home-room-copy">
           <p className="eyebrow">모르미의 생활 수학</p>
@@ -1067,10 +1052,8 @@ export function MoramiApp() {
   const [drillLocked, setDrillLocked] = useState(false);
   const [mastered, setMastered] = useState(false);
   const [ladder, setLadder] = useState(3);
-  const [selectedWords, setSelectedWords] = useState<Array<{ id: string; word: string }>>([]);
   const [teachText, setTeachText] = useState("");
   const [speechStatus, setSpeechStatus] = useState("");
-  const [showTeachHelp, setShowTeachHelp] = useState(false);
   const [teachMessages, setTeachMessages] = useState<TeachMessage[]>([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[0]) }]);
   const [teachSending, setTeachSending] = useState(false);
   const [teachSolved, setTeachSolved] = useState(false);
@@ -1104,7 +1087,11 @@ export function MoramiApp() {
   const selectedAreaSessions = useMemo(() => selectedArea?.sessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)) ?? [], [selectedArea]);
   const cafeConceptSessions = useMemo(() => cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
   const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
-  const sentenceBank = useMemo(() => activeSession.sentenceWords.map((word, index) => ({ id: `${variantSeed}-${sessionIndex}-${index}`, word })), [activeSession.sentenceWords, sessionIndex, variantSeed]);
+  const teachingProblem = activeSession.dictionaryProblem;
+  const teachingAnswerOptions = useMemo(
+    () => shuffleWords(Array.from(new Set([teachingProblem.correct, ...teachingProblem.answers])), variantSeed + sessionIndex * 61).slice(0, 3),
+    [sessionIndex, teachingProblem, variantSeed],
+  );
 
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
     setDialogue(fallbackDialogue);
@@ -1232,7 +1219,7 @@ export function MoramiApp() {
     setStage("teach");
     setExpression("confused");
     setDialogue(prompt);
-    setShowTeachHelp(false);
+    setLadder(3);
     setTeachText("");
     setSpeechStatus("");
     setTeachSending(false);
@@ -1244,8 +1231,7 @@ export function MoramiApp() {
     setExpression("confused");
     setDialogue(message);
     appendTeachMessage("morami", message);
-    setSelectedWords([]);
-    if (ladder > 0) setLadder((level) => level - 1);
+    if (ladder > 1) setLadder((level) => level - 1);
   }
 
   function solveTeaching(level: number, reply = `응! ${childName}가 알려 줘서 이제 알겠어.`, nextExpression: Expression = "happy", askForReply = true) {
@@ -1256,11 +1242,6 @@ export function MoramiApp() {
     appendTeachMessage("morami", reply);
     if (soundOn) playLearningChime();
     if (askForReply) void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy", level);
-  }
-
-  function checkSentence() {
-    if (selectedWords.map((token) => token.word).join("|") === activeSession.targetSentence.join("|")) solveTeaching(3);
-    else lowerLadder("순서가 조금 달라. 빈칸으로 같이 볼까?");
   }
 
   async function submitTeachText() {
@@ -1279,8 +1260,9 @@ export function MoramiApp() {
       conversation,
     });
     setTeachSending(false);
+    const directAnswerMatches = answersMatch(response, teachingProblem.correct);
     const understood = turn?.source === "anthropic" && typeof turn.understood === "boolean"
-      ? turn.understood
+      ? directAnswerMatches || turn.understood
       : teachResponseMatches(response, activeSession);
     if (understood) {
       solveTeaching(3, turn?.dialogue, turn?.expression ?? "happy", false);
@@ -1294,12 +1276,18 @@ export function MoramiApp() {
     }
   }
 
-  function openTeachHelp() {
-    setShowTeachHelp(true);
-    const helpMessage = "괜찮아. 아래 낱말로 같이 알려 줘.";
-    setDialogue(helpMessage);
+  function askForTeachHelp() {
+    if (ladder === 3) {
+      lowerLadder("괜찮아! 답을 보기에서 같이 골라 보자.");
+      return;
+    }
+    if (ladder === 2) {
+      lowerLadder("그럼 계산 방법부터 하나씩 생각해 보자.");
+      return;
+    }
     setExpression("calm");
-    appendTeachMessage("morami", helpMessage);
+    setDialogue(activeSession.hint);
+    appendTeachMessage("morami", `힌트야. ${activeSession.hint}`);
   }
 
   function startSpeechInput() {
@@ -1325,21 +1313,18 @@ export function MoramiApp() {
   }
 
   function answerLadder(answer: string, correct: string) {
-    if (answer === correct) {
+    if (answersMatch(answer, correct)) {
       solveTeaching(ladder);
       return;
     }
-    if (ladder > 0) {
-      lowerLadder(ladder === 2 ? "중요한 말 하나만 알려 줘." : "맞는 답을 눌러 줘.");
-    } else if (floorFails === 0) {
+    if (floorFails === 0) {
       setFloorFails(1);
       setExpression("confused");
-      setDialogue("사전을 보고 다시 골라 보자.");
-      setDictionaryOpen(true);
+      setDialogue("한 번 더 생각해 볼래? 아직 정답은 남아 있어.");
     } else {
-      setBrightCarry(true);
-      setExpression("bright");
-      setDialogue("괜찮아! 오늘은 여기까지 해도 돼.");
+      setFloorFails((count) => count + 1);
+      setExpression("calm");
+      setDialogue(`힌트야. ${activeSession.hint}`);
     }
   }
 
@@ -1420,11 +1405,9 @@ export function MoramiApp() {
     setDrillLocked(false);
     setMastered(false);
     setLadder(3);
-    setSelectedWords([]);
     setTeachText("");
     setSpeechStatus("");
     setTeachSending(false);
-    setShowTeachHelp(false);
     teachMessageId.current = 2;
     setTeachMessages([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[nextIndex]) }]);
     setTeachSolved(false);
@@ -1501,7 +1484,6 @@ export function MoramiApp() {
         <div className="top-actions">
           <button className={`round-control ${soundOn ? "is-music-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "배경 음악과 효과음 끄기" : "배경 음악과 효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /><span className="music-note" aria-hidden="true">♪</span></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
-          <Link className="report-link" href="/report">어른 리포트 <span className="link-arrow" /></Link>
         </div>
       </header>}
 
@@ -1515,7 +1497,7 @@ export function MoramiApp() {
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">
-          <div className="scene-balance">🪙 {coinBalance.toLocaleString("ko-KR")}원</div>
+          <div className="scene-balance"><span className="won-mark">원</span> {coinBalance.toLocaleString("ko-KR")}원</div>
           {!selectedArea ? (
             <>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>
@@ -1587,93 +1569,61 @@ export function MoramiApp() {
       )}
 
       {stage === "teach" && (
-        <section className="chat-scene">
+        <section className="chat-scene teaching-scene">
           <div className="chat-title">
-            <div><p className="eyebrow">내가 선생님!</p><h1>모르미의 생각을 고쳐 줘</h1></div>
-            <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 궁금해 사전</button>
+            <div><p className="eyebrow">내가 선생님!</p><h1>모르미에게 알려 주기</h1></div>
+            <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 별노트</button>
           </div>
-          <div className="chat-window">
-            <div className="morami-chat-row">
-              <Morami expression={expression} size="small" />
-              <div ref={teachThreadRef} className="teach-chat-thread" role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-                {teachMessages.map((message) => (
-                  <div className={`teach-message teach-message--${message.role}`} key={message.id}>
-                    <b>{message.role === "morami" ? "모르미" : childName}</b>
-                    <p>{message.text}</p>
-                  </div>
-                ))}
-              </div>
+          <div className="chat-window teaching-stage">
+            <div className="teaching-levels" aria-label={`도움 단계 L${ladder}`}>
+              <span className={ladder === 3 ? "is-active" : "is-complete"}><b>L3</b> 직접 답하기</span>
+              <i />
+              <span className={ladder === 2 ? "is-active" : ladder < 2 ? "is-complete" : ""}><b>L2</b> 답 고르기</span>
+              <i />
+              <span className={ladder === 1 ? "is-active" : ""}><b>L1</b> 방법 고르기</span>
             </div>
-            {!teachSolved && !brightCarry && (
-              <div className="ladder-card">
-                <div className="teach-free-response">
-                  <p><strong>내 말로 모르미에게 설명하기</strong><span>말하거나 직접 써도 돼요</span></p>
-                  <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="짧게 말해도 괜찮아요" rows={2} />
-                  <div><button type="button" className="speech-button" onClick={startSpeechInput} disabled={teachSending}>● 말로 알려주기</button><button type="button" className="send-teach-button" disabled={!teachText.trim() || teachSending} onClick={submitTeachText}>{teachSending ? "생각하는 중…" : "모르미에게 보내기"}</button></div>
-                  {speechStatus && <small>{speechStatus}</small>}
+            <div className="teaching-playground">
+              <div className="teaching-morami"><Morami expression={expression} /></div>
+              <article className="teaching-problem">
+                <span>모르미의 문제</span>
+                <h2>{teachingProblem.prompt}</h2>
+                <ProblemCard problem={teachingProblem} />
+              </article>
+              {!teachSolved && !brightCarry && (
+                <div className={`teaching-answer teaching-answer--l${ladder}`}>
+                  <p className="teaching-answer-label"><b>L{ladder}</b>{ladder === 3 ? "답을 직접 알려 줘" : ladder === 2 ? "맞는 답을 골라 줘" : "어떤 방법으로 풀까?"}</p>
+                  {ladder === 3 && <div className="teach-free-response">
+                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="답을 입력해 주세요" rows={2} />
+                    <div><button type="button" className="speech-button" onClick={startSpeechInput} disabled={teachSending}>● 말로 알려주기</button><button type="button" className="send-teach-button" disabled={!teachText.trim() || teachSending} onClick={submitTeachText}>{teachSending ? "생각하는 중…" : "완료!"}</button></div>
+                    {speechStatus && <small>{speechStatus}</small>}
+                  </div>}
+                  {ladder === 2 && <div className="teaching-choice-list">{teachingAnswerOptions.map((answer) => <button key={answer} onClick={() => answerLadder(answer, teachingProblem.correct)}>{readableChoice(answer)}</button>)}</div>}
+                  {ladder === 1 && <div className="teaching-choice-list">{activeSession.oneWordOptions.map((answer) => <button key={answer} onClick={() => answerLadder(answer, activeSession.oneWordCorrect)}>{answer}</button>)}</div>}
                 </div>
-                {!showTeachHelp ? (
-                  <button type="button" className="teach-help-button" onClick={openTeachHelp}>잘 모르겠어 · 도움 낱말 보기</button>
-                ) : (
-                  <div className="teach-help-panel">
-                    <div className="help-divider"><span>도움 낱말로 알려주기</span></div>
-                    <div className="ladder-topline"><span>천천히 한 단계씩</span><div>{[0,1,2,3].map((n) => <i key={n} className={n <= ladder ? "on" : ""} />)}</div></div>
-                    {ladder === 3 && (
-                      <>
-                        <p className="kid-prompt">낱말을 차례로 톡톡!</p>
-                        <div className="sentence-tray">
-                          {selectedWords.length ? selectedWords.map((token) => <button key={token.id} onClick={() => setSelectedWords((words) => words.filter((word) => word.id !== token.id))}>{token.word}</button>) : <span>여기에 문장을 만들어요</span>}
-                        </div>
-                        <div className="word-bank">
-                          {sentenceBank.map((token) => <button key={token.id} disabled={selectedWords.some((word) => word.id === token.id)} onClick={() => setSelectedWords((words) => [...words, token])}>{token.word}</button>)}
-                        </div>
-                        <button className="check-button" disabled={selectedWords.length !== activeSession.targetSentence.length} onClick={checkSentence}>이렇게 알려 줄래!</button>
-                      </>
-                    )}
-                    {ladder === 2 && (
-                      <>
-                        <p className="kid-prompt">빈칸에 들어갈 말은?</p>
-                        <div className="fill-sentence">{activeSession.fillBefore} <b>?</b> {activeSession.fillAfter}</div>
-                        <div className="choice-row">{activeSession.fillOptions.map((word) => <button key={word} onClick={() => answerLadder(word, activeSession.fillCorrect)}>{word}</button>)}</div>
-                        <p className="disguise-hint"><UiIcon name="bulb" size="small" /> {activeSession.hint}</p>
-                      </>
-                    )}
-                    {ladder === 1 && (
-                      <>
-                        <p className="kid-prompt">{activeSession.oneWordPrompt}</p>
-                        <div className="choice-row">{activeSession.oneWordOptions.map((word) => <button key={word} onClick={() => answerLadder(word, activeSession.oneWordCorrect)}>{word}</button>)}</div>
-                      </>
-                    )}
-                    {ladder === 0 && (
-                      <>
-                        <p className="kid-prompt">{activeSession.pointPrompt}</p>
-                        {activeSession.pointClockMarker ? (
-                          <PointingClock marker={activeSession.pointClockMarker} onPick={(number) => answerLadder(String(number), activeSession.pointCorrect)} />
-                        ) : (
-                          <div className="point-choice-grid">{activeSession.pointOptions.map((answer) => <button key={answer} onClick={() => answerLadder(answer, activeSession.pointCorrect)}>{answer}</button>)}</div>
-                        )}
-                        <p className="tap-hint">답을 톡 눌러서 알려 줘</p>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            {(teachSolved || brightCarry) && (
-              <div className="learned-card">
-                <UiIcon name={teachSolved ? "star" : "sun"} size="large" />
-                <h2>{teachSolved ? "모르미가 이해했어!" : "오늘의 배움을 챙겼어!"}</h2>
-                <p>{teachSolved ? `${childName}가 알려 준 말로 다시 해 볼게.` : "내일 다시 만나면 한 번 더 알려 줘."}</p>
-                <button className="primary-button" onClick={goWrap}>별노트에 적기 <span className="button-arrow" /></button>
-              </div>
-            )}
+              )}
+              {(teachSolved || brightCarry) && (
+                <div className="learned-card">
+                  <UiIcon name={teachSolved ? "star" : "sun"} size="large" />
+                  <h2>{teachSolved ? "모르미가 이해했어!" : "오늘의 배움을 챙겼어!"}</h2>
+                  <p>{teachSolved ? `${childName}가 알려 준 말로 다시 해 볼게.` : "내일 다시 만나면 한 번 더 알려 줘."}</p>
+                  <button className="primary-button" onClick={goWrap}>다음으로 <span className="button-arrow" /></button>
+                </div>
+              )}
+            </div>
+            <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
+              <div><b>모르미</b><p>{dialogue}</p></div>
+              {!teachSolved && !brightCarry && <button type="button" onClick={askForTeachHelp}>{ladder > 1 ? "잘 모르겠어" : "힌트 보기"}</button>}
+            </div>
+            <div className="teaching-chat-history" aria-hidden="true">
+              {teachMessages.map((message) => <span key={message.id}>{message.role}: {message.text}</span>)}
+            </div>
           </div>
         </section>
       )}
 
       {stage === "teachReward" && (
         <section className="teach-reward-scene">
-          <div className="scene-balance">🪙 {(coinBalance + sessionCoins).toLocaleString("ko-KR")}원</div>
+          <div className="scene-balance"><span className="won-mark">원</span> {(coinBalance + sessionCoins).toLocaleString("ko-KR")}원</div>
           <div className="teach-reward-morami"><Morami expression="celebrate" /></div>
           <div className="teach-reward-copy">
             <div className="teach-reward-dialogue"><b>모르미</b><p>{childName}, 알려줘서 고마워~!</p></div>
@@ -1730,7 +1680,6 @@ export function MoramiApp() {
             <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>{cafeUnlockedAfterLesson ? "열린 카페로 나가기" : "모르미와 집으로"} <span className="button-arrow" /></button>
             <div className="complete-secondary-actions">
               <button className="complete-report-link" onClick={showCurriculum}>전체 수학 과정</button>
-              <Link className="complete-report-link" href="/report">오늘 기록 보기</Link>
             </div>
           </div>
         </section>

@@ -132,8 +132,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /correctPosition = Math\.abs\(seed\) % \(answers\.length \+ 1\)/);
   assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, seed\), seed\)/);
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
-  assert.match(app, /sentenceBank\.map/);
-  assert.doesNotMatch(app, /selectedWords\.includes\(word\)/);
+  assert.match(app, /const teachingProblem = activeSession\.dictionaryProblem/);
   assert.match(app, /mark === missing \? "\?" : mark/);
   assert.doesNotMatch(app, /<i \/>\{mark\}<\/span>/);
   assert.match(app, /extraLifeProblem/);
@@ -142,8 +141,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /보기에서 골라 모르미에게 알려 줘요/);
   assert.match(app, /mission-morami/);
   assert.match(app, /● 동그라미/);
-  assert.match(app, /잘 모르겠어 · 도움 낱말 보기/);
-  assert.match(app, /showTeachHelp/);
+  assert.match(app, /L3<\/b> 직접 답하기/);
+  assert.match(app, /L2<\/b> 답 고르기/);
+  assert.match(app, /L1<\/b> 방법 고르기/);
+  assert.match(app, /askForTeachHelp/);
+  assert.match(app, /teachingAnswerOptions/);
+  assert.match(app, /activeSession\.oneWordOptions/);
+  assert.match(css, /\.teaching-playground/);
   assert.match(app, /teachMessages\.map/);
   assert.match(app, /teachResponseMatches/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
@@ -159,7 +163,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /tenFrameItems/);
   assert.match(app, /말로 알려주기/);
   assert.match(app, /SpeechRecognition/);
-  assert.doesNotMatch(css, /\.report-link \{ display:none; \}/);
+  assert.doesNotMatch(app, /href="\/report"/);
+  assert.doesNotMatch(app, /🪙|💰|💵/);
+  assert.match(app, /won-mark/);
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
   assert.match(app, /const notes = \[659\.25, 783\.99, 1046\.5\]/);
