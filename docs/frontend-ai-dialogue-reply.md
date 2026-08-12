@@ -75,7 +75,42 @@
 
 또한 URL 변수 이름은 `{session_id}`가 아니라 `{conversation_id}`로 통일한다. 일반 학습 세션과 AI 대화 세션을 혼동하지 않기 위함이다.
 
-## 5. API 분리안
+## 5. 공식 영문명과 호환 이전 원칙
+
+현재 프론트 코드에는 `morami`, `mormi`, `mormey` 세 표기가 섞여 있다. 신규 코드와 외부 계약에서 사용하는 공식 영문명은 **`mormi`**로 통일한다.
+
+| 대상 | 신규 표기 |
+|---|---|
+| 외부 API | `/api/mormi/respond` |
+| FastAPI 패키지 | `mormi_api` |
+| TypeScript 타입 | `MormiTurn`, `MormiEvent` |
+| 소스 파일 | `mormi-content.ts` |
+| 이미지 경로 | `/mormi/*` |
+| 브라우저 저장 키 | `mormi-*` |
+
+명칭 변경은 참조와 기존 사용자 데이터를 깨뜨리지 않도록 단계적으로 진행한다.
+
+1. 신규 Next.js BFF 경로 `/api/mormi/respond`를 기본 경로로 만든다.
+2. 기존 `/api/morami/respond`는 일정 기간 같은 핸들러를 호출하는 호환 경로로 유지한다.
+3. 코드의 타입·변수·파일명은 `Mormi`/`mormi`로 변경하고 테스트의 참조도 함께 갱신한다.
+4. 이미지 파일은 `/mormi/*`로 복사 또는 이동한 뒤 기존 `/morami/*` 참조가 필요한 기간에는 별칭을 유지한다.
+5. 브라우저 저장 데이터는 새 `mormi-*` 키를 먼저 읽고, 값이 없으면 기존 `morami-*`와 `mormey-*` 키를 읽어 새 키로 한 번만 마이그레이션한다.
+6. 호환 키와 경로는 운영 데이터 마이그레이션이 확인된 뒤 별도 버전에서 제거한다.
+
+예시 저장 키 마이그레이션:
+
+```ts
+const completedSessions =
+  localStorage.getItem("mormi-completed-sessions") ??
+  localStorage.getItem("morami-completed-sessions") ??
+  "[]";
+
+localStorage.setItem("mormi-completed-sessions", completedSessions);
+```
+
+API 문서, 환경 변수, 이벤트 이름, 새 데이터베이스 스키마에는 과거 표기인 `morami`와 `mormey`를 새로 추가하지 않는다. 화면에 표시하는 한글 이름은 계속 **모르미**를 사용한다.
+
+## 6. API 분리안
 
 ### 일반 학습 API
 
@@ -114,9 +149,9 @@ GET  /v1/learners/{learner_id}/star-notes
   → FastAPI /v1/conversations/*
 ```
 
-현재 `/api/morami/respond`는 첫 시나리오 마이그레이션이 끝날 때까지 임시 호환 라우트로 유지할 수 있다. 서비스 키는 Next.js 서버의 `MORMI_DIALOGUE_SERVICE_KEY`에만 두고 브라우저 번들에는 포함하지 않는다.
+신규 `/api/mormi/respond`를 기본 BFF로 사용한다. 현재 `/api/morami/respond`는 첫 시나리오와 기존 배포 데이터의 마이그레이션이 끝날 때까지 같은 핸들러를 호출하는 임시 호환 라우트로 유지한다. 서비스 키는 Next.js 서버의 `MORMI_DIALOGUE_SERVICE_KEY`에만 두고 브라우저 번들에는 포함하지 않는다.
 
-## 6. 반복학습 결과 전달 방식
+## 7. 반복학습 결과 전달 방식
 
 동일 데이터를 일반 백엔드와 AI 대화 백엔드에 중복 저장하지 않는 것이 우선이다.
 
@@ -149,7 +184,7 @@ GET  /v1/learners/{learner_id}/star-notes
 
 원문 문제, 정답 문장, 아이 이름은 대화 시작 요청에 넣지 않는다.
 
-## 7. 프론트가 원하는 턴 계약
+## 8. 프론트가 원하는 턴 계약
 
 응답 최상위 필드는 `session_id` 대신 `conversation_id`를 사용한다.
 
@@ -249,7 +284,7 @@ type TurnContract = {
 
 `pedagogy`는 개발·QA에서만 사용하고 아동 UI에는 직접 표시하지 않는다.
 
-## 8. 가르치기 완료와 500원 보상 연결
+## 9. 가르치기 완료와 500원 보상 연결
 
 프론트가 `note_update` 유무나 사다리 단계를 보고 보상 가능 여부를 추론하면 안 된다. AI 대화 백엔드가 다음을 반환한다.
 
@@ -279,7 +314,7 @@ type TurnContract = {
 teach-reward:{learning_session_id}:{conversation_id}
 ```
 
-## 9. 응답 전송과 멱등 처리
+## 10. 응답 전송과 멱등 처리
 
 프론트는 한 번의 사용자 행동에 UUID `response_id`를 하나 생성한다.
 
@@ -310,7 +345,7 @@ teach-reward:{learning_session_id}:{conversation_id}
 
 대화 응답은 오프라인 큐에서 나중에 일괄 전송하지 않는다. 다음 질문을 받아야 진행할 수 있기 때문이다.
 
-## 10. 입력 컴포넌트 매핑
+## 11. 입력 컴포넌트 매핑
 
 | `turn.input.kind` | 프론트 UI | 요청 `type` |
 |---|---|---|
@@ -325,7 +360,7 @@ teach-reward:{learning_session_id}:{conversation_id}
 
 한 턴에는 하나의 입력 방식만 활성화한다. 정오나 다음 입력 종류는 프론트가 결정하지 않는다.
 
-## 11. 표정 매핑
+## 12. 표정 매핑
 
 백엔드는 파일 경로 대신 의미 단위 `mood`를 반환한다.
 
@@ -341,7 +376,7 @@ const mormiMoodImage = {
 
 모르미 대사는 최대 50자·두 줄 이내로 제한한다. 실제 카페 장면에서는 “연습”, “문제”, “정답”, “미션 성공”처럼 몰입을 깨는 메타 표현을 대화 문장에 넣지 않는다. 게임 HUD의 퀘스트 표시는 프론트 연출이므로 별도로 유지할 수 있다.
 
-## 12. 도움 카드와 별노트
+## 13. 도움 카드와 별노트
 
 ### 도움 카드
 
@@ -359,7 +394,7 @@ const mormiMoodImage = {
 - 백엔드가 `note_id`로 중복 생성을 방지한다.
 - 프론트는 별노트 문장을 수정하거나 새로 만들어내지 않는다.
 
-## 13. 대화 원문과 개인정보
+## 14. 대화 원문과 개인정보
 
 일반 학습 기록과 AI 대화 원문을 분리한다.
 
@@ -381,7 +416,7 @@ const mormiMoodImage = {
 }
 ```
 
-## 14. 단계별 연결 순서
+## 15. 단계별 연결 순서
 
 ### 1차 — 계약과 BFF
 
@@ -411,7 +446,7 @@ const mormiMoodImage = {
 - 거스름돈 받기
 - 카페 돌다리 진행도와 대화 상태 복구
 
-## 15. 구현 전 백엔드 팀 확인 요청
+## 16. 구현 전 백엔드 팀 확인 요청
 
 다음 항목에 답을 받으면 프론트 연결을 시작할 수 있다.
 
@@ -427,8 +462,9 @@ const mormiMoodImage = {
 10. 원문 저장 동의 플래그와 보존 기간 정책은 누가 관리하는가?
 11. 별노트 저장 주체는 AI 대화 DB인가, 일반 학습 DB인가?
 12. 개발·스테이징 FastAPI 주소와 BFF용 인증 헤더 이름은 무엇인가?
+13. 기존 `/api/morami/respond` 호환 경로의 제거 기준과 종료 버전은 무엇으로 정할 것인가?
 
-## 16. 완료 기준
+## 17. 완료 기준
 
 첫 연결은 아래 항목이 모두 통과하면 완료로 본다.
 
@@ -441,7 +477,9 @@ const mormiMoodImage = {
 - 성공 완료에서만 가르치기 500원이 한 번 지급된다.
 - PostHog에 이름·원문·별노트 문장이 없는 것을 확인한다.
 - 새로고침 후 진행 중 대화의 최신 턴을 복구한다.
+- 기존 `morami-*` 또는 `mormey-*` 저장 데이터가 새 `mormi-*` 키로 손실 없이 이전된다.
+- 기존 `/api/morami/respond` 호출도 호환 기간에는 동일한 대화 응답을 받는다.
 
-## 17. 한 문장 합의안
+## 18. 한 문장 합의안
 
 > 프론트는 백엔드가 반환한 턴을 그대로 렌더링하고, AI 대화 백엔드는 아이의 이해 상태와 다음 지원을 결정하며, 일반 학습 백엔드는 진행도와 보상을 최종 확정한다.
