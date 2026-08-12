@@ -29,6 +29,7 @@ npm run dev:vercel
 - `mormi-web/app/CafeJourney.tsx`: Figma 돌다리, 줄 비교, 메뉴 선택, 합계 입력, 돈·거스름돈 조합
 - `mormi-web/app/journey-config.ts`: 카페 해금에 필요한 과정과 화폐 정의
 - `mormi-web/public/figma/cafe/`: Figma에서 내려받은 카페 메뉴와 스테이지 원본 PNG
+- 카페 전 화면은 `cafe-bakery-cute-v4.png` 배경 위에 동일한 크림·캐러멜·민트 UI를 사용하며, 메뉴 PNG는 Figma `74:6`의 이름과 순서에 맞춰 관리합니다.
 - `mormi-web/app/api/morami/respond/route.ts`: Anthropic 응답과 로컬 대체 응답
 - `mormi-web/instrumentation-client.ts`: 개인정보 보호형 PostHog 초기화
 - `mormi-web/public/cafe-money/`: 100원, 500원, 1,000원, 5,000원 투명 PNG

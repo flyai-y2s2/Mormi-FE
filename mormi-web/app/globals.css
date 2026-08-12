@@ -486,3 +486,106 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .onboarding-greeting h1{font-size:clamp(34px,4.4vw,54px);letter-spacing:-3px}
 .home-room-copy h1{margin-bottom:24px;font-size:clamp(34px,4.2vw,52px);letter-spacing:-3px}
 @media(max-width:760px){.onboarding-greeting h1{font-size:32px;letter-spacing:-2px}.home-room-copy h1{font-size:30px;letter-spacing:-2px}}
+
+/* Cafe visual repair: one café room, stable card geometry, faithful Figma menu order */
+.figma-cafe{
+  --cafe-ink:#3c3028;
+  --cafe-caramel:#b9794d;
+  --cafe-caramel-dark:#855234;
+  --cafe-mint:#6ab89f;
+  --cafe-cream:#fffaf2;
+  --cafe-line:#e6ccb3;
+  padding:18px 24px 46px;
+  color:var(--cafe-ink);
+  background:
+    linear-gradient(180deg,rgba(255,250,244,.2) 0%,rgba(252,244,235,.7) 68%,rgba(251,244,236,.96) 100%),
+    url('/scenes/cafe-bakery-cute-v4.png') center top/cover fixed;
+}
+.figma-cafe__bar{
+  min-height:62px;margin-bottom:14px;padding:7px 12px;
+  grid-template-columns:120px auto 1fr;gap:18px;
+  border:1px solid rgba(218,190,163,.9);border-radius:20px;
+  background:rgba(255,252,247,.94);box-shadow:0 10px 28px rgba(106,73,51,.12);
+  backdrop-filter:blur(10px);
+}
+.figma-cafe__bar>button{border-color:#dfc1a6;color:#70472f;background:#fffaf5}
+.figma-cafe__place{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#6c4028;font-size:17px;font-weight:950}
+.figma-cafe__place>span{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#f4dfc7}
+.figma-cafe__bar .figma-cafe__steps{justify-content:flex-end}
+.figma-cafe__bar .figma-cafe__steps span.is-active i{background:var(--cafe-caramel)}
+.figma-cafe__bar .figma-cafe__steps span:not(:last-child)::after{border-color:#d6b899}
+
+.figma-cafe-map,.figma-cafe-panel{
+  width:min(1133px,100%);min-height:700px;
+  border:1px solid rgba(222,193,167,.95);border-radius:30px;
+  box-shadow:0 26px 70px rgba(91,62,42,.18),inset 0 1px 0 rgba(255,255,255,.92);
+}
+.figma-cafe-panel{
+  padding:30px 34px;
+  background:
+    linear-gradient(rgba(255,252,246,.94),rgba(255,249,240,.97)),
+    url('/scenes/cafe-bakery-cute-v4.png') center/cover;
+}
+.figma-cafe-panel>h1,.figma-cafe-panel__heading h1{color:#4b3426;font-size:clamp(24px,2.3vw,31px);font-weight:900}
+.figma-cafe-panel>h2{margin-top:34px;color:#5c4639;font-size:clamp(23px,2.2vw,29px);font-weight:850}
+.figma-cafe-action,.figma-cafe-done button{
+  border:1px solid #57967f;color:#fff;background:linear-gradient(180deg,#79cbb0,#55a88d);box-shadow:0 6px 0 #397f69;font-weight:950;
+}
+.figma-cafe-action:disabled{box-shadow:none}
+.figma-cafe-feedback{padding:7px 14px;border-radius:12px;background:rgba(239,249,240,.9)}
+
+.figma-cafe-menu__layout{grid-template-columns:minmax(0,1fr) 225px;gap:26px}
+.figma-cafe-menu__grid{min-width:0;gap:18px}
+.figma-cafe-menu__grid button{
+  height:202px;padding:9px 15px 13px;grid-template-rows:112px 1fr;
+  border:2px solid var(--cafe-line);background:rgba(255,244,222,.95);box-shadow:0 8px 18px rgba(114,77,48,.08);
+}
+.figma-cafe-menu__grid button:hover{transform:translateY(-2px);border-color:#cca27b;box-shadow:0 11px 22px rgba(114,77,48,.14)}
+.figma-cafe-menu__grid button.is-selected{border-color:#66a47f;background:#edf7eb;box-shadow:0 0 0 2px rgba(102,164,127,.16),0 10px 22px rgba(71,119,88,.14)}
+.figma-cafe-menu__grid img{width:100%;height:112px;object-fit:contain}
+.figma-cafe-menu__grid b{font-size:18px;font-weight:850}.figma-cafe-menu__grid strong{font-weight:750}
+.figma-cafe-panel__heading>strong{border-color:#ddbd77;background:#ffe79b;color:#5b422c;font-weight:850}
+.figma-cafe-menu aside{min-width:0;min-height:422px;border:2px solid #cfe0c8;background:rgba(240,247,235,.96);box-shadow:0 8px 18px rgba(78,104,68,.08)}
+.figma-cafe-menu aside button{margin:auto 0 0;border-radius:16px;color:#fff;background:linear-gradient(#77c5a9,#56aa8f);font-weight:900}
+
+.figma-cafe-sum__equation{
+  width:min(960px,100%);margin:58px auto 0;
+  display:grid;grid-template-columns:minmax(210px,300px) 42px minmax(210px,300px) 42px minmax(190px,240px);gap:12px;
+}
+.figma-cafe-sum__equation>div{display:contents}
+.figma-cafe-sum__equation article{width:auto;min-width:0;min-height:220px;padding:24px;border:2px solid #ead4b7;background:rgba(255,241,211,.96);box-shadow:0 10px 22px rgba(117,80,49,.08)}
+.figma-cafe-sum__equation article span{font-size:22px;font-weight:850}.figma-cafe-sum__equation article strong{margin-top:27px;font-size:30px;font-weight:800;white-space:nowrap}
+.figma-cafe-sum__equation>b,.figma-cafe-sum__equation>div>b{display:grid;place-items:center;font-size:38px;font-weight:900}
+.figma-cafe-sum__equation label{width:auto;min-width:0;min-height:160px;padding:24px 20px;display:flex;flex-direction:column;justify-content:center;border:2px solid #cbe0ca;background:rgba(232,245,229,.98)}
+.figma-cafe-sum__equation label>span{font-size:17px;font-weight:850;white-space:nowrap}
+.figma-cafe-sum__equation label>div{width:100%;display:flex;align-items:baseline;justify-content:center;gap:5px}
+.figma-cafe-sum__equation input{width:calc(100% - 28px);font-size:31px;font-weight:900;text-align:center;white-space:nowrap}
+.figma-cafe-sum__equation input::placeholder{color:#779279}.figma-cafe-sum__equation small{flex:0 0 auto;font-size:21px;white-space:nowrap}
+.figma-cafe-money-hint{width:min(760px,92%);margin-top:48px;padding:15px 20px;gap:8px;background:rgba(232,240,255,.94)}
+.figma-cafe-money-hint span{width:82px;display:flex;flex-direction:column;align-items:center;color:#455b78;font-size:11px;line-height:1.05}
+.figma-cafe-money-hint img{width:76px;height:38px;object-fit:contain}.figma-cafe-money-hint b{white-space:nowrap}
+
+.figma-cafe-queue::before{background:rgba(235,242,255,.9)}
+.figma-cafe-queue__choice button{border:1px solid #e2cbaa;background:#f8e8c9}.figma-cafe-queue__choice button:last-child{background:#e7f3e4}
+.figma-cafe-pay__layout>aside,.figma-cafe-wallet article{background:rgba(255,248,237,.96)}
+.figma-cafe-change__equation{border:1px solid #e2c8a8;background:rgba(248,231,202,.95)}
+.figma-cafe-change__builder aside{background:rgba(235,242,255,.96)}
+
+@media(max-width:900px){
+  .figma-cafe__bar{grid-template-columns:105px 1fr}.figma-cafe__place{display:none}.figma-cafe__bar .figma-cafe__steps{justify-content:center}
+  .figma-cafe-sum__equation{grid-template-columns:minmax(150px,1fr) 32px minmax(150px,1fr);gap:8px}
+  .figma-cafe-sum__equation>div:nth-child(2)+b{display:none}
+  .figma-cafe-sum__equation label{grid-column:1/4;width:min(310px,100%);justify-self:center;min-height:112px}
+}
+@media(max-width:760px){
+  .figma-cafe{padding:7px 6px 24px;background-attachment:scroll;background-position:center top}
+  .figma-cafe__bar{grid-template-columns:78px 1fr;padding:5px 7px;border-radius:16px}.figma-cafe__bar>button{min-height:39px}
+  .figma-cafe-map,.figma-cafe-panel{border-radius:22px}.figma-cafe-panel{padding:20px 12px;background:linear-gradient(rgba(255,252,246,.96),rgba(255,249,240,.98)),url('/scenes/cafe-bakery-cute-v4.png') center/cover}
+  .figma-cafe-menu__grid{gap:9px}.figma-cafe-menu__grid button{height:174px;grid-template-rows:96px 1fr}.figma-cafe-menu__grid img{height:96px}
+  .figma-cafe-menu aside{min-height:230px}.figma-cafe-menu aside button{margin-top:14px}
+  .figma-cafe-sum__equation{margin-top:30px;grid-template-columns:1fr 26px 1fr;gap:6px}
+  .figma-cafe-sum__equation article{width:auto;min-height:158px;padding:12px 7px}.figma-cafe-sum__equation article span{font-size:16px}.figma-cafe-sum__equation article strong{margin-top:18px;font-size:19px}
+  .figma-cafe-sum__equation>b,.figma-cafe-sum__equation>div>b{font-size:27px}
+  .figma-cafe-sum__equation label{grid-column:1/4;min-height:96px;padding:12px}.figma-cafe-sum__equation input{font-size:26px}
+  .figma-cafe-money-hint{width:100%;margin-top:22px;padding:10px 7px}.figma-cafe-money-hint span{width:61px}.figma-cafe-money-hint img{width:58px;height:30px}
+}

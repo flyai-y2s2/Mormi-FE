@@ -59,7 +59,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /data-figma-node="74:6"/);
   assert.match(cafe, /data-figma-node="74:8"/);
   assert.match(cafe, /data-figma-node="74:10"/);
-  assert.match(cafe, /figma\/cafe\/strawberry-juice\.png/);
+  assert.match(cafe, /id: "milk", name: "우유"[^\n]+milk\.png\?v=2/);
+  assert.match(cafe, /id: "strawberry-juice", name: "딸기주스"[^\n]+strawberry-juice\.png\?v=2/);
+  assert.match(cafe, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
+  assert.match(cafe, /figma-cafe__place/);
+  assert.doesNotMatch(cafe, /figma-cafe-sum__equation[\s\S]{0,600}<Image src=\{item\.image\}/);
   assert.match(cafe, /changePaymentMoney/);
   assert.match(cafe, /changeChangeMoney/);
   assert.match(cafe, /직원에게 내기/);

@@ -8,12 +8,12 @@ import { cafeMoney, cafeStations } from "./journey-config";
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "pay" | "change" | "done";
 
 const menu = [
-  { id: "americano", name: "아메리카노", price: 3000, image: "/figma/cafe/americano.png" },
-  { id: "milk", name: "우유", price: 2000, image: "/figma/cafe/milk.png" },
-  { id: "strawberry-juice", name: "딸기주스", price: 4000, image: "/figma/cafe/strawberry-juice.png" },
-  { id: "cookie", name: "쿠키", price: 2000, image: "/figma/cafe/cookie.png" },
-  { id: "strawberry-cake", name: "딸기케이크", price: 3000, image: "/figma/cafe/strawberry-cake.png" },
-  { id: "sandwich", name: "샌드위치", price: 4000, image: "/figma/cafe/sandwich.png" },
+  { id: "americano", name: "아메리카노", price: 3000, image: "/figma/cafe/americano.png?v=2" },
+  { id: "milk", name: "우유", price: 2000, image: "/figma/cafe/milk.png?v=2" },
+  { id: "strawberry-juice", name: "딸기주스", price: 4000, image: "/figma/cafe/strawberry-juice.png?v=2" },
+  { id: "cookie", name: "쿠키", price: 2000, image: "/figma/cafe/cookie.png?v=2" },
+  { id: "strawberry-cake", name: "딸기케이크", price: 3000, image: "/figma/cafe/strawberry-cake.png?v=2" },
+  { id: "sandwich", name: "샌드위치", price: 4000, image: "/figma/cafe/sandwich.png?v=2" },
 ] as const;
 
 const stationCopy = [
@@ -147,7 +147,8 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     <section className={`figma-cafe figma-cafe--${step}`}>
       <div className="figma-cafe__bar">
         <button onClick={step === "overview" ? onBack : returnToMap}>← {step === "overview" ? "외출 장소" : "돌다리"}</button>
-        <div aria-label="카페 진행 단계">
+        <strong className="figma-cafe__place"><span aria-hidden="true">☕</span> 모르미 카페</strong>
+        <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
         </div>
       </div>
@@ -203,10 +204,12 @@ export function CafeJourney({ onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-sum" data-figma-node="74:8">
           <h1>3. 메뉴 값 합하기</h1><h2>고른 메뉴의 값을 모두 더해 봐요</h2>
           <div className="figma-cafe-sum__equation">
-            {selectedItems.map((item, index) => <div key={item.id}><article><Image src={item.image} alt="" width={130} height={90} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index < selectedItems.length - 1 && <b>＋</b>}</div>)}
-            <b>=</b><label><span>합계</span><input aria-label="메뉴 합계" inputMode="numeric" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value.replace(/[^0-9]/g, "")); setSumFeedback(""); }} placeholder="?" /><small>원</small></label>
+            {selectedItems.map((item, index) => <div key={item.id}><article><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index < selectedItems.length - 1 && <b aria-hidden="true">＋</b>}</div>)}
+            <b aria-hidden="true">=</b><label><span>합계</span><div><input aria-label="메뉴 합계" inputMode="numeric" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value.replace(/[^0-9]/g, "")); setSumFeedback(""); }} placeholder="?" /><small>원</small></div></label>
           </div>
-          <div className="figma-cafe-money-hint">{Array.from({ length: Math.ceil(selectedTotal / 1000) }, (_, index) => <span key={index}>1,000원</span>)}</div>
+          <div className="figma-cafe-money-hint" aria-label={`천 원짜리 ${Math.ceil(selectedTotal / 1000)}장`}>
+            {Array.from({ length: Math.ceil(selectedTotal / 1000) }, (_, index) => <span key={index}><Image src="/cafe-money/1000.png" alt="" width={92} height={48} unoptimized /><b>1,000원</b></span>)}
+          </div>
           {sumFeedback && <p className="figma-cafe-feedback" role="status">{sumFeedback}</p>}
           <button className="figma-cafe-action" onClick={checkSum} disabled={!sumAnswer}>합계 확인</button>
         </main>
