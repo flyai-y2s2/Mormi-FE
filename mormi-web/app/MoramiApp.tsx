@@ -365,6 +365,17 @@ function shuffleWords(words: string[], seed: number) {
   return shuffled;
 }
 
+function shuffledCountingValues(seed: number) {
+  const values = Array.from({ length: 10 }, (_, index) => index + 1);
+  let state = Math.abs(seed) + 1;
+  for (let index = values.length - 1; index > 0; index -= 1) {
+    state = (state * 9301 + 49297) % 233280;
+    const target = state % (index + 1);
+    [values[index], values[target]] = [values[target], values[index]];
+  }
+  return values;
+}
+
 function fourAnswerCandidates(problem: Problem) {
   const candidates: string[] = [];
   const numberParts = problem.correct.match(/\d[\d,]*/g) ?? [];
@@ -952,6 +963,9 @@ export function MoramiApp() {
   const [variantSeed, setVariantSeed] = useState(1);
   const activeSession = useMemo(() => {
     const base = sessions[sessionIndex];
+    const countingValues = base.id === "number-count"
+      ? shuffledCountingValues(variantSeed + sessionIndex * 59)
+      : null;
     return {
       ...base,
       fillOptions: shuffleWords(base.fillOptions, variantSeed + sessionIndex * 43),
@@ -962,7 +976,8 @@ export function MoramiApp() {
         const problem = base.drills[index % base.drills.length];
         const cycle = Math.floor(index / base.drills.length);
         const seed = variantSeed + index * 11 + cycle * 130;
-        return shuffleProblemAnswers(varyProblem(problem, seed), seed);
+        const variationSeed = countingValues ? countingValues[index] - 1 : seed;
+        return shuffleProblemAnswers(varyProblem(problem, variationSeed), seed);
       }),
     };
   }, [sessionIndex, variantSeed]);
