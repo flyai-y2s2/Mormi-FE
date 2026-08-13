@@ -1204,7 +1204,9 @@ export function MoramiApp() {
       applyTeachingConversation(await startHomeTeaching(sessionId));
     } catch (error) {
       console.error("[mormi-api] 가르치기 시작 실패", error);
-      setTeachError("가르치기를 준비하지 못했어요. 잠시 후 다시 눌러 주세요.");
+      setTeachError(error instanceof ApiError
+        ? error.message
+        : "가르치기를 준비하지 못했어요. 잠시 후 다시 눌러 주세요.");
     } finally {
       setTeachSending(false);
     }

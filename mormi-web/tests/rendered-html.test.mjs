@@ -258,6 +258,8 @@ test("production dialogue flows through deployed Spring BE while the AI BFF stay
   assert.match(dialogue, /stage_progress\?:/);
   assert.match(dialogue, /verified_facts:/);
   assert.match(apiClient, /const BASE_URL = "\/api\/be"/);
+  assert.match(apiClient, /REQUEST_TIMEOUT_MS = 20_000/);
+  assert.match(apiClient, /request_timeout/);
   assert.doesNotMatch(apiClient, /NEXT_PUBLIC_API_BASE_URL/);
   assert.match(backendProxy, /process\.env\.BACKEND_ORIGIN/);
   assert.match(backendProxy, /authorization/);
