@@ -622,11 +622,16 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             <span>CAFE QUEST</span>
             <h1>모르미와 카페에 왔어요!</h1>
             <p>스테이지를 하나씩 완료하고 주문에 성공해 봐요.</p>
+            {/* 카드 위에 진행도를 한 줄로 보여 줘야 지금 어디쯤인지 바로 안다. */}
+            <div className="figma-cafe-map__progress">
+              <span aria-hidden="true"><i style={{ width: `${(journeyProgress / stationCopy.length) * 100}%` }} /></span>
+              <b>{journeyProgress} / {stationCopy.length} 완료</b>
+            </div>
           </header>
           <div className="figma-cafe-map__stones" aria-label="카페 스테이지 선택">
             {stationCopy.map((station, index) => (
               <button key={station.title} className={`${index === journeyProgress ? "is-current" : ""} ${index < journeyProgress ? "is-complete" : ""}`} disabled={index > journeyProgress} onClick={() => { if (index === 0 && journeyProgress === 0) captureMormeyEvent("cafe_started"); openStation(index); }}>
-                <span className="figma-cafe-map__image"><Image src={station.image} alt={`${station.title} 스테이지`} width={360} height={270} unoptimized /></span>
+                <span className="figma-cafe-map__image"><Image src={station.image} alt={`${station.title} 스테이지`} width={360} height={270} unoptimized /><i className="figma-cafe-map__no" aria-hidden="true">{index < journeyProgress ? "✓" : index + 1}</i></span>
                 <span className="figma-cafe-map__copy"><small>STAGE {index + 1}</small><strong>{station.title}</strong><p>{station.description}</p></span>
                 <em>{index < journeyProgress ? "완료" : index > journeyProgress ? "잠김" : "도전하기"}</em>
               </button>
