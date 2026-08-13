@@ -35,6 +35,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/journey-config.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
+  const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
 
   assert.equal((curriculum.match(/\blesson\(\{/g) || []).length, 24);
   assert.equal((original.match(/^ {4}id: "/gm) || []).length, 12);
@@ -151,9 +152,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
   assert.match(app, /teachingProblemFromTurn\(teachingTurn, currentDrill\)/);
   assert.match(app, /teachingProblemFromTurn/);
-  assert.match(app, /teachingProblemMatchingTurn/);
-  assert.match(app, /numbersMentionedIn\(turn\.mormi\.text\)/);
-  assert.match(app, /setTeachingFocusProblem\(teachingProblemMatchingTurn\(nextConversation\.turn, currentDrill\)\)/);
+  // 검수된 AI visual 계약이 화면 문제의 단일 출처다. 모르미 대사에서
+  // 숫자를 추측해 그림을 다시 만드는 휴리스틱은 사용하지 않는다.
+  assert.doesNotMatch(app, /teachingProblemMatchingTurn|numbersMentionedIn|teachingFocusProblem/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.match(app, /모르미가 헷갈린 문제/);
   assert.match(app, /<ProblemCard problem=\{teachingProblem\}/);
@@ -176,6 +177,15 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
+  // 도움 카드는 AI 계약의 visible=true일 때만 열린다. FE가 첫 턴에
+  // 임의로 추가하지 않으며, 입력 UI 안내는 실제 input.kind와 일치한다.
+  assert.match(app, /function teachingInputLabel\(turn: MormiTurn\)/);
+  assert.match(app, /case "choices":\s*return "보기에서 하나를 골라 알려줘"/);
+  assert.match(app, /case "joint":\s*case "button":\s*return "도움 카드와 같이 해보자"/);
+  assert.doesNotMatch(app, /expression_level === "L1" \? "빈칸을 함께 채워줘"/);
+  assert.match(dialogueContract, /retention_policy\?: "no_raw" \| "30_days" \| "90_days" \| "permanent"/);
+  assert.match(dialogueContract, /conversation_storage_consent: true/);
+  assert.match(dialogueContract, /retention_policy: "permanent"/);
   assert.match(app, /nextTurn\.note_update/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
   assert.match(app, /const childName = learner\.name/);

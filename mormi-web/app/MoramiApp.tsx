@@ -303,49 +303,35 @@ function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Pro
   };
 }
 
-const koreanNumberWords: Array<[string, number]> = [
-  ["열", 10], ["아홉", 9], ["여덟", 8], ["일곱", 7], ["여섯", 6],
-  ["다섯", 5], ["넷", 4], ["네", 4], ["셋", 3], ["세", 3], ["둘", 2], ["두", 2], ["하나", 1],
-];
-
-function numbersMentionedIn(text: string) {
-  const mentions: Array<{ index: number; value: number }> = [];
-  for (const match of text.matchAll(/\d[\d,]*/g)) {
-    mentions.push({ index: match.index ?? 0, value: Number(match[0].replaceAll(",", "")) });
+/**
+ * 입력 계약이 언제나 아동 화면의 안내를 결정한다.
+ *
+ * `pedagogy`는 서버의 QA·분석용 보조 필드라 구버전 응답에서 빠질 수 있다.
+ * 이때 expression_level만 기준으로 문구를 고르면 선택지가 표시되는데도
+ * “도움 카드와 같이 해보자”라고 말하는 모순이 생긴다. 화면에서는 실제로
+ * 열린 입력 방식에 맞춰 안내하고, 발화사다리·힌트사다리의 결정 자체는
+ * 계속 AI 계약을 따른다.
+ */
+function teachingInputLabel(turn: MormiTurn): string {
+  switch (turn.input.kind) {
+    case "text":
+      return turn.pedagogy?.expression_level === "L3"
+        ? "방법을 짧게 알려줘"
+        : "생각과 이유를 직접 알려줘";
+    case "choices":
+      return "보기에서 하나를 골라 알려줘";
+    case "fill":
+      return "빈칸을 채워 알려줘";
+    case "count":
+      return "하나씩 세어 알려줘";
+    case "equation":
+      return "식을 완성해 알려줘";
+    case "joint":
+    case "button":
+      return "도움 카드와 같이 해보자";
+    case "none":
+      return "모르미가 다음 말을 준비하고 있어.";
   }
-  koreanNumberWords.forEach(([word, value]) => {
-    const index = text.indexOf(word);
-    if (index >= 0) mentions.push({ index, value });
-  });
-  return mentions.sort((left, right) => left.index - right.index).map(({ value }) => value);
-}
-
-/** 모르미 대사에 나온 수와 화면 그림의 수를 하나로 맞춘다. */
-function teachingProblemMatchingTurn(turn: MormiTurn, fallback: Problem): Problem {
-  const problem = teachingProblemFromTurn(turn, fallback);
-  const values = numbersMentionedIn(turn.mormi.text);
-  let visual = problem.visual;
-
-  if (visual.type === "ten-frame" && values.length > 0) {
-    const primaryCount = values[0] === 10 && values.length > 1 ? values[1] : values[0];
-    visual = visual.secondCount !== undefined && values.length > 1
-      ? { ...visual, count: values[0], secondCount: values[1] }
-      : { ...visual, count: Math.min(10, primaryCount) };
-  } else if (visual.type === "money" && values.length > 0) {
-    if (visual.paid !== undefined && values.length > 1) {
-      visual = { ...visual, paid: values[0], amounts: [values[1], ...visual.amounts.slice(1)] };
-    } else if (values.length >= visual.amounts.length) {
-      visual = { ...visual, amounts: values.slice(0, visual.amounts.length) };
-    }
-  } else if ((visual.type === "objects" || visual.type === "equation") && values.length > 1) {
-    visual = { ...visual, left: values[0], right: values[1] };
-  } else if (visual.type === "groups" && values.length > 1) {
-    visual = { ...visual, groups: values[0], each: values[1] };
-  } else if (visual.type === "measurement" && values.length > 0) {
-    visual = { ...visual, left: values[0], right: values[1] ?? visual.right };
-  }
-
-  return { ...problem, prompt: turn.mormi.text, visual };
 }
 
 function rotateAnswers(answers: string[], seed: number) {
@@ -1002,7 +988,6 @@ export function MoramiApp() {
   const [teachChoiceIds, setTeachChoiceIds] = useState<string[]>([]);
   const [teachFillValues, setTeachFillValues] = useState<Record<string, string>>({});
   const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
-  const [teachingFocusProblem, setTeachingFocusProblem] = useState<Problem | null>(null);
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
   const [teachError, setTeachError] = useState("");
@@ -1035,8 +1020,8 @@ export function MoramiApp() {
   const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
   const teachingTurn = mormiConversation?.turn ?? null;
   const teachingProblem = useMemo(
-    () => teachingFocusProblem ?? teachingProblemFromTurn(teachingTurn, currentDrill),
-    [currentDrill, teachingFocusProblem, teachingTurn],
+    () => teachingProblemFromTurn(teachingTurn, currentDrill),
+    [currentDrill, teachingTurn],
   );
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
@@ -1223,7 +1208,6 @@ export function MoramiApp() {
     setTeachError("");
     setTeachSending(true);
     setMormiConversation(null);
-    setTeachingFocusProblem(null);
     setTeachingNote(null);
     try {
       const sessionId = await learningSessionPromise.current;
@@ -1231,9 +1215,7 @@ export function MoramiApp() {
       if (!sessionId || attemptWriteError.current) {
         throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
       }
-      const nextConversation = await startHomeTeaching(sessionId);
-      setTeachingFocusProblem(teachingProblemMatchingTurn(nextConversation.turn, currentDrill));
-      applyTeachingConversation(nextConversation);
+      applyTeachingConversation(await startHomeTeaching(sessionId));
     } catch (error) {
       if (error instanceof ApiError) {
         // 아이 화면에는 쉬운 안내만 표시하되, 운영 진단에는 BE가 정제한
@@ -1406,7 +1388,6 @@ export function MoramiApp() {
     setTeachChoiceIds([]);
     setTeachFillValues({});
     setMormiConversation(null);
-    setTeachingFocusProblem(null);
     setTeachingNote(null);
     setTeachSending(false);
     setTeachError("");
@@ -1629,7 +1610,7 @@ export function MoramiApp() {
               {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
               {teachingTurn && !teachingComplete && (
                 <div className={`teaching-answer teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
-                  <p className="teaching-answer-label">{teachingTurn.pedagogy?.expression_level === "L4" ? "생각과 이유를 직접 알려줘" : teachingTurn.pedagogy?.expression_level === "L3" ? "방법을 짧게 알려줘" : teachingTurn.pedagogy?.expression_level === "L2" ? "필요한 방법을 골라줘" : teachingTurn.pedagogy?.expression_level === "L1" ? "빈칸을 함께 채워줘" : "도움 카드와 같이 해보자"}</p>
+                  <p className="teaching-answer-label">{teachingInputLabel(teachingTurn)}</p>
                   {teachingTurn.input.kind === "text" && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim()) void submitTeachingResponse("text", { text: teachText.trim() }); }}>
                     <textarea
                       value={teachText}
@@ -1658,7 +1639,6 @@ export function MoramiApp() {
                     {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
                     <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "같이 해보기"}</button>
                   </div>}
-                  {teachingTurn.input.kind === "none" && <p className="teaching-answer-label">모르미가 다음 말을 준비하고 있어.</p>}
                   {teachingTurn.input.kind !== "none" && <button type="button" className="dictionary-link" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
                 </div>
               )}

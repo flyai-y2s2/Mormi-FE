@@ -45,7 +45,7 @@ export type StartMormiConversation = {
   cafe_context?: MormiCafeContext;
   queue_context?: { left_count: number; right_count: number };
   conversation_storage_consent?: boolean;
-  retention_policy?: "no_raw" | "30_days" | "90_days";
+  retention_policy?: "no_raw" | "30_days" | "90_days" | "permanent";
 };
 
 export type MormiChoice = {
@@ -167,8 +167,11 @@ export function startMormiConversation(input: StartMormiConversation) {
   return requestMormi<MormiConversation>("/api/mormi/conversations", {
     method: "POST",
     body: JSON.stringify({
-      conversation_storage_consent: false,
-      retention_policy: "no_raw",
+      // 파일럿 동의를 전제로 하는 현재 서비스 정책과 동일하게, 개발용
+      // 직접 AI 경로도 대화 원문을 암호화해 영구 보존한다. 운영 홈 화면은
+      // Spring BE를 거치지만, 이 경로를 쓰는 AI 테스트 화면도 예외가 아니다.
+      conversation_storage_consent: true,
+      retention_policy: "permanent",
       ...input,
     }),
   });
