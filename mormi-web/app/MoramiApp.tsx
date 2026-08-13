@@ -131,8 +131,21 @@ function playCoinRewardSound(reward: number) {
 
 type UiIconName = "sound" | "mute" | "book" | "star" | "sprout" | "bulb" | "sun" | "clip" | "bag" | "refresh" | "home" | "cafe" | "key" | "lock";
 
+const illustratedIconAssets: Partial<Record<UiIconName, string>> = {
+  home: "/ui/mormi-home.png",
+  cafe: "/ui/mormi-cafe.png",
+  key: "/ui/mormi-key.png",
+  star: "/ui/mormi-star.png",
+  sprout: "/ui/mormi-sprout.png",
+};
+
 function UiIcon({ name, size = "medium" }: { name: UiIconName; size?: "small" | "medium" | "large" }) {
-  return <span className={`ui-icon ui-icon--${name} ui-icon--${size}`} aria-hidden="true"><i /></span>;
+  const illustratedAsset = illustratedIconAssets[name];
+  return (
+    <span className={`ui-icon ui-icon--${name} ui-icon--${size} ${illustratedAsset ? "ui-icon--asset" : ""}`} aria-hidden="true">
+      {illustratedAsset ? <Image src={illustratedAsset} alt="" width={96} height={96} unoptimized /> : <i />}
+    </span>
+  );
 }
 
 function Clock({ hour, minute, small = false }: { hour: number; minute: number; small?: boolean }) {
@@ -1674,8 +1687,7 @@ export function MoramiApp() {
 
   return (
     <main className={`app-shell app-shell--${stage}`}>
-      {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar">
-        <button className="brand brand--button" onClick={showHome} aria-label="모르미 집으로"><span>모</span> 모르미</button>
+      {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
         </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}><UiIcon name="home" size="small" />집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button></nav>}
