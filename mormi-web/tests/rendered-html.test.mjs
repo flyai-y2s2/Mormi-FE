@@ -149,8 +149,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
   assert.match(app, /teachingProblemFromTurn\(teachingTurn, currentDrill\)/);
   assert.match(app, /teachingProblemFromTurn/);
+  assert.match(app, /teachingProblemMatchingTurn/);
+  assert.match(app, /numbersMentionedIn\(turn\.mormi\.text\)/);
+  assert.match(app, /setTeachingFocusProblem\(teachingProblemMatchingTurn\(nextConversation\.turn, currentDrill\)\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
-  assert.match(app, /반복학습에서 본 문제/);
+  assert.match(app, /모르미가 헷갈린 문제/);
   assert.match(app, /<ProblemCard problem=\{teachingProblem\}/);
   assert.match(app, /event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.nativeEvent\.isComposing/);
   assert.match(app, /mark === missing \? "\?" : mark/);
@@ -169,6 +172,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teachingTurn\.input\.kind/);
   assert.match(css, /\.teaching-playground/);
   assert.match(css, /@media\(max-width:980px\)/);
+  assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
   assert.match(app, /nextTurn\.note_update/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
@@ -208,7 +212,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /disabled=\{drillLocked \|\| isWrong\}/);
   assert.match(app, /\/1,000원/);
   assert.match(app, /원을 얻었어!/);
-  assert.match(app, /useGameMusic/);
+  assert.doesNotMatch(app, /useGameMusic|배경 음악과 효과음/);
+  assert.match(app, /aria-label=\{soundOn \? "효과음 끄기" : "효과음 켜기"\}/);
+  assert.match(app, /if \(soundOn\) playCoinRewardSound\(reward\)/);
   assert.match(app, /cafe-required-lessons/);
   assert.match(app, /otherConceptSessions/);
   assert.match(app, /const stageLabels = \["혼자 연습"/);

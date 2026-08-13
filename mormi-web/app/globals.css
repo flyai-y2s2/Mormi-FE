@@ -462,7 +462,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .app-shell--home::before,.app-shell--curriculum::before,.app-shell--onboarding::before { content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(90deg,rgba(255,250,238,.28),rgba(255,250,238,.06)); }
 .app-shell--home .topbar,.app-shell--curriculum .topbar { max-width:none; padding-inline:42px; background:linear-gradient(180deg,rgba(255,252,245,.92),rgba(255,252,245,.45),transparent); }
 .scene-balance { min-width:122px; padding:10px 16px; position:absolute; right:38px; top:22px; z-index:25; border:2px solid rgba(66,91,79,.11); border-radius:999px; color:#4c5c55; background:rgba(255,255,255,.9); box-shadow:0 8px 24px rgba(59,73,66,.13); font-size:15px; font-weight:950; text-align:center; }
-.round-control { position:relative; }.round-control.is-music-on { box-shadow:0 0 0 4px rgba(107,211,168,.2),0 6px 20px rgba(70,94,82,.09); }.music-note { position:absolute; right:-2px; top:-5px; color:#d28a2e; font-size:16px; font-weight:950; animation:musicNote 1.2s ease-in-out infinite alternate; }.round-control:not(.is-music-on) .music-note { display:none; }@keyframes musicNote { to { transform:translateY(-4px) rotate(9deg); opacity:.55; } }
+.round-control { position:relative; }.round-control.is-sound-on { box-shadow:0 0 0 4px rgba(107,211,168,.2),0 6px 20px rgba(70,94,82,.09); }
 
 .onboarding-scene { max-width:none; min-height:100svh; padding:90px 8vw 38px; grid-template-columns:.85fr 1.15fr; background:transparent; }
 .onboarding-morami { align-self:end; }.onboarding-morami::before { display:none; }.onboarding-morami .morami-frame { width:min(38vw,480px); height:min(70vh,620px); }
@@ -765,6 +765,14 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .cafe-ai-followup{width:min(920px,calc(100% - 24px));margin:18px auto 28px;padding:18px;border:3px solid #fff;border-radius:22px;background:#f1f8ef;box-shadow:0 7px 0 #c6dec8;color:#3f5448}.cafe-ai-followup form,.cafe-ai-followup label{display:grid;gap:8px}.cafe-ai-followup input{min-height:52px;padding:0 15px;border:3px solid #84c89d;border-radius:14px;background:#fff;font:inherit}.cafe-ai-followup button{min-height:48px;padding:8px 15px;border:0;border-radius:14px;color:#fff;background:#5ca276;font-weight:900;cursor:pointer}.cafe-ai-followup button:disabled{opacity:.5}.cafe-ai-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cafe-ai-choices button{color:#3f5448;border:3px solid #84c89d;background:#fff}.cafe-help-card{margin-bottom:13px;padding:14px 16px;border:3px solid #e1d3f4;border-radius:16px;background:#faf5ff}.cafe-help-card strong{color:#755da7}.cafe-help-card p{margin:5px 0 0}.cafe-ai-followup .cafe-ai-dont-know{min-height:auto;margin:12px auto 0;display:block;color:#6b6f69;background:transparent;text-decoration:underline}.figma-cafe-feedback.is-error{color:#a5483c;background:#fff0ed}
 @media(max-width:600px){.cafe-ai-followup{padding:13px}.cafe-ai-choices{grid-template-columns:1fr}}
 
+/* Teaching help note: it belongs below the dialogue, not in a squeezed side column. */
+.teaching-dialogue{display:flex;flex-direction:column;align-items:stretch}
+.teaching-dialogue>div{min-width:0}
+.teaching-dialogue>.star-note{width:100%;min-width:0;min-height:0;margin-top:14px;display:block;overflow:hidden;border:3px solid #d8c9f2;border-radius:18px;background:#faf6ff;box-shadow:0 5px 0 #e7def7;transform:none}
+.teaching-dialogue>.star-note .note-content{min-width:0;padding:16px 18px}
+.teaching-dialogue>.star-note .note-content p{margin:0 0 8px;color:#7159a8;font-size:14px}
+.teaching-dialogue>.star-note .note-content span{display:block;padding:10px 13px;overflow-wrap:anywhere;border-radius:13px;color:#347a60;background:#e6f8ef;font-size:15px;line-height:1.55}
+
 /* Responsive teaching board: keep the repeated problem and response controls visible. */
 @media(max-width:980px){
   .teaching-playground{grid-template-columns:140px minmax(0,1fr);align-items:center}
@@ -791,4 +799,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-problem .chart-visual{width:100%;padding:20px 3px;gap:6px}
   .teaching-problem .chart-visual>div{width:auto;min-width:0;flex:1}
   .teaching-problem .calendar-visual{padding:12px 8px}
+  .teaching-dialogue>.star-note .note-content{padding:13px}
+  .teaching-dialogue>.star-note .note-content span{font-size:14px}
 }

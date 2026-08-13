@@ -131,86 +131,6 @@ function playCoinRewardSound(reward: number) {
   window.setTimeout(() => void context.close(), 700);
 }
 
-function useGameMusic(enabled: boolean) {
-  const contextRef = useRef<AudioContext | null>(null);
-  const loopRef = useRef<number | null>(null);
-
-  const stopMusic = useCallback(() => {
-    if (loopRef.current !== null) window.clearInterval(loopRef.current);
-    loopRef.current = null;
-    const context = contextRef.current;
-    contextRef.current = null;
-    if (context) void context.close();
-  }, []);
-
-  const startMusic = useCallback((force = false) => {
-    if ((!enabled && !force) || contextRef.current || typeof window === "undefined") return;
-    const AudioContextClass = window.AudioContext
-      ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    const context = new AudioContextClass();
-    const master = context.createGain();
-    master.gain.setValueAtTime(0.038, context.currentTime);
-    master.connect(context.destination);
-    contextRef.current = context;
-
-    const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46];
-    const bass = [130.81, 164.81, 146.83, 174.61];
-    const scheduleBar = () => {
-      const now = context.currentTime + 0.06;
-      melody.forEach((frequency, index) => {
-        const start = now + index * 0.36;
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = "triangle";
-        oscillator.frequency.setValueAtTime(frequency, start);
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(index % 2 === 0 ? 0.2 : 0.13, start + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.31);
-        oscillator.connect(gain);
-        gain.connect(master);
-        oscillator.start(start);
-        oscillator.stop(start + 0.34);
-      });
-      bass.forEach((frequency, index) => {
-        const start = now + index * 0.72;
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(frequency, start);
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.62);
-        oscillator.connect(gain);
-        gain.connect(master);
-        oscillator.start(start);
-        oscillator.stop(start + 0.66);
-      });
-    };
-
-    scheduleBar();
-    loopRef.current = window.setInterval(scheduleBar, 2880);
-  }, [enabled]);
-
-  useEffect(() => {
-    if (!enabled) {
-      stopMusic();
-      return;
-    }
-    const beginAfterInteraction = () => startMusic();
-    document.addEventListener("pointerdown", beginAfterInteraction, { once: true });
-    document.addEventListener("keydown", beginAfterInteraction, { once: true });
-    return () => {
-      document.removeEventListener("pointerdown", beginAfterInteraction);
-      document.removeEventListener("keydown", beginAfterInteraction);
-    };
-  }, [enabled, startMusic, stopMusic]);
-
-  useEffect(() => () => stopMusic(), [stopMusic]);
-  return { startMusic, stopMusic };
-}
-
 type UiIconName = "sound" | "mute" | "book" | "star" | "sprout" | "bulb" | "sun" | "clip" | "bag" | "refresh";
 
 function UiIcon({ name, size = "medium" }: { name: UiIconName; size?: "small" | "medium" | "large" }) {
@@ -381,6 +301,51 @@ function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Pro
       : fallback.answers,
     visual: candidate.visual as unknown as Visual,
   };
+}
+
+const koreanNumberWords: Array<[string, number]> = [
+  ["열", 10], ["아홉", 9], ["여덟", 8], ["일곱", 7], ["여섯", 6],
+  ["다섯", 5], ["넷", 4], ["네", 4], ["셋", 3], ["세", 3], ["둘", 2], ["두", 2], ["하나", 1],
+];
+
+function numbersMentionedIn(text: string) {
+  const mentions: Array<{ index: number; value: number }> = [];
+  for (const match of text.matchAll(/\d[\d,]*/g)) {
+    mentions.push({ index: match.index ?? 0, value: Number(match[0].replaceAll(",", "")) });
+  }
+  koreanNumberWords.forEach(([word, value]) => {
+    const index = text.indexOf(word);
+    if (index >= 0) mentions.push({ index, value });
+  });
+  return mentions.sort((left, right) => left.index - right.index).map(({ value }) => value);
+}
+
+/** 모르미 대사에 나온 수와 화면 그림의 수를 하나로 맞춘다. */
+function teachingProblemMatchingTurn(turn: MormiTurn, fallback: Problem): Problem {
+  const problem = teachingProblemFromTurn(turn, fallback);
+  const values = numbersMentionedIn(turn.mormi.text);
+  let visual = problem.visual;
+
+  if (visual.type === "ten-frame" && values.length > 0) {
+    const primaryCount = values[0] === 10 && values.length > 1 ? values[1] : values[0];
+    visual = visual.secondCount !== undefined && values.length > 1
+      ? { ...visual, count: values[0], secondCount: values[1] }
+      : { ...visual, count: Math.min(10, primaryCount) };
+  } else if (visual.type === "money" && values.length > 0) {
+    if (visual.paid !== undefined && values.length > 1) {
+      visual = { ...visual, paid: values[0], amounts: [values[1], ...visual.amounts.slice(1)] };
+    } else if (values.length >= visual.amounts.length) {
+      visual = { ...visual, amounts: values.slice(0, visual.amounts.length) };
+    }
+  } else if ((visual.type === "objects" || visual.type === "equation") && values.length > 1) {
+    visual = { ...visual, left: values[0], right: values[1] };
+  } else if (visual.type === "groups" && values.length > 1) {
+    visual = { ...visual, groups: values[0], each: values[1] };
+  } else if (visual.type === "measurement" && values.length > 0) {
+    visual = { ...visual, left: values[0], right: values[1] ?? visual.right };
+  }
+
+  return { ...problem, prompt: turn.mormi.text, visual };
 }
 
 function rotateAnswers(answers: string[], seed: number) {
@@ -1007,7 +972,6 @@ export function MoramiApp() {
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
   const [showOtherConcepts, setShowOtherConcepts] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
-  const { startMusic, stopMusic } = useGameMusic(soundOn);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const [drillIndex, setDrillIndex] = useState(0);
   const [drillCorrect, setDrillCorrect] = useState(0);
@@ -1023,6 +987,7 @@ export function MoramiApp() {
   const [teachChoiceIds, setTeachChoiceIds] = useState<string[]>([]);
   const [teachFillValues, setTeachFillValues] = useState<Record<string, string>>({});
   const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
+  const [teachingFocusProblem, setTeachingFocusProblem] = useState<Problem | null>(null);
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
   const [teachError, setTeachError] = useState("");
@@ -1055,8 +1020,8 @@ export function MoramiApp() {
   const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
   const teachingTurn = mormiConversation?.turn ?? null;
   const teachingProblem = useMemo(
-    () => teachingProblemFromTurn(teachingTurn, currentDrill),
-    [currentDrill, teachingTurn],
+    () => teachingFocusProblem ?? teachingProblemFromTurn(teachingTurn, currentDrill),
+    [currentDrill, teachingFocusProblem, teachingTurn],
   );
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
@@ -1243,6 +1208,7 @@ export function MoramiApp() {
     setTeachError("");
     setTeachSending(true);
     setMormiConversation(null);
+    setTeachingFocusProblem(null);
     setTeachingNote(null);
     try {
       const sessionId = await learningSessionPromise.current;
@@ -1250,7 +1216,9 @@ export function MoramiApp() {
       if (!sessionId || attemptWriteError.current) {
         throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
       }
-      applyTeachingConversation(await startHomeTeaching(sessionId));
+      const nextConversation = await startHomeTeaching(sessionId);
+      setTeachingFocusProblem(teachingProblemMatchingTurn(nextConversation.turn, currentDrill));
+      applyTeachingConversation(nextConversation);
     } catch (error) {
       if (error instanceof ApiError) {
         // 아이 화면에는 쉬운 안내만 표시하되, 운영 진단에는 BE가 정제한
@@ -1423,6 +1391,7 @@ export function MoramiApp() {
     setTeachChoiceIds([]);
     setTeachFillValues({});
     setMormiConversation(null);
+    setTeachingFocusProblem(null);
     setTeachingNote(null);
     setTeachSending(false);
     setTeachError("");
@@ -1524,9 +1493,7 @@ export function MoramiApp() {
   }
 
   function toggleSound() {
-    if (soundOn) stopMusic();
-    else startMusic(true);
-    setSoundOn(!soundOn);
+    setSoundOn((enabled) => !enabled);
   }
 
   const completedAfterLesson = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
@@ -1541,7 +1508,7 @@ export function MoramiApp() {
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
         </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}>집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}>외부</button></nav>}
         <div className="top-actions">
-          <button className={`round-control ${soundOn ? "is-music-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "배경 음악과 효과음 끄기" : "배경 음악과 효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /><span className="music-note" aria-hidden="true">♪</span></button>
+          <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
         </div>
       </header>}
@@ -1639,7 +1606,7 @@ export function MoramiApp() {
             <div className="teaching-playground">
               <div className="teaching-morami"><Morami expression={expression} /></div>
               <article className="teaching-problem">
-                <span>반복학습에서 본 문제</span>
+                <span>모르미가 헷갈린 문제</span>
                 <h2>{teachingProblem.prompt}</h2>
                 <ProblemCard problem={teachingProblem} />
               </article>
