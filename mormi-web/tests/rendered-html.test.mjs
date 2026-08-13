@@ -49,7 +49,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 반복학습용 정적 문항에도 대화 API와 같은 카피 품질 계약을 적용한다.
   assert.doesNotMatch(curriculum, /어떤 방법이 맞을까|퍼진 넓이|느낌으로|눈대중|한눈에 대충|색만 보기|크기만 보기/);
   assert.match(app, /useState<Stage>\("onboarding"\)/);
-  assert.match(app, /className="drill-choice-prompt">\{currentDrill\.prompt\}/);
+  // 반복 문제의 질문은 카드 머리 한 곳에만 있다. 카드 밖과 안에 같은 문장을 두면
+  // 시선이 카드 안에 머물러 위쪽 질문을 지나친다.
+  assert.match(app, /<header className="practice-card__head">/);
+  assert.equal((app.match(/\{currentDrill\.prompt\}/g) || []).length, 1);
+  assert.doesNotMatch(app, /drill-choice-prompt|drill-header/);
   assert.doesNotMatch(app, /onboarding-promise/);
   assert.doesNotMatch(app, /카페에 가려면\?/);
   assert.match(app, /morami-completed-sessions/);
