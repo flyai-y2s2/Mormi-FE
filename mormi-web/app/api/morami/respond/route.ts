@@ -20,6 +20,10 @@ type TurnRequest = {
   conversation?: ConversationMessage[];
   // Mormi-AI 대화용. 첫 턴에는 conversationId 가 없고, 서버가 발급해 돌려준다.
   learnerId?: number;
+  // 집 가르치기 시작 사다리를 정하는 반복문제 성적.
+  drillCount?: number;
+  drillFirstTryCorrect?: number;
+  drillWrongCount?: number;
   learningSessionId?: string | null;
   conversationId?: string | null;
   turnId?: string | null;
@@ -53,16 +57,31 @@ type TurnResponse = {
 const allowedExpressions = new Set<Expression>(["calm", "happy", "confused", "surprised", "bright", "celebrate"]);
 
 /**
- * Mormi-AI 가 실제로 가지고 있는 집 가르치기 시나리오만 연결한다.
+ * 집 가르치기는 시나리오 하나로 모든 커리큘럼 세션을 처리한다.
  *
- * AI 저장소의 SCENARIOS 에는 home_teach 시나리오가 home_addition_teach(3+5) 하나뿐이다.
- * 커리큘럼 세션 전부를 여기로 보내면 아이가 배우는 내용과 무관하게 3+5 이야기를 하므로,
- * 대응되는 세션만 태우고 나머지는 기존 경로를 그대로 쓴다.
- * AI 에 시나리오가 늘어나면 이 표에 줄을 추가하면 된다.
+ * AI 가 세션별 교육 내용을 home_teaching_catalog 로 갖고 있고, 어느 세션인지는
+ * practice_summary.curriculum_session_id 로 고른다. 그래서 세션마다 시나리오를
+ * 따로 두지 않는다. 카탈로그에 없는 세션은 AI 가 거절하므로 화면은 기존 경로로 내려간다.
  */
-const aiScenarioBySession: Record<string, string> = {
-  "add-pictures": "home_addition_teach",
-};
+const HOME_TEACH_SCENARIO = "home_teach";
+
+/**
+ * 반복문제 성적 요약. AI 는 이걸로 어느 세션인지 고르고 시작 사다리를 정한다.
+ *
+ * 화면이 성적을 못 보냈어도 세션 id 는 있어야 하므로 0문항으로라도 만들어 보낸다.
+ * 그래야 아이가 지금 배우는 내용으로 대화가 열린다.
+ */
+function practiceSummary(input: TurnRequest) {
+  const total = Math.min(Math.max(input.drillCount ?? 0, 0), 50);
+  return {
+    curriculum_session_id: input.sessionId,
+    skill_id: input.sessionId,
+    question_count: total,
+    first_try_correct_count: Math.min(Math.max(input.drillFirstTryCorrect ?? 0, 0), total),
+    wrong_attempt_count: Math.min(Math.max(input.drillWrongCount ?? 0, 0), 200),
+    misconception_tags: input.misconception ? [input.misconception].slice(0, 30) : [],
+  };
+}
 
 // 계약서 12절의 mood → 표정 매핑. 백엔드는 파일 경로가 아니라 의미 단위 mood 를 준다.
 const expressionByMood: Record<string, Expression> = {
@@ -106,7 +125,7 @@ async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
   const cafe = input.scene === "cafe";
   const scenarioId = cafe
     ? (input.cafeScenarioId && cafeScenarioIds.has(input.cafeScenarioId) ? input.cafeScenarioId : undefined)
-    : (input.sessionId ? aiScenarioBySession[input.sessionId] : undefined);
+    : (input.sessionId ? HOME_TEACH_SCENARIO : undefined);
 
   // 첫 턴이면 대화를 만들고, 이후에는 아이 발화를 그 대화에 붙인다.
   const creating = !input.conversationId;
@@ -132,6 +151,8 @@ async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
       // 줄 서기는 queue_context, 메뉴 세 단계는 cafe_context 를 요구한다.
       ...(input.queueContext ? { queue_context: input.queueContext } : {}),
       ...(input.cafeContext ? { cafe_context: input.cafeContext } : {}),
+      // 집 가르치기는 practice_summary 로 어느 세션인지와 반복문제 성적을 함께 넘긴다.
+      ...(cafe ? {} : { practice_summary: practiceSummary(input) }),
     }
     : {
       turn_id: input.turnId,

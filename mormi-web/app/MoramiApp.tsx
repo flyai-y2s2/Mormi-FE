@@ -52,6 +52,10 @@ type MoramiTurnOptions = {
   learningSessionId?: string | null;
   conversationId?: string | null;
   turnId?: string | null;
+  // 반복문제 성적. AI 가 어느 세션인지와 시작 사다리를 이걸로 정한다.
+  drillCount?: number;
+  drillFirstTryCorrect?: number;
+  drillWrongCount?: number;
 };
 
 type MoramiTurn = {
@@ -1174,6 +1178,8 @@ export function MoramiApp() {
   const [drillIndex, setDrillIndex] = useState(0);
   const [drillCorrect, setDrillCorrect] = useState(0);
   const [drillAttempts, setDrillAttempts] = useState(0);
+  // 한 번에 맞힌 문항 수. AI 가 가르치기 시작 사다리를 정하는 근거다.
+  const [drillFirstTryCorrect, setDrillFirstTryCorrect] = useState(0);
   const [drillFeedback, setDrillFeedback] = useState("");
   const [selectedDrillAnswer, setSelectedDrillAnswer] = useState<{ question: number; answer: string } | null>(null);
   const [wrongDrillAnswers, setWrongDrillAnswers] = useState<string[]>([]);
@@ -1243,13 +1249,16 @@ export function MoramiApp() {
       learningSessionId: learningSessionId.current,
       conversationId: conversationId.current,
       turnId: conversationTurnId.current,
+      drillCount: drillCorrect,
+      drillFirstTryCorrect,
+      drillWrongCount: Math.max(drillAttempts - drillCorrect, 0),
     });
     if (turn) {
       rememberConversation(turn);
       setDialogue(turn.dialogue);
       setExpression(turn.expression);
     }
-  }, [activeSession, childName, ladder, learner.id, rememberConversation]);
+  }, [activeSession, childName, drillAttempts, drillCorrect, drillFirstTryCorrect, ladder, learner.id, rememberConversation]);
 
   const appendTeachMessage = useCallback((role: TeachMessage["role"], text: string) => {
     const nextMessage = { id: teachMessageId.current, role, text };
@@ -1418,6 +1427,7 @@ export function MoramiApp() {
             ? 100
             : 50;
       setDrillCorrect(nextCorrect);
+      if (wrongDrillAnswers.length === 0) setDrillFirstTryCorrect((count) => count + 1);
       setSessionCoins((coins) => coins + reward);
       setCoinReward(reward);
       setDrillFeedback(`맞았어요! +${reward}원을 얻었어요.`);
@@ -1495,6 +1505,9 @@ export function MoramiApp() {
       learningSessionId: learningSessionId.current,
       conversationId: conversationId.current,
       turnId: conversationTurnId.current,
+      drillCount: drillCorrect,
+      drillFirstTryCorrect,
+      drillWrongCount: Math.max(drillAttempts - drillCorrect, 0),
     });
     setTeachSending(false);
     if (turn) rememberConversation(turn);
@@ -1679,6 +1692,7 @@ export function MoramiApp() {
     setDrillIndex(0);
     setDrillCorrect(0);
     setDrillAttempts(0);
+    setDrillFirstTryCorrect(0);
     setDrillFeedback("");
     setSelectedDrillAnswer(null);
     setWrongDrillAnswers([]);
