@@ -173,7 +173,9 @@ function MoneyVisual({ amounts, paid, labels = [] }: { amounts: number[]; paid?:
       <div className="price-row">
         {amounts.map((amount, index) => (
           <div className="price-card" key={`${amount}-${index}`}>
-            <i className={amount >= 1000 ? "bill-shape" : "coin-shape"} />
+            {labels[index]
+              ? <Image src={productImage(labels[index])} alt={`${labels[index]} 사진`} width={120} height={90} unoptimized />
+              : <i className={amount >= 1000 ? "bill-shape" : "coin-shape"} />}
             <span>{labels[index] || "돈"}</span>
             <strong>{amount.toLocaleString("ko-KR")}원</strong>
           </div>
@@ -332,6 +334,56 @@ function teachingInputLabel(turn: MormiTurn): string {
     case "none":
       return "모르미가 다음 말을 준비하고 있어.";
   }
+}
+
+function childFriendlyTeachingLine(session: Session, problem: Problem, turn: MormiTurn) {
+  const level = turn.pedagogy?.expression_level ?? "L4";
+  const linesByLevel: Partial<Record<Session["id"], Record<string, string>>> = {
+    "number-count": {
+      L4: "점이 모두 몇 개인지, 어떻게 세었는지 알려줄래?",
+      L3: "점이 모두 몇 개인지 짧게 알려줄래?",
+      L2: "점을 빠뜨리지 않고 세는 방법을 골라 줄래?",
+      L1: "점을 하나씩 짚으며 몇 개인지 함께 세어 보자.",
+      L0: "내가 먼저 셀게. 다음 점을 함께 세어 줄래?",
+    },
+    "number-compare": {
+      L4: "어느 쪽이 더 적은지, 어떻게 알았는지 알려줄래?",
+      L3: "어느 쪽이 더 적은지 짧게 알려줄래?",
+      L2: "사람이 더 적은 쪽을 골라 줄래?",
+      L1: "왼쪽과 오른쪽 사람 수를 하나씩 세어 비교해 보자.",
+      L0: "내가 한쪽을 셀게. 다른 쪽을 함께 세어 줄래?",
+    },
+    "money-count": {
+      L4: "돈이 모두 얼마인지, 어떻게 세었는지 알려줄래?",
+      L3: "돈이 모두 얼마인지 짧게 알려줄래?",
+      L2: "돈을 세는 방법을 골라 줄래?",
+      L1: "큰돈부터 하나씩 더해 보자.",
+      L0: "내가 먼저 셀게. 다음 돈을 함께 더해 줄래?",
+    },
+    "money-price": {
+      L4: "두 물건값을 더하면 얼마인지, 어떻게 계산했는지 알려줄래?",
+      L3: "두 물건값을 더하면 얼마인지 알려줄래?",
+      L2: "두 물건값을 더하는 방법을 골라 줄래?",
+      L1: "첫 번째 값에 두 번째 값을 함께 더해 보자.",
+      L0: "내가 첫 번째 값을 읽을게. 다음 값을 함께 더해 줄래?",
+    },
+    "money-budget": {
+      L4: "낸 돈에서 물건값을 빼면 얼마가 남는지 알려줄래?",
+      L3: "거스름돈이 얼마인지 짧게 알려줄래?",
+      L2: "거스름돈을 구하는 방법을 골라 줄래?",
+      L1: "낸 돈에서 물건값을 함께 빼 보자.",
+      L0: "내가 식을 만들게. 뺄 값을 함께 골라 줄래?",
+    },
+  };
+  return linesByLevel[session.id]?.[level] ?? `${problem.prompt} 어떻게 생각했는지 알려줄래?`;
+}
+
+function childFriendlyTeachingChoice(sessionId: string, label: string) {
+  if (sessionId !== "number-count") return readableChoice(label);
+  const normalized = label.replaceAll("갈리키", "가리키");
+  if (/가리키/.test(normalized)) return "점을 하나씩 가리키며";
+  if (/한꺼번에/.test(normalized)) return "점을 한꺼번에 보며";
+  return readableChoice(normalized);
 }
 
 function rotateAnswers(answers: string[], seed: number) {
@@ -1023,6 +1075,9 @@ export function MoramiApp() {
     () => teachingProblemFromTurn(teachingTurn, currentDrill),
     [currentDrill, teachingTurn],
   );
+  const teachingDialogue = teachingTurn
+    ? childFriendlyTeachingLine(activeSession, teachingProblem, teachingTurn)
+    : "";
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
@@ -1627,7 +1682,7 @@ export function MoramiApp() {
                     <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
-                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{childFriendlyTeachingChoice(activeSession.id, choice.label)}</button>)}</div>
                     <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "이렇게 알려줄게"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
@@ -1652,7 +1707,7 @@ export function MoramiApp() {
               )}
             </div>
             <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-              <div><b>모르미</b><p>{dialogue}</p></div>
+              <div><b>모르미</b><p>{teachingTurn && !teachingComplete ? teachingDialogue : dialogue}</p></div>
               {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
               {teachError && <p role="alert">{teachError}</p>}
             </div>

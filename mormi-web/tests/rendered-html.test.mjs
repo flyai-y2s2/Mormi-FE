@@ -155,6 +155,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 검수된 AI visual 계약이 화면 문제의 단일 출처다. 모르미 대사에서
   // 숫자를 추측해 그림을 다시 만드는 휴리스틱은 사용하지 않는다.
   assert.doesNotMatch(app, /teachingProblemMatchingTurn|numbersMentionedIn|teachingFocusProblem/);
+  assert.match(app, /childFriendlyTeachingLine\(activeSession, teachingProblem, teachingTurn\)/);
+  assert.match(app, /childFriendlyTeachingChoice\(activeSession\.id, choice\.label\)/);
+  assert.match(app, /teachingTurn && !teachingComplete \? teachingDialogue : dialogue/);
+  assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.match(app, /모르미가 헷갈린 문제/);
   assert.match(app, /<ProblemCard problem=\{teachingProblem\}/);

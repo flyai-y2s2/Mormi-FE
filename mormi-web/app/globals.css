@@ -166,6 +166,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .money-visual { width:min(100%,650px); min-height:270px; padding:22px; display:flex; flex-direction:column; justify-content:center; gap:18px; border-radius:34px; background:linear-gradient(145deg,#effcf5,#fff7d9); }
 .price-row { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
 .price-card { min-width:145px; min-height:145px; padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:3px solid #d9eadf; border-radius:24px; background:white; box-shadow:0 7px 0 #d7e7de; }
+.price-card > img { width:82px; height:62px; object-fit:contain; border-radius:14px; }
 .price-card > span { color:#67796f; font-size:14px; font-weight:900; }.price-card strong { color:#285f4a; font-size:23px; }
 .bill-shape { width:72px; height:38px; display:block; border:4px double #55aa7f; border-radius:8px; background:#dff8e9; position:relative; }.bill-shape::after { content:""; width:20px; height:20px; position:absolute; left:22px; top:5px; border:3px solid #70b995; border-radius:50%; }
 .coin-shape { width:52px; height:52px; display:block; border:5px double #d3a73b; border-radius:50%; background:radial-gradient(circle at 32% 27%,#fff4a4,#f4ce59 56%,#daa82f); }
