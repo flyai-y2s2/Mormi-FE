@@ -998,6 +998,7 @@ export function MoramiApp() {
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
+  const hasTeachingDialogue = teachingComplete || Boolean(teachingTurn?.help_card?.visible) || Boolean(teachError);
 
   const showMoramiFallback = useCallback((fallbackDialogue: string, fallbackExpression: Expression) => {
     setDialogue(fallbackDialogue);
@@ -1625,11 +1626,13 @@ export function MoramiApp() {
                 </div>
               )}
             </div>
-            <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-              {teachingComplete && <div><b>모르미</b><p>{dialogue}</p></div>}
-              {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
-              {teachError && <p role="alert">{teachError}</p>}
-            </div>
+            {hasTeachingDialogue && (
+              <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
+                {teachingComplete && <div><b>모르미</b><p>{dialogue}</p></div>}
+                {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
+                {teachError && <p role="alert">{teachError}</p>}
+              </div>
+            )}
           </div>
         </section>
       )}
