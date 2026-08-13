@@ -45,6 +45,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /\[6수04-04\]/);
   assert.match(curriculum, /curriculumForSession/);
   assert.match(app, /useState<Stage>\("onboarding"\)/);
+  assert.match(app, /className="drill-choice-prompt">\{currentDrill\.prompt\}/);
   assert.doesNotMatch(app, /onboarding-promise/);
   assert.doesNotMatch(app, /카페에 가려면\?/);
   assert.match(app, /morami-completed-sessions/);

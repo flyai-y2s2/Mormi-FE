@@ -171,7 +171,8 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .coin-shape { width:52px; height:52px; display:block; border:5px double #d3a73b; border-radius:50%; background:radial-gradient(circle at 32% 27%,#fff4a4,#f4ce59 56%,#daa82f); }
 .paid-card { align-self:center; min-width:180px; padding:10px 18px; display:flex; align-items:center; justify-content:center; gap:12px; border-radius:16px; color:#67538f; background:#f0eaff; }.paid-card span { font-size:13px; font-weight:900; }.paid-card strong { font-size:21px; }
 .money-operation { display:flex; justify-content:center; align-items:center; gap:14px; color:#4e6258; font-size:24px; font-weight:900; }.money-operation b { color:#e37662; font-size:31px; }
-.answer-grid { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
+.drill-choice-prompt { width:100%; margin:12px 0 14px; color:#29483c; font-size:clamp(20px,2.5vw,28px); line-height:1.35; font-weight:950; text-align:center; }
+.answer-grid { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 0; }
 .answer-grid button { min-height: 72px; padding: 12px; border: 3px solid #dceae3; border-radius: 22px; background: white; color: #29483c; font-size: 22px; font-weight: 900; cursor: pointer; box-shadow: 0 7px 0 #dce7e1; transition: .16s; }
 .answer-grid button:hover { border-color: var(--mint); transform: translateY(-3px); box-shadow: 0 10px 0 #cbe8da; }
 .answer-grid button:active { transform: translateY(5px); box-shadow: 0 2px 0 #dce7e1; }

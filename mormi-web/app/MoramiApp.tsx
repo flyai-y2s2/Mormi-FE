@@ -1564,6 +1564,7 @@ export function MoramiApp() {
               <div className="practice-card">
                 {coinReward !== null && <div className={`coin-reward-effect coin-reward-effect--${coinReward}`} key={`${drillIndex}-${coinReward}`}><i /><i /><i /><Image src="/cafe-money/100.png" alt="획득한 돈" width={120} height={120} unoptimized /><strong>+{coinReward}원!</strong><span>{coinReward === 200 ? "한 번에 정답!" : coinReward === 150 ? "한 번 더 생각해서 성공!" : coinReward === 100 ? "두 번 다시 생각해서 성공!" : "끝까지 포기하지 않았어!"}</span></div>}
                 <ProblemCard problem={currentDrill} />
+                <p className="drill-choice-prompt">{currentDrill.prompt}</p>
                 <div className={`answer-grid ${["왼쪽", "같아", "오른쪽"].includes(currentDrill.correct) ? "answer-grid--comparison" : ""}`}>
                   {currentDrill.answers.map((answer) => {
                     const isWrong = wrongDrillAnswers.includes(answer);
