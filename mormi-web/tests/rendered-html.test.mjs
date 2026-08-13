@@ -134,6 +134,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /5~6학년군/);
   assert.match(curriculum, /export const transferTarget = 3/);
   assert.match(app, /varyProblem/);
+  assert.match(app, /const isCurrencyVisual = !problem\.visual\.labels\?\.length/);
+  assert.match(app, /\? problem\.visual\.amounts\s*:\s*problem\.visual\.amounts\.map/);
   assert.match(app, /shuffleProblemAnswers/);
   assert.match(app, /ensureFourAnswers/);
   assert.match(app, /answers\.length >= 4/);

@@ -404,9 +404,18 @@ function varyProblem(problem: Problem, seed: number): Problem {
     return { ...problem, correct: display(count), answers: rotateAnswers([display(count), display(Math.max(1, count - 1)), display(Math.min(10, count + 1))], seed), visual: { ...problem.visual, count } };
   }
   if (problem.visual.type === "money") {
-    const amounts = problem.visual.amounts.map((amount, index) => amount + 100 * (((seed + index) % 3 + 3) % 3));
+    // 상품 가격은 문제마다 바꿔도 되지만, 그림으로 보여 주는 동전·지폐의 값은
+    // 실제 화폐 단위여야 한다. 예를 들어 1,000원 지폐를 1,200원으로 바꾸지 않는다.
+    const isCurrencyVisual = !problem.visual.labels?.length;
+    const amounts = isCurrencyVisual
+      ? problem.visual.amounts
+      : problem.visual.amounts.map((amount, index) => amount + 100 * (((seed + index) % 3 + 3) % 3));
     const total = amounts.reduce((sum, amount) => sum + amount, 0);
-    const paid = problem.visual.paid ? Math.max(total + 500, problem.visual.paid + step * 500) : undefined;
+    const paid = problem.visual.paid
+      ? isCurrencyVisual
+        ? problem.visual.paid
+        : Math.max(total + 500, problem.visual.paid + step * 500)
+      : undefined;
     const result = paid ? paid - total : total;
     const money = (value: number) => `${Math.max(0, value).toLocaleString("ko-KR")}원`;
     return {
