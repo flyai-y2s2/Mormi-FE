@@ -764,3 +764,31 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* Authenticated TurnContract follow-up shared by all cafe stages. */
 .cafe-ai-followup{width:min(920px,calc(100% - 24px));margin:18px auto 28px;padding:18px;border:3px solid #fff;border-radius:22px;background:#f1f8ef;box-shadow:0 7px 0 #c6dec8;color:#3f5448}.cafe-ai-followup form,.cafe-ai-followup label{display:grid;gap:8px}.cafe-ai-followup input{min-height:52px;padding:0 15px;border:3px solid #84c89d;border-radius:14px;background:#fff;font:inherit}.cafe-ai-followup button{min-height:48px;padding:8px 15px;border:0;border-radius:14px;color:#fff;background:#5ca276;font-weight:900;cursor:pointer}.cafe-ai-followup button:disabled{opacity:.5}.cafe-ai-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cafe-ai-choices button{color:#3f5448;border:3px solid #84c89d;background:#fff}.cafe-help-card{margin-bottom:13px;padding:14px 16px;border:3px solid #e1d3f4;border-radius:16px;background:#faf5ff}.cafe-help-card strong{color:#755da7}.cafe-help-card p{margin:5px 0 0}.cafe-ai-followup .cafe-ai-dont-know{min-height:auto;margin:12px auto 0;display:block;color:#6b6f69;background:transparent;text-decoration:underline}.figma-cafe-feedback.is-error{color:#a5483c;background:#fff0ed}
 @media(max-width:600px){.cafe-ai-followup{padding:13px}.cafe-ai-choices{grid-template-columns:1fr}}
+
+/* Responsive teaching board: keep the repeated problem and response controls visible. */
+@media(max-width:980px){
+  .teaching-playground{grid-template-columns:140px minmax(0,1fr);align-items:center}
+  .teaching-morami{grid-column:1;grid-row:1}
+  .teaching-morami .morami-frame{width:140px;height:190px}
+  .teaching-problem{grid-column:2;grid-row:1;min-width:0;min-height:330px}
+  .teaching-answer,.teaching-playground>.learned-card{grid-column:1/3;grid-row:auto;width:100%;min-width:0}
+  .teaching-problem .problem-visual{width:100%;min-width:0;min-height:220px;padding:0;overflow:hidden}
+  .teaching-problem .money-visual{transform:none}
+}
+
+@media(max-width:560px){
+  .teaching-scene{padding:28px 10px 36px}
+  .teaching-stage{padding:12px 8px 17px}
+  .teaching-playground{padding:12px 9px;grid-template-columns:1fr;gap:12px}
+  .teaching-morami{grid-column:1;grid-row:auto;justify-self:center}
+  .teaching-morami .morami-frame{width:92px;height:116px}
+  .teaching-problem{grid-column:1;grid-row:auto;width:100%;min-height:300px;padding:14px}
+  .teaching-problem .problem-visual{min-height:210px;transform:none}
+  .teaching-answer,.teaching-playground>.learned-card{grid-column:1;grid-row:auto}
+  .teaching-problem .clock{width:min(220px,70vw)}
+  .teaching-problem .measurement-visual{padding:16px 4px}
+  .teaching-problem .measurement-visual>div{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .teaching-problem .chart-visual{width:100%;padding:20px 3px;gap:6px}
+  .teaching-problem .chart-visual>div{width:auto;min-width:0;flex:1}
+  .teaching-problem .calendar-visual{padding:12px 8px}
+}

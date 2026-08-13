@@ -338,6 +338,51 @@ function ProblemCard({ problem, small = false }: { problem: Problem; small?: boo
   return <div className={`problem-visual ${small ? "problem-visual--small" : ""}`}><LearningVisual visual={problem.visual} small={small} /></div>;
 }
 
+const learningVisualTypes = new Set<Visual["type"]>([
+  "objects",
+  "equation",
+  "clock",
+  "money",
+  "ten-frame",
+  "groups",
+  "number-line",
+  "measurement",
+  "shapes",
+  "pattern",
+  "chart",
+  "calendar",
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * AI의 home_teaching 계약에는 반복학습 문제와 같은 `problem.visual`이 들어온다.
+ * 정답은 의도적으로 오지 않으므로 화면 표시에는 기존 문제의 정답을 보존하고,
+ * 프롬프트와 그림만 서버가 고른 세션별 문제로 교체한다.
+ */
+function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Problem {
+  if (!turn || !isRecord(turn.visual?.data)) return fallback;
+
+  const candidate = turn.visual.type === "home_teaching"
+    ? turn.visual.data.problem
+    : turn.visual.type === "home_practice_problem"
+      ? turn.visual.data
+      : null;
+  if (!isRecord(candidate) || typeof candidate.prompt !== "string" || !isRecord(candidate.visual)) return fallback;
+  if (typeof candidate.visual.type !== "string" || !learningVisualTypes.has(candidate.visual.type as Visual["type"])) return fallback;
+
+  return {
+    ...fallback,
+    prompt: candidate.prompt,
+    answers: Array.isArray(candidate.answers) && candidate.answers.every((answer) => typeof answer === "string")
+      ? candidate.answers
+      : fallback.answers,
+    visual: candidate.visual as unknown as Visual,
+  };
+}
+
 function rotateAnswers(answers: string[], seed: number) {
   const offset = Math.abs(seed) % answers.length;
   return [...answers.slice(offset), ...answers.slice(0, offset)];
@@ -1009,6 +1054,10 @@ export function MoramiApp() {
   const cafeConceptSessions = useMemo(() => cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
   const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
   const teachingTurn = mormiConversation?.turn ?? null;
+  const teachingProblem = useMemo(
+    () => teachingProblemFromTurn(teachingTurn, currentDrill),
+    [currentDrill, teachingTurn],
+  );
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
@@ -1590,12 +1639,9 @@ export function MoramiApp() {
             <div className="teaching-playground">
               <div className="teaching-morami"><Morami expression={expression} /></div>
               <article className="teaching-problem">
-                <span>모르미의 문제</span>
-                <h2>{typeof teachingTurn?.visual.data.title === "string" ? teachingTurn.visual.data.title : activeSession.title}</h2>
-                <div className="problem-visual" data-visual-type={teachingTurn?.visual.type ?? "loading"}>
-                  {teachingTurn?.visual.type === "home_teaching" ? <UiIcon name="book" size="large" /> : <UiIcon name="bulb" size="large" />}
-                  <strong>{typeof teachingTurn?.visual.data.subject === "string" ? teachingTurn.visual.data.subject : "모르미가 보여 주는 문제"}</strong>
-                </div>
+                <span>반복학습에서 본 문제</span>
+                <h2>{teachingProblem.prompt}</h2>
+                <ProblemCard problem={teachingProblem} />
               </article>
               {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}
               {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
@@ -1603,7 +1649,18 @@ export function MoramiApp() {
                 <div className={`teaching-answer teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
                   <p className="teaching-answer-label">{teachingTurn.pedagogy?.expression_level === "L4" ? "생각과 이유를 직접 알려줘" : teachingTurn.pedagogy?.expression_level === "L3" ? "방법을 짧게 알려줘" : teachingTurn.pedagogy?.expression_level === "L2" ? "필요한 방법을 골라줘" : teachingTurn.pedagogy?.expression_level === "L1" ? "빈칸을 함께 채워줘" : "도움 카드와 같이 해보자"}</p>
                   {teachingTurn.input.kind === "text" && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim()) void submitTeachingResponse("text", { text: teachText.trim() }); }}>
-                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder={teachingTurn.input.placeholder ?? "모르미에게 네 말로 알려줘"} rows={3} disabled={teachSending} />
+                    <textarea
+                      value={teachText}
+                      onChange={(event) => setTeachText(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                        event.preventDefault();
+                        if (teachText.trim() && !teachSending) void submitTeachingResponse("text", { text: teachText.trim() });
+                      }}
+                      placeholder={teachingTurn.input.placeholder ?? "모르미에게 네 말로 알려줘"}
+                      rows={3}
+                      disabled={teachSending}
+                    />
                     <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">

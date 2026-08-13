@@ -147,7 +147,12 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /correctPosition = Math\.abs\(seed\) % \(answers\.length \+ 1\)/);
   assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, seed\), seed\)/);
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
-  assert.match(app, /teachingTurn\?\.visual/);
+  assert.match(app, /teachingProblemFromTurn\(teachingTurn, currentDrill\)/);
+  assert.match(app, /teachingProblemFromTurn/);
+  assert.match(app, /turn\.visual\.data\.problem/);
+  assert.match(app, /반복학습에서 본 문제/);
+  assert.match(app, /<ProblemCard problem=\{teachingProblem\}/);
+  assert.match(app, /event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.nativeEvent\.isComposing/);
   assert.match(app, /mark === missing \? "\?" : mark/);
   assert.doesNotMatch(app, /<i \/>\{mark\}<\/span>/);
   assert.match(app, /extraLifeProblem/);
@@ -163,6 +168,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /submitMormiResponseThroughBe/);
   assert.match(app, /teachingTurn\.input\.kind/);
   assert.match(css, /\.teaching-playground/);
+  assert.match(css, /@media\(max-width:980px\)/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
   assert.match(app, /nextTurn\.note_update/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
