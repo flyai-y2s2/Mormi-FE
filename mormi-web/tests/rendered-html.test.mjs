@@ -78,6 +78,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /sumAnswer/);
   assert.doesNotMatch(cafe, /천 원짜리/);
   assert.match(cafe, /type QueueScene = "intro" \| "count-both" \| "count-left" \| "note" \| "clear"/);
+  assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
+  assert.match(cafe, /className=\{queueCounts\.left === 1 \? "is-mirrored" : ""\} src="\/cafe-stages\/queue-v2\.png"/);
+  assert.match(cafe, /카페 대기줄: 왼쪽 줄 \$\{queueCounts\.left\}명, 오른쪽 줄 \$\{queueCounts\.right\}명/);
+  assert.doesNotMatch(cafe, /className="queue-story-lines"/);
   assert.match(cafe, /어\? 주문하려면 줄을 서야 하나 봐/);
   assert.match(cafe, /왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어\?/);
   assert.match(cafe, /더 짧은 줄에는 몇 명이 있어\?/);
