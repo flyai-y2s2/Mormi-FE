@@ -278,8 +278,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-back span { font-size:21px; line-height:1; }
 .teaching-back:hover { background:#effaf4; transform:translateY(-1px); }
 .teaching-toolbar .dictionary-pill { width:88px; height:88px; min-height:88px; padding:8px; flex-direction:column; justify-content:center; border-radius:50%; color:#62509d; background:#f0eaff; box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12); font-size:13px; }
-/* 대화 상자를 문제 위로 올렸으므로 상단 여백으로 툴바를 피하고, 모르미가 아래로
-   삐져나오던 음수 여백은 되돌린다. 그리드 열 너비는 origin/main 의 조정을 따른다. */
+/* 문제를 먼저 보여주고, 모르미의 서버 대화는 그 아래에서 이어진다. */
 .teaching-stage { min-height:704px; padding:100px 28px 14px; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; }
 .teaching-playground { min-height:420px; padding:0; display:grid; grid-template-columns:250px minmax(390px,1fr) 300px; grid-template-rows:340px 70px; align-items:end; column-gap:18px; row-gap:10px; border-radius:0; background:transparent; box-shadow:none; }
 .teaching-morami { grid-column:1; grid-row:1/3; align-self:end; justify-self:center; margin-bottom:0; position:relative; z-index:5; }
@@ -320,7 +319,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .guided-teaching h3 { margin:12px 0; color:#344c41; font-size:17px; line-height:1.4; }.guided-progress { display:flex; align-items:center; gap:5px; }.guided-progress i { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; color:#89958f; background:#e9eeeb; font-size:10px; font-style:normal; font-weight:950; }.guided-progress i.is-current { color:#fff; background:#49ac7f; box-shadow:0 0 0 4px #d9f0e5; }.guided-progress i.is-done { color:#2e805c; background:#d9f0e5; }
 .model-teaching>span { display:block; margin-bottom:9px; color:#7a6545; font-size:14px; font-weight:950; }.model-teaching ol { margin:0 0 12px; padding:0; display:grid; gap:7px; list-style:none; }.model-teaching li { padding:9px; display:flex; align-items:center; gap:8px; border-radius:12px; color:#526158; background:#f1f3f1; font-size:16px; line-height:1.4; font-weight:850; }.model-teaching li b { width:24px; height:24px; display:grid; place-items:center; flex:0 0 24px; border-radius:50%; color:#fff; background:#9eada6; }.model-teaching li.is-current { color:#315f4a; background:#e7f8ef; }.model-teaching li.is-current b { background:#49ac7f; }.model-teaching .send-teach-button { width:100%; min-height:52px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-size:18px; line-height:1.4; font-weight:950; }
 .teaching-playground > .learned-card { width:100%; margin:0; padding:24px 14px; grid-column:2/4; grid-row:1/3; border-radius:28px; }
-.teaching-dialogue { min-height:185px; margin:0 0 18px; padding:30px 58px 34px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:16px; border:7px solid #78cda6; border-radius:20px; background:#fff; box-shadow:none; }
+.teaching-dialogue { min-height:185px; margin:22px 0 0; padding:30px 58px 34px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:16px; border:7px solid #78cda6; border-radius:20px; background:#fff; box-shadow:none; }
 .teaching-dialogue b { display:block; margin-bottom:9px; font-size:22px; line-height:1.2; }
 .teaching-dialogue p { margin:0; color:#202924; font-size:20px; line-height:1.5; font-weight:700; }
 .teaching-dialogue > button.teaching-dont-know { min-width:150px; min-height:44px; margin:-2px 0 0; padding:8px 16px; position:static; align-self:flex-end; border:3px solid #9cb7aa; border-radius:14px; color:#485850; background:#f7fbf9; box-shadow:0 4px 0 #d7e3dd; cursor:pointer; font-size:16px; line-height:1.25; font-weight:850; text-decoration:none; }
@@ -665,6 +664,21 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe-money-hint{width:100%;margin-top:25px;padding:14px 8px;gap:8px}.figma-cafe-money-hint span{font-size:13px}
 }
 
+/* Keep the home choices visually grouped and make the key goal unmistakable. */
+@media(min-width:761px){
+  .journey-hub--home{padding-left:clamp(24px,4vw,64px);padding-right:clamp(24px,4vw,64px)}
+  .home-room-main{width:min(1180px,100%);margin:0 auto;grid-template-columns:minmax(500px,650px) minmax(330px,440px);justify-content:center;gap:clamp(24px,3vw,48px)}
+  .home-room-copy{width:100%;justify-self:end}
+  .home-room-morami{justify-self:start}
+  .player-hud{right:max(4.5vw,calc((100vw - 1180px)/2));top:18px}
+}
+.daily-quest b .ui-icon--key{--icon-size:34px;margin:-8px 2px -8px 0;filter:none}
+.home-main-actions button>span .ui-icon--lock{--icon-size:56px}
+@media(max-width:760px){
+  .daily-quest b .ui-icon--key{--icon-size:28px;margin:-6px 1px -6px 0}
+  .home-main-actions button>span .ui-icon--lock{--icon-size:46px}
+}
+
 /* Mormey café game skin — Figma journey, original product UI */
 .figma-cafe{
   --cafe-espresso:#4f3528;--cafe-latte:#f4dfc5;--cafe-mint:#74c5a4;--cafe-pink:#f5b6bd;--cafe-yellow:#ffe08a;
@@ -863,7 +877,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-playground>.learned-card{grid-column:2/4;grid-row:1/3;width:100%;min-width:0}
   .teaching-problem .problem-visual{width:100%;min-width:0;min-height:245px;padding:0;overflow:hidden}
   .teaching-problem .money-visual{transform:none}
-  .teaching-dialogue{min-height:170px;margin-bottom:14px;padding:26px 38px 30px;border-width:6px}
+  .teaching-dialogue{min-height:170px;margin:18px 0 0;padding:26px 38px 30px;border-width:6px}
   .teaching-dialogue b{font-size:21px}.teaching-dialogue p{font-size:19px}
 }
 
@@ -997,4 +1011,15 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .player-hud{grid-template-columns:1fr 1fr}.player-hud>.player-wallet{grid-column:1/3;min-height:72px;justify-content:center}.player-wallet>img{width:58px;height:58px;flex-basis:58px}.player-hud .player-wallet strong{font-size:24px}.journey-hub--home{padding-top:200px}
   .journey-nav button{min-width:84px;font-size:12px}.journey-nav button .ui-icon{--icon-size:21px}
   .figma-cafe__steps span{min-width:0}.figma-cafe__steps span:not(:last-child)::after{width:6px}.figma-cafe-map__stones>button{min-width:0}
+}
+
+/* Final desktop placement: keep the home cards, Mormi, and HUD in one visual cluster. */
+@media(min-width:1101px){
+  .player-hud{right:max(48px,calc((100vw - 1180px)/2))}
+}
+.daily-quest b .ui-icon--key{--icon-size:48px;margin:-13px 1px -13px -7px}
+.home-main-actions button>span .ui-icon--lock{--icon-size:64px}
+@media(max-width:760px){
+  .daily-quest b .ui-icon--key{--icon-size:38px;margin:-9px 0 -9px -5px}
+  .home-main-actions button>span .ui-icon--lock{--icon-size:52px}
 }
