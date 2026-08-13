@@ -610,7 +610,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     <section className={`figma-cafe figma-cafe--${step}`}>
       <div className="figma-cafe__bar">
         <button onClick={step === "overview" ? onBack : returnToMap}>← {step === "overview" ? "외출 장소" : "돌아가기"}</button>
-        <strong className="figma-cafe__place"><span aria-hidden="true">☕</span> 모르미 카페</strong>
+        <strong className="figma-cafe__place"><span className="cafe-place-icon" aria-hidden="true"><i /></span> 모르미 카페</strong>
         <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
         </div>
@@ -628,7 +628,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
               <button key={station.title} className={`${index === journeyProgress ? "is-current" : ""} ${index < journeyProgress ? "is-complete" : ""}`} disabled={index > journeyProgress} onClick={() => { if (index === 0 && journeyProgress === 0) captureMormeyEvent("cafe_started"); openStation(index); }}>
                 <span className="figma-cafe-map__image"><Image src={station.image} alt={`${station.title} 스테이지`} width={360} height={270} unoptimized /></span>
                 <span className="figma-cafe-map__copy"><small>STAGE {index + 1}</small><strong>{station.title}</strong><p>{station.description}</p></span>
-                <em>{index < journeyProgress ? "완료 ✓" : index > journeyProgress ? "잠김 🔒" : "도전하기"}</em>
+                <em>{index < journeyProgress ? "완료" : index > journeyProgress ? "잠김" : "도전하기"}</em>
               </button>
             ))}
           </div>
@@ -707,7 +707,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           {sumChildMenu && <form onSubmit={(event) => { event.preventDefault(); if (sumAnswer.trim()) checkSum(); }}>
           <div className="figma-cafe-sum__equation">
             {[sumMormeyMenu, sumChildMenu].map((item, index) => <div key={item.id}><article><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index === 0 && <b aria-hidden="true">＋</b>}</div>)}
-            <b aria-hidden="true">=</b><label className="figma-cafe-sum__answer"><span>내가 계산한 합계</span><input inputMode="numeric" aria-label="두 메뉴 가격의 합계" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value); setSumFeedback(""); }} placeholder="?" /><b>원</b></label>
+            <b aria-hidden="true">=</b><label className="figma-cafe-sum__answer"><span>내가 계산한 합계</span><input inputMode="numeric" aria-label="두 메뉴 가격의 합계" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value); setSumFeedback(""); }} /><b>원</b></label>
           </div>
           {sumFeedback && <p className="figma-cafe-feedback" role="status">{sumFeedback}</p>}
           <button type="submit" className="figma-cafe-action" disabled={!sumAnswer.trim()}>합계 확인</button></form>}

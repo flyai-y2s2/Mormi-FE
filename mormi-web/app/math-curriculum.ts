@@ -41,7 +41,7 @@ function lesson(spec: LessonSpec): Session {
   const learnedLine = spec.rule.join(" ");
   const fillBefore = spec.rule.slice(0, keyIndex).join(" ");
   const fillAfter = spec.rule.slice(keyIndex + 1).join(" ");
-  const fillSentence = [fillBefore, "□", fillAfter].filter(Boolean).join(" ");
+  const fillSentence = [fillBefore, "(　　　)", fillAfter].filter(Boolean).join(" ");
   return {
     id: spec.id,
     subject: spec.subject,

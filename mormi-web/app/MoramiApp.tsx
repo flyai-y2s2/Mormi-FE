@@ -64,6 +64,13 @@ function choiceIndexOf(selectedChoiceId: unknown) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : -1;
 }
 
+const teachingBlank = `(\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0)`;
+
+function formatTeachingDisplayText(text: string) {
+  return text.replace(/[□▢]/g, teachingBlank);
+}
+
+
 function playLearningChime() {
   if (typeof window === "undefined") return;
   const AudioContextClass = window.AudioContext
@@ -122,7 +129,7 @@ function playCoinRewardSound(reward: number) {
   window.setTimeout(() => void context.close(), 700);
 }
 
-type UiIconName = "sound" | "mute" | "book" | "star" | "sprout" | "bulb" | "sun" | "clip" | "bag" | "refresh";
+type UiIconName = "sound" | "mute" | "book" | "star" | "sprout" | "bulb" | "sun" | "clip" | "bag" | "refresh" | "home" | "cafe" | "key" | "lock";
 
 function UiIcon({ name, size = "medium" }: { name: UiIconName; size?: "small" | "medium" | "large" }) {
   return <span className={`ui-icon ui-icon--${name} ui-icon--${size}`} aria-hidden="true"><i /></span>;
@@ -777,7 +784,7 @@ function CurriculumCourseButton({ session, index, completed, cafeRequired = fals
   const alignment = curriculumForSession(session);
   return (
     <button className={completed ? "is-complete" : ""} onClick={() => onOpen(index)}>
-      <i>{completed ? "완료" : cafeRequired ? "🔑" : session.level}</i>
+      <i>{completed ? "완료" : cafeRequired ? <UiIcon name="key" size="small" /> : session.level}</i>
       <span><b>{session.title}</b><small>{alignment.gradeBand} · {alignment.code} · {session.unit} {session.level}단계</small>{cafeRequired && <mark className="cafe-course-mark">완료하면 카페에 갈 수 있어요!</mark>}</span>
       <em>{completed ? "★ 다시 보기" : cafeRequired ? "열쇠 얻기" : "시작"}</em>
     </button>
@@ -897,15 +904,19 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
 
   return (
     <section className="journey-hub journey-hub--home">
-      <div className="player-hud"><span>LV.{level}</span><b>⭐ {stars}</b><strong><i className="won-mark">원</i> {coinBalance.toLocaleString("ko-KR")}원</strong></div>
+      <div className="player-hud" aria-label="나의 모험 정보">
+        <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
+        <div className="player-stat player-stat--star"><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></div>
+        <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
+      </div>
       <div className="home-room-main">
         <div className="home-room-copy">
           <p className="eyebrow">모르미의 생활 수학</p>
           <h1>오늘은 어떤 걸 할까?</h1>
-          <div className="daily-quest"><span>오늘의 퀘스트</span><b>🔑 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
+          <div className="daily-quest"><span>오늘의 퀘스트</span><b><UiIcon name="key" size="small" /> 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
           <div className="home-main-actions">
-            <button onClick={onCurriculum}><span>🏠</span><b>집에서 복습하기</b><small>개념 완료 보상 ⭐ 3개</small></button>
-            <button onClick={onOutside}><span>{unlocked ? "☕" : "🔒"}</span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
+            <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b><small>개념을 익히고 별 3개를 받아요</small></button>
+            <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
           </div>
         </div>
         <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
@@ -922,10 +933,9 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, onHome, onCafe }: {
+function OutsideHub({ unlocked, cafeTheme, onCafe }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
-  onHome: () => void;
   onCafe: () => void;
 }) {
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
@@ -936,15 +946,15 @@ function OutsideHub({ unlocked, cafeTheme, onHome, onCafe }: {
     : `필수 개념 ${requiredCount}개 중 ${remainingCount}개가 남았어요`;
   return (
     <section className="journey-hub journey-hub--outside">
-      <div className="outside-scene-head"><div><p className="eyebrow">🌱 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div><button onClick={onHome} aria-label="집으로">⌂</button></div>
+      <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
       <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{isUnlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
       <div className="destination-grid">
-        <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} onClick={isUnlocked ? onCafe : onHome}>
+        <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} disabled={!isUnlocked} onClick={onCafe}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{isUnlocked ? `${cafeTheme?.title ?? "카페"} 가기` : `🔒 ${cafeTheme?.title ?? "카페"} 가기`}</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{isUnlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
+          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{isUnlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
         </button>
-        <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
+        <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span><UiIcon name="lock" size="small" /> 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
     </section>
   );
@@ -1011,9 +1021,9 @@ export function MoramiApp() {
   const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
+  const [teachHelpLoading, setTeachHelpLoading] = useState(false);
   const teachRequestInFlight = useRef(false);
   const [teachError, setTeachError] = useState("");
-  const [teachRewardGranted, setTeachRewardGranted] = useState(false);
   const [teachRewardAmount, setTeachRewardAmount] = useState(0);
   const [solvedAtLevel, setSolvedAtLevel] = useState<number | null>(null);
   const [homeworkSolved, setHomeworkSolved] = useState(false);
@@ -1369,6 +1379,7 @@ export function MoramiApp() {
     const activeConversation = mormiConversation;
     teachRequestInFlight.current = true;
     setTeachError("");
+    setTeachHelpLoading(type === "no_response");
     setTeachSending(true);
     try {
       const nextConversation = await submitMormiResponseThroughBe(activeConversation.conversation_id, {
@@ -1390,6 +1401,7 @@ export function MoramiApp() {
       setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
     } finally {
       teachRequestInFlight.current = false;
+      setTeachHelpLoading(false);
       setTeachSending(false);
     }
   }
@@ -1449,7 +1461,6 @@ export function MoramiApp() {
       refreshThemes();
       setSessionCoins(result.total_reward);
       setTeachRewardAmount(result.teach_reward);
-      setTeachRewardGranted(result.teach_reward > 0);
       learningSessionId.current = null;
       learningSessionPromise.current = null;
       localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
@@ -1511,7 +1522,6 @@ export function MoramiApp() {
     setTeachingNote(null);
     setTeachSending(false);
     setTeachError("");
-    setTeachRewardGranted(false);
     setTeachRewardAmount(0);
     setSolvedAtLevel(null);
     setHomeworkSolved(false);
@@ -1668,7 +1678,7 @@ export function MoramiApp() {
         <button className="brand brand--button" onClick={showHome} aria-label="모르미 집으로"><span>모</span> 모르미</button>
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
-        </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}>집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}>외부</button></nav>}
+        </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}><UiIcon name="home" size="small" />집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button></nav>}
         <div className="top-actions">
           <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
@@ -1684,7 +1694,7 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} onHome={showHome} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} onCafe={() => setStage("cafe")} />}
 
       {stage === "cafe" && <CafeJourney
         learnerName={childName}
@@ -1696,12 +1706,11 @@ export function MoramiApp() {
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">
-          <div className="scene-balance"><span className="won-mark">원</span> {coinBalance.toLocaleString("ko-KR")}원</div>
           {!selectedArea ? (
             <>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>
               <section className="cafe-required-lessons">
-                <div><strong>☕ 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
+                <div><strong><UiIcon name="cafe" size="small" /> 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
                 {cafeConceptSessions.map((session) => <button key={session.id} className={completedSessionIds.includes(session.id) ? "is-complete" : ""} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{session.title}</b><small>{session.id === "number-count" ? "줄의 사람을 1~5명까지 정확히 세어요" : session.id === "number-compare" ? "두 줄 중 사람이 더 적은 쪽을 찾아요" : session.id === "money-count" ? "100원·500원·1,000원·5,000원의 값을 읽어요" : session.id === "money-price" ? "모르미와 내가 고른 두 메뉴값을 더해요" : "예산과 합계를 비교하고 10,000원에서 메뉴값을 빼요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
               </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
@@ -1734,7 +1743,7 @@ export function MoramiApp() {
               <p className="eyebrow">{activeSession.unit} 탐험 · {Math.min(drillCorrect + 1, masteryTarget)}/{masteryTarget}</p>
               <h1>{mastered ? "준비 끝!" : currentDrill.prompt}</h1>
             </div>
-            <div className="drill-game-status"><div className="drill-wallet"><Image src="/cafe-money/100.png" alt="획득한 돈" width={50} height={50} unoptimized /><span>이번 세션</span><strong>{sessionCoins.toLocaleString("ko-KR")}/1,000원</strong></div><div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
+            <div className="drill-game-status"><div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
               {Array.from({ length: masteryTarget }, (_, index) => <span key={index} className={index < drillCorrect ? "filled" : ""}>{index < drillCorrect ? <UiIcon name="sprout" size="small" /> : <i className="seed-empty" />}</span>)}
             </div>
             </div>
@@ -1776,17 +1785,17 @@ export function MoramiApp() {
             <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 별노트</button>
           </div>
           <div className="chat-window teaching-stage">
-            {hasServerMessagePanel && (
+            {hasServerMessagePanel && !teachingComplete && (
               <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-                {serverMormiText && <div><b>모르미</b><p>{serverMormiText}</p></div>}
+                {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
                 {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
                 {teachError && <p role="alert">{teachError}</p>}
-                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className="teaching-dont-know" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
+                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
               </div>
             )}
             <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               <div className="teaching-morami"><Morami expression={expression} /></div>
-              {teachingProblem && <article className="teaching-problem">
+              {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
                 <ProblemCard problem={teachingProblem} />
                 <p className="teaching-problem-recap"><span>모르미가 헷갈린 문제</span>{teachingProblem.prompt}</p>
               </article>}
@@ -1814,7 +1823,7 @@ export function MoramiApp() {
                     <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "선택하기"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
-                    {typeof teachingTurn.input.config.sentence === "string" && <p>{teachingTurn.input.config.sentence}</p>}
+                    {typeof teachingTurn.input.config.sentence === "string" && teachingProblem?.visual.type !== "money" && <p>{formatTeachingDisplayText(teachingTurn.input.config.sentence)}</p>}
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
@@ -1839,7 +1848,6 @@ export function MoramiApp() {
 
       {stage === "teachReward" && (
         <section className="teach-reward-scene">
-          <div className="scene-balance"><span className="won-mark">원</span> {coinBalance.toLocaleString("ko-KR")}원</div>
           <div className="teach-reward-morami"><Morami expression="celebrate" /></div>
           <div className="teach-reward-copy">
             <div className="teach-reward-dialogue"><b>모르미</b><p>{childName}, 알려줘서 고마워~!</p></div>
@@ -1882,16 +1890,13 @@ export function MoramiApp() {
           <div className="complete-copy">
             <p className="eyebrow">집에서 오늘의 준비 완료</p>
             <h1>모르미와<br /><em>오늘도 해냈어!</em></h1>
-            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원 · 가르치기 +{teachRewardGranted ? teachRewardAmount : 0}원</small></div></div>
+            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
               <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
-            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>{cafeUnlockedAfterLesson ? "열린 카페로 나가기" : "모르미와 집으로"} <span className="button-arrow" /></button>
-            <div className="complete-secondary-actions">
-              <button className="complete-report-link" onClick={showCurriculum}>전체 수학 과정</button>
-            </div>
+            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}
