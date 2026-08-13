@@ -1751,16 +1751,6 @@ export function MoramiApp() {
 
       {stage === "drill" && (
         <section className="scene scene--drill">
-          <div className="drill-header">
-            <div>
-              <p className="eyebrow">{activeSession.unit} 탐험 · {Math.min(drillCorrect + 1, masteryTarget)}/{masteryTarget}</p>
-              <h1>{mastered ? "준비 끝!" : currentDrill.prompt}</h1>
-            </div>
-            <div className="drill-game-status"><div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
-              {Array.from({ length: masteryTarget }, (_, index) => <span key={index} className={index < drillCorrect ? "filled" : ""}>{index < drillCorrect ? <UiIcon name="sprout" size="small" /> : <i className="seed-empty" />}</span>)}
-            </div>
-            </div>
-          </div>
           <div className="drill-board drill-board--solo">
             {mastered ? (
               <div className="mastery-card">
@@ -1774,8 +1764,17 @@ export function MoramiApp() {
             ) : (
               <div className="practice-card">
                 {coinReward !== null && <div className={`coin-reward-effect coin-reward-effect--${coinReward}`} key={`${drillIndex}-${coinReward}`}><i /><i /><i /><Image src="/cafe-money/100.png" alt="획득한 돈" width={120} height={120} unoptimized /><strong>+{coinReward}원!</strong><span>{coinReward === 200 ? "한 번에 정답!" : coinReward === 150 ? "한 번 더 생각해서 성공!" : coinReward === 100 ? "두 번 다시 생각해서 성공!" : "끝까지 포기하지 않았어!"}</span></div>}
-                <ProblemCard problem={currentDrill} />
-                <p className="drill-choice-prompt">{currentDrill.prompt}</p>
+                {/* 질문은 카드 안에 한 번만 둔다. 카드 밖에 또 두면 시선이 카드 안에 머물러 위쪽 질문을 지나친다. */}
+                <header className="practice-card__head">
+                  <div>
+                    <p className="eyebrow">{activeSession.unit} 탐험 · {Math.min(drillCorrect + 1, masteryTarget)}/{masteryTarget}</p>
+                    <h1>{currentDrill.prompt}</h1>
+                  </div>
+                  <div className="seed-meter" aria-label={`${drillCorrect}개 익힘`}>
+                    {Array.from({ length: masteryTarget }, (_, index) => <span key={index} className={index < drillCorrect ? "filled" : ""}>{index < drillCorrect ? <UiIcon name="sprout" size="small" /> : <i className="seed-empty" />}</span>)}
+                  </div>
+                </header>
+                <div className="practice-card__visual"><ProblemCard problem={currentDrill} /></div>
                 <div className={`answer-grid ${["왼쪽", "같아", "오른쪽"].includes(currentDrill.correct) ? "answer-grid--comparison" : ""}`}>
                   {currentDrill.answers.map((answer) => {
                     const isWrong = wrongDrillAnswers.includes(answer);

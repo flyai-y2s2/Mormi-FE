@@ -151,17 +151,27 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 
 /* Drill */
 .scene--drill { padding-top: 20px; }
-.drill-header, .chat-title { display: flex; justify-content: space-between; align-items: end; margin-bottom: 24px; }
-.drill-header h1, .chat-title h1 { margin: 2px 0 0; font-size: clamp(30px, 4vw, 45px); letter-spacing: -2px; }
+.chat-title { display: flex; justify-content: space-between; align-items: end; margin-bottom: 24px; }
+.chat-title h1 { margin: 2px 0 0; font-size: clamp(30px, 4vw, 45px); letter-spacing: -2px; }
 .seed-meter { display: grid; grid-template-columns: repeat(5, 32px); gap: 5px; padding: 10px 12px; border-radius: 20px; background: rgba(255,255,255,.72); }
 .seed-meter span { width: 32px; height: 32px; display: grid; place-items: center; color: #c5d2cc; background: white; border-radius: 11px; font-weight: 900; font-size: 19px; }
 .seed-meter span.filled { background: #ddfff0; animation: seedPop .4s ease; }
 .seed-empty { width:13px; height:13px; border:2px solid #c9d5cf; border-radius:50%; }
 @keyframes seedPop { 50% { transform: scale(1.35) rotate(-8deg); } }
 .drill-board { display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: center; }
-.drill-board--solo { grid-template-columns: minmax(0, 780px); justify-content: center; }
+/* 질문이 카드 안으로 들어왔으므로 카드가 예전 헤더만큼 넓어야 한다.
+   780px 로 좁혀 두면 질문이 카드 안에서 다시 갇힌다. */
+.drill-board--solo { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
 .practice-card, .mastery-card { min-height: 590px; padding: 34px; border: 5px solid rgba(255,255,255,.8); border-radius: 42px; background: rgba(255,255,255,.76); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
-.practice-card { position:relative; overflow:hidden; }.drill-game-status { display:flex; align-items:center; gap:10px; }.drill-wallet { min-width:190px; min-height:56px; padding:6px 12px 6px 5px; display:grid; grid-template-columns:46px 1fr; grid-template-rows:1fr 1fr; align-items:center; column-gap:7px; border:2px solid #efd278; border-radius:18px; background:linear-gradient(120deg,#fff6c9,#fffdf2); box-shadow:0 7px 0 #e8d393; }.drill-wallet img { width:44px; height:44px; grid-row:1/3; object-fit:contain; filter:drop-shadow(0 4px 5px rgba(107,75,14,.18)); }.drill-wallet span { align-self:end; color:#8b752e; font-size:9px; font-weight:900; }.drill-wallet strong { align-self:start; color:#6e5112; font-size:15px; }.coin-reward-effect { width:250px; min-height:210px; padding:22px; position:absolute; left:50%; top:50%; z-index:8; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; justify-content:center; border:5px solid rgba(255,255,255,.92); border-radius:34px; color:#654808; background:radial-gradient(circle,#fffde7 0 35%,#ffe680 72%,#f7bf3e); box-shadow:0 24px 70px rgba(96,67,13,.28); animation:coinRewardIn 1.08s cubic-bezier(.17,.88,.31,1.22) both; }.coin-reward-effect img { width:105px; height:105px; object-fit:contain; filter:drop-shadow(0 10px 8px rgba(99,70,14,.2)); animation:coinSpin .75s ease both; }.coin-reward-effect strong { margin-top:-4px; font-size:34px; line-height:1; }.coin-reward-effect span { margin-top:6px; font-size:12px; font-weight:900; }.coin-reward-effect > i { width:26px; height:26px; position:absolute; background:#fff8b9; clip-path:polygon(50% 0,61% 37%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 37%); }.coin-reward-effect > i:nth-child(1) { left:28px; top:34px; }.coin-reward-effect > i:nth-child(2) { right:30px; top:52px; transform:scale(.7); }.coin-reward-effect > i:nth-child(3) { right:46px; bottom:37px; transform:scale(.5); }.coin-reward-effect--50 { filter:saturate(.82); }.mastery-coin-total { min-width:300px; margin:6px 0 14px; padding:10px 18px; display:grid; grid-template-columns:70px 1fr; grid-template-rows:1fr 1fr; align-items:center; border:3px solid #efd069; border-radius:22px; background:#fff8d8; }.mastery-coin-total img { width:64px; height:64px; grid-row:1/3; object-fit:contain; }.mastery-coin-total span { align-self:end; color:#8e762e; font-size:11px; font-weight:900; }.mastery-coin-total strong { align-self:start; color:#745513; font-size:24px; }@keyframes coinRewardIn { 0% { opacity:0; transform:translate(-50%,-35%) scale(.45); } 35% { opacity:1; transform:translate(-50%,-54%) scale(1.08); } 78% { opacity:1; transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-56%) scale(.92); } }@keyframes coinSpin { from { transform:rotateY(100deg) scale(.55); } to { transform:rotateY(360deg) scale(1); } }
+.practice-card { position:relative; overflow:hidden; align-items:stretch; justify-content:flex-start; }
+/* 카드 머리: 왼쪽에 단원·질문, 오른쪽에 진행도. 질문이 가장 큰 글자여야 아이가 먼저 읽는다. */
+.practice-card__head { width:100%; margin-bottom:22px; padding-bottom:18px; display:flex; align-items:flex-start; justify-content:space-between; gap:24px; border-bottom:2px solid rgba(41,72,60,.09); text-align:left; }
+.practice-card__head > div { min-width:0; }
+.practice-card__head h1 { margin:5px 0 0; color:#1f3b30; font-size:clamp(26px,3.2vw,42px); line-height:1.22; letter-spacing:-1.6px; overflow-wrap:anywhere; }
+.practice-card__head .seed-meter { flex:0 0 auto; background:rgba(246,251,248,.9); }
+/* 그림은 남는 세로 공간을 모두 차지해, 질문과 보기 사이에서 중심을 잡는다. */
+.practice-card__visual { width:100%; flex:1 1 auto; min-height:0; padding:4px 0 22px; display:grid; place-items:center; }
+.coin-reward-effect { width:250px; min-height:210px; padding:22px; position:absolute; left:50%; top:50%; z-index:8; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; justify-content:center; border:5px solid rgba(255,255,255,.92); border-radius:34px; color:#654808; background:radial-gradient(circle,#fffde7 0 35%,#ffe680 72%,#f7bf3e); box-shadow:0 24px 70px rgba(96,67,13,.28); animation:coinRewardIn 1.08s cubic-bezier(.17,.88,.31,1.22) both; }.coin-reward-effect img { width:105px; height:105px; object-fit:contain; filter:drop-shadow(0 10px 8px rgba(99,70,14,.2)); animation:coinSpin .75s ease both; }.coin-reward-effect strong { margin-top:-4px; font-size:34px; line-height:1; }.coin-reward-effect span { margin-top:6px; font-size:12px; font-weight:900; }.coin-reward-effect > i { width:26px; height:26px; position:absolute; background:#fff8b9; clip-path:polygon(50% 0,61% 37%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 37%); }.coin-reward-effect > i:nth-child(1) { left:28px; top:34px; }.coin-reward-effect > i:nth-child(2) { right:30px; top:52px; transform:scale(.7); }.coin-reward-effect > i:nth-child(3) { right:46px; bottom:37px; transform:scale(.5); }.coin-reward-effect--50 { filter:saturate(.82); }.mastery-coin-total { min-width:300px; margin:6px 0 14px; padding:10px 18px; display:grid; grid-template-columns:70px 1fr; grid-template-rows:1fr 1fr; align-items:center; border:3px solid #efd069; border-radius:22px; background:#fff8d8; }.mastery-coin-total img { width:64px; height:64px; grid-row:1/3; object-fit:contain; }.mastery-coin-total span { align-self:end; color:#8e762e; font-size:11px; font-weight:900; }.mastery-coin-total strong { align-self:start; color:#745513; font-size:24px; }@keyframes coinRewardIn { 0% { opacity:0; transform:translate(-50%,-35%) scale(.45); } 35% { opacity:1; transform:translate(-50%,-54%) scale(1.08); } 78% { opacity:1; transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-56%) scale(.92); } }@keyframes coinSpin { from { transform:rotateY(100deg) scale(.55); } to { transform:rotateY(360deg) scale(1); } }
 .problem-visual { width:100%; min-height:310px; display:grid; place-items:center; }
 .problem-visual--small { min-height:190px; }
 .math-visual { width:min(100%,620px); min-height:270px; padding:28px; display:flex; align-items:center; justify-content:center; gap:20px; border-radius:34px; background:linear-gradient(145deg,#f5fff9,#fff9df); }
@@ -180,7 +190,6 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .coin-shape { width:52px; height:52px; display:block; border:5px double #d3a73b; border-radius:50%; background:radial-gradient(circle at 32% 27%,#fff4a4,#f4ce59 56%,#daa82f); }
 .paid-card { align-self:center; min-width:180px; padding:10px 18px; display:flex; align-items:center; justify-content:center; gap:12px; border-radius:16px; color:#67538f; background:#f0eaff; }.paid-card span { font-size:13px; font-weight:900; }.paid-card strong { font-size:21px; }
 .money-operation { display:flex; justify-content:center; align-items:center; gap:14px; color:#4e6258; font-size:24px; font-weight:900; }.money-operation b { color:#e37662; font-size:31px; }
-.drill-choice-prompt { width:100%; margin:12px 0 14px; color:#29483c; font-size:clamp(20px,2.5vw,28px); line-height:1.35; font-weight:950; text-align:center; }
 .answer-grid { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 0; }
 .answer-grid button { min-height: 72px; padding: 12px; border: 3px solid #dceae3; border-radius: 22px; background: white; color: #29483c; font-size: 22px; font-weight: 900; cursor: pointer; box-shadow: 0 7px 0 #dce7e1; transition: .16s; }
 .answer-grid button:hover { border-color: var(--mint); transform: translateY(-3px); box-shadow: 0 10px 0 #cbe8da; }
@@ -488,7 +497,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .topbar { height:76px; padding:0 10px; }.brand { min-width:0; font-size:18px; gap:7px; white-space:nowrap; }.brand span { width:38px; height:38px; flex:0 0 38px; }.round-control { width:44px; height:44px; }.top-actions { gap:5px; }.report-link { width:50px; min-width:50px; height:44px; padding:0; justify-content:center; font-size:0; }.report-link::before { content:"기록"; display:block; font-size:12px; font-weight:950; white-space:nowrap; }.report-link .link-arrow { display:none; }
   .curriculum-link { min-width:72px; min-height:42px; padding:0 10px; font-size:12px; }.curriculum-home { padding:20px 12px 55px; }.curriculum-hero { min-height:0; padding:28px 22px; display:block; border-radius:28px; }.curriculum-hero h1 { font-size:34px; letter-spacing:-2px; }.curriculum-hero > div > p:not(.eyebrow) { font-size:15px; }.curriculum-hero .morami-frame { display:none; }.curriculum-summary { gap:6px; }.curriculum-summary strong { min-width:0; flex:1; padding:11px 8px; display:block; text-align:center; font-size:22px; }.curriculum-summary span { display:block; }.area-picker-heading { margin:30px 4px 12px; }.area-picker-heading h2 { font-size:25px; }.math-area-card { min-height:150px; padding:12px; grid-template-columns:112px minmax(0,1fr); gap:8px 12px; border-radius:24px; }.math-area-visual { border-radius:18px; }.math-area-visual span { min-width:42px; height:29px; left:6px; top:6px; border-width:2px; border-radius:10px; font-size:11px; }.math-area-heading p { font-size:19px; }.math-area-heading small { font-size:11px; line-height:1.4; }.math-area-footer { padding-top:8px; font-size:11px; }.math-area-footer em { gap:3px; }.math-area-footer b { font-size:20px; }.area-back { margin:0 2px 14px; }.area-detail-heading { min-height:0; padding:16px; grid-template-columns:112px 1fr; gap:14px; border-radius:25px; }.area-detail-visual { width:112px; height:112px; border-radius:19px; }.area-detail-visual span { left:6px; top:6px; min-width:42px; height:29px; border-width:2px; }.area-detail-heading h1 { margin:2px 0 7px; font-size:28px; letter-spacing:-1px; }.area-detail-heading > div > p:last-child { font-size:12px; line-height:1.5; }.area-detail-label { margin:24px 4px 11px; display:block; }.area-detail-label strong,.area-detail-label span { display:block; }.area-detail-label strong { font-size:19px; }.area-detail-label span { margin-top:3px; font-size:11px; }.math-course-list button { min-height:74px; grid-template-columns:38px 1fr auto; padding:10px; }.math-course-list button > i { width:36px; height:36px; }.course-unit-card summary { min-height:68px; padding:10px 12px; }.course-unit-card summary > span b { font-size:16px; }.math-course-list--nested { padding:7px; }
   .scene { min-height:calc(100vh - 80px); padding-left:15px; padding-right:15px; }.scene--memory .morami-frame--large, .scene--wrap .morami-frame--large { width:240px; height:285px; }.day-chip { font-size:13px; }.speech-bubble { padding:22px 58px 22px 22px; border-radius:24px; }.speech-bubble h1 { font-size:30px; }.speech-bubble p:not(.eyebrow) { font-size:18px; line-height:1.65; }.primary-button { width:100%; min-height:66px; padding:0 20px; font-size:18px; }
-  .drill-header { align-items:center; flex-wrap:wrap; gap:14px; }.drill-header h1 { font-size:28px; }.drill-game-status { width:100%; }.drill-wallet { min-width:165px; }.seed-meter { width:100%; grid-template-columns:repeat(5,1fr); gap:3px; padding:7px; }.seed-meter span { width:100%; height:auto; aspect-ratio:1; font-size:15px; border-radius:8px; }.practice-card, .mastery-card { min-height:500px; padding:22px 14px; border-radius:30px; }.clock { width:230px; border-width:10px; }.answer-grid { grid-template-columns:repeat(2,1fr); gap:8px; }.answer-grid button { min-height:66px; padding:8px 4px; border-width:2px; font-size:16px; }.coin-reward-effect { width:220px; min-height:190px; }.mastery-coin-total { min-width:260px; }.session-coin-earned { grid-template-columns:68px 1fr; padding:10px; }.session-coin-earned img { width:64px; height:64px; }.session-coin-earned strong { font-size:19px; }
+  .practice-card__head { flex-direction:column; gap:12px; margin-bottom:16px; padding-bottom:14px; }.practice-card__head h1 { font-size:24px; letter-spacing:-1px; }.practice-card__visual { padding-bottom:14px; }.seed-meter { width:100%; grid-template-columns:repeat(5,1fr); gap:3px; padding:7px; }.seed-meter span { width:100%; height:auto; aspect-ratio:1; font-size:15px; border-radius:8px; }.practice-card, .mastery-card { min-height:500px; padding:22px 14px; border-radius:30px; }.clock { width:230px; border-width:10px; }.answer-grid { grid-template-columns:repeat(2,1fr); gap:8px; }.answer-grid button { min-height:66px; padding:8px 4px; border-width:2px; font-size:16px; }.coin-reward-effect { width:220px; min-height:190px; }.mastery-coin-total { min-width:260px; }.session-coin-earned { grid-template-columns:68px 1fr; padding:10px; }.session-coin-earned img { width:64px; height:64px; }.session-coin-earned strong { font-size:19px; }
   .chat-title { align-items:center; gap:8px; }.chat-title h1 { font-size:27px; }.dictionary-pill { min-height:52px; padding:0 12px; font-size:13px; }.chat-window { min-width:0; padding:16px 12px; border-radius:28px; }.morami-chat-row { min-width:0; grid-template-columns:78px minmax(0,1fr); gap:5px; }.morami-chat-row .morami-frame { width:78px; height:102px; }.teach-chat-thread { max-height:340px; gap:7px; }.teach-message { padding:11px 12px; border-radius:16px 16px 16px 5px; }.teach-message p { overflow-wrap:anywhere; font-size:15px; }.teach-message--child { width:94%; border-radius:16px 16px 5px 16px; }.ladder-card { width:100%; padding:20px 15px; border-radius:25px 25px 7px 25px; }.teach-free-response { margin-top:4px; }.teach-free-response > p { display:block; }.teach-free-response > p span { display:block; margin-top:2px; }.teach-free-response > div { grid-template-columns:1fr; }.word-bank button { min-width:55px; padding:0 12px; font-size:17px; }.choice-row { gap:7px; }.choice-row button { min-width:0; padding:3px; overflow-wrap:anywhere; font-size:16px; }.point-clock { width:230px; }
   .dictionary-card { padding:40px 20px 24px; }.dictionary-visual { grid-template-columns:1fr; gap:5px; padding-top:20px; }.dictionary-visual .clock { margin:auto; }.dictionary-lines { display:grid; grid-template-columns:1fr 1fr; gap:6px; }.dictionary-lines p { padding:12px; margin:4px; border-radius:14px; background:#f7f3ff; font-size:14px; }.short-hand-icon, .long-hand-icon { display:none; }
   .problem-visual { min-height:250px; }.math-visual { min-height:230px; padding:15px; gap:9px; }.math-visual > strong { min-width:70px; min-height:78px; font-size:40px; }.math-symbol { font-size:31px; }.answer-cloud { min-width:62px; min-height:62px; font-size:31px; }.object-group { width:105px; min-height:135px; padding:8px; gap:5px; }.object-group i { width:23px; height:23px; }.money-visual { min-height:240px; padding:14px; }.price-card { min-width:120px; min-height:120px; padding:10px; }.price-card strong { font-size:19px; }.point-choice-grid { gap:7px; }.point-choice-grid button { min-height:70px; padding:5px; font-size:18px; }
@@ -915,29 +924,25 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 /* Final responsive QA: rewards and teaching copy stay readable at every width. */
-.drill-wallet,.mastery-coin-total{box-sizing:border-box;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px}
-.drill-wallet{width:clamp(245px,28vw,320px);min-width:245px;min-height:72px;padding:8px 16px 8px 8px}
-.drill-wallet img{width:58px;height:58px}
-.drill-wallet span,.mastery-coin-total span{align-self:end;line-height:1.2}
-.drill-wallet strong,.mastery-coin-total strong{min-width:0;align-self:start;white-space:nowrap;line-height:1.15;font-variant-numeric:tabular-nums}
-.drill-wallet strong{font-size:clamp(16px,1.45vw,22px)}
+.mastery-coin-total{box-sizing:border-box;grid-template-rows:auto auto}
+.mastery-coin-total span{align-self:end;line-height:1.2}
+.mastery-coin-total strong{min-width:0;align-self:start;white-space:nowrap;line-height:1.15;font-variant-numeric:tabular-nums}
 .mastery-coin-total{width:min(100%,300px);min-width:0;min-height:88px;padding:10px 14px;grid-template-columns:58px max-content;justify-content:center;column-gap:10px}
 .mastery-coin-total img{width:58px;height:58px}
 .mastery-coin-total strong{font-size:clamp(24px,2.2vw,31px)}
 .teaching-answer p,.teaching-dialogue p{overflow-wrap:anywhere}
 
 @media(max-width:900px){
-  .drill-game-status{width:100%;flex-wrap:wrap;justify-content:flex-end}
-  .drill-wallet{flex:0 0 auto}
-  .seed-meter{flex:1 1 240px;min-width:210px}
+  .practice-card__head{gap:16px}
+  .practice-card__head .seed-meter{max-width:240px}
   .home-actions,.destination-grid,.figma-cafe-map__stones,.cafe-menu-grid{min-width:0}
 }
 
 @media(max-width:560px){
-  .drill-game-status{justify-content:center}
-  .drill-wallet{width:min(100%,320px);min-width:0}
-  .drill-wallet strong{font-size:17px}
-  .seed-meter{flex-basis:100%;min-width:0}
+  /* 좁은 화면에서 진행도가 폭 전체를 먹으면 질문과 그림 사이를 갈라놓는다.
+     작은 띠로 줄여 시선이 질문에서 그림으로 바로 넘어가게 둔다. */
+  .practice-card__head .seed-meter{width:auto;max-width:none;grid-template-columns:repeat(5,26px);gap:5px;padding:6px 8px}
+  .practice-card__head .seed-meter span{width:26px;height:26px;aspect-ratio:auto;border-radius:8px;font-size:13px}
   .mastery-coin-total{grid-template-columns:58px minmax(0,1fr);padding:10px 15px}
   .mastery-coin-total img{width:58px;height:58px}
   .mastery-coin-total strong{font-size:24px}
@@ -945,9 +950,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 @media(max-width:380px){
-  .drill-wallet{grid-template-columns:52px minmax(0,1fr);padding-right:11px}
-  .drill-wallet img{width:48px;height:48px}
-  .drill-wallet strong{font-size:15px}
   .mastery-coin-total strong{font-size:21px}
 }
 
