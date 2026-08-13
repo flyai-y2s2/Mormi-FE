@@ -252,7 +252,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /내 지갑 \{coinBalance\.toLocaleString/);
   assert.match(app, />나가기 <span className="button-arrow" \/><\/button>/);
   assert.doesNotMatch(app, /열린 카페로 나가기|전체 수학 과정/);
-  assert.match(app, /won-mark/);
+  // 모은 돈은 전용 코인 이미지로 보여 준다. 이모지도, 글자 배지(won-mark)도 쓰지 않는다.
+  assert.match(app, /<Image src="\/ui\/mormi-coin\.png" alt="모르미 새싹 코인"/);
+  assert.doesNotMatch(app, /won-mark/);
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
   assert.match(app, /const notes = \[659\.25, 783\.99, 1046\.5\]/);
@@ -265,7 +267,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /wrongDrillAnswers\.length === 2\s*\? 100/);
   assert.match(app, /:\s*50;/);
   assert.match(app, /disabled=\{drillLocked \|\| isWrong\}/);
-  assert.match(app, /\/1,000원/);
+  // 반복 진행은 새싹 미터와 N/5 표시로만 보여 준다. 화면 안 코인 누적(drill-wallet)은 걷어냈다.
+  assert.match(app, /className="seed-meter"/);
+  assert.match(app, /\{Math\.min\(drillCorrect \+ 1, masteryTarget\)\}\/\{masteryTarget\}/);
+  assert.doesNotMatch(app, /drill-wallet/);
   assert.match(app, /원을 얻었어!/);
   assert.doesNotMatch(app, /useGameMusic|배경 음악과 효과음/);
   assert.match(app, /aria-label=\{soundOn \? "효과음 끄기" : "효과음 켜기"\}/);
