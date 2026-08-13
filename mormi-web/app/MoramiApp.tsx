@@ -1203,7 +1203,15 @@ export function MoramiApp() {
       }
       applyTeachingConversation(await startHomeTeaching(sessionId));
     } catch (error) {
-      console.error("[mormi-api] 가르치기 시작 실패", error);
+      if (error instanceof ApiError) {
+        // 아이 화면에는 쉬운 안내만 표시하되, 운영 진단에는 BE가 정제한
+        // 코드만 남긴다. 요청 본문이나 아이 원문은 기록하지 않는다.
+        console.error(
+          `[mormi-api] 가르치기 시작 실패 status=${error.status} code=${error.code}`,
+        );
+      } else {
+        console.error("[mormi-api] 가르치기 시작 실패 (unexpected)");
+      }
       setTeachError(error instanceof ApiError
         ? error.message
         : "가르치기를 준비하지 못했어요. 잠시 후 다시 눌러 주세요.");
