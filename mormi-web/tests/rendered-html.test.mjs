@@ -155,9 +155,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 검수된 AI visual 계약이 화면 문제의 단일 출처다. 모르미 대사에서
   // 숫자를 추측해 그림을 다시 만드는 휴리스틱은 사용하지 않는다.
   assert.doesNotMatch(app, /teachingProblemMatchingTurn|numbersMentionedIn|teachingFocusProblem/);
-  assert.match(app, /childFriendlyTeachingLine\(activeSession, teachingProblem, teachingTurn\)/);
-  assert.match(app, /childFriendlyTeachingChoice\(activeSession\.id, choice\.label\)/);
-  assert.match(app, /teachingTurn && !teachingComplete \? teachingDialogue : dialogue/);
+  assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
+  assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
+  assert.match(app, /<h2>\{teachingProblem\.prompt\}<\/h2>/);
+  assert.match(app, /\{teachingComplete && <div><b>모르미<\/b><p>\{dialogue\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.match(app, /모르미가 헷갈린 문제/);
@@ -181,12 +182,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
-  // 도움 카드는 AI 계약의 visible=true일 때만 열린다. FE가 첫 턴에
-  // 임의로 추가하지 않으며, 입력 UI 안내는 실제 input.kind와 일치한다.
-  assert.match(app, /function teachingInputLabel\(turn: MormiTurn\)/);
-  assert.match(app, /case "choices":\s*return "보기에서 하나를 골라 알려줘"/);
-  assert.match(app, /case "joint":\s*case "button":\s*return "도움 카드와 같이 해보자"/);
-  assert.doesNotMatch(app, /expression_level === "L1" \? "빈칸을 함께 채워줘"/);
+  // 도움 카드와 입력 문구는 AI 계약을 그대로 사용하며 FE가 별도 질문을 만들지 않는다.
+  assert.doesNotMatch(app, /생각과 이유를 직접 알려줘|보기에서 하나를 골라 알려줘|도움 카드와 같이 해보자/);
   assert.match(dialogueContract, /retention_policy\?: "no_raw" \| "30_days" \| "90_days" \| "permanent"/);
   assert.match(dialogueContract, /conversation_storage_consent: true/);
   assert.match(dialogueContract, /retention_policy: "permanent"/);

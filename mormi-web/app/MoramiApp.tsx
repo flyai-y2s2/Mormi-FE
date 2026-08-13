@@ -284,16 +284,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * 정답은 의도적으로 오지 않으므로 화면 표시에는 기존 문제의 정답을 보존하고,
  * 프롬프트와 그림만 서버가 고른 세션별 문제로 교체한다.
  */
-function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Problem {
-  if (!turn || !isRecord(turn.visual?.data)) return fallback;
+function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Problem | null {
+  if (!turn || !isRecord(turn.visual?.data)) return null;
 
   const candidate = turn.visual.type === "home_teaching"
     ? turn.visual.data.problem
     : turn.visual.type === "home_practice_problem"
       ? turn.visual.data
       : null;
-  if (!isRecord(candidate) || typeof candidate.prompt !== "string" || !isRecord(candidate.visual)) return fallback;
-  if (typeof candidate.visual.type !== "string" || !learningVisualTypes.has(candidate.visual.type as Visual["type"])) return fallback;
+  if (!isRecord(candidate) || typeof candidate.prompt !== "string" || !isRecord(candidate.visual)) return null;
+  if (typeof candidate.visual.type !== "string" || !learningVisualTypes.has(candidate.visual.type as Visual["type"])) return null;
 
   return {
     ...fallback,
@@ -303,87 +303,6 @@ function teachingProblemFromTurn(turn: MormiTurn | null, fallback: Problem): Pro
       : fallback.answers,
     visual: candidate.visual as unknown as Visual,
   };
-}
-
-/**
- * 입력 계약이 언제나 아동 화면의 안내를 결정한다.
- *
- * `pedagogy`는 서버의 QA·분석용 보조 필드라 구버전 응답에서 빠질 수 있다.
- * 이때 expression_level만 기준으로 문구를 고르면 선택지가 표시되는데도
- * “도움 카드와 같이 해보자”라고 말하는 모순이 생긴다. 화면에서는 실제로
- * 열린 입력 방식에 맞춰 안내하고, 발화사다리·힌트사다리의 결정 자체는
- * 계속 AI 계약을 따른다.
- */
-function teachingInputLabel(turn: MormiTurn): string {
-  switch (turn.input.kind) {
-    case "text":
-      return turn.pedagogy?.expression_level === "L3"
-        ? "방법을 짧게 알려줘"
-        : "생각과 이유를 직접 알려줘";
-    case "choices":
-      return "보기에서 하나를 골라 알려줘";
-    case "fill":
-      return "빈칸을 채워 알려줘";
-    case "count":
-      return "하나씩 세어 알려줘";
-    case "equation":
-      return "식을 완성해 알려줘";
-    case "joint":
-    case "button":
-      return "도움 카드와 같이 해보자";
-    case "none":
-      return "모르미가 다음 말을 준비하고 있어.";
-  }
-}
-
-function childFriendlyTeachingLine(session: Session, problem: Problem, turn: MormiTurn) {
-  const level = turn.pedagogy?.expression_level ?? "L4";
-  const linesByLevel: Partial<Record<Session["id"], Record<string, string>>> = {
-    "number-count": {
-      L4: "점이 모두 몇 개인지, 어떻게 세었는지 알려줄래?",
-      L3: "점이 모두 몇 개인지 짧게 알려줄래?",
-      L2: "점을 빠뜨리지 않고 세는 방법을 골라 줄래?",
-      L1: "점을 하나씩 짚으며 몇 개인지 함께 세어 보자.",
-      L0: "내가 먼저 셀게. 다음 점을 함께 세어 줄래?",
-    },
-    "number-compare": {
-      L4: "어느 쪽이 더 적은지, 어떻게 알았는지 알려줄래?",
-      L3: "어느 쪽이 더 적은지 짧게 알려줄래?",
-      L2: "사람이 더 적은 쪽을 골라 줄래?",
-      L1: "왼쪽과 오른쪽 사람 수를 하나씩 세어 비교해 보자.",
-      L0: "내가 한쪽을 셀게. 다른 쪽을 함께 세어 줄래?",
-    },
-    "money-count": {
-      L4: "돈이 모두 얼마인지, 어떻게 세었는지 알려줄래?",
-      L3: "돈이 모두 얼마인지 짧게 알려줄래?",
-      L2: "돈을 세는 방법을 골라 줄래?",
-      L1: "큰돈부터 하나씩 더해 보자.",
-      L0: "내가 먼저 셀게. 다음 돈을 함께 더해 줄래?",
-    },
-    "money-price": {
-      L4: "두 물건값을 더하면 얼마인지, 어떻게 계산했는지 알려줄래?",
-      L3: "두 물건값을 더하면 얼마인지 알려줄래?",
-      L2: "두 물건값을 더하는 방법을 골라 줄래?",
-      L1: "첫 번째 값에 두 번째 값을 함께 더해 보자.",
-      L0: "내가 첫 번째 값을 읽을게. 다음 값을 함께 더해 줄래?",
-    },
-    "money-budget": {
-      L4: "낸 돈에서 물건값을 빼면 얼마가 남는지 알려줄래?",
-      L3: "거스름돈이 얼마인지 짧게 알려줄래?",
-      L2: "거스름돈을 구하는 방법을 골라 줄래?",
-      L1: "낸 돈에서 물건값을 함께 빼 보자.",
-      L0: "내가 식을 만들게. 뺄 값을 함께 골라 줄래?",
-    },
-  };
-  return linesByLevel[session.id]?.[level] ?? `${problem.prompt} 어떻게 생각했는지 알려줄래?`;
-}
-
-function childFriendlyTeachingChoice(sessionId: string, label: string) {
-  if (sessionId !== "number-count") return readableChoice(label);
-  const normalized = label.replaceAll("갈리키", "가리키");
-  if (/가리키/.test(normalized)) return "점을 하나씩 가리키며";
-  if (/한꺼번에/.test(normalized)) return "점을 한꺼번에 보며";
-  return readableChoice(normalized);
 }
 
 function rotateAnswers(answers: string[], seed: number) {
@@ -1075,9 +994,6 @@ export function MoramiApp() {
     () => teachingProblemFromTurn(teachingTurn, currentDrill),
     [currentDrill, teachingTurn],
   );
-  const teachingDialogue = teachingTurn
-    ? childFriendlyTeachingLine(activeSession, teachingProblem, teachingTurn)
-    : "";
   const teachingComplete = teachingTurn?.status === "completed";
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
@@ -1656,16 +1572,15 @@ export function MoramiApp() {
           <div className="chat-window teaching-stage">
             <div className="teaching-playground">
               <div className="teaching-morami"><Morami expression={expression} /></div>
-              <article className="teaching-problem">
+              {teachingProblem && <article className="teaching-problem">
                 <span>모르미가 헷갈린 문제</span>
                 <h2>{teachingProblem.prompt}</h2>
                 <ProblemCard problem={teachingProblem} />
-              </article>
+              </article>}
               {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}
               {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
               {teachingTurn && !teachingComplete && (
                 <div className={`teaching-answer teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
-                  <p className="teaching-answer-label">{teachingInputLabel(teachingTurn)}</p>
                   {teachingTurn.input.kind === "text" && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim()) void submitTeachingResponse("text", { text: teachText.trim() }); }}>
                     <textarea
                       value={teachText}
@@ -1675,24 +1590,24 @@ export function MoramiApp() {
                         event.preventDefault();
                         if (teachText.trim() && !teachSending) void submitTeachingResponse("text", { text: teachText.trim() });
                       }}
-                      placeholder={teachingTurn.input.placeholder ?? "모르미에게 네 말로 알려줘"}
+                      placeholder={teachingTurn.input.placeholder ?? ""}
                       rows={3}
                       disabled={teachSending}
                     />
-                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
+                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
-                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{childFriendlyTeachingChoice(activeSession.id, choice.label)}</button>)}</div>
-                    <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "이렇게 알려줄게"}</button>
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
+                    <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
                     {typeof teachingTurn.input.config.sentence === "string" && <p>{teachingTurn.input.config.sentence}</p>}
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
-                    <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "빈칸 채우기"}</button>
+                    <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label}</button>
                   </div>}
                   {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
                     {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
-                    <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "같이 해보기"}</button>
+                    <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label}</button>
                   </div>}
                   {teachingTurn.input.kind !== "none" && <button type="button" className="dictionary-link" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
                 </div>
@@ -1707,7 +1622,7 @@ export function MoramiApp() {
               )}
             </div>
             <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-              <div><b>모르미</b><p>{teachingTurn && !teachingComplete ? teachingDialogue : dialogue}</p></div>
+              {teachingComplete && <div><b>모르미</b><p>{dialogue}</p></div>}
               {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
               {teachError && <p role="alert">{teachError}</p>}
             </div>
