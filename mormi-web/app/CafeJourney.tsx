@@ -55,10 +55,9 @@ function randomItem<T>(items: readonly T[], excluded?: T) {
 }
 
 function randomQueueCounts() {
-  const left = 1 + Math.floor(Math.random() * 5);
-  let right = 1 + Math.floor(Math.random() * 5);
-  while (right === left) right = 1 + Math.floor(Math.random() * 5);
-  return { left, right };
+  // queue-v2.png에는 왼쪽 2명·오른쪽 1명이 있다. 이미지와 학습 문제의
+  // 인원 수가 어긋나지 않도록 같은 장면을 좌우 반전한 경우만 함께 사용한다.
+  return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
 }
 
 function CafeDialogueControls({
@@ -621,12 +620,11 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
           {queueScene !== "note" && queueScene !== "clear" && (
             <section className="queue-story-scene" aria-label="카페의 두 줄">
-              <Image className="queue-story-morami" src={queueScene === "intro" ? "/morami/confused-cutout.png" : "/morami/bright-cutout.png"} alt={queueScene === "intro" ? "어느 줄에 설지 고민하는 모르미" : "질문하는 모르미"} width={320} height={360} unoptimized />
               <div className="queue-story-task">
-                <div className="queue-story-lines">
-                  <div aria-label={`왼쪽 줄 ${queueCounts.left}명`}><strong>왼쪽 줄</strong>{Array.from({ length: queueCounts.left }, (_, index) => <i key={index}><span /></i>)}</div>
-                  <div aria-label={`오른쪽 줄 ${queueCounts.right}명`}><strong>오른쪽 줄</strong>{Array.from({ length: queueCounts.right }, (_, index) => <i key={index}><span /></i>)}</div>
-                </div>
+                <figure className="queue-story-visual">
+                  <Image className={queueCounts.left === 1 ? "is-mirrored" : ""} src="/cafe-stages/queue-v2.png" alt={`카페 대기줄: 왼쪽 줄 ${queueCounts.left}명, 오른쪽 줄 ${queueCounts.right}명`} width={900} height={675} unoptimized />
+                  <figcaption><span>왼쪽 줄</span><span>오른쪽 줄</span></figcaption>
+                </figure>
                 {queueScene === "count-both" && <form className="queue-story-input" onSubmit={(event) => { event.preventDefault(); submitQueueCounts(); }}><input aria-label="양쪽 줄의 사람 수" value={queueCountAnswer} onChange={(event) => setQueueCountAnswer(event.target.value)} placeholder="답변을 입력해 주세요" /><button type="submit" disabled={!queueCountAnswer.trim()}>완료</button></form>}
                 {queueScene === "count-left" && <div className="queue-story-options" aria-label="더 짧은 줄 사람 수 선택">{[1, 2, 3, 4, 5].map((count) => <button key={count} onClick={() => chooseLeftCount(count)}>{count}명</button>)}</div>}
               </div>
