@@ -1248,7 +1248,14 @@ export function MoramiApp() {
       });
       applyTeachingConversation(nextConversation);
     } catch (error) {
-      console.error("[mormi-api] 가르치기 응답 실패", error);
+      if (error instanceof ApiError) {
+        // 원문 발화는 남기지 않고, AI·BE가 정제한 운영 코드만 기록한다.
+        console.error(
+          `[mormi-api] 가르치기 응답 실패 status=${error.status} code=${error.code}`,
+        );
+      } else {
+        console.error("[mormi-api] 가르치기 응답 실패 (unexpected)");
+      }
       setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
     } finally {
       setTeachSending(false);
