@@ -910,3 +910,47 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe-menu__grid button,.figma-cafe-menu__grid button.is-selected{height:148px;padding:7px 8px 9px;grid-template-rows:76px auto}
   .figma-cafe-menu__grid img{height:74px}
 }
+
+/* Unified illustrated navigation and a calmer, larger home HUD. */
+.ui-icon--home{border-radius:8px;background:#f7f0df;box-shadow:inset 0 -4px 0 #dfcfad}
+.ui-icon--home::before{content:"";width:66%;height:52%;position:absolute;left:17%;bottom:13%;border:3px solid #3b8568;border-radius:3px;background:#fffaf0}
+.ui-icon--home::after{content:"";width:55%;height:55%;position:absolute;left:22%;top:3%;border-left:4px solid #3b8568;border-top:4px solid #3b8568;transform:rotate(45deg);border-radius:3px}
+.ui-icon--home i{width:18%;height:31%;position:absolute;left:41%;bottom:13%;z-index:2;border-radius:3px 3px 0 0;background:#e9b36b}
+.ui-icon--cafe{border-radius:50%;background:#f7dfc1;box-shadow:inset 0 -4px 0 #dfbd91}
+.ui-icon--cafe::before{content:"";width:57%;height:43%;position:absolute;left:14%;top:31%;border:3px solid #76503d;border-radius:3px 3px 10px 10px;background:#fff7e9}
+.ui-icon--cafe::after{content:"";width:24%;height:29%;position:absolute;right:5%;top:35%;border:3px solid #76503d;border-left:0;border-radius:0 9px 9px 0}
+.ui-icon--cafe i{width:28%;height:19%;position:absolute;left:29%;top:9%;border-left:3px solid #74ad91;border-right:3px solid #74ad91;border-radius:50%}
+.ui-icon--key{transform:rotate(-16deg)}
+.ui-icon--key::before{content:"";width:44%;height:44%;position:absolute;left:0;top:7%;border:4px solid #d39d35;border-radius:50%;background:#fff4c5}
+.ui-icon--key::after{content:"";width:61%;height:6px;position:absolute;right:0;bottom:26%;border-radius:4px;background:#d39d35;box-shadow:7px 6px 0 -1px #d39d35}
+.ui-icon--lock{border-radius:8px;background:#ece7f4}
+.ui-icon--lock::before{content:"";width:52%;height:48%;position:absolute;left:24%;bottom:8%;border-radius:7px;background:#8d78bd}
+.ui-icon--lock::after{content:"";width:42%;height:42%;position:absolute;left:29%;top:4%;border:4px solid #8d78bd;border-bottom:0;border-radius:50% 50% 0 0}
+.ui-icon--lock i{width:4px;height:10px;position:absolute;left:calc(50% - 2px);bottom:17%;z-index:2;border-radius:3px;background:#fff}
+.journey-nav button{display:flex;align-items:center;justify-content:center;gap:7px}.journey-nav button .ui-icon{filter:none}.journey-nav button.is-active .ui-icon{filter:drop-shadow(0 2px 2px rgba(0,0,0,.12))}
+.player-hud{width:min(600px,44vw);padding:10px;right:4.5vw;top:18px;display:grid;grid-template-columns:120px 130px minmax(220px,1fr);gap:9px;border-radius:27px;background:rgba(255,253,248,.95)}
+.player-hud>.player-stat,.player-hud>.player-wallet{min-width:0;min-height:78px;padding:9px 12px;display:flex;align-items:center;gap:10px;border:3px solid #fff;border-radius:21px;box-shadow:0 6px 0 #cee4d9}
+.player-hud>.player-stat{background:#edf8f2}.player-hud>.player-stat--star{background:#fff7d8;box-shadow:0 6px 0 #ebd995}
+.player-hud .player-stat>span,.player-hud .player-wallet>span{min-width:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;color:#43574e;background:transparent}
+.player-hud small{color:#718178;font-size:10px;font-weight:900;line-height:1.2}.player-hud b{padding:0;color:#28483b;background:transparent;font-size:23px;line-height:1.1}
+.player-hud>.player-wallet{background:linear-gradient(135deg,#fff7cc,#fffdf3);box-shadow:0 6px 0 #e8ce72}.player-wallet>img{width:72px;height:72px;flex:0 0 72px;object-fit:contain;filter:drop-shadow(0 7px 7px rgba(107,76,13,.18))}.player-hud .player-wallet strong{padding:0;color:#745313;background:transparent;font-size:clamp(22px,2vw,30px);white-space:nowrap;line-height:1.05}
+.daily-quest b,.cafe-required-lessons>div>strong,.outside-scene-head .eyebrow{display:flex;align-items:center;gap:7px}.home-main-actions button>span{display:grid;place-items:center}.home-main-actions button>span .ui-icon{--icon-size:50px;filter:none}
+.destination-card--soon>span{display:flex;align-items:center;gap:6px}.destination-card--soon>span .ui-icon{filter:none}.outside-scene-head{justify-content:flex-start}
+.cafe-place-icon{position:relative}.cafe-place-icon::before{content:"";width:18px;height:13px;border:2px solid #6d4633;border-radius:2px 2px 6px 6px;background:#fff5e3}.cafe-place-icon::after{content:"";width:8px;height:9px;margin-left:-4px;border:2px solid #6d4633;border-left:0;border-radius:0 7px 7px 0}.cafe-place-icon i{width:10px;height:7px;position:absolute;left:8px;top:5px;border-left:2px solid #78ad91;border-right:2px solid #78ad91;border-radius:50%}
+.destination-card:disabled{cursor:not-allowed}.destination-card:disabled img{filter:saturate(.6) brightness(.86)}
+.figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-menu__layout,.figma-cafe-pay__layout,.figma-cafe-change__builder{min-width:0;max-width:100%}
+
+@media(max-width:1100px){
+  .player-hud{width:min(560px,55vw);grid-template-columns:105px 115px minmax(205px,1fr)}
+  .home-room-main{padding-top:82px}
+}
+@media(max-width:760px){
+  .player-hud{width:calc(100% - 24px);right:12px;top:72px;grid-template-columns:1fr 1fr 1.5fr;gap:6px;padding:7px;border-radius:21px}
+  .player-hud>.player-stat,.player-hud>.player-wallet{min-height:64px;padding:6px 8px;gap:6px;border-radius:16px}.player-hud .ui-icon--large{--icon-size:34px}.player-wallet>img{width:50px;height:50px;flex-basis:50px}.player-hud b{font-size:17px}.player-hud .player-wallet strong{font-size:19px}
+  .journey-hub--home{padding-top:122px}.home-room-main{padding-top:0}.home-main-actions button>span .ui-icon{--icon-size:43px}
+}
+@media(max-width:430px){
+  .player-hud{grid-template-columns:1fr 1fr}.player-hud>.player-wallet{grid-column:1/3;min-height:72px;justify-content:center}.player-wallet>img{width:58px;height:58px;flex-basis:58px}.player-hud .player-wallet strong{font-size:24px}.journey-hub--home{padding-top:200px}
+  .journey-nav button{min-width:84px;font-size:12px}.journey-nav button .ui-icon{--icon-size:21px}
+  .figma-cafe__steps span{min-width:0}.figma-cafe__steps span:not(:last-child)::after{width:6px}.figma-cafe-map__stones>button{min-width:0}
+}
