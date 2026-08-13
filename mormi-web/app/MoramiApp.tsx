@@ -976,9 +976,9 @@ export function MoramiApp() {
   const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
+  const [teachHelpLoading, setTeachHelpLoading] = useState(false);
   const teachRequestInFlight = useRef(false);
   const [teachError, setTeachError] = useState("");
-  const [teachRewardGranted, setTeachRewardGranted] = useState(false);
   const [teachRewardAmount, setTeachRewardAmount] = useState(0);
   const [solvedAtLevel, setSolvedAtLevel] = useState<number | null>(null);
   const [homeworkSolved, setHomeworkSolved] = useState(false);
@@ -1243,6 +1243,7 @@ export function MoramiApp() {
     const activeConversation = mormiConversation;
     teachRequestInFlight.current = true;
     setTeachError("");
+    setTeachHelpLoading(type === "no_response");
     setTeachSending(true);
     try {
       const nextConversation = await submitMormiResponseThroughBe(activeConversation.conversation_id, {
@@ -1264,6 +1265,7 @@ export function MoramiApp() {
       setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
     } finally {
       teachRequestInFlight.current = false;
+      setTeachHelpLoading(false);
       setTeachSending(false);
     }
   }
@@ -1321,7 +1323,6 @@ export function MoramiApp() {
       setCoinBalance(result.wallet_balance);
       setSessionCoins(result.total_reward);
       setTeachRewardAmount(result.teach_reward);
-      setTeachRewardGranted(result.teach_reward > 0);
       learningSessionId.current = null;
       learningSessionPromise.current = null;
       localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
@@ -1383,7 +1384,6 @@ export function MoramiApp() {
     setTeachingNote(null);
     setTeachSending(false);
     setTeachError("");
-    setTeachRewardGranted(false);
     setTeachRewardAmount(0);
     setSolvedAtLevel(null);
     setHomeworkSolved(false);
@@ -1593,7 +1593,7 @@ export function MoramiApp() {
           <div className="chat-window teaching-stage">
             <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               <div className="teaching-morami"><Morami expression={expression} /></div>
-              {teachingProblem && <article className="teaching-problem">
+              {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
                 <span>모르미가 헷갈린 문제</span>
                 <h2>{teachingProblem.prompt}</h2>
                 <ProblemCard problem={teachingProblem} />
@@ -1622,7 +1622,7 @@ export function MoramiApp() {
                     <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "선택하기"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
-                    {typeof teachingTurn.input.config.sentence === "string" && <p>{formatTeachingDisplayText(teachingTurn.input.config.sentence)}</p>}
+                    {typeof teachingTurn.input.config.sentence === "string" && teachingProblem?.visual.type !== "money" && <p>{formatTeachingDisplayText(teachingTurn.input.config.sentence)}</p>}
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
@@ -1641,12 +1641,12 @@ export function MoramiApp() {
                 </div>
               )}
             </div>
-            {hasServerMessagePanel && (
+            {hasServerMessagePanel && !teachingComplete && (
               <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                 {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
                 {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
                 {teachError && <p role="alert">{teachError}</p>}
-                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className="teaching-dont-know" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
+                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
               </div>
             )}
           </div>
@@ -1698,16 +1698,13 @@ export function MoramiApp() {
           <div className="complete-copy">
             <p className="eyebrow">집에서 오늘의 준비 완료</p>
             <h1>모르미와<br /><em>오늘도 해냈어!</em></h1>
-            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원 · 가르치기 +{teachRewardGranted ? teachRewardAmount : 0}원</small></div></div>
+            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
               <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
-            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>{cafeUnlockedAfterLesson ? "열린 카페로 나가기" : "모르미와 집으로"} <span className="button-arrow" /></button>
-            <div className="complete-secondary-actions">
-              <button className="complete-report-link" onClick={showCurriculum}>전체 수학 과정</button>
-            </div>
+            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}

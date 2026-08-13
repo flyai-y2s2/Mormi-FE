@@ -168,13 +168,14 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
   assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
   assert.match(app, /<h2>\{teachingProblem\.prompt\}<\/h2>/);
+  assert.match(app, /teaching-problem--\$\{teachingProblem\.visual\.type\}/);
   assert.match(app, /function formatTeachingDisplayText\(text: string\)/);
   assert.match(app, /text\.replace\(\/\[□▢\]\/g, teachingBlank\)/);
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
   assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
-  assert.match(app, /\{hasServerMessagePanel && \(/);
+  assert.match(app, /\{hasServerMessagePanel && !teachingComplete && \(/);
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
@@ -199,16 +200,21 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teachingTurn\.input\.kind/);
   assert.match(app, /teaching-playground--\$\{teachingTurn\?\.input\.kind \?\? "loading"\}/);
   assert.match(app, /teaching-answer--\$\{teachingTurn\.input\.kind\}/);
-  assert.match(app, /className="teaching-dont-know"/);
+  assert.match(app, /className=\{`teaching-dont-know \$\{teachHelpLoading \? "is-loading" : ""\}`\}/);
+  assert.match(app, /teachHelpLoading \? "도움 준비 중…" : "잘 모르겠어"/);
+  assert.match(app, /teachingProblem\?\.visual\.type !== "money"/);
   assert.match(app, /className="teaching-back"/);
   assert.match(app, /aria-label="이전 반복학습 화면으로 돌아가기"/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /stage !== "cafe" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
   assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:16px[^}]*font-weight:850/);
+  assert.match(css, /button\.teaching-dont-know\.is-loading::before/);
   assert.match(css, /teaching-answer--button[^}]*transform:translateX\(-42px\)/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
+  assert.match(css, /\.today-badges > span \{/);
+  assert.match(css, /\.note-content h2 em \{ color: #6256a8/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
   // 도움 카드와 입력 문구는 AI 계약을 그대로 사용하며 FE가 별도 질문을 만들지 않는다.
   assert.doesNotMatch(app, /생각과 이유를 직접 알려줘|보기에서 하나를 골라 알려줘|도움 카드와 같이 해보자/);
@@ -238,6 +244,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(css, /speech-button/);
   assert.doesNotMatch(app, /href="\/report"/);
   assert.doesNotMatch(app, /🪙|💰|💵/);
+  assert.doesNotMatch(app, /내 지갑 \{coinBalance\.toLocaleString/);
+  assert.match(app, />나가기 <span className="button-arrow" \/><\/button>/);
+  assert.doesNotMatch(app, /열린 카페로 나가기|전체 수학 과정/);
   assert.match(app, /won-mark/);
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
