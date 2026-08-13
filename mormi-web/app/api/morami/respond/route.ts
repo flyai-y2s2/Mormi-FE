@@ -18,16 +18,115 @@ type TurnRequest = {
   learnerName?: string;
   childMessage?: string;
   conversation?: ConversationMessage[];
+  // Mormi-AI 대화용. 첫 턴에는 conversationId 가 없고, 서버가 발급해 돌려준다.
+  learnerId?: number;
+  learningSessionId?: string | null;
+  conversationId?: string | null;
+  turnId?: string | null;
+  elapsedMs?: number;
 };
 
 type TurnResponse = {
   dialogue: string;
   expression: Expression;
-  source: "anthropic" | "mock";
+  source: "mormi-ai" | "anthropic" | "mock";
   understood?: boolean;
+  // 아래 셋은 Mormi-AI 를 거친 턴에만 실린다.
+  conversationId?: string;
+  turnId?: string;
+  teachRewardEligible?: boolean;
 };
 
 const allowedExpressions = new Set<Expression>(["calm", "happy", "confused", "surprised", "bright", "celebrate"]);
+
+/**
+ * Mormi-AI 가 실제로 가지고 있는 집 가르치기 시나리오만 연결한다.
+ *
+ * AI 저장소의 SCENARIOS 에는 home_teach 시나리오가 home_addition_teach(3+5) 하나뿐이다.
+ * 커리큘럼 세션 전부를 여기로 보내면 아이가 배우는 내용과 무관하게 3+5 이야기를 하므로,
+ * 대응되는 세션만 태우고 나머지는 기존 경로를 그대로 쓴다.
+ * AI 에 시나리오가 늘어나면 이 표에 줄을 추가하면 된다.
+ */
+const aiScenarioBySession: Record<string, string> = {
+  "add-pictures": "home_addition_teach",
+};
+
+// 계약서 12절의 mood → 표정 매핑. 백엔드는 파일 경로가 아니라 의미 단위 mood 를 준다.
+const expressionByMood: Record<string, Expression> = {
+  curious: "confused",
+  listening: "calm",
+  thinking: "calm",
+  relieved: "happy",
+  celebrating: "celebrate",
+};
+
+type MormiTurnContract = {
+  turn_id: string;
+  status: "active" | "completed";
+  mormi: { text: string; mood: string };
+  completion?: { outcome: string; teach_reward_eligible: boolean } | null;
+};
+
+type SessionEnvelope = {
+  conversation_id: string;
+  turn: MormiTurnContract;
+};
+
+function envelopeToTurn(envelope: SessionEnvelope): TurnResponse {
+  const { turn } = envelope;
+  const completed = turn.status === "completed";
+  return {
+    dialogue: turn.mormi.text,
+    expression: expressionByMood[turn.mormi.mood] ?? "calm",
+    source: "mormi-ai",
+    // bright_exit 은 오늘 활동을 안전하게 끝낸 것이지 가르치기 성공이 아니다.
+    understood: completed && turn.completion?.outcome !== "bright_exit",
+    conversationId: envelope.conversation_id,
+    turnId: turn.turn_id,
+    teachRewardEligible: Boolean(turn.completion?.teach_reward_eligible),
+  };
+}
+
+async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
+  const origin = (process.env.AI_ORIGIN || "").replace(/\/$/, "");
+  const serviceKey = process.env.MORMI_DIALOGUE_SERVICE_KEY;
+  const scenarioId = input.sessionId ? aiScenarioBySession[input.sessionId] : undefined;
+
+  // 설정이나 시나리오가 없으면 조용히 기존 경로로 넘긴다. 화면은 멈추지 않아야 한다.
+  if (!origin || !serviceKey || !scenarioId || !input.learnerId) return null;
+  if (input.event !== "teach_prompt" && input.event !== "teach_message") return null;
+
+  const headers = { "content-type": "application/json", "x-mormi-service-key": serviceKey };
+
+  // 첫 턴이면 대화를 만들고, 이후에는 아이 발화를 그 대화에 붙인다.
+  const creating = !input.conversationId;
+  const url = creating
+    ? `${origin}/v1/conversations`
+    : `${origin}/v1/conversations/${input.conversationId}/responses`;
+  const body = creating
+    ? {
+      learner_id: input.learnerId,
+      scene: "home_teach",
+      scenario_id: scenarioId,
+      learning_session_id: input.learningSessionId ?? null,
+    }
+    : {
+      turn_id: input.turnId,
+      response_id: crypto.randomUUID(),
+      type: "text",
+      text: input.childMessage,
+      latency_ms: input.elapsedMs,
+    };
+
+  if (!creating && (!input.turnId || !input.childMessage?.trim())) return null;
+
+  const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+  if (!response.ok) {
+    console.warn(`Mormi-AI 대화 호출 실패: ${response.status} ${creating ? "create" : "respond"}`);
+    return null;
+  }
+  return envelopeToTurn(await response.json() as SessionEnvelope);
+}
 
 function mockTurn(input: TurnRequest): TurnResponse {
   const turns: Record<MoramiEvent, Omit<TurnResponse, "source">> = {
@@ -87,6 +186,15 @@ export async function POST(request: Request) {
     input = await request.json() as TurnRequest;
   } catch {
     return Response.json({ error: "invalid request" }, { status: 400 });
+  }
+
+  // 대화의 교육적 판단은 Mormi-AI 가 한다. 연결되지 않은 세션과 장애 상황에서만
+  // 아래의 기존 경로로 내려간다.
+  try {
+    const aiTurn = await callMormiAi(input);
+    if (aiTurn) return Response.json(aiTurn);
+  } catch (error) {
+    console.warn("Mormi-AI 대화 호출 실패", error instanceof Error ? error.message : "unknown error");
   }
 
   const fallback = mockTurn(input);

@@ -48,13 +48,20 @@ type MoramiTurnOptions = {
   teachPrompt?: string;
   learnerName?: string;
   conversation?: Array<{ role: "morami" | "child"; text: string }>;
+  learnerId?: number;
+  learningSessionId?: string | null;
+  conversationId?: string | null;
+  turnId?: string | null;
 };
 
 type MoramiTurn = {
   dialogue: string;
   expression: Expression;
-  source: "anthropic" | "mock";
+  source: "mormi-ai" | "anthropic" | "mock";
   understood?: boolean;
+  conversationId?: string;
+  turnId?: string;
+  teachRewardEligible?: boolean;
 };
 
 const simpleLearnedLines: Record<string, string> = {
@@ -1130,6 +1137,9 @@ export function MoramiApp() {
   const [learner, setLearner] = useState<LearnerProfile>(defaultLearner);
   // 서버 학습 세션 id. 시도·완료 전송의 대상이며, API 미설정이면 null 로 남는다.
   const learningSessionId = useRef<string | null>(null);
+  // Mormi-AI 대화 식별자. 세션 완료 때 백엔드로 넘겨야 가르치기 보상이 확정된다.
+  const conversationId = useRef<string | null>(null);
+  const conversationTurnId = useRef<string | null>(null);
   const attemptCounter = useRef(0);
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
@@ -1216,15 +1226,28 @@ export function MoramiApp() {
   );
   const teachingScaffold = useMemo(() => teachingScaffoldFor(activeSession, teachingProblem), [activeSession, teachingProblem]);
 
+  // AI 를 거친 턴만 식별자를 싣고 온다. 기존 경로로 내려간 턴은 그냥 지나간다.
+  const rememberConversation = useCallback((turn: MoramiTurn) => {
+    if (turn.conversationId) conversationId.current = turn.conversationId;
+    if (turn.turnId) conversationTurnId.current = turn.turnId;
+  }, []);
+
   const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
     setDialogue(fallbackDialogue);
     setExpression(fallbackExpression);
-    const turn = await requestMoramiTurn(activeSession, event, fallbackDialogue, ladderLevel, { learnerName: childName });
+    const turn = await requestMoramiTurn(activeSession, event, fallbackDialogue, ladderLevel, {
+      learnerName: childName,
+      learnerId: learner.id,
+      learningSessionId: learningSessionId.current,
+      conversationId: conversationId.current,
+      turnId: conversationTurnId.current,
+    });
     if (turn) {
+      rememberConversation(turn);
       setDialogue(turn.dialogue);
       setExpression(turn.expression);
     }
-  }, [activeSession, childName, ladder]);
+  }, [activeSession, childName, ladder, learner.id, rememberConversation]);
 
   const appendTeachMessage = useCallback((role: TeachMessage["role"], text: string) => {
     const nextMessage = { id: teachMessageId.current, role, text };
@@ -1432,15 +1455,23 @@ export function MoramiApp() {
       teachPrompt: prompt,
       learnerName: childName,
       conversation,
+      learnerId: learner.id,
+      learningSessionId: learningSessionId.current,
+      conversationId: conversationId.current,
+      turnId: conversationTurnId.current,
     });
     setTeachSending(false);
+    if (turn) rememberConversation(turn);
     const directAnswerMatches = answersMatch(response, teachingProblem.correct);
     const reasonInput = ladder === 4 ? teachText : teachReason;
     const reasonMatches = teachingScaffold.reasonKeywords.some((keyword) => reasonInput.replaceAll(" ", "").includes(keyword.replaceAll(" ", "")));
     const levelEvidenceMatches = ladder === 4 ? directAnswerMatches && reasonMatches : directAnswerMatches || reasonMatches;
-    const understood = turn?.source === "anthropic" && typeof turn.understood === "boolean"
-      ? levelEvidenceMatches || (ladder < 4 && turn.understood)
-      : levelEvidenceMatches || (ladder < 4 && teachResponseMatches(response, activeSession));
+    // AI 대화가 붙은 세션에서는 이해 판정을 프런트가 다시 하지 않는다(계약서 1절).
+    const understood = turn?.source === "mormi-ai"
+      ? Boolean(turn.understood)
+      : turn?.source === "anthropic" && typeof turn.understood === "boolean"
+        ? levelEvidenceMatches || (ladder < 4 && turn.understood)
+        : levelEvidenceMatches || (ladder < 4 && teachResponseMatches(response, activeSession));
     if (understood) {
       solveTeaching(ladder, turn?.dialogue, turn?.expression ?? "happy", false);
     } else {
@@ -1543,6 +1574,9 @@ export function MoramiApp() {
       learningSessionId.current = null;
       fireAndForget(async () => {
         const result = await api.completeSession(sessionId, {
+          // 가르치기 500원은 백엔드가 이 대화를 AI 에 재확인한 뒤에만 지급한다.
+          // 값이 없으면 보상 없이 세션만 종료된다.
+          conversation_id: conversationId.current ?? undefined,
           transfer_solved: transfer,
           timed_out: timedOut,
           scaffold_level: solvedAtLevel,
@@ -1615,6 +1649,9 @@ export function MoramiApp() {
     // 서버 세션을 연다. variant_seed 를 함께 보내야 나중에 아이가 본 문제를 재구성할 수 있다.
     learningSessionId.current = null;
     attemptCounter.current = 0;
+    // 대화는 세션 단위로 새로 연다. 이전 세션의 식별자를 물려주면 엉뚱한 대화에 보상이 붙는다.
+    conversationId.current = null;
+    conversationTurnId.current = null;
     const seed = variantSeed + 97 + nextIndex * 13;
     fireAndForget(async () => {
       const started = await api.startSession(sessions[nextIndex].id, seed);
