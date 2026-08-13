@@ -166,7 +166,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /item: "cup"/);
   assert.match(app, /tenFrameItems/);
   assert.doesNotMatch(app, /말로 알려주기/);
+  assert.doesNotMatch(app, /말로 설명/);
   assert.doesNotMatch(app, /SpeechRecognition/);
+  assert.doesNotMatch(css, /speech-button/);
   assert.doesNotMatch(app, /href="\/report"/);
   assert.doesNotMatch(app, /🪙|💰|💵/);
   assert.match(app, /won-mark/);
