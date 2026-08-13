@@ -304,7 +304,8 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-dialogue { min-height:185px; margin-top:0; padding:30px 58px 34px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:16px; border:7px solid #78cda6; border-radius:20px; background:#fff; box-shadow:none; }
 .teaching-dialogue b { display:block; margin-bottom:9px; font-size:30px; line-height:1; }
 .teaching-dialogue p { margin:0; color:#202924; font-size:26px; line-height:1.4; font-weight:700; }
-.teaching-dialogue > button.teaching-dont-know { min-width:0; min-height:0; padding:8px; position:absolute; right:22px; bottom:12px; border:0; color:#606862; background:transparent; cursor:pointer; font-size:14px; font-weight:700; }
+.teaching-dialogue > button.teaching-dont-know { min-width:0; min-height:0; padding:4px; position:absolute; right:24px; bottom:14px; border:0; color:#858b87; background:transparent; box-shadow:none; cursor:pointer; font-size:13px; line-height:1.2; font-weight:600; text-decoration:none; }
+.teaching-dialogue > button.teaching-dont-know:hover { color:#626864; background:transparent; transform:none; }
 .teaching-chat-history { display:none; }
 .won-mark { width:24px; height:24px; display:inline-grid; place-items:center; border:2px solid #d7b849; border-radius:50%; color:#8a6b15; background:#fff3b5; font-size:9px; font-style:normal; font-weight:950; vertical-align:middle; }
 .complete-secondary-actions { grid-template-columns:1fr; }
