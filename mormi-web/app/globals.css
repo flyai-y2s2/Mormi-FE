@@ -201,7 +201,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .answer-grid button.is-correct::after,.mission-choice-list button.is-correct::after { content:"✓"; margin-left:8px; color:#18724d; font-size:.78em; white-space:nowrap; }
 .answer-grid button.is-wrong,.mission-choice-list button.is-wrong { border-color:#e2c66f; color:#62552f; background:#fff9df; box-shadow:0 7px 0 #e9d99f; }
 .answer-grid button.is-wrong::after,.mission-choice-list button.is-wrong::after { content:"↻"; margin-left:8px; color:#806b2d; font-size:.78em; white-space:nowrap; }
-.gentle-feedback { height: 35px; margin-top: 18px; color: transparent; font-size: 16px; font-weight: 800; transition: .25s; }
+.gentle-feedback { width:100%; height:35px; margin-top:18px; color:transparent; font-size:16px; font-weight:800; text-align:center; transition:.25s; }
 .gentle-feedback.is-visible { color: #617a6e; }
 .gentle-feedback.is-correct { color:#19734e; }.gentle-feedback.is-wrong { color:#806b2d; }
 .mastery-card { text-align: center; background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,249,219,.95)); }
@@ -293,10 +293,9 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-morami { grid-column:1; grid-row:1/3; align-self:end; justify-self:center; margin-bottom:0; position:relative; z-index:5; }
 .teaching-morami .morami-frame { width:250px; height:320px; }
 .teaching-problem { width:100%; min-height:340px; padding:0 12px; grid-column:2/4; grid-row:1; justify-self:center; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0; border-radius:0; background:transparent; box-shadow:none; text-align:center; }
-.teaching-problem-recap { margin:10px 0 0; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; color:#7c8880; font-size:15px; line-height:1.35; font-weight:800; }
-.teaching-problem-recap > span { padding:5px 9px; border-radius:9px; color:#8a7bb4; background:#f2eeff; font-size:11px; font-weight:950; }
+.teaching-problem-heading{margin:0 0 12px;display:grid;justify-items:center;gap:10px}.teaching-problem-heading>span{padding:6px 11px;border-radius:10px;color:#7662b0;background:#f2eeff;font-size:13px;line-height:1.2;font-weight:950}.teaching-problem-heading h2{margin:0;color:#24463a;font-size:clamp(27px,2.6vw,38px);line-height:1.25;letter-spacing:-1.4px;font-weight:950}
 /* origin/main 이 돈 그림에 준 여유를 이어받는다. 문구가 그림 아래로 내려갔으므로 위쪽에 준다. */
-.teaching-problem--money .teaching-problem-recap { margin-top:24px; }
+.teaching-problem--money .teaching-problem-heading{margin-bottom:16px}
 .teaching-problem .problem-visual { min-height:290px; padding:2px; display:grid; place-items:center; }
 .teaching-problem .ten-frame { width:260px; }
 .teaching-problem .money-visual { transform:scale(1.05); }
@@ -308,7 +307,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-answer--choices,
 .teaching-answer--fill,
 .teaching-answer--joint,
-.teaching-answer--button { width:160px; grid-column:3; grid-row:1; align-self:center; justify-self:start; transform:translateX(-42px); }
+.teaching-answer--button { width:300px; grid-column:3; grid-row:1; align-self:center; justify-self:end; transform:none; }
 .teaching-playground--choices .teaching-problem { width:100%; justify-self:start; transform:translate(-18px, 22px); }
 .teaching-answer--choices { width:300px; align-self:end; justify-self:end; margin-bottom:4px; transform:translateY(22px); }
 .teaching-answer--choices .teaching-choice-list button { width:100%; min-height:62px; padding-inline:18px; white-space:nowrap; }
@@ -548,7 +547,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .onboarding-secondary:hover { color:#3f6655; }
 .promise-actions { display:grid; }.onboarding-skip { padding:13px; border:0; color:#758078; background:transparent; cursor:pointer; font-weight:850; text-decoration:underline; text-underline-offset:4px; }.onboarding-tutorial { min-height:100svh; padding:80px 24px 40px; display:grid; place-items:center; position:relative; }.onboarding-skip--top { position:absolute; right:30px; top:24px; z-index:3; }.tutorial-progress { position:absolute; top:42px; display:flex; gap:8px; }.tutorial-progress i { width:45px; height:9px; border-radius:9px; background:#d8d8cf; }.tutorial-progress i.is-active { background:#55b485; }.tutorial-card { width:min(920px,100%); min-height:520px; padding:48px; display:grid; grid-template-columns:300px 1fr; align-items:center; gap:25px; border:5px solid rgba(255,255,255,.8); border-radius:40px; background:rgba(255,252,243,.96); box-shadow:0 25px 75px rgba(54,65,59,.2); }.tutorial-card .morami-frame { width:280px; height:340px; }.tutorial-card h1 { margin:5px 0 22px; font-size:38px; line-height:1.25; letter-spacing:-2px; }.tutorial-choices { display:grid; gap:10px; }.tutorial-choices button { min-height:62px; border:3px solid #9fd7bd; border-radius:18px; color:#285743; background:#fff; cursor:pointer; font-size:17px; font-weight:950; }.tutorial-choices button:hover { background:#eaf9f1; transform:translateY(-2px); }.tutorial-feedback { color:#33785b; font-weight:950; }
 
-.journey-hub--home { max-width:none; min-height:calc(100svh - 88px); padding:0 7vw 42px; position:relative; }.home-room-main { min-height:calc(100svh - 160px); display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:4vw; }.home-room-copy { max-width:650px; padding:34px; border-radius:36px; background:rgba(255,252,244,.9); box-shadow:0 22px 60px rgba(54,68,61,.16); backdrop-filter:blur(5px); }.home-room-copy h1 { margin:4px 0 28px; font-size:clamp(42px,5.5vw,70px); letter-spacing:-4px; }.home-main-actions { display:grid; gap:13px; }.home-main-actions button { min-height:105px; padding:18px 22px; display:grid; grid-template-columns:56px 1fr; grid-template-rows:1fr 1fr; align-items:center; column-gap:14px; border:3px solid #dbece3; border-radius:26px; color:#29463b; background:#fff; box-shadow:0 8px 0 #cfe4da,0 16px 26px rgba(60,81,71,.08); cursor:pointer; text-align:left; }.home-main-actions button:last-child { border-color:#f1deb0; box-shadow:0 8px 0 #ead5a2,0 16px 26px rgba(98,79,39,.08); }.home-main-actions button > span { grid-row:1/3; font-size:34px; }.home-main-actions b { align-self:end; font-size:22px; }.home-main-actions small { align-self:start; color:#718078; font-size:13px; }.home-room-morami { align-self:end; justify-self:center; }.home-room-morami .morami-frame { width:min(38vw,460px); height:min(66vh,590px); }.home-next-lesson { min-width:440px; min-height:64px; padding:10px 18px; position:absolute; left:50%; bottom:24px; transform:translateX(-50%); border:2px solid #63ba93; border-radius:20px; color:#285c47; background:rgba(255,255,255,.94); box-shadow:0 12px 28px rgba(43,77,62,.14); cursor:pointer; }.home-next-lesson span,.home-next-lesson b { display:block; }.home-next-lesson span { color:#8a6c2e; font-size:11px; }.home-next-lesson b { font-size:15px; }
+.journey-hub--home { max-width:none; min-height:calc(100svh - 88px); padding:0 7vw 42px; position:relative; }.home-room-main { min-height:calc(100svh - 160px); display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:4vw; }.home-room-copy-column{width:100%;max-width:650px;display:grid;gap:12px}.journey-nav--home-card{position:static;justify-self:start;transform:none;background:rgba(255,255,255,.92)}.home-room-copy { max-width:650px; padding:34px; border-radius:36px; background:rgba(255,252,244,.9); box-shadow:0 22px 60px rgba(54,68,61,.16); backdrop-filter:blur(5px); }.home-room-copy h1 { margin:4px 0 28px; font-size:clamp(42px,5.5vw,70px); letter-spacing:-4px; }.home-main-actions { display:grid; gap:13px; }.home-main-actions button { min-height:105px; padding:18px 22px; display:grid; grid-template-columns:56px 1fr; grid-template-rows:1fr 1fr; align-items:center; column-gap:14px; border:3px solid #dbece3; border-radius:26px; color:#29463b; background:#fff; box-shadow:0 8px 0 #cfe4da,0 16px 26px rgba(60,81,71,.08); cursor:pointer; text-align:left; }.home-main-actions button:last-child { border-color:#f1deb0; box-shadow:0 8px 0 #ead5a2,0 16px 26px rgba(98,79,39,.08); }.home-main-actions button > span { grid-row:1/3; font-size:34px; }.home-main-actions b { align-self:end; font-size:22px; }.home-main-actions small { align-self:start; color:#718078; font-size:13px; }.home-room-morami { align-self:end; justify-self:center; }.home-room-morami .morami-frame { width:min(38vw,460px); height:min(66vh,590px); }.home-next-lesson { min-width:440px; min-height:64px; padding:10px 18px; position:absolute; left:50%; bottom:24px; transform:translateX(-50%); border:2px solid #63ba93; border-radius:20px; color:#285c47; background:rgba(255,255,255,.94); box-shadow:0 12px 28px rgba(43,77,62,.14); cursor:pointer; }.home-next-lesson span,.home-next-lesson b { display:block; }.home-next-lesson span { color:#8a6c2e; font-size:11px; }.home-next-lesson b { font-size:15px; }
 .player-hud { padding:7px; position:absolute; right:38px; top:20px; z-index:25; display:flex; align-items:center; gap:5px; border:2px solid rgba(66,91,79,.1); border-radius:18px; background:rgba(255,255,255,.92); box-shadow:0 10px 28px rgba(48,67,58,.15); }.player-hud > * { min-height:34px; padding:7px 11px; display:flex; align-items:center; border-radius:12px; font-size:12px; }.player-hud span { color:#fff; background:#4ca87e; font-weight:950; }.player-hud b { color:#8b681d; background:#fff4c7; }.player-hud strong { color:#475951; background:#eef4f1; }.daily-quest { margin:-10px 0 20px; padding:10px 13px; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; border:2px solid #edc85f; border-radius:17px; color:#66521c; background:linear-gradient(90deg,#fff3b9,#fff9df); }.daily-quest span { padding:4px 7px; border-radius:8px; color:#fff; background:#d79b2d; font-size:10px; font-weight:950; }.daily-quest b { font-size:13px; }.daily-quest strong { min-width:42px; text-align:center; }
 
 .curriculum-home--room { max-width:1000px; min-height:calc(100svh - 88px); padding-top:46px; position:relative; }.room-list-heading { margin-bottom:18px; padding:25px 30px; border-radius:28px; background:rgba(255,252,245,.93); box-shadow:0 15px 42px rgba(51,70,60,.14); }.room-list-heading h1 { margin:2px 0 5px; font-size:38px; letter-spacing:-2px; }.room-list-heading > p:last-child { margin:0; color:#697970; }.room-area-list { display:grid; gap:10px; }.room-area-list > button { min-height:88px; padding:12px 18px; display:grid; grid-template-columns:50px 1fr auto; align-items:center; gap:14px; border:2px solid rgba(68,89,79,.1); border-left:8px solid var(--area-color); border-radius:22px; color:#294239; background:rgba(255,255,255,.94); box-shadow:0 10px 26px rgba(52,72,62,.1); cursor:pointer; text-align:left; }.room-area-list i { width:46px; height:46px; display:grid; place-items:center; border-radius:15px; color:#fff; background:var(--area-color); font-style:normal; font-weight:950; }.room-area-list span b,.room-area-list span small,.room-area-list span mark { display:block; }.room-area-list span b { font-size:19px; }.room-area-list span small { color:#7a8981; font-size:11px; }.room-area-list span mark { width:max-content; margin-top:5px; padding:4px 8px; border-radius:999px; color:#1d684d; background:#dff6e9; font-size:10px; font-weight:950; }.room-area-list em { display:flex; align-items:center; gap:12px; color:var(--area-color); font-style:normal; font-weight:950; }.room-area-list em b { font-size:28px; }.area-detail--room { max-width:860px; }.cafe-required-banner { margin:12px 0; padding:14px 17px; display:flex; align-items:center; gap:13px; border:3px solid #75c69f; border-radius:20px; color:#285d48; background:#e8faf1; box-shadow:0 8px 22px rgba(45,112,83,.1); }.cafe-required-banner > span { font-size:30px; }.cafe-required-banner b { font-size:15px; }.cafe-required-banner p { margin:2px 0 0; font-size:12px; }.cafe-course-mark { width:max-content; margin:6px 0 0; padding:5px 9px; display:block; color:#176044; background:#dff6e9; border:1px solid #7cc8a3; font-size:10px; }.math-course-list button:has(.cafe-course-mark) { border:3px solid #73c69e; background:#f3fff8; }.math-course-list button:has(.cafe-course-mark) > i { background:#dff6e9; }
@@ -677,7 +676,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(min-width:761px){
   .journey-hub--home{padding-left:clamp(24px,4vw,64px);padding-right:clamp(24px,4vw,64px)}
   .home-room-main{width:min(1180px,100%);margin:0 auto;grid-template-columns:minmax(500px,650px) minmax(330px,440px);justify-content:center;gap:clamp(24px,3vw,48px)}
-  .home-room-copy{width:100%;justify-self:end}
+  .home-room-copy-column{justify-self:end}
   .home-room-morami{justify-self:start}
   .player-hud{right:max(4.5vw,calc((100vw - 1180px)/2));top:18px}
 }
@@ -839,7 +838,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:760px){.queue-story-scene{min-height:500px;padding:54px 5px 0}.queue-story-task{width:100%;gap:10px}.queue-story-visual{border-radius:22px}.queue-story-visual img{height:auto;aspect-ratio:4/3;object-fit:cover}.queue-story-visual figcaption{bottom:10px;padding:0 7%;gap:4px}.queue-story-visual figcaption span{padding:5px 8px;font-size:12px}.queue-story-options{grid-template-columns:repeat(3,1fr)}}
 
 @media(max-width:760px){
-  .teaching-scene{padding:34px 10px 40px}.teaching-scene .chat-title h1{font-size:25px}.teaching-stage{min-height:0;padding:13px 9px 18px;border-radius:27px}.teaching-playground{min-height:0;padding:14px 10px;display:grid;grid-template-columns:100px 1fr;gap:10px}.teaching-morami .morami-frame{width:100px;height:145px}.teaching-problem{min-width:0;min-height:270px;padding:13px;grid-column:2}.teaching-problem-recap{margin-top:6px;gap:6px;font-size:13px}.teaching-problem .problem-visual{min-height:170px;transform:scale(.78)}.teaching-answer,.teaching-playground>.learned-card{grid-column:1/3;width:100%;padding:13px}.teaching-choice-list{grid-template-columns:repeat(3,1fr);gap:6px}.teaching-choice-list button{min-height:54px;padding:5px;font-size:13px}.teaching-choice-pair .teaching-choice-list{grid-template-columns:1fr}.teaching-dialogue{min-height:125px;padding:15px;grid-template-columns:1fr}.teaching-dialogue b{font-size:17px}.teaching-dialogue p{font-size:15px}.teaching-dialogue>button{min-height:42px}
+  .teaching-scene{padding:34px 10px 40px}.teaching-scene .chat-title h1{font-size:25px}.teaching-stage{min-height:0;padding:13px 9px 18px;border-radius:27px}.teaching-playground{min-height:0;padding:14px 10px;display:grid;grid-template-columns:100px 1fr;gap:10px}.teaching-morami .morami-frame{width:100px;height:145px}.teaching-problem{min-width:0;min-height:270px;padding:13px;grid-column:2}.teaching-problem-heading{margin-bottom:6px;gap:6px}.teaching-problem-heading>span{font-size:10px}.teaching-problem-heading h2{font-size:23px}.teaching-problem .problem-visual{min-height:170px;transform:scale(.78)}.teaching-answer,.teaching-playground>.learned-card{grid-column:1/3;width:100%;padding:13px}.teaching-choice-list{grid-template-columns:repeat(3,1fr);gap:6px}.teaching-choice-list button{min-height:54px;padding:5px;font-size:13px}.teaching-choice-pair .teaching-choice-list{grid-template-columns:1fr}.teaching-dialogue{min-height:125px;padding:15px;grid-template-columns:1fr}.teaching-dialogue b{font-size:17px}.teaching-dialogue p{font-size:15px}.teaching-dialogue>button{min-height:42px}
 }
 
 /* Local-only Mormi-AI contract lab */
@@ -879,7 +878,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-problem{grid-column:2/4;grid-row:1;min-width:0;min-height:310px}
   .teaching-playground--choices .teaching-problem,.teaching-playground--fill .teaching-problem,.teaching-playground--joint .teaching-problem,.teaching-playground--button .teaching-problem{grid-column:2}
   .teaching-answer{grid-column:2/4;grid-row:2;width:100%;min-width:0}
-  .teaching-answer--choices,.teaching-answer--fill,.teaching-answer--joint,.teaching-answer--button{width:145px;grid-column:3;grid-row:1;transform:translateX(-24px)}
+  .teaching-answer--choices,.teaching-answer--fill,.teaching-answer--joint,.teaching-answer--button{width:230px;grid-column:3;grid-row:1;justify-self:end;transform:none}
   .teaching-playground--choices .teaching-problem{transform:translate(-10px,16px)}
   .teaching-answer--choices{width:230px;margin-bottom:0;transform:translateY(16px)}
   .teaching-answer--choices .teaching-choice-list button{min-height:56px;padding-inline:10px;font-size:14px}
@@ -900,7 +899,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-morami{grid-column:1;grid-row:2;justify-self:center;margin-bottom:0}
   .teaching-morami .morami-frame{width:105px;height:140px}
   .teaching-problem,.teaching-playground--choices .teaching-problem,.teaching-playground--fill .teaching-problem,.teaching-playground--joint .teaching-problem,.teaching-playground--button .teaching-problem{grid-column:1/3;grid-row:1;width:100%;min-height:300px;padding:6px}
-  .teaching-problem-recap{margin-top:6px;gap:6px;font-size:13px}
+  .teaching-problem-heading{margin-bottom:8px;gap:7px}.teaching-problem-heading h2{font-size:25px}
   .teaching-problem .problem-visual{min-height:235px;transform:none}
   .teaching-problem .ten-frame{width:220px}
   .teaching-answer,.teaching-answer--choices,.teaching-answer--fill,.teaching-answer--joint,.teaching-answer--button{width:100%;grid-column:2;grid-row:2;align-self:center;transform:none}
@@ -1001,16 +1000,17 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-menu__layout,.figma-cafe-pay__layout,.figma-cafe-change__builder{min-width:0;max-width:100%}
 
 @media(max-width:1100px){
-  .player-hud{width:min(560px,55vw);grid-template-columns:105px 115px minmax(205px,1fr)}
-  .home-room-main{padding-top:82px}
+  .journey-hub--home{padding-top:18px}
+  .player-hud{width:min(680px,calc(100% - 28px));margin:0 auto 22px;position:relative;right:auto;top:auto;grid-template-columns:105px 115px minmax(205px,1fr)}
+  .home-room-main{padding-top:0}
 }
 @media(max-width:760px){
-  .player-hud{width:calc(100% - 24px);right:12px;top:72px;grid-template-columns:1fr 1fr 1.5fr;gap:6px;padding:7px;border-radius:21px}
+  .player-hud{width:calc(100% - 12px);margin:0 auto 15px;right:auto;top:auto;grid-template-columns:1fr 1fr 1.5fr;gap:6px;padding:7px;border-radius:21px}
   .player-hud>.player-stat,.player-hud>.player-wallet{min-height:64px;padding:6px 8px;gap:6px;border-radius:16px}.player-hud .ui-icon--large{--icon-size:34px}.player-wallet>img{width:50px;height:50px;flex-basis:50px}.player-hud b{font-size:17px}.player-hud .player-wallet strong{font-size:19px}
-  .journey-hub--home{padding-top:122px}.home-room-main{padding-top:0}.home-main-actions button>span .ui-icon{--icon-size:43px}
+  .journey-hub--home{padding-top:12px}.home-room-main{padding-top:0}.home-room-copy-column{gap:9px}.home-room-copy-column .home-room-copy{margin-top:0}.home-main-actions button>span .ui-icon{--icon-size:43px}
 }
 @media(max-width:430px){
-  .player-hud{grid-template-columns:1fr 1fr}.player-hud>.player-wallet{grid-column:1/3;min-height:72px;justify-content:center}.player-wallet>img{width:58px;height:58px;flex-basis:58px}.player-hud .player-wallet strong{font-size:24px}.journey-hub--home{padding-top:200px}
+  .player-hud{grid-template-columns:1fr 1fr}.player-hud>.player-wallet{grid-column:1/3;min-height:72px;justify-content:center}.player-wallet>img{width:58px;height:58px;flex-basis:58px}.player-hud .player-wallet strong{font-size:24px}.journey-hub--home{padding-top:10px}
   .journey-nav button{min-width:84px;font-size:12px}.journey-nav button .ui-icon{--icon-size:21px}
   .figma-cafe__steps span{min-width:0}.figma-cafe__steps span:not(:last-child)::after{width:6px}.figma-cafe-map__stones>button{min-width:0}
 }
@@ -1018,10 +1018,13 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* Final desktop placement: keep the home cards, Mormi, and HUD in one visual cluster. */
 @media(min-width:1101px){
   .player-hud{right:max(48px,calc((100vw - 1180px)/2))}
+  .home-room-copy-column{transform:translate(30px,24px)}
+  .home-room-morami{transform:translate(-8px,-46px)}
+  .home-next-lesson{bottom:58px}
 }
 .daily-quest b .ui-icon--key{--icon-size:48px;margin:-13px 1px -13px -7px}
-.home-main-actions button>span .ui-icon--lock{--icon-size:64px}
+.home-main-actions button>span .ui-icon--lock{--icon-size:50px}
 @media(max-width:760px){
   .daily-quest b .ui-icon--key{--icon-size:38px;margin:-9px 0 -9px -5px}
-  .home-main-actions button>span .ui-icon--lock{--icon-size:52px}
+  .home-main-actions button>span .ui-icon--lock{--icon-size:43px}
 }

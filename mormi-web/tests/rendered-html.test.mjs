@@ -174,9 +174,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /teachingProblemMatchingTurn|numbersMentionedIn|teachingFocusProblem/);
   assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
   assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
-  // 문제 문구는 그림 아래 회수 문구로 내려갔다. 아이가 답할 질문은 그림 위의 모르미 대화라,
-  // 둘을 같이 위에 두면 시선이 엉뚱한 질문으로 먼저 간다.
-  assert.match(app, /<p className="teaching-problem-recap"><span>모르미가 헷갈린 문제<\/span>\{teachingProblem\.prompt\}<\/p>/);
+  // 실제 문제 문구는 문제 그림 위에서 크게 보여 주고, 서버 대화는 아래 대화창에 분리한다.
+  assert.match(app, /<div className="teaching-problem-heading"><span>모르미가 헷갈린 문제<\/span><h2>\{teachingProblem\.prompt\}<\/h2><\/div>/);
   assert.match(app, /teaching-problem--\$\{teachingProblem\.visual\.type\}/);
   assert.match(app, /function formatTeachingDisplayText\(text: string\)/);
   assert.match(app, /text\.replace\(\/\[□▢\]\/g, teachingBlank\)/);
@@ -217,9 +216,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /stage !== "cafe" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
+  assert.match(app, /<div className="mastery-stars" aria-label="별 5개">(?:<UiIcon name="star" size="large" \/>){5}<\/div>/);
   assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:16px[^}]*font-weight:850/);
   assert.match(css, /button\.teaching-dont-know\.is-loading::before/);
-  assert.match(css, /teaching-answer--button[^}]*transform:translateX\(-42px\)/);
+  assert.match(css, /teaching-answer--button[^}]*grid-column:3[^}]*justify-self:end[^}]*transform:none/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(css, /\.today-badges > span \{/);

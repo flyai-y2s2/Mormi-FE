@@ -924,13 +924,19 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
         <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
       </div>
       <div className="home-room-main">
-        <div className="home-room-copy">
-          <p className="eyebrow">모르미의 생활 수학</p>
-          <h1>오늘은 어떤 걸 할까?</h1>
-          <div className="daily-quest"><span>오늘의 퀘스트</span><b><UiIcon name="key" size="small" /> 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
-          <div className="home-main-actions">
-            <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b><small>개념을 익히고 별 3개를 받아요</small></button>
-            <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
+        <div className="home-room-copy-column">
+          <nav className="journey-nav journey-nav--home-card" aria-label="장소 이동">
+            <button className="is-active" type="button"><UiIcon name="home" size="small" />집</button>
+            <button type="button" onClick={onOutside}><UiIcon name="cafe" size="small" />외부</button>
+          </nav>
+          <div className="home-room-copy">
+            <p className="eyebrow">모르미의 생활 수학</p>
+            <h1>오늘은 어떤 걸 할까?</h1>
+            <div className="daily-quest"><span>오늘의 퀘스트</span><b><UiIcon name="key" size="small" /> 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
+            <div className="home-main-actions">
+              <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b><small>개념을 익히고 별 3개를 받아요</small></button>
+              <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
+            </div>
           </div>
         </div>
         <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
@@ -1691,7 +1697,7 @@ export function MoramiApp() {
       {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
-        </div> : <nav className="journey-nav" aria-label="장소 이동"><button className={stage === "home" ? "is-active" : ""} onClick={showHome}><UiIcon name="home" size="small" />집</button><button className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button></nav>}
+        </div> : stage === "home" ? <span /> : <nav className="journey-nav" aria-label="장소 이동"><button onClick={showHome}><UiIcon name="home" size="small" />집</button><button className="is-active" onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button></nav>}
         <div className="top-actions">
           <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
@@ -1754,7 +1760,7 @@ export function MoramiApp() {
           <div className="drill-board drill-board--solo">
             {mastered ? (
               <div className="mastery-card">
-                <div className="mastery-stars"><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /></div>
+                <div className="mastery-stars" aria-label="별 5개"><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /><UiIcon name="star" size="large" /></div>
                 <h2>5번 반복학습 끝!</h2>
                 <div className="mastery-coin-total"><Image src="/cafe-money/100.png" alt="세션에서 얻은 돈" width={74} height={74} unoptimized /><span>반복학습 보상</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원</strong></div>
                 <p>이제 모르미가 처음 찾아올 거야.<br />방금 익힌 걸 모르미에게 가르쳐 줘.</p>
@@ -1794,14 +1800,14 @@ export function MoramiApp() {
         <section className="chat-scene teaching-scene">
           <div className="chat-title teaching-toolbar">
             <button className="teaching-back" onClick={() => { setStage("drill"); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="이전 반복학습 화면으로 돌아가기"><span>←</span> 이전으로</button>
-            <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 별노트</button>
+            <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)} aria-label="궁금해 사전 열기"><UiIcon name="book" size="small" /> 궁금해 사전</button>
           </div>
           <div className="chat-window teaching-stage">
             <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               <div className="teaching-morami"><Morami expression={expression} /></div>
               {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
+                <div className="teaching-problem-heading"><span>모르미가 헷갈린 문제</span><h2>{teachingProblem.prompt}</h2></div>
                 <ProblemCard problem={teachingProblem} />
-                <p className="teaching-problem-recap"><span>모르미가 헷갈린 문제</span>{teachingProblem.prompt}</p>
               </article>}
               {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}
               {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
