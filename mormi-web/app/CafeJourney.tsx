@@ -76,9 +76,12 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
   const [changeFeedback, setChangeFeedback] = useState("");
 
-  // 모르미가 스테이션을 열며 건네는 첫 마디. Mormi-AI 가 비었거나 실패하면
-  // 값이 비고, 화면은 아래의 기본 문구를 그대로 쓴다.
+  // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
+  // 화면은 아래의 기본 문구를 그대로 쓴다.
   const [mormiLines, setMormiLines] = useState<Partial<Record<CafeStage, string>>>({});
+
+  // 스테이션마다 독립된 대화다. 아이 답을 붙이려면 대화 id 와 직전 턴 id 가 필요하다.
+  const cafeTalks = useRef<Partial<Record<CafeStage, { conversationId: string; turnId: string }>>>({});
 
   // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
   const visitId = useRef<string | null>(null);
@@ -101,14 +104,12 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
   }, []);
 
   /**
-   * 스테이션을 열며 모르미의 첫 마디를 받아 온다.
+   * 모르미와 한 번 주고받는다. 대화 id 가 없으면 새 대화를 여는 요청이 된다.
    *
-   * 화면이 방금 뽑은 문제를 함께 보내야 모르미가 아이가 보고 있는 것과 같은
-   * 줄·메뉴·예산을 말한다. 대화 자체는 Mormi-AI 가 보관한다.
-   * 실패하면 대사가 비고 화면은 기본 문구로 그대로 진행한다.
+   * 대화 자체는 Mormi-AI 가 보관한다. 실패하면 대사가 비고 화면은
+   * 기본 문구로 그대로 진행한다.
    */
-  function openCafeDialogue(stage: CafeStage, body: Record<string, unknown>) {
-    setMormiLines((lines) => ({ ...lines, [stage]: undefined }));
+  function talkToMormi(stage: CafeStage, body: Record<string, unknown>) {
     void (async () => {
       try {
         const response = await fetch("/api/morami/respond", {
@@ -117,12 +118,50 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
           body: JSON.stringify({ scene: "cafe", learnerId, ...body }),
         });
         if (!response.ok) return;
-        const turn = await response.json() as { dialogue?: string };
+        const turn = await response.json() as {
+          dialogue?: string;
+          conversationId?: string;
+          turnId?: string;
+        };
+        // 다음 응답은 반드시 최신 턴에 붙여야 한다. AI 가 stale turn_id 를 거절한다.
+        if (turn.conversationId && turn.turnId) {
+          cafeTalks.current[stage] = { conversationId: turn.conversationId, turnId: turn.turnId };
+        }
         if (turn.dialogue) setMormiLines((lines) => ({ ...lines, [stage]: turn.dialogue }));
       } catch {
         // 모르미 대사는 진행을 막지 않는다.
       }
     })();
+  }
+
+  /**
+   * 스테이션을 열며 모르미의 첫 마디를 받아 온다.
+   *
+   * 화면이 방금 뽑은 문제를 함께 보내야 모르미가 아이가 보고 있는 것과 같은
+   * 줄·메뉴·예산을 말한다.
+   */
+  function openCafeDialogue(stage: CafeStage, body: Record<string, unknown>) {
+    setMormiLines((lines) => ({ ...lines, [stage]: undefined }));
+    delete cafeTalks.current[stage];
+    talkToMormi(stage, body);
+  }
+
+  /**
+   * 아이가 방금 낸 답을 그 스테이션 대화에 붙인다.
+   *
+   * 정오 판정과 기록은 일반 백엔드가 계속 담당한다. 여기로도 보내는 이유는
+   * 모르미가 아이 말에 이어서 반응하게 하고, 아이가 어떻게 답했는지를
+   * 대화로 남기기 위해서다. 첫 마디를 아직 못 받았으면 붙일 곳이 없어 건너뛴다.
+   */
+  function sendCafeAnswer(stage: CafeStage, text: string) {
+    const talk = cafeTalks.current[stage];
+    const answer = text.trim();
+    if (!talk || !answer) return;
+    talkToMormi(stage, {
+      conversationId: talk.conversationId,
+      turnId: talk.turnId,
+      childMessage: answer.slice(0, 300),
+    });
   }
 
   function nextAttemptNo(stage: CafeStage) {
@@ -214,6 +253,7 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       return;
     }
     setQueueFeedback("");
+    sendCafeAnswer("queue", `왼쪽 줄에는 ${queueCounts.left}명, 오른쪽 줄에는 ${queueCounts.right}명이 있어.`);
     setQueueScene("count-left");
   }
 
@@ -234,6 +274,7 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
         elapsed_ms: elapsedMs,
       }), "카페 줄 서기");
     }
+    sendCafeAnswer("queue", `왼쪽 줄은 ${queueCounts.left}명, 오른쪽 줄은 ${queueCounts.right}명이야. 더 짧은 줄은 ${count}명이야.`);
     if (count === shorterCount) {
       setQueueFeedback("");
       setQueueScene("note");
@@ -277,6 +318,10 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       const elapsedMs = stageElapsedMs();
       fireAndForget(() => api.cafeMenu(id, selectedMenu, menuBudget, attemptNo, elapsedMs), "카페 메뉴 선택");
     }
+    const childMenu = selectedItems.find((item) => item.id !== mormeyMenuId);
+    if (childMenu) {
+      sendCafeAnswer("menu", `${menuBudget.toLocaleString("ko-KR")}원 예산에서 ${childMenu.name}(${childMenu.price.toLocaleString("ko-KR")}원)를 골랐어. 합계는 ${selectedTotal.toLocaleString("ko-KR")}원이야.`);
+    }
     if (selectedTotal > menuBudget) {
       setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
       captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: true });
@@ -303,6 +348,9 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
         "카페 메뉴값 계산",
       );
     }
+    if (sumChildMenu) {
+      sendCafeAnswer("calculate", `${sumMormeyMenu.name} ${sumMormeyMenu.price.toLocaleString("ko-KR")}원이랑 ${sumChildMenu.name} ${sumChildMenu.price.toLocaleString("ko-KR")}원을 더하면 ${answer.toLocaleString("ko-KR")}원이야.`);
+    }
     if (answer === sumTarget) {
       setSumFeedback("맞아! 두 메뉴의 값을 정확히 더했어.");
       setJourneyProgress((progress) => Math.max(progress, 3));
@@ -324,6 +372,7 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       const elapsedMs = stageElapsedMs();
       fireAndForget(() => api.cafeChange(id, changeMenu.id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
     }
+    sendCafeAnswer("change", `10,000원에서 ${changeMenu.name} ${changeMenu.price.toLocaleString("ko-KR")}원을 빼면 ${changeTotal.toLocaleString("ko-KR")}원이야. 천 원 ${changeCounts[1000]}장, 오백 원 ${changeCounts[500]}개를 담았어.`);
     if (changeTotal === changeTarget) {
       setChangeFeedback("맞아. 받아야 할 거스름돈을 정확히 담았어!");
       setJourneyProgress(4);
@@ -402,7 +451,10 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
 
           {queueScene !== "clear" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            <p>{queueScene === "intro" ? (mormiLines.queue || "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어...") : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : queueScene === "count-left" ? "더 짧은 줄에는 몇 명이 있어?" : `${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
+            {/* 모르미가 방금 한 말이 있으면 그걸 쓴다. 노트 장면은 마무리 문구를 유지한다. */}
+            <p>{queueScene === "note"
+              ? `${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`
+              : mormiLines.queue || (queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : "더 짧은 줄에는 몇 명이 있어?")}</p>
             {queueFeedback && <small role="status">{queueFeedback}</small>}
             {queueScene === "intro" && <button className="queue-story-next" onClick={() => setQueueScene("count-both")}>다음으로</button>}
             {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); setQueueScene("count-left"); }}>잘 모르겠어</button>}

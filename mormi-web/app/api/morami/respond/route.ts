@@ -108,15 +108,18 @@ async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
     ? (input.cafeScenarioId && cafeScenarioIds.has(input.cafeScenarioId) ? input.cafeScenarioId : undefined)
     : (input.sessionId ? aiScenarioBySession[input.sessionId] : undefined);
 
-  // 설정이나 시나리오가 없으면 조용히 기존 경로로 넘긴다. 화면은 멈추지 않아야 한다.
-  if (!origin || !serviceKey || !scenarioId || !input.learnerId) return null;
+  // 첫 턴이면 대화를 만들고, 이후에는 아이 발화를 그 대화에 붙인다.
+  const creating = !input.conversationId;
+
+  // 설정이 없으면 조용히 기존 경로로 넘긴다. 화면은 멈추지 않아야 한다.
+  if (!origin || !serviceKey || !input.learnerId) return null;
+  // 시나리오는 대화를 새로 열 때만 필요하다. 이어가는 턴은 대화가 이미 알고 있다.
+  if (creating && !scenarioId) return null;
   // 집 가르치기는 아이가 설명하는 두 순간에만 AI 를 태운다. 카페는 스테이션을 열 때다.
   if (!cafe && input.event !== "teach_prompt" && input.event !== "teach_message") return null;
 
   const headers = { "content-type": "application/json", "x-mormi-service-key": serviceKey };
 
-  // 첫 턴이면 대화를 만들고, 이후에는 아이 발화를 그 대화에 붙인다.
-  const creating = !input.conversationId;
   const url = creating
     ? `${origin}/v1/conversations`
     : `${origin}/v1/conversations/${input.conversationId}/responses`;
