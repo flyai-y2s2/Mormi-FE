@@ -606,11 +606,6 @@ export function CafeJourney({ onBack, onComplete }: Props) {
             ))}
           </div>
           <div className="figma-cafe-map__path" aria-hidden="true" />
-          <div className="figma-cafe-map__guide">
-            <span>{Math.min(journeyProgress, 3) + 1}</span>
-            <div><small>지금 할 미션</small><h2>{stationCopy[Math.min(journeyProgress, 3)].title}</h2><p>{stationCopy[Math.min(journeyProgress, 3)].description}</p></div>
-            <button onClick={() => openStation(Math.min(journeyProgress, 3))}>스테이지 시작</button>
-          </div>
         </main>
       )}
 
