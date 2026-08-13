@@ -158,10 +158,12 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
   assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
   assert.match(app, /<h2>\{teachingProblem\.prompt\}<\/h2>/);
-  assert.match(app, /\{teachingComplete && <div><b>모르미<\/b><p>\{dialogue\}<\/p><\/div>\}/);
+  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{serverMormiText\}<\/p><\/div>\}/);
   assert.match(app, /teachingTurn\.input\.submit_label \?\? "모르미에게 알려주기"/);
-  assert.match(app, /const hasTeachingDialogue = teachingComplete \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
-  assert.match(app, /\{hasTeachingDialogue && \(/);
+  assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
+  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
+  assert.match(app, /\{hasServerMessagePanel && \(/);
+  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{serverMormiText\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.match(app, /모르미가 헷갈린 문제/);
