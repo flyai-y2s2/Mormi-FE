@@ -157,14 +157,23 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     setQueueScene("count-left");
   }
 
-  // TODO(백엔드): 줄 서기 시도를 서버에 남기지 못하고 있다.
-  // POST /v1/cafe-visits/{id}/queue 는 choiceId("left"/"right")를 받고
-  // CurriculumCatalog.QUEUE_CORRECT_CHOICE = "right" 와 비교해 정오를 판정한다.
-  // 이 화면은 좌우 인원이 매번 랜덤이라 정답 줄이 고정이 아니고, 아이가 고르는 값도
-  // 방향이 아니라 "더 짧은 줄의 인원수"다. 서버가 좌우 인원과 답을 함께 받아
-  // 판정하도록 계약이 바뀌어야 계측을 붙일 수 있다.
   function chooseLeftCount(count: number) {
     const shorterCount = Math.min(queueCounts.left, queueCounts.right);
+    const id = visitId.current;
+    if (id) {
+      // 좌우 인원과 아이의 답을 함께 보낸다. 정오 판정은 서버가 한다.
+      const attemptNo = nextAttemptNo("queue");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(() => api.cafeQueue(id, {
+        left_count: queueCounts.left,
+        right_count: queueCounts.right,
+        chosen_count: count,
+        counting_answer: queueCountAnswer.slice(0, 40),
+        scaffold_used: queueHelp,
+        attempt_no: attemptNo,
+        elapsed_ms: elapsedMs,
+      }), "카페 줄 서기");
+    }
     if (count === shorterCount) {
       setQueueFeedback("");
       setQueueScene("note");
@@ -201,18 +210,17 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
   function orderMenu() {
     if (selectedMenu.length !== 2) return;
-    if (selectedTotal > menuBudget) {
-      // 예산 초과는 서버에 남기지 않는다. MenuRequest 에 예산 필드가 없어
-      // 초과 시도를 정상 주문과 구분할 방법이 없다.
-      setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
-      captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: true });
-      return;
-    }
+    // 예산 초과도 한 건의 시도로 남긴다. 서버가 예산과 함께 받아 오답으로 기록한다.
     const id = visitId.current;
     if (id) {
       const attemptNo = nextAttemptNo("menu");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(() => api.cafeMenu(id, selectedMenu, attemptNo, elapsedMs), "카페 메뉴 선택");
+      fireAndForget(() => api.cafeMenu(id, selectedMenu, menuBudget, attemptNo, elapsedMs), "카페 메뉴 선택");
+    }
+    if (selectedTotal > menuBudget) {
+      setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
+      captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: true });
+      return;
     }
     captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: false });
     setMenuScene("thanks");
@@ -223,13 +231,18 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     returnToMap();
   }
 
-  // TODO(백엔드): 계산 단계 시도를 서버에 남기지 못하고 있다.
-  // POST /v1/cafe-visits/{id}/payments 는 화폐 액면가→개수 맵을 받아 합계가
-  // CAFE_TARGET_AMOUNT(10,000원)와 같은지로 판정한다. 이 화면에서는 돈을 직접 고르는
-  // 단계가 사라지고 "두 메뉴 값의 합"을 숫자로 입력하는 방식이라 보낼 counts 가 없다.
-  // 서버가 숫자 답과 기대 합계를 받도록 계약이 바뀌어야 계측을 붙일 수 있다.
   function checkSum() {
     const answer = Number(sumAnswer.replace(/[^0-9]/g, ""));
+    const id = visitId.current;
+    // 이 단계의 두 메뉴는 메뉴 고르기와 별개로 뽑히므로 함께 보낸다.
+    if (id && sumChildMenu) {
+      const attemptNo = nextAttemptNo("calculate");
+      const elapsedMs = stageElapsedMs();
+      fireAndForget(
+        () => api.cafePayment(id, [sumMormeyMenu.id, sumChildMenu.id], answer, attemptNo, elapsedMs),
+        "카페 메뉴값 계산",
+      );
+    }
     if (answer === sumTarget) {
       setSumFeedback("맞아! 두 메뉴의 값을 정확히 더했어.");
       setJourneyProgress((progress) => Math.max(progress, 3));
@@ -249,7 +262,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
     if (id) {
       const attemptNo = nextAttemptNo("change");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(() => api.cafeChange(id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
+      fireAndForget(() => api.cafeChange(id, changeMenu.id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
     }
     if (changeTotal === changeTarget) {
       setChangeFeedback("맞아. 받아야 할 거스름돈을 정확히 담았어!");

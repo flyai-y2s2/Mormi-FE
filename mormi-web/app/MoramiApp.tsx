@@ -1141,6 +1141,8 @@ export function MoramiApp() {
   const conversationId = useRef<string | null>(null);
   const conversationTurnId = useRef<string | null>(null);
   const attemptCounter = useRef(0);
+  // 가르치기 시도 번호. (activity, attempt_no) 유니크가 활동별로 걸리므로 카운터도 분리한다.
+  const teachAttemptCounter = useRef(0);
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
   const [sessionIndex, setSessionIndex] = useState(0);
@@ -1367,6 +1369,40 @@ export function MoramiApp() {
     }), "시도 기록");
   }
 
+  /**
+   * 가르치기 응답 1건. 아이가 적거나 고른 내용을 그대로 남긴다.
+   *
+   * <p>모르미 대화 원문은 Mormi-AI 가 따로 보관하지만, AI 시나리오가 붙은 세션은
+   * 아직 일부뿐이라 그쪽에만 기대면 대부분의 세션에서 응답이 사라진다.
+   * 연구 분석에 필요한 만큼은 여기에서 학습 기록으로도 남긴다.
+   */
+  function postTeachAttempt(
+    isCorrect: boolean,
+    meta: Record<string, unknown>,
+    questionIndex = 0,
+  ) {
+    const sessionId = learningSessionId.current;
+    if (!sessionId) return;
+    teachAttemptCounter.current += 1;
+    const attemptNo = teachAttemptCounter.current;
+    const elapsedMs = nowMs() - startedAt.current;
+    fireAndForget(() => api.recordAttempt(sessionId, {
+      activity: "teach",
+      attempt_no: attemptNo,
+      item_id: `${activeSession.id}:teach:l${ladder}`,
+      question_index: questionIndex,
+      is_correct: isCorrect,
+      elapsed_ms: Math.min(elapsedMs, 600000),
+      answer_meta: {
+        ladder_level: ladder,
+        teach_prompt: teachingProblem.prompt,
+        correct_answer: teachingProblem.correct,
+        conversation_id: conversationId.current,
+        ...meta,
+      },
+    }), "가르치기 기록");
+  }
+
   function answerDrill(answer: string) {
     if (drillLocked || mastered) return;
     setSelectedDrillAnswer({ question: drillIndex, answer });
@@ -1472,6 +1508,18 @@ export function MoramiApp() {
       : turn?.source === "anthropic" && typeof turn.understood === "boolean"
         ? levelEvidenceMatches || (ladder < 4 && turn.understood)
         : levelEvidenceMatches || (ladder < 4 && teachResponseMatches(response, activeSession));
+    postTeachAttempt(understood, {
+      response_type: "free_text",
+      child_text: response,
+      answer_text: teachText.trim(),
+      reason_text: teachReason.trim(),
+      morami_prompt: prompt,
+      morami_reply: turn?.dialogue,
+      dialogue_source: turn?.source ?? "none",
+      direct_answer_matches: directAnswerMatches,
+      reason_matches: reasonMatches,
+      child_turn_no: conversation.filter((message) => message.role === "child").length,
+    });
     if (understood) {
       solveTeaching(ladder, turn?.dialogue, turn?.expression ?? "happy", false);
     } else {
@@ -1494,7 +1542,15 @@ export function MoramiApp() {
 
   function submitTeachChoices() {
     if (!selectedTeachAnswer || !selectedTeachReason) return;
-    if (answersMatch(selectedTeachAnswer, teachingProblem.correct) && selectedTeachReason === teachingScaffold.reasonCorrect) {
+    const correct = answersMatch(selectedTeachAnswer, teachingProblem.correct)
+      && selectedTeachReason === teachingScaffold.reasonCorrect;
+    postTeachAttempt(correct, {
+      response_type: "choice",
+      selected_answer: selectedTeachAnswer,
+      selected_reason: selectedTeachReason,
+      correct_reason: teachingScaffold.reasonCorrect,
+    });
+    if (correct) {
       solveTeaching(2);
       return;
     }
@@ -1504,6 +1560,12 @@ export function MoramiApp() {
 
   function answerGuidedTeaching(answer: string) {
     const step = teachingScaffold.guidedSteps[guidedTeachStep];
+    postTeachAttempt(answersMatch(answer, step.correct), {
+      response_type: "guided_step",
+      selected_answer: answer,
+      step_prompt: step.prompt,
+      step_correct: step.correct,
+    }, guidedTeachStep);
     if (!answersMatch(answer, step.correct)) {
       setExpression("confused");
       setDialogue("이 단계만 다시 천천히 생각해 보자.");
@@ -1649,6 +1711,7 @@ export function MoramiApp() {
     // 서버 세션을 연다. variant_seed 를 함께 보내야 나중에 아이가 본 문제를 재구성할 수 있다.
     learningSessionId.current = null;
     attemptCounter.current = 0;
+    teachAttemptCounter.current = 0;
     // 대화는 세션 단위로 새로 연다. 이전 세션의 식별자를 물려주면 엉뚱한 대화에 보상이 붙는다.
     conversationId.current = null;
     conversationTurnId.current = null;

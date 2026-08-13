@@ -212,31 +212,46 @@ export const api = {
     return request<CafeVisitState>("/v1/cafe-visits", { method: "POST" });
   },
 
-  cafeQueue(visitId: string, choiceId: "left" | "right", scaffoldUsed: boolean, attemptNo: number, elapsedMs?: number) {
+  /**
+   * 줄 서기. 좌우 인원이 매번 달라지므로 문제를 함께 보내고 정오는 서버가 판정한다.
+   * chosenCount 는 아이가 답한 "더 짧은 줄의 인원수"다.
+   */
+  cafeQueue(visitId: string, body: {
+    left_count: number;
+    right_count: number;
+    chosen_count: number;
+    counting_answer?: string;
+    scaffold_used: boolean;
+    attempt_no: number;
+    elapsed_ms?: number;
+  }) {
     return request<StageResult>(`/v1/cafe-visits/${visitId}/queue`, {
       method: "POST",
-      body: JSON.stringify({ choice_id: choiceId, scaffold_used: scaffoldUsed, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+      body: JSON.stringify(body),
     });
   },
 
-  cafeMenu(visitId: string, menuIds: string[], attemptNo: number, elapsedMs?: number) {
+  /** 메뉴 고르기. 예산도 방문마다 달라지므로 함께 보낸다. 초과 주문도 오답으로 기록된다. */
+  cafeMenu(visitId: string, menuIds: string[], budget: number, attemptNo: number, elapsedMs?: number) {
     return request<StageResult>(`/v1/cafe-visits/${visitId}/menu`, {
       method: "POST",
-      body: JSON.stringify({ menu_ids: menuIds, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+      body: JSON.stringify({ menu_ids: menuIds, budget, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
   },
 
-  cafePayment(visitId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
+  /** 메뉴값 계산. 이 단계의 두 메뉴는 메뉴 고르기와 별개로 다시 뽑히므로 함께 보낸다. */
+  cafePayment(visitId: string, menuIds: string[], answerAmount: number, attemptNo: number, elapsedMs?: number) {
     return request<StageResult>(`/v1/cafe-visits/${visitId}/payments`, {
       method: "POST",
-      body: JSON.stringify({ counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+      body: JSON.stringify({ menu_ids: menuIds, answer_amount: answerAmount, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
   },
 
-  cafeChange(visitId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
+  /** 거스름돈. 기대값은 서버가 10,000원 − menuId 가격으로 계산한다. */
+  cafeChange(visitId: string, menuId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
     return request<StageResult>(`/v1/cafe-visits/${visitId}/change`, {
       method: "POST",
-      body: JSON.stringify({ counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
+      body: JSON.stringify({ menu_id: menuId, counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
   },
 
