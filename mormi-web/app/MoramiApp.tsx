@@ -1608,7 +1608,7 @@ export function MoramiApp() {
                       rows={1}
                       disabled={teachSending}
                     />
-                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
+                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "확인 중…" : "완료"}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
