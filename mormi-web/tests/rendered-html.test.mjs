@@ -192,9 +192,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teaching-playground--\$\{teachingTurn\?\.input\.kind \?\? "loading"\}/);
   assert.match(app, /teaching-answer--\$\{teachingTurn\.input\.kind\}/);
   assert.match(app, /className="teaching-dont-know"/);
+  assert.match(app, /className="teaching-back"/);
+  assert.match(app, /aria-label="이전 반복학습 화면으로 돌아가기"/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /stage !== "cafe" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
+  assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:16px[^}]*font-weight:850/);
+  assert.match(css, /teaching-answer--button[^}]*transform:translateX\(-42px\)/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);

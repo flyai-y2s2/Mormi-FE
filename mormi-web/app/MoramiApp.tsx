@@ -1581,6 +1581,7 @@ export function MoramiApp() {
       {stage === "teach" && (
         <section className="chat-scene teaching-scene">
           <div className="chat-title teaching-toolbar">
+            <button className="teaching-back" onClick={() => { setStage("drill"); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="이전 반복학습 화면으로 돌아가기"><span>←</span> 이전으로</button>
             <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 별노트</button>
           </div>
           <div className="chat-window teaching-stage">
