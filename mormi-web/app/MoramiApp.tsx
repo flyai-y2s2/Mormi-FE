@@ -1594,20 +1594,20 @@ export function MoramiApp() {
                       rows={3}
                       disabled={teachSending}
                     />
-                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label}</button>
+                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
-                    <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label}</button>
+                    <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "선택하기"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
                     {typeof teachingTurn.input.config.sentence === "string" && <p>{teachingTurn.input.config.sentence}</p>}
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
-                    <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label}</button>
+                    <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
                   {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
                     {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
-                    <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label}</button>
+                    <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "다음"}</button>
                   </div>}
                   {teachingTurn.input.kind !== "none" && <button type="button" className="dictionary-link" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
                 </div>
