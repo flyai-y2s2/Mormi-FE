@@ -3,10 +3,10 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent, identifyLearner } from "./analytics";
-import { api, apiEnabled, ApiError, readStoredLearner, storeSession } from "./api-client";
+import { api, apiEnabled, ApiError, readStoredLearner, storeSession, type ThemeView } from "./api-client";
 import { CafeJourney } from "./CafeJourney";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
-import { curriculumForSession, masteryTarget, mathAreas, sessions, transferTarget } from "./math-curriculum";
+import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
 import {
   startHomeTeaching,
   submitMormiResponseThroughBe,
@@ -54,23 +54,14 @@ function scaffoldLevel(turn: MormiTurn | null) {
   return level ? Number(level.slice(1)) : null;
 }
 
-const simpleLearnedLines: Record<string, string> = {
-  "add-pictures": "더하기는 둘을 한데 모으는 거야.",
-  "add-place": "같은 자리끼리 더해.",
-  "add-make-ten": "10을 먼저 만들고, 남은 수를 더해.",
-  "sub-pictures": "빼고 남은 수를 세어.",
-  "sub-place": "같은 자리끼리 빼.",
-  "sub-borrow": "십 하나를 낱개 10개로 바꿔.",
-  "money-count": "돈에 적힌 수를 모두 더해.",
-  "money-price": "두 물건값을 더해.",
-  "money-budget": "낸 돈에서 물건값을 빼.",
-  "money-mission": "두 물건값을 더해. 그다음 낸 돈에서 빼.",
-  "clock-basic": "긴 바늘이 12면 정각, 6이면 30분이야.",
-  "clock-quarter": "긴 바늘은 숫자 한 칸에 5분이야.",
-};
-
-function simpleLearnedLine(session: Session) {
-  return simpleLearnedLines[session.id] ?? session.learnedLine;
+/**
+ * answer_meta.selected_choice_id 는 `${sessionId}:${questionIndex}:choice:${index}` 꼴이다.
+ * 마지막 조각이 보기 번호다. 형식이 다르면 -1 을 돌려 복구에서 빠지게 한다.
+ */
+function choiceIndexOf(selectedChoiceId: unknown) {
+  if (typeof selectedChoiceId !== "string") return -1;
+  const parsed = Number(selectedChoiceId.split(":").pop());
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : -1;
 }
 
 function playLearningChime() {
@@ -818,12 +809,17 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
   );
 }
 
-function Onboarding({ onStart, submitting, submitError }: {
+/** 참여 번호 입력 규칙. 온보딩과 복구가 같은 형식을 써야 서버가 같은 아이로 찾는다. */
+const normalizeResearchCode = (value: string) =>
+  value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40);
+
+function Onboarding({ onStart, onRestore, submitting, submitError }: {
   onStart: (name: string, researchCode: string) => void;
+  onRestore: (researchCode: string) => void;
   submitting: boolean;
   submitError: string;
 }) {
-  const [page, setPage] = useState<"hello" | "name">("hello");
+  const [page, setPage] = useState<"hello" | "name" | "restore">("hello");
   const [name, setName] = useState("");
   const [researchCode, setResearchCode] = useState("");
   const profile = { name: name.trim() || "친구" };
@@ -831,6 +827,25 @@ function Onboarding({ onStart, submitting, submitError }: {
   function finishOnboarding() {
     captureMormeyEvent("onboarding_intro_completed");
     onStart(profile.name, researchCode.trim());
+  }
+
+  // 기기를 바꾼 아이. 이름은 서버가 갖고 있으므로 참여 번호만 받는다.
+  if (page === "restore") {
+    return (
+      <section className="onboarding-scene onboarding-scene--name">
+        <div className="onboarding-morami"><Morami expression="happy" /></div>
+        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (researchCode.trim()) onRestore(researchCode.trim()); }}>
+          <span>모르미</span>
+          <h1>다시 만나서 반가워!</h1>
+          <p>참여 번호를 적으면 하던 데부터 이어서 할 수 있어.</p>
+          <label htmlFor="restore-code">참여 번호</label>
+          <input id="restore-code" value={researchCode} onChange={(event) => setResearchCode(normalizeResearchCode(event.target.value))} placeholder="선생님이 알려준 번호" autoComplete="off" />
+          <button className="primary-button" type="submit" disabled={submitting || !researchCode.trim()}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
+          {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
+          <button type="button" className="onboarding-secondary" onClick={() => setPage("name")}>처음 시작하는 거예요</button>
+        </form>
+      </section>
+    );
   }
 
   if (page === "name") {
@@ -847,11 +862,12 @@ function Onboarding({ onStart, submitting, submitError }: {
             <>
               {/* 연구 코드가 아이를 구분한다. 같은 코드로 다시 들어오면 진행도가 이어진다. */}
               <label htmlFor="research-code">참여 번호</label>
-              <input id="research-code" value={researchCode} onChange={(event) => setResearchCode(event.target.value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40))} placeholder="선생님이 알려준 번호" autoComplete="off" />
+              <input id="research-code" value={researchCode} onChange={(event) => setResearchCode(normalizeResearchCode(event.target.value))} placeholder="선생님이 알려준 번호" autoComplete="off" />
             </>
           )}
           <button className="primary-button" type="submit" disabled={submitting || !name.trim() || (apiEnabled && !researchCode.trim())}>{submitting ? "준비 중…" : "내 이름 알려주기"} <span className="button-arrow" /></button>
           {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
+          {apiEnabled && <button type="button" className="onboarding-secondary" onClick={() => setPage("restore")}>전에 하던 게 있어요</button>}
         </form>
       </section>
     );
@@ -865,6 +881,7 @@ function Onboarding({ onStart, submitting, submitError }: {
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
         <button className="primary-button" onClick={() => setPage("name")}>내 이름 알려주기 <span className="button-arrow" /></button>
+        {apiEnabled && <button type="button" className="onboarding-secondary" onClick={() => setPage("restore")}>전에 하던 게 있어요</button>}
       </div>
     </section>
   );
@@ -898,16 +915,34 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
   );
 }
 
-function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: () => void; onCafe: () => void }) {
+/**
+ * 외출 장소. 해금 여부는 서버(`GET /v1/themes`)가 확정한 값을 그대로 쓴다.
+ *
+ * cafeTheme 이 없으면 서버를 못 읽은 것이므로 로컬 규칙으로 내려간다. 다만 로컬 규칙과
+ * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
+ * 그쪽을 우선한다.
+ */
+function OutsideHub({ unlocked, cafeTheme, onHome, onCafe }: {
+  unlocked: boolean;
+  cafeTheme: ThemeView | null;
+  onHome: () => void;
+  onCafe: () => void;
+}) {
+  const isUnlocked = cafeTheme?.unlocked ?? unlocked;
+  const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
+  const remainingCount = cafeTheme?.remaining_session_ids.length ?? null;
+  const lockedNote = remainingCount === null
+    ? `필수 개념 ${requiredCount}개를 끝내야 열려요`
+    : `필수 개념 ${requiredCount}개 중 ${remainingCount}개가 남았어요`;
   return (
     <section className="journey-hub journey-hub--outside">
       <div className="outside-scene-head"><div><p className="eyebrow">🌱 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div><button onClick={onHome} aria-label="집으로">⌂</button></div>
-      <div className="outside-morami-talk"><Morami expression={unlocked ? "happy" : "confused"} size="small" /><p>{unlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
+      <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{isUnlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
       <div className="destination-grid">
-        <button className={`destination-card destination-card--cafe ${unlocked ? "is-unlocked" : "is-locked"}`} onClick={unlocked ? onCafe : onHome}>
+        <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} onClick={isUnlocked ? onCafe : onHome}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{unlocked ? "진행" : "잠김"}</small><h2>{unlocked ? "카페 가기" : "🔒 카페 가기"}</h2><p>{unlocked ? "줄을 서고, 메뉴를 골라 계산해요" : `필수 개념 ${cafeRequiredSessionIds.length}개를 끝내야 열려요`}</p><strong>{unlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
+          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{isUnlocked ? `${cafeTheme?.title ?? "카페"} 가기` : `🔒 ${cafeTheme?.title ?? "카페"} 가기`}</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{isUnlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
         </button>
         <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span>🔒 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
@@ -923,6 +958,12 @@ export function MoramiApp() {
   const attemptWriteQueue = useRef<Promise<void>>(Promise.resolve());
   const attemptWriteError = useRef<unknown>(null);
   const attemptCounter = useRef(0);
+  // 복구한 잠긴 오답. 문제 보기가 복구된 seed 로 다시 만들어진 뒤에 적용한다.
+  const pendingDrillRestore = useRef<{
+    curriculumSessionId: string;
+    questionIndex: number;
+    wrongChoiceIndexes: number[];
+  } | null>(null);
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
   const [sessionIndex, setSessionIndex] = useState(0);
@@ -979,6 +1020,10 @@ export function MoramiApp() {
   const [homeworkIndex, setHomeworkIndex] = useState(0);
   const [homeworkCorrect, setHomeworkCorrect] = useState(0);
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
+  // 진행 중 카페 방문. 새로고침 뒤 카페로 들어가면 이 방문을 이어 받는다.
+  const [activeCafeVisitId, setActiveCafeVisitId] = useState<string | null>(null);
+  // 서버가 확정한 외출 장소 해금 상태. 못 읽으면 null 이고 로컬 규칙으로 내려간다.
+  const [themes, setThemes] = useState<ThemeView[] | null>(null);
   const [coinBalance, setCoinBalance] = useState(6000);
   const startedAt = useRef(0);
   const elapsedSeconds = useRef(0);
@@ -1015,16 +1060,103 @@ export function MoramiApp() {
     setExpression(fallbackExpression);
   }, []);
 
+  /** 해금 상태 갱신. 실패해도 화면은 로컬 규칙으로 계속 돌아간다. */
+  const refreshThemes = useCallback(() => {
+    if (!apiEnabled) return;
+    void api.themes()
+      .then(setThemes)
+      .catch((error: unknown) => console.warn("[mormi-api] 외출 장소 조회 실패", error));
+  }, []);
+
+  const cafeTheme = themes?.find((theme) => theme.theme_id === "cafe") ?? null;
+
+  /**
+   * 새로고침 복구. 서버가 들고 있는 진행 중 세션을 그대로 화면에 되돌린다.
+   *
+   * attemptCounter 복원이 특히 중요하다. 이걸 빼먹으면 재개 뒤 attempt_no 가 1부터
+   * 다시 올라가고, 서버는 (session, activity, attempt_no) 멱등키로 이미 본 번호라
+   * 판단해 새 시도를 중복 처리한다. 즉 재개 이후의 기록이 조용히 사라진다.
+   *
+   * @returns 복구해서 반복 화면으로 들어갔으면 true.
+   */
+  const restoreLearningSession = useCallback(async (activeSessionId: string) => {
+    const view = await api.getSession(activeSessionId);
+    if (view.completed_at) return false;
+
+    const index = sessions.findIndex((session) => session.id === view.curriculum_session_id);
+    if (index < 0) return false;
+
+    const drills = view.attempts.filter((attempt) => attempt.activity === "drill");
+    // 시도가 하나도 없으면 되살릴 화면이 없다. 홈에 두고 새로 고르게 한다.
+    if (drills.length === 0) return false;
+
+    const correct = Math.min(view.correct_count, masteryTarget);
+    const questionIndex = Math.min(correct, masteryTarget - 1);
+    pendingDrillRestore.current = {
+      curriculumSessionId: view.curriculum_session_id,
+      questionIndex,
+      wrongChoiceIndexes: drills
+        .filter((attempt) => !attempt.is_correct && attempt.question_index === questionIndex)
+        .map((attempt) => choiceIndexOf(attempt.answer_meta.selected_choice_id)),
+    };
+
+    learningSessionId.current = view.learning_session_id;
+    learningSessionPromise.current = Promise.resolve(view.learning_session_id);
+    attemptCounter.current = drills.reduce((max, attempt) => Math.max(max, attempt.attempt_no), 0);
+    attemptWriteError.current = null;
+    attemptWriteQueue.current = Promise.resolve();
+
+    setSessionIndex(index);
+    // 서버가 보관한 seed 를 되돌려야 아이가 실제로 봤던 문제가 그대로 다시 만들어진다.
+    setVariantSeed(view.variant_seed);
+    setDrillIndex(questionIndex);
+    setDrillCorrect(correct);
+    setDrillAttempts(drills.length);
+    setSessionCoins(view.drill_reward_subtotal);
+    setMastered(correct >= masteryTarget);
+    setStage("drill");
+    startedAt.current = nowMs();
+    elapsedSeconds.current = 0;
+    return true;
+  }, []);
+
+  /**
+   * 잠긴 오답 복원. 문제 보기는 variantSeed 로 섞이므로, activeSession 이 복구된 seed 로
+   * 다시 만들어진 뒤에야 선택지 번호를 실제 답 문자열로 되돌릴 수 있다.
+   */
+  useEffect(() => {
+    const pending = pendingDrillRestore.current;
+    if (!pending || pending.curriculumSessionId !== activeSession.id) return;
+    pendingDrillRestore.current = null;
+    const question = activeSession.drills[pending.questionIndex % activeSession.drills.length];
+    const locked = pending.wrongChoiceIndexes
+      .map((choiceIndex) => question.answers[choiceIndex])
+      .filter((answer): answer is string => Boolean(answer) && answer !== question.correct);
+    if (locked.length > 0) setWrongDrillAnswers([...new Set(locked)]);
+  }, [activeSession, drillIndex]);
+
   useEffect(() => {
     // 서버가 붙어 있으면 진행도의 기준은 서버다. localStorage 는 오프라인 표시용으로만 남긴다.
     if (apiEnabled && readStoredLearner()) {
-      void api.progress().then((snapshot) => {
+      void api.progress().then(async (snapshot) => {
         setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
         setCompletedSessionIds(snapshot.completed_session_ids);
         setCoinBalance(snapshot.wallet_balance);
+        setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+        refreshThemes();
         setStage("home");
         // 이름과 원문은 보내지 않고, 서버가 발급한 가명 id 로만 식별한다.
         identifyLearner(snapshot.analytics_id);
+
+        // 진행 중 세션이 남아 있으면 홈을 거쳐 반복 화면으로 되돌아간다.
+        // 실패해도 홈은 그대로 두어, 아이가 새 개념을 고를 수 있게 한다.
+        if (snapshot.active_learning_session_id) {
+          await restoreLearningSession(snapshot.active_learning_session_id)
+            .catch((error: unknown) => {
+              console.warn("[mormi-api] 학습 세션 복구 실패", error);
+              return false;
+            });
+        }
       }).catch((error: unknown) => {
         // 토큰이 만료·삭제되었으면 온보딩부터 다시 시작한다.
         if (error instanceof ApiError && (error.status === 401 || error.status === 404)) return;
@@ -1045,7 +1177,7 @@ export function MoramiApp() {
         if (onboarded && savedLearner?.id && savedLearner.name) setStage("home");
       });
     } catch { /* device-local progress is optional */ }
-  }, []);
+  }, [restoreLearningSession, refreshThemes]);
 
   useEffect(() => {
     if (!["drill", "teach", "wrap", "homework"].includes(stage)) return;
@@ -1313,6 +1445,8 @@ export function MoramiApp() {
       const next = result.completed_session_ids;
       setCompletedSessionIds(next);
       setCoinBalance(result.wallet_balance);
+      // 이 세션으로 카페가 열렸을 수 있다. 해금 판정은 서버에서 다시 받아 온다.
+      refreshThemes();
       setSessionCoins(result.total_reward);
       setTeachRewardAmount(result.teach_reward);
       setTeachRewardGranted(result.teach_reward > 0);
@@ -1439,6 +1573,8 @@ export function MoramiApp() {
       const snapshot = await api.progress();
       setCompletedSessionIds(snapshot.completed_session_ids);
       setCoinBalance(snapshot.wallet_balance);
+      setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+      refreshThemes();
 
       captureMormeyEvent("onboarding_completed", { tutorial_available: false });
       setStage("home");
@@ -1447,6 +1583,50 @@ export function MoramiApp() {
       setOnboardingError(error instanceof ApiError
         ? error.message
         : "연결이 잘 되지 않았어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setOnboardingSubmitting(false);
+    }
+  }
+
+  /**
+   * 기기를 바꾼 아이. 이름 없이 참여 번호만으로 토큰을 다시 받아 진행도를 이어 받는다.
+   *
+   * createLearner 와 달리 없는 번호면 만들지 않고 실패한다. 오타로 새 학습자가
+   * 생겨 연구 데이터가 둘로 갈라지는 걸 막아야 하므로, 이 경로에서는 그게 맞다.
+   */
+  async function restoreByResearchCode(researchCode: string) {
+    setOnboardingSubmitting(true);
+    setOnboardingError("");
+    try {
+      const restored = await api.restoreLearner(researchCode);
+      const profile = { id: restored.id, name: restored.display_name };
+      storeSession(restored.access_token, { ...profile, researchCode: restored.research_code, analyticsId: restored.analytics_id });
+      setLearner(profile);
+      identifyLearner(restored.analytics_id);
+
+      const snapshot = await api.progress();
+      setCompletedSessionIds(snapshot.completed_session_ids);
+      setCoinBalance(snapshot.wallet_balance);
+      setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+      refreshThemes();
+      setStage("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // 기기를 바꾸기 전에 풀던 세션이 남아 있으면 그 화면까지 되돌린다.
+      if (snapshot.active_learning_session_id) {
+        await restoreLearningSession(snapshot.active_learning_session_id)
+          .catch((error: unknown) => {
+            console.warn("[mormi-api] 학습 세션 복구 실패", error);
+            return false;
+          });
+      }
+      captureMormeyEvent("learner_restored");
+    } catch (error) {
+      setOnboardingError(error instanceof ApiError && error.status === 404
+        ? "그 참여 번호로 저장된 기록을 찾지 못했어요. 번호를 다시 확인해 주세요."
+        : error instanceof ApiError
+          ? error.message
+          : "연결이 잘 되지 않았어요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setOnboardingSubmitting(false);
     }
@@ -1495,13 +1675,24 @@ export function MoramiApp() {
         </div>
       </header>}
 
-      {stage === "onboarding" && <Onboarding onStart={(name, code) => { void completeOnboarding(name, code); }} submitting={onboardingSubmitting} submitError={onboardingError} />}
+      {stage === "onboarding" && <Onboarding
+        onStart={(name, code) => { void completeOnboarding(name, code); }}
+        onRestore={(code) => { void restoreByResearchCode(code); }}
+        submitting={onboardingSubmitting}
+        submitError={onboardingError}
+      />}
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} onHome={showHome} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} onHome={showHome} onCafe={() => setStage("cafe")} />}
 
-      {stage === "cafe" && <CafeJourney learnerName={childName} learnerId={learner.id} onBack={showOutside} onComplete={showHome} />}
+      {stage === "cafe" && <CafeJourney
+        learnerName={childName}
+        learnerId={learner.id}
+        activeVisitId={activeCafeVisitId}
+        onBack={showOutside}
+        onComplete={() => { setActiveCafeVisitId(null); showHome(); }}
+      />}
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">

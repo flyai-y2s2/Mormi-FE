@@ -483,5 +483,30 @@ export function curriculumForSession(session: Session): CurriculumAlignment {
 }
 
 export const areaForSession = (sessionId: string) => mathAreas.find((area) => area.sessionIds.includes(sessionId));
+export const sessionById = (sessionId: string) => sessions.find((session) => session.id === sessionId);
 export const masteryTarget = 5;
 export const transferTarget = 3;
+
+/**
+ * 별노트에 적히는 한 줄. rule 을 이어 붙인 learnedLine 은 아이가 읽기엔 길어서,
+ * 문장이 마련된 세션은 이 짧은 버전을 쓴다. 리포트도 같은 문구를 보여야 하므로
+ * 학습 화면과 공유한다.
+ */
+const simpleLearnedLines: Record<string, string> = {
+  "add-pictures": "더하기는 둘을 한데 모으는 거야.",
+  "add-place": "같은 자리끼리 더해.",
+  "add-make-ten": "10을 먼저 만들고, 남은 수를 더해.",
+  "sub-pictures": "빼고 남은 수를 세어.",
+  "sub-place": "같은 자리끼리 빼.",
+  "sub-borrow": "십 하나를 낱개 10개로 바꿔.",
+  "money-count": "돈에 적힌 수를 모두 더해.",
+  "money-price": "두 물건값을 더해.",
+  "money-budget": "낸 돈에서 물건값을 빼.",
+  "money-mission": "두 물건값을 더해. 그다음 낸 돈에서 빼.",
+  "clock-basic": "긴 바늘이 12면 정각, 6이면 30분이야.",
+  "clock-quarter": "긴 바늘은 숫자 한 칸에 5분이야.",
+};
+
+export function simpleLearnedLine(session: Session) {
+  return simpleLearnedLines[session.id] ?? session.learnedLine;
+}

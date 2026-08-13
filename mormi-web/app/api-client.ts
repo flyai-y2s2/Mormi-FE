@@ -87,6 +87,108 @@ export type CafeVisitState = {
   change_target: number | null;
 };
 
+/**
+ * GET /v1/reports/summary · /history 의 한 건.
+ *
+ * 서버는 자기가 가진 값만 돌려준다. sessionTitle·unit·misconception·learnedLine 처럼
+ * 커리큘럼 본문에 있는 값은 없으므로, 화면이 session_id 로 정적 커리큘럼에서 채운다.
+ */
+export type ReportSummaryDto = {
+  date: string | null;
+  learning_session_id: string;
+  session_id: string;
+  mastery_target: number;
+  repetitions: number;
+  mastery_seconds: number;
+  /** 오개념에 한 번이라도 동조했는지. BE 가 @JsonProperty 로 이 이름을 고정한다. */
+  synchronized: boolean;
+  transfer: boolean;
+  ladder: number;
+  timed_out: boolean;
+  learner_id: number | null;
+  learner_name: string | null;
+  earned_coins: number;
+  drill_coins: number;
+  teach_coins: number;
+  wallet_balance: number;
+  wrong_attempt_count: number;
+  first_try_correct_count: number;
+};
+
+export type AttemptView = {
+  attempt_id: number;
+  activity: string;
+  attempt_no: number;
+  item_id: string;
+  question_index: number | null;
+  is_correct: boolean;
+  elapsed_ms: number | null;
+  reward_granted: number;
+  answer_meta: Record<string, unknown>;
+  created_at: string;
+};
+
+/** GET /v1/learning-sessions/{id}. 새로고침 뒤 어디까지 풀었는지 복원하는 데 쓴다. */
+export type SessionView = {
+  learning_session_id: string;
+  curriculum_session_id: string;
+  variant_seed: number;
+  started_at: string;
+  completed_at: string | null;
+  timed_out: boolean;
+  transfer_solved: boolean;
+  scaffold_level: number | null;
+  conversation_id: string | null;
+  correct_count: number;
+  mastery_target: number;
+  drill_reward_subtotal: number;
+  attempts: AttemptView[];
+};
+
+export type StageAttemptView = {
+  stage: string;
+  attempt_no: number;
+  is_correct: boolean;
+  elapsed_ms: number | null;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+/** GET /v1/cafe-visits/{id}. CafeVisitState 에 시도 이력과 메뉴 가격이 더 붙은 형태다. */
+export type CafeVisitView = CafeVisitState & {
+  started_at: string;
+  completed_at: string | null;
+  menu_prices: Record<string, number>;
+  attempts: StageAttemptView[];
+};
+
+/**
+ * GET /v1/themes. 외출 장소 하나의 상태다.
+ *
+ * 해금 판정은 서버가 확정한다. 프런트도 journey-config 로 같은 규칙을 갖고 있지만,
+ * 두 목록이 어긋나면 화면은 열려 보이는데 POST /v1/cafe-visits 가 403 을 준다.
+ * 그래서 서버 값이 있으면 그쪽을 쓰고, 로컬 규칙은 오프라인 폴백으로만 남긴다.
+ */
+export type ThemeView = {
+  theme_id: string;
+  title: string;
+  unlocked: boolean;
+  required_session_ids: string[];
+  remaining_session_ids: string[];
+};
+
+export type RetentionPolicy = "no_raw" | "30_days" | "90_days" | "permanent";
+
+export type LearnerConsent = {
+  id: number;
+  display_name: string;
+  research_code: string;
+  analytics_id: string;
+  conversation_storage_consent: boolean;
+  retention_policy: RetentionPolicy;
+  created_at: string;
+};
+
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) {
     super(message);
@@ -194,6 +296,40 @@ export const api = {
     return apiRequest<ProgressSnapshot>("/v1/progress");
   },
 
+  themes() {
+    return apiRequest<ThemeView[]>("/v1/themes");
+  },
+
+  /** 완료된 세션이 하나도 없으면 서버가 404 를 준다. 화면은 이를 오류로 다루지 않는다. */
+  reportSummary() {
+    return apiRequest<ReportSummaryDto>("/v1/reports/summary");
+  },
+
+  reportHistory(limit = 8) {
+    return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
+  },
+
+  /** 새로고침 복구용. 시도 전체가 함께 온다. */
+  getSession(sessionId: string) {
+    return apiRequest<SessionView>(`/v1/learning-sessions/${sessionId}`);
+  },
+
+  getCafeVisit(visitId: string) {
+    return apiRequest<CafeVisitView>(`/v1/cafe-visits/${visitId}`);
+  },
+
+  /** 본인만 조회할 수 있다. 동의 현황을 읽는 데 쓴다. */
+  getLearner(learnerId: number) {
+    return apiRequest<LearnerConsent>(`/v1/learners/${learnerId}`);
+  },
+
+  updateConversationConsent(consent: boolean, retentionPolicy: RetentionPolicy) {
+    return apiRequest<LearnerConsent>("/v1/learners/me/conversation-consent", {
+      method: "PATCH",
+      body: JSON.stringify({ conversation_storage_consent: consent, retention_policy: retentionPolicy }),
+    });
+  },
+
   startSession(curriculumSessionId: string, variantSeed: number) {
     return apiRequest<{ learning_session_id: string; variant_seed: number }>("/v1/learning-sessions", {
       method: "POST",
@@ -233,8 +369,12 @@ export const api = {
     });
   },
 
+  /**
+   * 진행 중 방문이 있으면 서버가 그것을 그대로 돌려준다(새로 만들지 않는다).
+   * 응답은 조회와 같은 CafeVisitView 라 시도 이력까지 함께 온다.
+   */
   startCafeVisit() {
-    return apiRequest<CafeVisitState>("/v1/cafe-visits", { method: "POST" });
+    return apiRequest<CafeVisitView>("/v1/cafe-visits", { method: "POST" });
   },
 
   /**
