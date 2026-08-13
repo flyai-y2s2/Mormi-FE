@@ -8,3 +8,7 @@
 # 원본은 파일당 100MB 를 넘어 GitHub 가 거부하며, 재배포 조건도 별도 확인이 필요하다.
 # 받는 곳: https://aihub.or.kr  「교과 단계별 교과 데이터」(dataSetSn=71855)
 /data
+
+# 로컬 통합 실행용 외부 서비스와 런타임(각 저장소는 별도 Git 이력 유지)
+/local-services/
+/.local-runtime/

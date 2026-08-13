@@ -4,9 +4,7 @@ import posthog from "posthog-js";
 
 export type MormeyAnalyticsEvent =
   | "onboarding_completed"
-  | "onboarding_tutorial_started"
-  | "onboarding_tutorial_completed"
-  | "onboarding_tutorial_skipped"
+  | "onboarding_intro_completed"
   | "home_opened"
   | "outside_opened"
   | "lesson_started"

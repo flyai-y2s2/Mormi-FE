@@ -101,8 +101,8 @@ function envelopeToTurn(envelope: SessionEnvelope): TurnResponse {
 }
 
 async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
-  const origin = (process.env.AI_ORIGIN || "").replace(/\/$/, "");
-  const serviceKey = process.env.MORMI_DIALOGUE_SERVICE_KEY;
+  const origin = (process.env.AI_ORIGIN || process.env.MORMI_AI_BASE_URL || "").replace(/\/$/, "");
+  const serviceKey = process.env.MORMI_DIALOGUE_SERVICE_KEY || process.env.MORMI_AI_SERVICE_KEY;
   const cafe = input.scene === "cafe";
   const scenarioId = cafe
     ? (input.cafeScenarioId && cafeScenarioIds.has(input.cafeScenarioId) ? input.cafeScenarioId : undefined)
@@ -112,13 +112,14 @@ async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
   const creating = !input.conversationId;
 
   // 설정이 없으면 조용히 기존 경로로 넘긴다. 화면은 멈추지 않아야 한다.
-  if (!origin || !serviceKey || !input.learnerId) return null;
+  if (!origin || !input.learnerId) return null;
   // 시나리오는 대화를 새로 열 때만 필요하다. 이어가는 턴은 대화가 이미 알고 있다.
   if (creating && !scenarioId) return null;
   // 집 가르치기는 아이가 설명하는 두 순간에만 AI 를 태운다. 카페는 스테이션을 열 때다.
   if (!cafe && input.event !== "teach_prompt" && input.event !== "teach_message") return null;
 
-  const headers = { "content-type": "application/json", "x-mormi-service-key": serviceKey };
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (serviceKey) headers["x-mormi-service-key"] = serviceKey;
 
   const url = creating
     ? `${origin}/v1/conversations`
