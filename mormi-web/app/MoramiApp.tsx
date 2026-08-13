@@ -1823,7 +1823,7 @@ export function MoramiApp() {
 
       {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} onHome={showHome} onCafe={() => setStage("cafe")} />}
 
-      {stage === "cafe" && <CafeJourney learnerName={childName} onBack={showOutside} onComplete={showHome} />}
+      {stage === "cafe" && <CafeJourney learnerName={childName} learnerId={learner.id} onBack={showOutside} onComplete={showHome} />}
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">

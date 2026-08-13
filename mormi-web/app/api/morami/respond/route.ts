@@ -24,7 +24,20 @@ type TurnRequest = {
   conversationId?: string | null;
   turnId?: string | null;
   elapsedMs?: number;
+  // 카페용. 화면이 방문마다 새로 뽑는 문제를 그대로 실어 보낸다.
+  // AI 가 스스로 뽑으면 화면과 다른 숫자를 말하게 된다.
+  scene?: "home_teach" | "cafe";
+  cafeScenarioId?: string;
+  queueContext?: { left_count: number; right_count: number };
+  cafeContext?: {
+    menu_items: Array<{ id: string; name: string; price: number; image_url?: string }>;
+    mormi_menu_id: string;
+    budget?: number;
+  };
 };
+
+/** AI 저장소에 실제로 있는 카페 시나리오. 화면이 보낸 값을 그대로 믿지 않는다. */
+const cafeScenarioIds = new Set(["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"]);
 
 type TurnResponse = {
   dialogue: string;
@@ -90,11 +103,15 @@ function envelopeToTurn(envelope: SessionEnvelope): TurnResponse {
 async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
   const origin = (process.env.AI_ORIGIN || "").replace(/\/$/, "");
   const serviceKey = process.env.MORMI_DIALOGUE_SERVICE_KEY;
-  const scenarioId = input.sessionId ? aiScenarioBySession[input.sessionId] : undefined;
+  const cafe = input.scene === "cafe";
+  const scenarioId = cafe
+    ? (input.cafeScenarioId && cafeScenarioIds.has(input.cafeScenarioId) ? input.cafeScenarioId : undefined)
+    : (input.sessionId ? aiScenarioBySession[input.sessionId] : undefined);
 
   // 설정이나 시나리오가 없으면 조용히 기존 경로로 넘긴다. 화면은 멈추지 않아야 한다.
   if (!origin || !serviceKey || !scenarioId || !input.learnerId) return null;
-  if (input.event !== "teach_prompt" && input.event !== "teach_message") return null;
+  // 집 가르치기는 아이가 설명하는 두 순간에만 AI 를 태운다. 카페는 스테이션을 열 때다.
+  if (!cafe && input.event !== "teach_prompt" && input.event !== "teach_message") return null;
 
   const headers = { "content-type": "application/json", "x-mormi-service-key": serviceKey };
 
@@ -106,9 +123,12 @@ async function callMormiAi(input: TurnRequest): Promise<TurnResponse | null> {
   const body = creating
     ? {
       learner_id: input.learnerId,
-      scene: "home_teach",
+      scene: cafe ? "cafe" : "home_teach",
       scenario_id: scenarioId,
       learning_session_id: input.learningSessionId ?? null,
+      // 줄 서기는 queue_context, 메뉴 세 단계는 cafe_context 를 요구한다.
+      ...(input.queueContext ? { queue_context: input.queueContext } : {}),
+      ...(input.cafeContext ? { cafe_context: input.cafeContext } : {}),
     }
     : {
       turn_id: input.turnId,
@@ -196,6 +216,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.warn("Mormi-AI 대화 호출 실패", error instanceof Error ? error.message : "unknown error");
   }
+
+  // 카페는 아래의 집 가르치기 폴백을 쓰면 안 된다. 그 대사는 카페 상황과 무관하다.
+  // 대사 없이 돌려주면 화면이 자기 문구를 그대로 쓴다.
+  if (input.scene === "cafe") return Response.json({ dialogue: "", expression: "calm", source: "mock" });
 
   const fallback = mockTurn(input);
   const apiKey = process.env.ANTHROPIC_API_KEY;
