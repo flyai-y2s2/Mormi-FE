@@ -961,6 +961,7 @@ export function MoramiApp() {
   const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
+  const teachRequestInFlight = useRef(false);
   const [teachError, setTeachError] = useState("");
   const [teachRewardGranted, setTeachRewardGranted] = useState(false);
   const [teachRewardAmount, setTeachRewardAmount] = useState(0);
@@ -1221,12 +1222,14 @@ export function MoramiApp() {
     type: MormiResponseType,
     payload: Pick<Parameters<typeof submitMormiResponseThroughBe>[1], "text" | "choice_ids" | "values"> = {},
   ) {
-    if (!mormiConversation || teachSending || teachingComplete) return;
+    if (!mormiConversation || teachRequestInFlight.current || teachingComplete) return;
+    const activeConversation = mormiConversation;
+    teachRequestInFlight.current = true;
     setTeachError("");
     setTeachSending(true);
     try {
-      const nextConversation = await submitMormiResponseThroughBe(mormiConversation.conversation_id, {
-        turn_id: mormiConversation.turn.turn_id,
+      const nextConversation = await submitMormiResponseThroughBe(activeConversation.conversation_id, {
+        turn_id: activeConversation.turn.turn_id,
         type,
         latency_ms: Math.min(nowMs() - startedAt.current, 600000),
         ...payload,
@@ -1243,6 +1246,7 @@ export function MoramiApp() {
       }
       setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
     } finally {
+      teachRequestInFlight.current = false;
       setTeachSending(false);
     }
   }

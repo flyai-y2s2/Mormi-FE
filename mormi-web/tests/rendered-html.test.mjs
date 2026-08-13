@@ -178,6 +178,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /askForTeachHelp|teachingAnswerOptions|teachingScaffoldFor|answerGuidedTeaching|advanceModelTeaching/);
   assert.match(app, /startHomeTeaching/);
   assert.match(app, /submitMormiResponseThroughBe/);
+  assert.match(app, /teachRequestInFlight\.current/);
+  assert.match(cafe, /dialogueRequestInFlight\.current/);
   assert.match(app, /teachingTurn\.input\.kind/);
   assert.match(css, /\.teaching-playground/);
   assert.match(css, /@media\(max-width:980px\)/);
@@ -281,6 +283,12 @@ test("production dialogue flows through deployed Spring BE while the AI BFF stay
   assert.match(dialogue, /startHomeTeaching/);
   assert.match(dialogue, /startCafeDialogue/);
   assert.match(dialogue, /submitMormiResponseThroughBe/);
+  assert.match(dialogue, /pendingResponseByTurn/);
+  assert.match(dialogue, /stableResponseSignature/);
+  assert.match(dialogue, /latest\.turn\.turn_id !== input\.turn_id/);
+  assert.match(dialogue, /DIALOGUE_REQUEST_TIMEOUT_MS/);
+  assert.match(apiClient, /timeoutMs = REQUEST_TIMEOUT_MS/);
+  assert.match(backendProxy, /const REQUEST_TIMEOUT_MS = 55_000/);
   assert.match(dialogue, /scenario_context\?:/);
   assert.match(dialogue, /stage_progress\?:/);
   assert.match(dialogue, /verified_facts:/);

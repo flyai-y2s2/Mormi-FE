@@ -123,7 +123,12 @@ export function clearSession() {
   localStorage.removeItem(LEARNER_KEY);
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  auth = true,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<T> {
   if (!apiEnabled) throw new ApiError(0, "api_disabled", "API base URL is not configured");
 
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -134,7 +139,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, auth =
   }
 
   const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {

@@ -139,6 +139,36 @@ export type SubmitMormiResponse = {
   latency_ms?: number | null;
 };
 
+const DIALOGUE_REQUEST_TIMEOUT_MS = 60_000;
+const RECOVERY_DELAYS_MS = [0, 600, 1_800] as const;
+
+type PendingDialogueResponse = {
+  responseId: string;
+  signature: string;
+};
+
+// 네트워크 응답만 유실된 경우에도 같은 턴·같은 답은 같은 response_id를 쓴다.
+// AI 서버가 이미 처리를 끝냈다면 동일 결과를 돌려주므로 stale-turn 루프가 없다.
+const pendingResponseByTurn = new Map<string, PendingDialogueResponse>();
+
+function stableResponseSignature(input: SubmitMormiResponse) {
+  const values = Object.fromEntries(
+    Object.entries(input.values ?? {}).sort(([left], [right]) => left.localeCompare(right)),
+  );
+  return JSON.stringify({
+    type: input.type,
+    text: input.text ?? null,
+    choice_ids: input.choice_ids ?? [],
+    values,
+    asr_confidence: input.asr_confidence ?? null,
+  });
+}
+
+function waitForRecovery(delayMs: number) {
+  if (delayMs === 0) return Promise.resolve();
+  return new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
+}
+
 export class MormiDialogueError extends Error {
   constructor(
     message: string,
@@ -221,19 +251,56 @@ export async function submitMormiResponseThroughBe(
   conversationId: string,
   input: SubmitMormiResponse,
 ) {
-  const { apiRequest } = await import("./api-client");
-  return apiRequest<MormiConversation>(
-    `/v1/dialogue/conversations/${encodeURIComponent(conversationId)}/responses`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        choice_ids: [],
-        values: {},
-        response_id: input.response_id || crypto.randomUUID(),
-        ...input,
-      }),
-    },
-  );
+  const { apiRequest, ApiError } = await import("./api-client");
+  const pendingKey = `${conversationId}:${input.turn_id}`;
+  const signature = stableResponseSignature(input);
+  const previousPending = pendingResponseByTurn.get(pendingKey);
+  const pending = previousPending?.signature === signature
+    ? previousPending
+    : {
+        responseId: input.response_id || crypto.randomUUID(),
+        signature,
+      };
+  pendingResponseByTurn.set(pendingKey, pending);
+
+  try {
+    const conversation = await apiRequest<MormiConversation>(
+      `/v1/dialogue/conversations/${encodeURIComponent(conversationId)}/responses`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          choice_ids: [],
+          values: {},
+          ...input,
+          response_id: pending.responseId,
+        }),
+      },
+      true,
+      DIALOGUE_REQUEST_TIMEOUT_MS,
+    );
+    pendingResponseByTurn.delete(pendingKey);
+    return conversation;
+  } catch (error) {
+    const ambiguous = !(error instanceof ApiError)
+      || [0, 409, 429, 500, 502, 503, 504].includes(error.status);
+    if (!ambiguous) throw error;
+
+    // POST가 AI에서 반영된 뒤 중간 응답만 끊겼을 수 있다. 잠깐 동안 최신 턴을
+    // 조회해 진행된 상태를 찾으면 실패로 보이지 않고 그 턴을 그대로 적용한다.
+    for (const delayMs of RECOVERY_DELAYS_MS) {
+      await waitForRecovery(delayMs);
+      try {
+        const latest = await recoverMormiConversationThroughBe(conversationId);
+        if (latest.turn.turn_id !== input.turn_id) {
+          pendingResponseByTurn.delete(pendingKey);
+          return latest;
+        }
+      } catch {
+        // 최초 POST 오류를 유지한다. 복구 조회 오류가 아이 원문을 덮지 않는다.
+      }
+    }
+    throw error;
+  }
 }
 
 export async function recoverMormiConversationThroughBe(conversationId: string) {

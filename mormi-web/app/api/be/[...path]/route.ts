@@ -3,7 +3,12 @@ import "server-only";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUEST_TIMEOUT_MS = 45_000;
+// 대화 요청은 Spring BE가 두 번의 LLM 호출을 기다릴 수 있다. 브라우저(60초)가
+// 이 프록시(55초)보다 먼저 끊지 않고, 이 프록시는 BE(45초)의 정제된 오류를
+// 받을 수 있도록 바깥쪽일수록 조금 더 긴 제한을 둔다.
+const REQUEST_TIMEOUT_MS = 55_000;
+
+export const maxDuration = 60;
 
 type BackendRouteContext = {
   params: Promise<{ path: string[] }>;

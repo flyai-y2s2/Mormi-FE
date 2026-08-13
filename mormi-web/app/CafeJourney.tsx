@@ -158,6 +158,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
+  const dialogueRequestInFlight = useRef(false);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
   // 화면은 아래의 기본 문구를 그대로 쓴다.
@@ -264,7 +265,8 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       values?: Record<string, string | number | boolean | string[]>;
     },
   ) {
-    if (dialogueSending) return null;
+    if (dialogueRequestInFlight.current) return null;
+    dialogueRequestInFlight.current = true;
     setDialogueSending(true);
     try {
       const conversation = cafeTalks.current[stage] ?? await cafeTalkPromises.current[stage];
@@ -278,6 +280,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
       setDialogueError(error instanceof Error ? error.message : "답을 보내지 못했어요.");
       return null;
     } finally {
+      dialogueRequestInFlight.current = false;
       setDialogueSending(false);
     }
   }
