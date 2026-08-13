@@ -14,34 +14,38 @@ Figma는 화면 디자인이 아니라 사용자 흐름만 참고했으며, UI�
 
 ## 실행
 
-### 프론트·백엔드·AI를 모두 로컬에서 실행
+### 로컬 FE + 배포된 Spring BE
 
-로컬 통합 실행은 다음 주소를 사용합니다.
+브라우저는 Spring BE를 직접 호출하지 않습니다. 브라우저 요청은 `/api/be/*`로 들어오고, Next.js 서버 라우트가 `BACKEND_ORIGIN`에 지정한 **배포된 Spring BE**로 프록시합니다. 따라서 로컬 FE 실행 시에도 Spring BE를 빌드·실행하거나 H2를 준비하지 않습니다. 주소가 빠졌거나 배포 서버에 닿지 않으면 이 라우트가 원인을 구분한 503 JSON을 반환합니다.
 
-```text
-Mormi-FE  http://localhost:3000
-Mormi-BE  http://127.0.0.1:8080
-Mormi-AI  http://127.0.0.1:8000
+카페에서 무작위로 만든 줄 인원·예산·메뉴 맥락은 첫 대화 시작 때 Spring BE에 함께 저장됩니다. 새로고침이나 재진입 때는 BE가 돌려준 `scenario_context`로 화면을 복원해 AI가 기억한 문제와 항상 같은 장면을 보여 줍니다.
+도움카드·선택형 단계에서 AI 대화가 완료된 경우에는 Spring BE가 AI의 검증 슬롯을
+카페 기록과 다시 대조한 `stage_progress`를 반환합니다. FE는 이 값이 완료일 때만 다음
+스테이지를 열며, 모르미 문장이나 아이 원문만 보고 정답을 추측하지 않습니다.
+
+먼저 `mormi-web/.env.local`에 실제 배포 주소를 넣습니다. 이 파일은 커밋하지 않습니다.
+
+```env
+BACKEND_ORIGIN=https://실제-배포된-Spring-BE-주소
 ```
 
-백엔드와 AI 최신 코드는 각각 `local-services/Mormi-BE`, `local-services/Mormi-AI`에 별도 Git 저장소로 두며 프론트 저장소에는 커밋하지 않습니다. AI 소스는 수정하지 않고, 실행 데이터와 Python 가상환경은 `.local-runtime/`에 분리합니다.
-
-최초 런타임 준비가 끝난 현재 작업 폴더에서는 아래 명령 하나로 세 서비스를 함께 실행할 수 있습니다.
+그 다음 아래 명령으로 FE를 실행합니다.
 
 ```bash
 ./scripts/start-local-stack.sh
 ```
 
-로컬 백엔드는 운영 PostgreSQL 스키마와 호환되는 H2 파일 DB를 사용합니다. 배포로 바꿀 때 프론트 코드를 고치지 않고 환경변수만 교체합니다.
+이 스크립트는 `BACKEND_ORIGIN`이 없거나 `localhost`·`127.0.0.1`이면 실행을 중단합니다. 배포 주소는 이 저장소에서 추정하거나 하드코딩하지 않습니다.
+
+`MORMI_START_LOCAL_AI=true`를 추가하면 개발 전용 `/ai-test` 점검을 위해 로컬 FastAPI AI만 함께 실행합니다. 이 경우에도 Spring BE는 항상 배포된 주소를 사용합니다.
 
 ```env
-BACKEND_ORIGIN=https://새-백엔드-주소
-NEXT_PUBLIC_API_BASE_URL=/api/be
-AI_ORIGIN=https://새-AI-주소
-MORMI_DIALOGUE_SERVICE_KEY=백엔드와-AI가-공유하는-키
+MORMI_START_LOCAL_AI=true
+AI_ORIGIN=http://127.0.0.1:8000
 ```
 
-`BACKEND_ORIGIN`, `AI_ORIGIN`, 서비스 키는 서버 전용이고 브라우저에는 노출되지 않습니다.
+일반 학습 API 경로는 코드에서 같은 출처의 `/api/be`로 고정됩니다.
+`BACKEND_ORIGIN`, `AI_ORIGIN`, AI 서비스 키는 서버 전용이고 브라우저에는 노출되지 않습니다. 실제 키는 `.env.local` 또는 배포 환경 변수에만 둡니다.
 
 ### 프론트만 실행
 
@@ -52,16 +56,9 @@ cp .env.example .env.local
 npm run dev:vercel
 ```
 
-기본 주소는 `http://localhost:3000`입니다. 기존 단발성 모르미 응답은 환경 변수를 비워도 안전한 로컬 문구로 대체되고, PostHog는 조용히 꺼진 상태로 동작합니다. 상태형 Mormi-AI 대화는 FastAPI 연결이 필요합니다.
+기본 주소는 `http://localhost:3000`입니다. 이 실행 방식도 `BACKEND_ORIGIN`에 배포된 Spring BE 주소가 필요합니다. 실제 집·카페 대화도 Spring BE가 FastAPI를 호출하므로 FE에는 AI 주소나 서비스 키가 필요하지 않습니다.
 
-```env
-MORMI_AI_BASE_URL=http://localhost:8000
-MORMI_AI_SERVICE_KEY=
-```
-
-두 값은 서버 전용입니다. 브라우저는 `/api/mormi/*`만 호출하고 서비스 키는 클라이언트 번들에 포함하지 않습니다.
-
-### 일반 백엔드 없이 Mormi-AI만 로컬 테스트
+### 배포된 Spring BE와 별개로 Mormi-AI만 로컬 테스트
 
 FastAPI와 프런트 개발 서버를 함께 실행한 뒤 `http://localhost:3000/ai-test`에서 집 가르치기와 카페 네 시나리오를 실제 `TurnContract`로 확인할 수 있습니다. 이 화면은 개발 환경 전용이며, 배포 빌드에서는 `MORMI_ENABLE_AI_TEST_PAGE=true`를 명시하지 않는 한 404를 반환합니다.
 
@@ -88,6 +85,8 @@ AI `develop`의 strict schema 변환 적용 이후 후속 자유 발화가 동�
 - `mormi-web/public/cafe-stages/`: 통일된 단순 3D 클레이 스타일의 카페 스테이지 카드 이미지
 - 카페는 Figma의 학습 순서와 제공된 화면별 문구를 유지하고 시각 디자인은 모르미의 크림·민트 게임 UI로 통일합니다. 스테이지 화면은 `줄 서기 → 메뉴 고르기 → 계산하기 → 거스름돈 받기` 네 카드가 순서대로 열리며, 줄 서기는 대화·자유 입력·선택·별노트·성공 화면의 5단계로 진행됩니다.
 - `mormi-web/app/mormi-dialogue.ts`: 집·카페가 함께 사용하는 Mormi-AI `TurnContract` 타입과 대화 클라이언트
+- `mormi-web/app/api/be/[...path]/route.ts`: 브라우저의 `/api/be/*`를 서버 전용
+  `BACKEND_ORIGIN`에 등록된 배포 Spring BE로 전달하는 운영 프록시
 - `mormi-web/app/ai-test/`: 일반 백엔드 없이 로컬 Mormi-AI를 점검하는 개발 전용 화면
 - `mormi-web/app/api/mormi/`: Mormi-AI 상태형 대화를 전달하는 서버 전용 BFF
 - `mormi-web/app/api/morami/respond/route.ts`: 이관 중 호환을 위한 기존 단발성 Anthropic 응답
@@ -106,4 +105,4 @@ npm test
 
 ## 배포
 
-프런트엔드는 `mormi-web`을 Vercel 프로젝트 루트로 지정합니다. Spring 백엔드와 FastAPI AI 서비스는 별도로 배포하고 Vercel 서버 환경 변수 `BACKEND_ORIGIN`, `AI_ORIGIN`, `MORMI_DIALOGUE_SERVICE_KEY`로 연결합니다. 공식 프런트 원격 저장소는 `https://github.com/flyai-y2s2/Mormi-FE.git`입니다.
+프런트엔드는 `mormi-web`을 Vercel 프로젝트 루트로 지정합니다. Vercel 서버 환경 변수에는 `BACKEND_ORIGIN`만 등록하고 반드시 배포된 Spring BE 주소를 넣습니다. `AI_ORIGIN`과 AI 서비스 키는 운영 FE에 등록하지 않습니다. Spring BE 운영 환경의 `MORMI_DIALOGUE_BASE_URL`, `MORMI_DIALOGUE_SERVICE_KEY`가 AI 연결을 담당합니다. 공식 프런트 원격 저장소는 `https://github.com/flyai-y2s2/Mormi-FE.git`입니다.

@@ -6,15 +6,18 @@
  * 진행도·보상·해금은 서버가 확정한다. 이 파일은 전송과 토큰 보관만 담당하고
  * 정오 판정이나 보상 계산을 다시 하지 않는다.
  *
- * NEXT_PUBLIC_API_BASE_URL 이 비어 있으면 모든 호출이 조용히 비활성화되고
- * 화면은 기존 localStorage 동작으로 계속 진행된다(로컬 데모용).
+ * 브라우저는 기본적으로 같은 출처의 /api/be 를 호출한다. Next 서버가 비공개
+ * BACKEND_ORIGIN으로 배포된 Spring BE에 프록시한다.
  */
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+// 일반 학습 화면은 항상 같은 출처의 서버 프록시만 사용한다. 공개 환경변수로
+// 직접 BE 주소를 덮어쓰게 두지 않아, 배포 설정에 남은 localhost가 되살아나는
+// 문제와 브라우저 혼합 콘텐츠/CORS 문제를 함께 막는다.
+const BASE_URL = "/api/be";
 const TOKEN_KEY = "mormi-access-token";
 const LEARNER_KEY = "mormi-learner";
 
-export const apiEnabled = Boolean(BASE_URL);
+export const apiEnabled = true;
 
 export type LearnerProfile = {
   id: number;
@@ -119,7 +122,7 @@ export function clearSession() {
   localStorage.removeItem(LEARNER_KEY);
 }
 
-async function request<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit = {}, auth = true): Promise<T> {
   if (!apiEnabled) throw new ApiError(0, "api_disabled", "API base URL is not configured");
 
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -146,7 +149,7 @@ async function request<T>(path: string, init: RequestInit = {}, auth = true): Pr
 
 export const api = {
   createLearner(displayName: string, researchCode: string) {
-    return request<{
+    return apiRequest<{
       id: number; display_name: string; research_code: string;
       analytics_id: string; access_token: string;
     }>("/v1/learners", {
@@ -156,7 +159,7 @@ export const api = {
   },
 
   restoreLearner(researchCode: string) {
-    return request<{
+    return apiRequest<{
       id: number; display_name: string; research_code: string;
       analytics_id: string; access_token: string;
     }>("/v1/learners/auth", {
@@ -166,11 +169,11 @@ export const api = {
   },
 
   progress() {
-    return request<ProgressSnapshot>("/v1/progress");
+    return apiRequest<ProgressSnapshot>("/v1/progress");
   },
 
   startSession(curriculumSessionId: string, variantSeed: number) {
-    return request<{ learning_session_id: string; variant_seed: number }>("/v1/learning-sessions", {
+    return apiRequest<{ learning_session_id: string; variant_seed: number }>("/v1/learning-sessions", {
       method: "POST",
       body: JSON.stringify({ curriculum_session_id: curriculumSessionId, variant_seed: variantSeed }),
     });
@@ -189,7 +192,7 @@ export const api = {
     elapsed_ms?: number;
     answer_meta?: Record<string, unknown>;
   }) {
-    return request<AttemptResult>(`/v1/learning-sessions/${sessionId}/attempts`, {
+    return apiRequest<AttemptResult>(`/v1/learning-sessions/${sessionId}/attempts`, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -202,14 +205,14 @@ export const api = {
     scaffold_level?: number | null;
     elapsed_seconds?: number;
   }) {
-    return request<CompleteResult>(`/v1/learning-sessions/${sessionId}/complete`, {
+    return apiRequest<CompleteResult>(`/v1/learning-sessions/${sessionId}/complete`, {
       method: "POST",
       body: JSON.stringify(body),
     });
   },
 
   startCafeVisit() {
-    return request<CafeVisitState>("/v1/cafe-visits", { method: "POST" });
+    return apiRequest<CafeVisitState>("/v1/cafe-visits", { method: "POST" });
   },
 
   /**
@@ -225,7 +228,7 @@ export const api = {
     attempt_no: number;
     elapsed_ms?: number;
   }) {
-    return request<StageResult>(`/v1/cafe-visits/${visitId}/queue`, {
+    return apiRequest<StageResult>(`/v1/cafe-visits/${visitId}/queue`, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -233,7 +236,7 @@ export const api = {
 
   /** 메뉴 고르기. 예산도 방문마다 달라지므로 함께 보낸다. 초과 주문도 오답으로 기록된다. */
   cafeMenu(visitId: string, menuIds: string[], budget: number, attemptNo: number, elapsedMs?: number) {
-    return request<StageResult>(`/v1/cafe-visits/${visitId}/menu`, {
+    return apiRequest<StageResult>(`/v1/cafe-visits/${visitId}/menu`, {
       method: "POST",
       body: JSON.stringify({ menu_ids: menuIds, budget, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
@@ -241,7 +244,7 @@ export const api = {
 
   /** 메뉴값 계산. 이 단계의 두 메뉴는 메뉴 고르기와 별개로 다시 뽑히므로 함께 보낸다. */
   cafePayment(visitId: string, menuIds: string[], answerAmount: number, attemptNo: number, elapsedMs?: number) {
-    return request<StageResult>(`/v1/cafe-visits/${visitId}/payments`, {
+    return apiRequest<StageResult>(`/v1/cafe-visits/${visitId}/payments`, {
       method: "POST",
       body: JSON.stringify({ menu_ids: menuIds, answer_amount: answerAmount, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
@@ -249,14 +252,14 @@ export const api = {
 
   /** 거스름돈. 기대값은 서버가 10,000원 − menuId 가격으로 계산한다. */
   cafeChange(visitId: string, menuId: string, counts: Record<number, number>, attemptNo: number, elapsedMs?: number) {
-    return request<StageResult>(`/v1/cafe-visits/${visitId}/change`, {
+    return apiRequest<StageResult>(`/v1/cafe-visits/${visitId}/change`, {
       method: "POST",
       body: JSON.stringify({ menu_id: menuId, counts, attempt_no: attemptNo, elapsed_ms: elapsedMs }),
     });
   },
 
   cafeComplete(visitId: string) {
-    return request<CafeVisitState>(`/v1/cafe-visits/${visitId}/complete`, { method: "POST" });
+    return apiRequest<CafeVisitState>(`/v1/cafe-visits/${visitId}/complete`, { method: "POST" });
   },
 };
 

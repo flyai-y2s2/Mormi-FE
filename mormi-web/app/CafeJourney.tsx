@@ -3,8 +3,14 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
-import { api, fireAndForget } from "./api-client";
+import { api, type StageResult } from "./api-client";
 import { cafeStations } from "./journey-config";
+import {
+  startCafeDialogue,
+  submitMormiResponseThroughBe,
+  type MormiConversation,
+  type MormiResponseType,
+} from "./mormi-dialogue";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
@@ -55,7 +61,81 @@ function randomQueueCounts() {
   return { left, right };
 }
 
-export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
+function CafeDialogueControls({
+  conversation,
+  inputText,
+  sending,
+  onInput,
+  onSubmit,
+}: {
+  conversation: MormiConversation | undefined;
+  inputText: string;
+  sending: boolean;
+  onInput: (value: string) => void;
+  onSubmit: (response: {
+    type: MormiResponseType;
+    text?: string;
+    choice_ids?: string[];
+    values?: Record<string, string | number | boolean | string[]>;
+  }) => void;
+}) {
+  if (!conversation || conversation.turn.state_version === 0 || conversation.turn.status === "completed") return null;
+  const { turn } = conversation;
+  const inputKind = turn.input.kind;
+  const completionValues = turn.input.config.completion_values;
+  const actionValues = completionValues && typeof completionValues === "object" && !Array.isArray(completionValues)
+    ? completionValues as Record<string, string | number | boolean | string[]>
+    : { completed: true };
+  const structuredValues = () => {
+    const numbers = inputText.match(/\d[\d,]*/g)?.map((value) => Number(value.replaceAll(",", ""))) ?? [];
+    if (inputKind === "count") {
+      return Object.fromEntries(
+        turn.input.target_slots
+          .slice(0, numbers.length)
+          .map((slot, index) => [slot, numbers[index]]),
+      );
+    }
+    if (inputKind === "equation" && numbers.length > 0) {
+      const resultSlot = turn.input.target_slots.includes("result")
+        ? "result"
+        : turn.input.target_slots[0];
+      return resultSlot ? { [resultSlot]: numbers.at(-1)! } : {};
+    }
+    return {};
+  };
+
+  return <aside className="cafe-ai-followup" aria-live="polite">
+    {turn.help_card?.visible && <div className="cafe-help-card"><strong>{turn.help_card.title}</strong><p>{turn.help_card.body}</p></div>}
+    {inputKind === "text" && <form onSubmit={(event) => {
+      event.preventDefault();
+      if (!inputText.trim() || sending) return;
+      onSubmit({ type: "text", text: inputText.trim() });
+    }}>
+      <label>모르미에게 이어서 알려주기
+        <input value={inputText} onChange={(event) => onInput(event.target.value)} placeholder={turn.input.placeholder || "짧게 알려줘"} />
+      </label>
+      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
+    </form>}
+    {(inputKind === "choices" || inputKind === "fill") && <div className="cafe-ai-choices">
+      {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}>{choice.label}</button>)}
+    </div>}
+    {(inputKind === "count" || inputKind === "equation") && <form onSubmit={(event) => {
+      event.preventDefault();
+      const values = structuredValues();
+      if (Object.keys(values).length === 0 || sending) return;
+      onSubmit({ type: inputKind, values });
+    }}>
+      <label>{inputKind === "count" ? "센 숫자를 차례로 적기" : "계산한 값 적기"}
+        <input inputMode="numeric" value={inputText} onChange={(event) => onInput(event.target.value)} placeholder={inputKind === "count" ? "예: 3, 5" : "예: 8100"} />
+      </label>
+      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
+    </form>}
+    {(inputKind === "joint" || inputKind === "button") && <button className="figma-cafe-action" disabled={sending} onClick={() => onSubmit({ type: "action", values: actionValues })}>{turn.input.submit_label || "도움 카드와 같이 해보기"}</button>}
+    {inputKind !== "none" && inputKind !== "joint" && inputKind !== "button" && <button className="cafe-ai-dont-know" disabled={sending} onClick={() => onSubmit({ type: "no_response" })}>잘 모르겠어</button>}
+  </aside>;
+}
+
+export function CafeJourney({ onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueHelp, setQueueHelp] = useState(false);
@@ -75,94 +155,169 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
   const [changeMenuId, setChangeMenuId] = useState<string>("americano");
   const [changeCounts, setChangeCounts] = useState<Record<number, number>>({ 500: 0, 1000: 0 });
   const [changeFeedback, setChangeFeedback] = useState("");
-  const [changeHintLevel, setChangeHintLevel] = useState(0);
+  const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
+  const [dialogueError, setDialogueError] = useState("");
+  const [dialogueSending, setDialogueSending] = useState(false);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
   // 화면은 아래의 기본 문구를 그대로 쓴다.
   const [mormiLines, setMormiLines] = useState<Partial<Record<CafeStage, string>>>({});
 
-  // 스테이션마다 독립된 대화다. 아이 답을 붙이려면 대화 id 와 직전 턴 id 가 필요하다.
-  const cafeTalks = useRef<Partial<Record<CafeStage, { conversationId: string; turnId: string }>>>({});
+  // 스테이션마다 독립된 전체 TurnContract를 보관한다.
+  const [cafeConversations, setCafeConversations] = useState<Partial<Record<CafeStage, MormiConversation>>>({});
+  const cafeTalks = useRef<Partial<Record<CafeStage, MormiConversation>>>({});
+  const cafeTalkPromises = useRef<Partial<Record<CafeStage, Promise<MormiConversation | null>>>>({});
+  const validatedStages = useRef<Partial<Record<CafeStage, boolean>>>({});
+  const finalizedStages = useRef<Partial<Record<CafeStage, boolean>>>({});
 
   // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
   const visitId = useRef<string | null>(null);
+  const visitPromise = useRef<Promise<string> | null>(null);
   // 스테이지별 시도 번호. 틀린 시도도 각각 한 건으로 남는다.
   const attemptNos = useRef<Record<string, number>>({ queue: 0, menu: 0, calculate: 0, change: 0 });
   const stageStartedAt = useRef(0);
 
   useEffect(() => {
     stageStartedAt.current = nowMs();
-    // 방문을 열고, 새로고침으로 돌아온 경우에는 진행 중인 방문을 이어받는다.
-    fireAndForget(async () => {
-      const visit = await api.startCafeVisit();
+    // 방문 생성이 끝나기 전에 답을 눌러도 유실되지 않도록 같은 Promise를 공유한다.
+    const pending = api.startCafeVisit().then((visit) => {
       visitId.current = visit.cafe_visit_id;
       if (visit.stage === "menu") setJourneyProgress((progress) => Math.max(progress, 1));
       if (visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 2));
       if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 3));
       if (visit.stage === "complete") setJourneyProgress(4);
       if (visit.order_total !== null) setMenuFeedback("");
-    }, "카페 방문 시작");
+      return visit.cafe_visit_id;
+    }).catch((error: unknown) => {
+      setDialogueError(error instanceof Error ? error.message : "카페를 불러오지 못했어요.");
+      throw error;
+    });
+    visitPromise.current = pending;
   }, []);
 
-  /**
-   * 모르미와 한 번 주고받는다. 대화 id 가 없으면 새 대화를 여는 요청이 된다.
-   *
-   * 대화 자체는 Mormi-AI 가 보관한다. 실패하면 대사가 비고 화면은
-   * 기본 문구로 그대로 진행한다.
-   */
-  function talkToMormi(stage: CafeStage, body: Record<string, unknown>) {
-    void (async () => {
+  function applyCafeConversation(stage: CafeStage, conversation: MormiConversation) {
+    const restoredQueue = conversation.scenario_context?.queue_context;
+    if (stage === "queue" && restoredQueue
+        && Number.isInteger(restoredQueue.left_count)
+        && Number.isInteger(restoredQueue.right_count)) {
+      setQueueCounts({ left: restoredQueue.left_count, right: restoredQueue.right_count });
+    }
+    const restoredCafe = conversation.scenario_context?.cafe_context;
+    if (restoredCafe && menu.some((item) => item.id === restoredCafe.mormi_menu_id)) {
+      if (stage === "menu") {
+        setMormeyMenuId(restoredCafe.mormi_menu_id);
+        if (typeof restoredCafe.budget === "number") setMenuBudget(restoredCafe.budget);
+      } else if (stage === "calculate") {
+        setSumMormeyMenuId(restoredCafe.mormi_menu_id);
+      } else if (stage === "change") {
+        setChangeMenuId(restoredCafe.mormi_menu_id);
+      }
+    }
+    cafeTalks.current[stage] = conversation;
+    setCafeConversations((current) => ({ ...current, [stage]: conversation }));
+    setMormiLines((lines) => ({ ...lines, [stage]: conversation.turn.mormi.text }));
+    setDialogueError("");
+    if (conversation.stage_progress?.stage === stage && conversation.stage_progress.completed) {
+      validatedStages.current[stage] = true;
+    }
+    if (conversation.turn.status === "completed" && validatedStages.current[stage]) {
+      completeValidatedStage(stage);
+    }
+    return conversation;
+  }
+
+  /** 화면이 뽑은 문제를 Spring BE가 인증된 AI 대화로 고정한다. */
+  function openCafeDialogue(
+    stage: CafeStage,
+    input: {
+      scenario_id: (typeof cafeScenarioByStation)[number];
+      queue_context?: { left_count: number; right_count: number };
+      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; budget?: number };
+    },
+  ) {
+    setMormiLines((lines) => ({ ...lines, [stage]: undefined }));
+    setDialogueError("");
+    setDialogueInputs((current) => ({ ...current, [stage]: "" }));
+    delete cafeTalks.current[stage];
+    validatedStages.current[stage] = false;
+    finalizedStages.current[stage] = false;
+
+    const pending = (async () => {
       try {
-        const response = await fetch("/api/morami/respond", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ scene: "cafe", learnerId, ...body }),
-        });
-        if (!response.ok) return;
-        const turn = await response.json() as {
-          dialogue?: string;
-          conversationId?: string;
-          turnId?: string;
-        };
-        // 다음 응답은 반드시 최신 턴에 붙여야 한다. AI 가 stale turn_id 를 거절한다.
-        if (turn.conversationId && turn.turnId) {
-          cafeTalks.current[stage] = { conversationId: turn.conversationId, turnId: turn.turnId };
-        }
-        if (turn.dialogue) setMormiLines((lines) => ({ ...lines, [stage]: turn.dialogue }));
-      } catch {
-        // 모르미 대사는 진행을 막지 않는다.
+        const id = visitId.current ?? await visitPromise.current;
+        if (!id) throw new Error("카페 방문을 먼저 열어 주세요.");
+        return applyCafeConversation(stage, await startCafeDialogue(id, input));
+      } catch (error: unknown) {
+        setDialogueError(error instanceof Error ? error.message : "모르미 대화를 시작하지 못했어요.");
+        return null;
       }
     })();
+    cafeTalkPromises.current[stage] = pending;
   }
 
-  /**
-   * 스테이션을 열며 모르미의 첫 마디를 받아 온다.
-   *
-   * 화면이 방금 뽑은 문제를 함께 보내야 모르미가 아이가 보고 있는 것과 같은
-   * 줄·메뉴·예산을 말한다.
-   */
-  function openCafeDialogue(stage: CafeStage, body: Record<string, unknown>) {
-    setMormiLines((lines) => ({ ...lines, [stage]: undefined }));
-    delete cafeTalks.current[stage];
-    talkToMormi(stage, body);
+  async function sendCafeResponse(
+    stage: CafeStage,
+    response: {
+      type: MormiResponseType;
+      text?: string;
+      choice_ids?: string[];
+      values?: Record<string, string | number | boolean | string[]>;
+    },
+  ) {
+    if (dialogueSending) return null;
+    setDialogueSending(true);
+    try {
+      const conversation = cafeTalks.current[stage] ?? await cafeTalkPromises.current[stage];
+      if (!conversation) throw new Error("모르미의 첫 질문을 불러오는 중이에요.");
+      const next = await submitMormiResponseThroughBe(conversation.conversation_id, {
+        turn_id: conversation.turn.turn_id,
+        ...response,
+      });
+      return applyCafeConversation(stage, next);
+    } catch (error: unknown) {
+      setDialogueError(error instanceof Error ? error.message : "답을 보내지 못했어요.");
+      return null;
+    } finally {
+      setDialogueSending(false);
+    }
   }
 
-  /**
-   * 아이가 방금 낸 답을 그 스테이션 대화에 붙인다.
-   *
-   * 정오 판정과 기록은 일반 백엔드가 계속 담당한다. 여기로도 보내는 이유는
-   * 모르미가 아이 말에 이어서 반응하게 하고, 아이가 어떻게 답했는지를
-   * 대화로 남기기 위해서다. 첫 마디를 아직 못 받았으면 붙일 곳이 없어 건너뛴다.
-   */
   function sendCafeAnswer(stage: CafeStage, text: string) {
-    const talk = cafeTalks.current[stage];
     const answer = text.trim();
-    if (!talk || !answer) return;
-    talkToMormi(stage, {
-      conversationId: talk.conversationId,
-      turnId: talk.turnId,
-      childMessage: answer.slice(0, 300),
-    });
+    if (!answer) return Promise.resolve(null);
+    return sendCafeResponse(stage, { type: "text", text: answer.slice(0, 300) });
+  }
+
+  function markStageValidated(stage: CafeStage, result: StageResult) {
+    validatedStages.current[stage] = result.is_correct && result.next_stage_unlocked;
+    if (validatedStages.current[stage] && cafeTalks.current[stage]?.turn.status === "completed") {
+      completeValidatedStage(stage);
+    }
+  }
+
+  function completeValidatedStage(stage: CafeStage) {
+    if (finalizedStages.current[stage]) return;
+    finalizedStages.current[stage] = true;
+    if (stage === "queue") {
+      setQueueFeedback("");
+      if (cafeTalks.current.queue?.turn.note_update) {
+        setQueueScene("note");
+      } else {
+        setJourneyProgress((progress) => Math.max(progress, 1));
+        setQueueScene("clear");
+      }
+    } else if (stage === "menu") {
+      setMenuFeedback("");
+      setMenuScene("thanks");
+    } else if (stage === "calculate") {
+      setSumFeedback("");
+      setJourneyProgress((progress) => Math.max(progress, 3));
+      window.setTimeout(returnToMap, 500);
+    } else {
+      setChangeFeedback("");
+      setJourneyProgress(4);
+      window.setTimeout(() => setStep("done"), 500);
+    }
   }
 
   function nextAttemptNo(stage: CafeStage) {
@@ -203,8 +358,8 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       setQueueFeedback("");
       setQueueHelp(false);
       openCafeDialogue("queue", {
-        cafeScenarioId: cafeScenarioByStation[0],
-        queueContext: { left_count: counts.left, right_count: counts.right },
+        scenario_id: cafeScenarioByStation[0],
+        queue_context: { left_count: counts.left, right_count: counts.right },
       });
     }
     if (index === 1) {
@@ -216,8 +371,8 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       setSelectedMenu([]);
       setMenuFeedback("");
       openCafeDialogue("menu", {
-        cafeScenarioId: cafeScenarioByStation[1],
-        cafeContext: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
+        scenario_id: cafeScenarioByStation[1],
+        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
       });
     }
     if (index === 2) {
@@ -227,8 +382,8 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       setSumAnswer("");
       setSumFeedback("");
       openCafeDialogue("calculate", {
-        cafeScenarioId: cafeScenarioByStation[2],
-        cafeContext: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
+        scenario_id: cafeScenarioByStation[2],
+        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
       });
     }
     if (index === 3) {
@@ -236,54 +391,60 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       setChangeMenuId(nextChangeMenu.id);
       setChangeCounts({ 500: 0, 1000: 0 });
       setChangeFeedback("");
-      setChangeHintLevel(0);
       openCafeDialogue("change", {
-        cafeScenarioId: cafeScenarioByStation[3],
-        cafeContext: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
+        scenario_id: cafeScenarioByStation[3],
+        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
       });
     }
     setStep((["queue", "menu", "sum", "change"] as CafeStep[])[index]);
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
   }
 
-  function submitQueueCounts() {
+  async function submitQueueCounts() {
     if (!queueCountAnswer.trim()) return;
+    // 정오와 무관하게 아이 원문을 AI에 먼저 전달한다. 부분 답·창의적 오답은
+    // 발화 이해기가 직전 질문과 함께 해석하고, 화면은 그 반응을 그대로 보여 준다.
+    await sendCafeAnswer("queue", queueCountAnswer);
     const numbers = queueCountAnswer.match(/[1-5]/g)?.map(Number) ?? [];
     if (numbers.length < 2 || numbers[0] !== queueCounts.left || numbers[1] !== queueCounts.right) {
-      setQueueFeedback(`왼쪽부터 차례로 다시 세어 볼까? 왼쪽과 오른쪽 숫자를 둘 다 적어 줘.`);
+      setQueueFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
       setQueueHelp(true);
       return;
     }
     setQueueFeedback("");
-    sendCafeAnswer("queue", `왼쪽 줄에는 ${queueCounts.left}명, 오른쪽 줄에는 ${queueCounts.right}명이 있어.`);
     setQueueScene("count-left");
   }
 
-  function chooseLeftCount(count: number) {
+  async function chooseLeftCount(count: number) {
     const shorterCount = Math.min(queueCounts.left, queueCounts.right);
-    const id = visitId.current;
+    const id = visitId.current ?? await visitPromise.current;
+    let result: StageResult | null = null;
     if (id) {
       // 좌우 인원과 아이의 답을 함께 보낸다. 정오 판정은 서버가 한다.
       const attemptNo = nextAttemptNo("queue");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(() => api.cafeQueue(id, {
+      try {
+        result = await api.cafeQueue(id, {
         left_count: queueCounts.left,
         right_count: queueCounts.right,
         chosen_count: count,
-        counting_answer: queueCountAnswer.slice(0, 40),
         scaffold_used: queueHelp,
         attempt_no: attemptNo,
         elapsed_ms: elapsedMs,
-      }), "카페 줄 서기");
+        });
+        markStageValidated("queue", result);
+      } catch (error: unknown) {
+        setQueueFeedback(error instanceof Error ? error.message : "줄 서기 답을 저장하지 못했어요.");
+        return;
+      }
     }
-    sendCafeAnswer("queue", `왼쪽 줄은 ${queueCounts.left}명, 오른쪽 줄은 ${queueCounts.right}명이야. 더 짧은 줄은 ${count}명이야.`);
-    if (count === shorterCount) {
-      setQueueFeedback("");
-      setQueueScene("note");
+    const conversation = await sendCafeAnswer("queue", `왼쪽 줄은 ${queueCounts.left}명, 오른쪽 줄은 ${queueCounts.right}명이야. 더 짧은 줄은 ${count}명이야.`);
+    if (count === shorterCount && result?.is_correct) {
+      setQueueFeedback(conversation?.turn.status === "completed" ? "" : "모르미가 한 가지를 더 궁금해해요.");
       captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp, left_count: queueCounts.left, right_count: queueCounts.right, learner_answer: queueCountAnswer });
       return;
     }
-    setQueueFeedback("사람을 앞에서부터 한 명씩 다시 세어 볼까?");
+    setQueueFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
     setQueueHelp(true);
     captureMormeyEvent("cafe_queue_answered", { correct: false, answer: count });
   }
@@ -311,18 +472,25 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
     });
   }
 
-  function orderMenu() {
+  async function orderMenu() {
     if (selectedMenu.length !== 2) return;
     // 예산 초과도 한 건의 시도로 남긴다. 서버가 예산과 함께 받아 오답으로 기록한다.
-    const id = visitId.current;
+    const id = visitId.current ?? await visitPromise.current;
+    let result: StageResult | null = null;
     if (id) {
       const attemptNo = nextAttemptNo("menu");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(() => api.cafeMenu(id, selectedMenu, menuBudget, attemptNo, elapsedMs), "카페 메뉴 선택");
+      try {
+        result = await api.cafeMenu(id, selectedMenu, menuBudget, attemptNo, elapsedMs);
+        markStageValidated("menu", result);
+      } catch (error: unknown) {
+        setMenuFeedback(error instanceof Error ? error.message : "메뉴 선택을 저장하지 못했어요.");
+        return;
+      }
     }
     const childMenu = selectedItems.find((item) => item.id !== mormeyMenuId);
     if (childMenu) {
-      sendCafeAnswer("menu", `${menuBudget.toLocaleString("ko-KR")}원 예산에서 ${childMenu.name}(${childMenu.price.toLocaleString("ko-KR")}원)를 골랐어. 합계는 ${selectedTotal.toLocaleString("ko-KR")}원이야.`);
+      await sendCafeAnswer("menu", `${menuBudget.toLocaleString("ko-KR")}원 예산에서 ${childMenu.name}(${childMenu.price.toLocaleString("ko-KR")}원)를 골랐어. 합계는 ${selectedTotal.toLocaleString("ko-KR")}원이야.`);
     }
     if (selectedTotal > menuBudget) {
       setMenuFeedback(`예산을 ${(selectedTotal - menuBudget).toLocaleString("ko-KR")}원 초과했어요. 내가 고른 메뉴를 빼고 다시 골라 봐요.`);
@@ -330,7 +498,10 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
       return;
     }
     captureMormeyEvent("cafe_menu_selected", { menu_ids: selectedMenu.join(","), total: selectedTotal, budget: menuBudget, over_budget: false });
-    setMenuScene("thanks");
+    if (!result?.is_correct) return;
+    if (cafeTalks.current.menu?.turn.status !== "completed") {
+      setMenuFeedback("모르미가 한 가지를 더 궁금해해요.");
+    }
   }
 
   function finishMenuStory() {
@@ -343,27 +514,29 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function checkSum() {
+  async function checkSum() {
     const answer = Number(sumAnswer.replace(/[^0-9]/g, ""));
-    const id = visitId.current;
+    const id = visitId.current ?? await visitPromise.current;
     // 이 단계의 두 메뉴는 메뉴 고르기와 별개로 뽑히므로 함께 보낸다.
+    let result: StageResult | null = null;
     if (id && sumChildMenu) {
       const attemptNo = nextAttemptNo("calculate");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(
-        () => api.cafePayment(id, [sumMormeyMenu.id, sumChildMenu.id], answer, attemptNo, elapsedMs),
-        "카페 메뉴값 계산",
-      );
+      try {
+        result = await api.cafePayment(id, [sumMormeyMenu.id, sumChildMenu.id], answer, attemptNo, elapsedMs);
+        markStageValidated("calculate", result);
+      } catch (error: unknown) {
+        setSumFeedback(error instanceof Error ? error.message : "계산 결과를 저장하지 못했어요.");
+        return;
+      }
     }
     if (sumChildMenu) {
-      sendCafeAnswer("calculate", `${sumMormeyMenu.name} ${sumMormeyMenu.price.toLocaleString("ko-KR")}원이랑 ${sumChildMenu.name} ${sumChildMenu.price.toLocaleString("ko-KR")}원을 더하면 ${answer.toLocaleString("ko-KR")}원이야.`);
+      await sendCafeAnswer("calculate", `${sumMormeyMenu.name} ${sumMormeyMenu.price.toLocaleString("ko-KR")}원이랑 ${sumChildMenu.name} ${sumChildMenu.price.toLocaleString("ko-KR")}원을 더하면 ${answer.toLocaleString("ko-KR")}원이야.`);
     }
     if (answer === sumTarget) {
-      setSumFeedback("맞아! 두 메뉴의 값을 정확히 더했어.");
-      setJourneyProgress((progress) => Math.max(progress, 3));
-      window.setTimeout(returnToMap, 700);
+      setSumFeedback(cafeTalks.current.calculate?.turn.status === "completed" ? "" : "모르미가 계산 방법도 궁금해해요.");
     } else {
-      setSumFeedback("두 메뉴 가격을 천 원 단위부터 차례로 더해 볼까?");
+      setSumFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
     }
   }
 
@@ -372,24 +545,37 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
     setChangeFeedback("");
   }
 
-  function checkChange() {
-    const id = visitId.current;
+  async function checkChange() {
+    const id = visitId.current ?? await visitPromise.current;
+    let result: StageResult | null = null;
     if (id) {
       const attemptNo = nextAttemptNo("change");
       const elapsedMs = stageElapsedMs();
-      fireAndForget(() => api.cafeChange(id, changeMenu.id, changeCounts, attemptNo, elapsedMs), "카페 거스름돈");
+      try {
+        result = await api.cafeChange(id, changeMenu.id, changeCounts, attemptNo, elapsedMs);
+        markStageValidated("change", result);
+      } catch (error: unknown) {
+        setChangeFeedback(error instanceof Error ? error.message : "거스름돈 결과를 저장하지 못했어요.");
+        return;
+      }
     }
-    sendCafeAnswer("change", `10,000원에서 ${changeMenu.name} ${changeMenu.price.toLocaleString("ko-KR")}원을 빼면 ${changeTotal.toLocaleString("ko-KR")}원이야. 천 원 ${changeCounts[1000]}장, 오백 원 ${changeCounts[500]}개를 담았어.`);
+    await sendCafeAnswer("change", `10,000원에서 ${changeMenu.name} ${changeMenu.price.toLocaleString("ko-KR")}원을 빼면 ${changeTotal.toLocaleString("ko-KR")}원이야. 천 원 ${changeCounts[1000]}장, 오백 원 ${changeCounts[500]}개를 담았어.`);
     if (changeTotal === changeTarget) {
-      setChangeFeedback("맞아. 받아야 할 거스름돈을 정확히 담았어!");
-      setChangeHintLevel(0);
-      setJourneyProgress(4);
-      window.setTimeout(() => setStep("done"), 750);
+      setChangeFeedback(cafeTalks.current.change?.turn.status === "completed" ? "" : "모르미가 계산 방법도 궁금해해요.");
       return;
     }
-    setChangeHintLevel((level) => Math.min(3, level + 1));
-    setChangeFeedback("괜찮아. 모르미의 도움을 보고 다시 만들어 보자.");
+    setChangeFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
   }
+
+  const activeDialogueStage: CafeStage | null = step === "queue"
+    ? "queue"
+    : step === "menu"
+      ? "menu"
+      : step === "sum"
+        ? "calculate"
+        : step === "change"
+          ? "change"
+          : null;
 
   return (
     <section className={`figma-cafe figma-cafe--${step}`}>
@@ -447,7 +633,7 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
           {queueScene === "note" && (
             <section className="queue-note-scene">
               <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>모르미의 공부노트</span><h2>줄 설 때는 사람이 더 적은 줄에 서는 게 좋아</h2></article>
+              <article><span>모르미의 공부노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2><small>{cafeConversations.queue?.turn.note_update?.attribution_label}</small></article>
             </section>
           )}
           {queueScene === "clear" && (
@@ -465,8 +651,8 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
               : mormiLines.queue || (queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : "더 짧은 줄에는 몇 명이 있어?")}</p>
             {queueFeedback && <small role="status">{queueFeedback}</small>}
             {queueScene === "intro" && <button className="queue-story-next" onClick={() => setQueueScene("count-both")}>다음으로</button>}
-            {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); setQueueScene("count-left"); }}>잘 모르겠어</button>}
-            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); setQueueFeedback("양쪽 줄을 하나씩 세고, 더 작은 수를 골라 봐."); }}>잘 모르겠어</button>}
+            {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); void sendCafeResponse("queue", { type: "no_response" }); }}>잘 모르겠어</button>}
+            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); void sendCafeResponse("queue", { type: "no_response" }); }}>잘 모르겠어</button>}
             {queueScene === "note" && <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>}
           </section>}
         </main>
@@ -516,28 +702,36 @@ export function CafeJourney({ learnerId, onBack, onComplete }: Props) {
             <aside><span>내가 만든 거스름돈</span><p>1,000원 × {changeCounts[1000]}</p><p>500원 × {changeCounts[500]}</p><strong>모두 {changeTotal.toLocaleString("ko-KR")}원</strong></aside>
           </div>
           {changeFeedback && <p className="figma-cafe-feedback" role="status">{changeFeedback}</p>}
-          {changeHintLevel > 0 && <aside className="cafe-change-hint" aria-live="polite">
-            <strong>모르미가 같이 생각해 볼게!</strong>
-            <p>10,000원에서 {changeMenu.price.toLocaleString("ko-KR")}원을 빼 보자.</p>
-            {changeHintLevel >= 2 && <div>10,000 − {changeMenu.price.toLocaleString("ko-KR")} = {changeHintLevel >= 3 ? <b>{changeTarget.toLocaleString("ko-KR")}원</b> : <b>?</b>}</div>}
-            {changeHintLevel >= 3 && <small>1,000원짜리 {Math.floor(changeTarget / 1000)}개{changeTarget % 1000 ? `와 500원짜리 ${changeTarget % 1000 / 500}개` : ""}를 담아 봐.</small>}
-          </aside>}
           <button className="figma-cafe-action" onClick={checkChange} disabled={!changeTotal}>계산 완료</button>
-          {changeHintLevel > 0 && <button className="figma-cafe-home-exit" onClick={onComplete}>집으로 돌아가기</button>}
         </main>
       )}
 
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p><button onClick={() => {
-            const id = visitId.current;
-            if (id) fireAndForget(() => api.cafeComplete(id), "카페 방문 완료");
-            captureMormeyEvent("cafe_journey_completed", { order_total: changeMenu.price, paid: 10000, change: changeTarget });
-            onComplete();
-          }}>모르미와 집으로</button></div>
+          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p><button onClick={() => { void (async () => {
+            try {
+              const id = visitId.current ?? await visitPromise.current;
+              if (!id) throw new Error("카페 방문 기록을 찾지 못했어요.");
+              await api.cafeComplete(id);
+              captureMormeyEvent("cafe_journey_completed", { order_total: changeMenu.price, paid: 10000, change: changeTarget });
+              onComplete();
+            } catch (error: unknown) {
+              setDialogueError(error instanceof Error ? error.message : "카페 완료를 저장하지 못했어요.");
+            }
+          })(); }}>모르미와 집으로</button></div>
         </main>
       )}
+      {activeDialogueStage && <CafeDialogueControls
+        conversation={cafeConversations[activeDialogueStage]}
+        inputText={dialogueInputs[activeDialogueStage] ?? ""}
+        sending={dialogueSending}
+        onInput={(value) => setDialogueInputs((current) => ({ ...current, [activeDialogueStage]: value }))}
+        onSubmit={(response) => { void sendCafeResponse(activeDialogueStage, response).then(() => {
+          setDialogueInputs((current) => ({ ...current, [activeDialogueStage]: "" }));
+        }); }}
+      />}
+      {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
     </section>
   );
 }

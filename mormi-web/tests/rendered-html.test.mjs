@@ -84,15 +84,16 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /우리 장바구니/);
   assert.match(cafe, /budgets = \[8000, 9000, 10000\]/);
   assert.match(cafe, /randomQueueCounts/);
+  assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
   assert.match(cafe, /예산을 .*원 초과했어요/);
   assert.match(cafe, /내 메뉴 골라 줘서 고마워/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,500}setStep\("sum"\)/);
   assert.match(cafe, />완료!</);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
-  assert.match(cafe, /changeHintLevel/);
-  assert.match(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(cafe, /집으로 돌아가기/);
+  assert.doesNotMatch(cafe, /changeHintLevel/);
+  assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
+  assert.match(cafe, /turn\.help_card\?\.visible/);
   assert.match(cafe, /STAGE 1 CLEAR!/);
   assert.match(cafe, /figma-cafe-sum__equation[\s\S]{0,800}<Image src=\{item\.image\}/);
   assert.match(cafe, /cafe-sum-menu-picker/);
@@ -145,7 +146,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /correctPosition = Math\.abs\(seed\) % \(answers\.length \+ 1\)/);
   assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, seed\), seed\)/);
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
-  assert.match(app, /const teachingProblem = activeSession\.dictionaryProblem/);
+  assert.match(app, /teachingTurn\?\.visual/);
   assert.match(app, /mark === missing \? "\?" : mark/);
   assert.doesNotMatch(app, /<i \/>\{mark\}<\/span>/);
   assert.match(app, /extraLifeProblem/);
@@ -156,23 +157,22 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /● 동그라미/);
   assert.doesNotMatch(app, /className="teaching-levels"/);
   assert.doesNotMatch(app, /<b>L\{ladder\}<\/b>/);
-  assert.match(app, /askForTeachHelp/);
-  assert.match(app, /teachingAnswerOptions/);
-  assert.match(app, /teachingScaffoldFor/);
-  assert.match(app, /answerGuidedTeaching/);
-  assert.match(app, /advanceModelTeaching/);
+  assert.doesNotMatch(app, /askForTeachHelp|teachingAnswerOptions|teachingScaffoldFor|answerGuidedTeaching|advanceModelTeaching/);
+  assert.match(app, /startHomeTeaching/);
+  assert.match(app, /submitMormiResponseThroughBe/);
+  assert.match(app, /teachingTurn\.input\.kind/);
   assert.match(css, /\.teaching-playground/);
-  assert.match(app, /teachMessages\.map/);
-  assert.match(app, /teachResponseMatches/);
+  assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
+  assert.match(app, /nextTurn\.note_update/);
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
   assert.match(app, /너의 이름을 알려줄래/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
-  assert.match(app, /모르미가 별노트에 적었어요/);
+  assert.match(app, /teachingNote\.attribution_label/);
   assert.doesNotMatch(app, />별노트에 적기/);
-  assert.match(app, /TEACH_REWARD = 500/);
+  assert.match(app, /result\.teach_reward/);
   assert.match(cafe, /figma-cafe-map/);
   assert.match(app, /네 설명이 맞아요/);
   assert.match(app, /네 설명을 기다리고 있어요/);
@@ -190,7 +190,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
   assert.match(app, /const notes = \[659\.25, 783\.99, 1046\.5\]/);
-  assert.match(app, /if \(soundOn\) playLearningChime\(\)/);
+  assert.match(app, /nextTurn\.status === "completed" && soundOn\) playLearningChime\(\)/);
   assert.doesNotMatch(app, /speechSynthesis|SpeechSynthesisUtterance/);
   assert.match(curriculum, /export const masteryTarget = 5/);
   assert.match(app, /wrongDrillAnswers/);
@@ -235,22 +235,39 @@ test("server-renders the adult mathematics report", async () => {
   assert.match(html, /전이 확인/);
 });
 
-test("Mormi-AI uses one server-side BFF contract for home and cafe dialogue", async () => {
-  const [dialogue, upstream, conversations, responses, environment] = await Promise.all([
+test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {
+  const [dialogue, apiClient, backendProxy, upstream, conversations, responses, environment, localStack] = await Promise.all([
     readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api-client.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/be/[...path]/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/mormi/_upstream.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/mormi/conversations/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/mormi/conversations/[conversationId]/responses/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
+    readFile(new URL("../../scripts/start-local-stack.sh", import.meta.url), "utf8"),
   ]);
 
   assert.match(dialogue, /type MormiScene = "home_teach" \| "cafe"/);
   assert.match(dialogue, /startMormiConversation/);
   assert.match(dialogue, /submitMormiResponse/);
   assert.match(dialogue, /recoverMormiConversation/);
+  assert.match(dialogue, /startHomeTeaching/);
+  assert.match(dialogue, /startCafeDialogue/);
+  assert.match(dialogue, /submitMormiResponseThroughBe/);
+  assert.match(dialogue, /scenario_context\?:/);
+  assert.match(dialogue, /stage_progress\?:/);
+  assert.match(dialogue, /verified_facts:/);
+  assert.match(apiClient, /const BASE_URL = "\/api\/be"/);
+  assert.doesNotMatch(apiClient, /NEXT_PUBLIC_API_BASE_URL/);
+  assert.match(backendProxy, /process\.env\.BACKEND_ORIGIN/);
+  assert.match(backendProxy, /authorization/);
+  assert.match(backendProxy, /backend_not_configured/);
   assert.match(upstream, /process\.env\.MORMI_AI_BASE_URL/);
   assert.match(upstream, /X-Mormi-Service-Key/);
   assert.doesNotMatch(environment, /NEXT_PUBLIC_MORMI_AI_SERVICE_KEY/);
+  assert.match(environment, /BACKEND_ORIGIN=https:\/\/YOUR-DEPLOYED-SPRING-BE/);
+  assert.match(localStack, /Spring BE는 배포 주소를 사용합니다/);
+  assert.doesNotMatch(localStack, /gradlew|bootRun|Mormi-BE/);
   assert.match(conversations, /\/v1\/conversations/);
   assert.match(responses, /\/responses/);
 });

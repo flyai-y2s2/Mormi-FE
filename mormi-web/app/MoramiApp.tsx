@@ -3,10 +3,17 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent, identifyLearner } from "./analytics";
-import { api, apiEnabled, ApiError, fireAndForget, readStoredLearner, storeSession } from "./api-client";
+import { api, apiEnabled, ApiError, readStoredLearner, storeSession } from "./api-client";
 import { CafeJourney } from "./CafeJourney";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, transferTarget } from "./math-curriculum";
+import {
+  startHomeTeaching,
+  submitMormiResponseThroughBe,
+  type MormiConversation,
+  type MormiResponseType,
+  type MormiTurn,
+} from "./mormi-dialogue";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -22,7 +29,6 @@ const expressions: Record<Expression, string> = {
 };
 
 const stageLabels = ["혼자 연습", "가르치기", "별노트", "생활 게임"];
-const TEACH_REWARD = 500;
 
 // 시계 읽기는 렌더가 아니라 이벤트 핸들러와 이펙트에서만 일어난다.
 // 모듈 스코프에 두어 렌더 중 호출로 오해되지 않게 한다.
@@ -35,34 +41,18 @@ type LearnerProfile = {
 
 const defaultLearner: LearnerProfile = { id: 1, name: "지우" };
 
-type TeachMessage = {
-  id: number;
-  role: "morami" | "child";
-  text: string;
-};
+function expressionFromMormiMood(mood: MormiTurn["mormi"]["mood"]): Expression {
+  if (mood === "celebrating") return "celebrate";
+  if (mood === "relieved") return "happy";
+  if (mood === "thinking") return "confused";
+  if (mood === "listening") return "calm";
+  return "bright";
+}
 
-type MoramiEvent = "session_start" | "drill_correct" | "drill_retry" | "teach_prompt" | "teach_message" | "teach_correct" | "teach_retry" | "homework_correct" | "session_complete";
-
-type MoramiTurnOptions = {
-  childMessage?: string;
-  teachPrompt?: string;
-  learnerName?: string;
-  conversation?: Array<{ role: "morami" | "child"; text: string }>;
-  learnerId?: number;
-  learningSessionId?: string | null;
-  conversationId?: string | null;
-  turnId?: string | null;
-};
-
-type MoramiTurn = {
-  dialogue: string;
-  expression: Expression;
-  source: "mormi-ai" | "anthropic" | "mock";
-  understood?: boolean;
-  conversationId?: string;
-  turnId?: string;
-  teachRewardEligible?: boolean;
-};
+function scaffoldLevel(turn: MormiTurn | null) {
+  const level = turn?.pedagogy?.expression_level;
+  return level ? Number(level.slice(1)) : null;
+}
 
 const simpleLearnedLines: Record<string, string> = {
   "add-pictures": "더하기는 둘을 한데 모으는 거야.",
@@ -81,33 +71,6 @@ const simpleLearnedLines: Record<string, string> = {
 
 function simpleLearnedLine(session: Session) {
   return simpleLearnedLines[session.id] ?? session.learnedLine;
-}
-
-function simpleTeachPrompt(session: Session) {
-  return `이 문제를 잘 모르겠어. ${session.dictionaryProblem.prompt}`;
-}
-
-async function requestMoramiTurn(session: Session, event: MoramiEvent, fallbackDialogue: string, ladderLevel = 4, options: MoramiTurnOptions = {}) {
-  try {
-    const response = await fetch("/api/morami/respond", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: session.id,
-        sessionTitle: session.title,
-        event,
-        ladderLevel,
-        misconception: session.misconception,
-        learnedLine: simpleLearnedLine(session),
-        fallbackDialogue,
-        ...options,
-      }),
-    });
-    if (!response.ok) return null;
-    return await response.json() as MoramiTurn;
-  } catch {
-    return null;
-  }
 }
 
 function playLearningChime() {
@@ -656,124 +619,6 @@ function readableChoice(answer: string) {
   return labels[answer] ?? answer;
 }
 
-const genericTeachWords = new Set(["거야", "해야", "답을", "수를", "말해", "찾아", "세어", "먼저", "같은"]);
-
-function teachResponseMatches(response: string, session: Session) {
-  const clean = (value: string) => value.replace(/[\s,._!?]/g, "").toLowerCase();
-  const normalized = clean(response);
-  if (!normalized) return false;
-  if ([session.dictionaryProblem.correct, session.pointCorrect, session.fillCorrect, session.oneWordCorrect].some((word) => answersMatch(response, word) || clean(word) === normalized)) return true;
-  const concepts = Array.from(new Set([session.fillCorrect, session.oneWordCorrect, ...session.targetSentence]))
-    .filter((word) => clean(word).length >= 2 && !genericTeachWords.has(word));
-  return concepts.filter((word) => normalized.includes(clean(word))).length >= 2;
-}
-
-type TeachingStep = { prompt: string; options: string[]; correct: string };
-type TeachingScaffold = {
-  freePrompt: string;
-  shortPrompt: string;
-  reasonPrompt: string;
-  reasonOptions: string[];
-  reasonCorrect: string;
-  reasonKeywords: string[];
-  guidedSteps: TeachingStep[];
-  modelLines: string[];
-};
-
-function teachingNumberOptions(value: number, suffix = "", step = 1) {
-  return [Math.max(0, value - step), value, value + step].map((candidate) => `${candidate.toLocaleString("ko-KR")}${suffix}`);
-}
-
-function teachingScaffoldFor(session: Session, problem: Problem): TeachingScaffold {
-  const answerStep: TeachingStep = { prompt: problem.prompt, options: problem.answers, correct: problem.correct };
-  if (session.id === "number-count" && problem.visual.type === "ten-frame") {
-    const count = problem.visual.count;
-    return {
-      freePrompt: "모두 몇 개인지, 어떻게 빠뜨리지 않고 셌는지 알려 줘.",
-      shortPrompt: "모두 몇 개야? 왜 그렇게 생각했어?",
-      reasonPrompt: "어떻게 세면 빠뜨리지 않을까?",
-      reasonOptions: ["하나씩 가리키며 세어", "한꺼번에 눈으로 봐", "아무 데서나 다시 세어"],
-      reasonCorrect: "하나씩 가리키며 세어",
-      reasonKeywords: ["하나씩", "가리키", "마지막", "빠뜨리지"],
-      guidedSteps: [
-        { prompt: "어떻게 세기 시작할까?", options: ["하나씩 가리키기", "눈 감고 세기", "두 번씩 세기"], correct: "하나씩 가리키기" },
-        { prompt: "마지막에 말한 수는 무엇일까?", options: ["전체 개수", "첫 번째 수", "남은 수"], correct: "전체 개수" },
-        { ...answerStep, options: teachingNumberOptions(count) },
-      ],
-      modelLines: ["모르미가 점을 하나씩 가리킬게.", `하나, 둘, 셋… 마지막 수는 ${count}이야.`, `그래서 모두 ${count}개야.`],
-    };
-  }
-  if (session.id === "number-compare" && problem.visual.type === "ten-frame" && typeof problem.visual.secondCount === "number") {
-    const left = problem.visual.count;
-    const right = problem.visual.secondCount;
-    const relation = left === right ? "같아" : left < right ? "작아" : "커";
-    return {
-      freePrompt: "어느 쪽을 골라야 하는지, 두 수를 비교한 이유까지 알려 줘.",
-      shortPrompt: `${problem.prompt} 왜 그렇게 생각했어?`,
-      reasonPrompt: "두 줄은 어떻게 비교하면 될까?",
-      reasonOptions: ["사람 수를 세고 비교해", "줄 간격만 봐", "사람 옷 색을 봐"],
-      reasonCorrect: "사람 수를 세고 비교해",
-      reasonKeywords: ["사람", "적", "많", "작", "짝", "세"],
-      guidedSteps: [
-        { prompt: "왼쪽에는 몇 명이 있어?", options: teachingNumberOptions(left, "명"), correct: `${left}명` },
-        { prompt: "오른쪽에는 몇 명이 있어?", options: teachingNumberOptions(right, "명"), correct: `${right}명` },
-        { prompt: `${left}은 ${right}보다 어때?`, options: ["작아", "커", "같아"], correct: relation },
-        answerStep,
-      ],
-      modelLines: [`왼쪽을 세면 ${left}명이야.`, `오른쪽을 세면 ${right}명이야.`, `${left}은 ${right}보다 ${relation}.`, `그래서 답은 ${problem.correct}이야.`],
-    };
-  }
-  if ((session.id === "money-count" || session.id === "money-price") && problem.visual.type === "money") {
-    const [first = 0, second = 0] = problem.visual.amounts;
-    const labels = problem.visual.labels ?? ["첫 번째 돈", "두 번째 돈"];
-    const reasonCorrect = session.id === "money-count" ? "돈에 적힌 값을 모두 더해" : "두 물건값을 더해";
-    return {
-      freePrompt: "모두 얼마인지, 어떤 계산을 했는지 함께 알려 줘.",
-      shortPrompt: "모두 얼마야? 어떤 계산을 했어?",
-      reasonPrompt: "어떤 방법으로 계산하면 될까?",
-      reasonOptions: [reasonCorrect, "큰 값 하나만 봐", "두 값을 빼"],
-      reasonCorrect,
-      reasonKeywords: ["더", "합", "모두", "값"],
-      guidedSteps: [
-        { prompt: `${labels[0] ?? "첫 번째"}의 값은?`, options: teachingNumberOptions(first, "원", first >= 1000 ? 500 : 100), correct: `${first.toLocaleString("ko-KR")}원` },
-        { prompt: `${labels[1] ?? "두 번째"}의 값은?`, options: teachingNumberOptions(second, "원", second >= 1000 ? 500 : 100), correct: `${second.toLocaleString("ko-KR")}원` },
-        { prompt: "두 값은 어떻게 할까?", options: ["더해", "빼", "큰 값만 골라"], correct: "더해" },
-        answerStep,
-      ],
-      modelLines: [`첫 번째 값은 ${first.toLocaleString("ko-KR")}원이야.`, `두 번째 값은 ${second.toLocaleString("ko-KR")}원이야.`, "두 값을 더하면 돼.", `그래서 모두 ${problem.correct}이야.`],
-    };
-  }
-  if (session.id === "money-budget" && problem.visual.type === "money") {
-    const paid = problem.visual.paid ?? 0;
-    const price = problem.visual.amounts.reduce((sum, value) => sum + value, 0);
-    return {
-      freePrompt: "얼마가 남는지, 왜 빼야 하는지 함께 알려 줘.",
-      shortPrompt: "얼마를 돌려받아? 어떤 계산을 했어?",
-      reasonPrompt: "남는 돈은 어떻게 구할까?",
-      reasonOptions: ["낸 돈에서 물건값을 빼", "낸 돈과 물건값을 더해", "물건값만 말해"],
-      reasonCorrect: "낸 돈에서 물건값을 빼",
-      reasonKeywords: ["빼", "남", "거스름", "낸 돈"],
-      guidedSteps: [
-        { prompt: "낸 돈은 얼마야?", options: teachingNumberOptions(paid, "원", 500), correct: `${paid.toLocaleString("ko-KR")}원` },
-        { prompt: "물건값은 얼마야?", options: teachingNumberOptions(price, "원", 500), correct: `${price.toLocaleString("ko-KR")}원` },
-        { prompt: "어떤 계산을 해야 할까?", options: ["낸 돈 - 물건값", "낸 돈 + 물건값", "물건값 - 낸 돈"], correct: "낸 돈 - 물건값" },
-        answerStep,
-      ],
-      modelLines: [`낸 돈은 ${paid.toLocaleString("ko-KR")}원이야.`, `물건값은 ${price.toLocaleString("ko-KR")}원이야.`, "낸 돈에서 물건값을 빼면 돼.", `그래서 ${problem.correct}을 돌려받아.`],
-    };
-  }
-  return {
-    freePrompt: "답과 그 이유를 직접 적어 줘.", shortPrompt: "답은 무엇이야? 왜 그렇게 생각했어?", reasonPrompt: activeSessionReasonPrompt(session),
-    reasonOptions: session.oneWordOptions, reasonCorrect: session.oneWordCorrect, reasonKeywords: [session.fillCorrect, session.oneWordCorrect],
-    guidedSteps: [{ prompt: session.oneWordPrompt, options: session.oneWordOptions, correct: session.oneWordCorrect }, answerStep],
-    modelLines: [session.hint, simpleLearnedLine(session), `그래서 답은 ${problem.correct}이야.`],
-  };
-}
-
-function activeSessionReasonPrompt(session: Session) {
-  return session.oneWordPrompt || "어떤 방법으로 풀까?";
-}
-
 type MissionScene = "cafe" | "market" | "stationery" | "toyshop" | "snackshop" | "giftshop" | "workshop" | "fair";
 type ProductScene = Extract<MissionScene, "cafe" | "market" | "stationery" | "toyshop" | "snackshop" | "giftshop">;
 
@@ -1085,14 +930,12 @@ function OutsideHub({ unlocked, onHome, onCafe }: { unlocked: boolean; onHome: (
 
 export function MoramiApp() {
   const [learner, setLearner] = useState<LearnerProfile>(defaultLearner);
-  // 서버 학습 세션 id. 시도·완료 전송의 대상이며, API 미설정이면 null 로 남는다.
+  // 반복 문제의 서버 세션과 기록은 순서대로 확정한 뒤에만 가르치기 대화를 시작한다.
   const learningSessionId = useRef<string | null>(null);
-  // Mormi-AI 대화 식별자. 세션 완료 때 백엔드로 넘겨야 가르치기 보상이 확정된다.
-  const conversationId = useRef<string | null>(null);
-  const conversationTurnId = useRef<string | null>(null);
+  const learningSessionPromise = useRef<Promise<string> | null>(null);
+  const attemptWriteQueue = useRef<Promise<void>>(Promise.resolve());
+  const attemptWriteError = useRef<unknown>(null);
   const attemptCounter = useRef(0);
-  // 가르치기 시도 번호. (activity, attempt_no) 유니크가 활동별로 걸리므로 카운터도 분리한다.
-  const teachAttemptCounter = useRef(0);
   const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const [onboardingError, setOnboardingError] = useState("");
   const [sessionIndex, setSessionIndex] = useState(0);
@@ -1131,29 +974,23 @@ export function MoramiApp() {
   const [coinReward, setCoinReward] = useState<number | null>(null);
   const [drillLocked, setDrillLocked] = useState(false);
   const [mastered, setMastered] = useState(false);
-  const [ladder, setLadder] = useState(4);
   const [teachText, setTeachText] = useState("");
-  const [teachReason, setTeachReason] = useState("");
-  const [selectedTeachAnswer, setSelectedTeachAnswer] = useState("");
-  const [selectedTeachReason, setSelectedTeachReason] = useState("");
-  const [guidedTeachStep, setGuidedTeachStep] = useState(0);
-  const [modelTeachStep, setModelTeachStep] = useState(0);
-  const [teachMessages, setTeachMessages] = useState<TeachMessage[]>([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[0]) }]);
+  const [teachChoiceIds, setTeachChoiceIds] = useState<string[]>([]);
+  const [teachFillValues, setTeachFillValues] = useState<Record<string, string>>({});
+  const [mormiConversation, setMormiConversation] = useState<MormiConversation | null>(null);
+  const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
-  const [teachSolved, setTeachSolved] = useState(false);
+  const [teachError, setTeachError] = useState("");
   const [teachRewardGranted, setTeachRewardGranted] = useState(false);
+  const [teachRewardAmount, setTeachRewardAmount] = useState(0);
   const [solvedAtLevel, setSolvedAtLevel] = useState<number | null>(null);
-  const [floorFails, setFloorFails] = useState(0);
-  const [brightCarry, setBrightCarry] = useState(false);
   const [homeworkSolved, setHomeworkSolved] = useState(false);
   const [homeworkIndex, setHomeworkIndex] = useState(0);
   const [homeworkCorrect, setHomeworkCorrect] = useState(0);
-  const [timedOut, setTimedOut] = useState(false);
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
   const [coinBalance, setCoinBalance] = useState(6000);
   const startedAt = useRef(0);
   const elapsedSeconds = useRef(0);
-  const teachMessageId = useRef(2);
   const teachThreadRef = useRef<HTMLDivElement>(null);
   const finishInProgress = useRef(false);
 
@@ -1171,40 +1008,14 @@ export function MoramiApp() {
   const selectedAreaSessions = useMemo(() => selectedArea?.sessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)) ?? [], [selectedArea]);
   const cafeConceptSessions = useMemo(() => cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
   const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
-  const teachingProblem = activeSession.dictionaryProblem;
-  const teachingAnswerOptions = useMemo(
-    () => shuffleWords(Array.from(new Set([teachingProblem.correct, ...teachingProblem.answers])), variantSeed + sessionIndex * 61).slice(0, 3),
-    [sessionIndex, teachingProblem, variantSeed],
-  );
-  const teachingScaffold = useMemo(() => teachingScaffoldFor(activeSession, teachingProblem), [activeSession, teachingProblem]);
+  const teachingTurn = mormiConversation?.turn ?? null;
+  const teachingComplete = teachingTurn?.status === "completed";
+  const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
+  const hasTeachingNote = Boolean(teachingNote) && !brightExit;
 
-  // AI 를 거친 턴만 식별자를 싣고 온다. 기존 경로로 내려간 턴은 그냥 지나간다.
-  const rememberConversation = useCallback((turn: MoramiTurn) => {
-    if (turn.conversationId) conversationId.current = turn.conversationId;
-    if (turn.turnId) conversationTurnId.current = turn.turnId;
-  }, []);
-
-  const askMorami = useCallback(async (event: MoramiEvent, fallbackDialogue: string, fallbackExpression: Expression, ladderLevel = ladder) => {
+  const showMoramiFallback = useCallback((fallbackDialogue: string, fallbackExpression: Expression) => {
     setDialogue(fallbackDialogue);
     setExpression(fallbackExpression);
-    const turn = await requestMoramiTurn(activeSession, event, fallbackDialogue, ladderLevel, {
-      learnerName: childName,
-      learnerId: learner.id,
-      learningSessionId: learningSessionId.current,
-      conversationId: conversationId.current,
-      turnId: conversationTurnId.current,
-    });
-    if (turn) {
-      rememberConversation(turn);
-      setDialogue(turn.dialogue);
-      setExpression(turn.expression);
-    }
-  }, [activeSession, childName, ladder, learner.id, rememberConversation]);
-
-  const appendTeachMessage = useCallback((role: TeachMessage["role"], text: string) => {
-    const nextMessage = { id: teachMessageId.current, role, text };
-    teachMessageId.current += 1;
-    setTeachMessages((messages) => [...messages, nextMessage]);
   }, []);
 
   useEffect(() => {
@@ -1243,12 +1054,6 @@ export function MoramiApp() {
     if (!["drill", "teach", "wrap", "homework"].includes(stage)) return;
     const timer = window.setInterval(() => {
       elapsedSeconds.current = Math.floor((nowMs() - startedAt.current) / 1000);
-      if (elapsedSeconds.current >= 480 && !["wrap", "complete"].includes(stage)) {
-        setTimedOut(true);
-        setStage("wrap");
-        setExpression("bright");
-        setDialogue("오늘도 충분히 잘 가르쳐 줬어. 우리가 알아낸 걸 별노트에 적자!");
-      }
     }, 1000);
     return () => window.clearInterval(timer);
   }, [stage]);
@@ -1257,7 +1062,7 @@ export function MoramiApp() {
     const thread = teachThreadRef.current;
     if (!thread || stage !== "teach") return;
     thread.scrollTo({ top: thread.scrollHeight, behavior: "smooth" });
-  }, [stage, teachMessages, teachSending]);
+  }, [stage, teachingTurn?.turn_id, teachSending]);
 
   const saveReport = useCallback((transfer: boolean) => {
     const report = {
@@ -1271,13 +1076,13 @@ export function MoramiApp() {
       masteryTarget,
       misconception: activeSession.misconception,
       learnedLine: simpleLearnedLine(activeSession),
-      synchronized: floorFails > 0 || brightCarry,
+      synchronized: teachingTurn?.pedagogy?.hint_level !== "H0",
       transfer,
       ladder: solvedAtLevel ?? 0,
-      timedOut,
+      timedOut: false,
       earnedCoins: sessionCoins,
-      drillCoins: sessionCoins - (teachRewardGranted ? TEACH_REWARD : 0),
-      teachCoins: teachRewardGranted ? TEACH_REWARD : 0,
+      drillCoins: Math.max(0, sessionCoins - teachRewardAmount),
+      teachCoins: teachRewardAmount,
       learnerId: learner.id,
       learnerName: learner.name,
     };
@@ -1288,69 +1093,43 @@ export function MoramiApp() {
     } catch {
       localStorage.setItem("morami-report-history", JSON.stringify([report]));
     }
-  }, [activeSession, brightCarry, drillAttempts, floorFails, learner, sessionCoins, solvedAtLevel, teachRewardGranted, timedOut]);
+  }, [activeSession, drillAttempts, learner, sessionCoins, solvedAtLevel, teachRewardAmount, teachingTurn?.pedagogy?.hint_level]);
 
-  /**
-   * 정답이든 오답이든 한 건씩 서버에 남긴다.
-   * attempt_no 는 세션 안에서 단조 증가하고, 재전송 시 서버가 중복으로 처리한다.
-   */
+  /** 반복 문제 시도는 세션 생성 뒤 한 건씩 순서대로 전송한다. */
   function postDrillAttempt(answer: string, isCorrect: boolean) {
-    const sessionId = learningSessionId.current;
-    if (!sessionId) return;
     attemptCounter.current += 1;
     const attemptNo = attemptCounter.current;
     const elapsedMs = nowMs() - startedAt.current;
-    fireAndForget(() => api.recordAttempt(sessionId, {
-      activity: "drill",
-      attempt_no: attemptNo,
-      item_id: `${activeSession.id}:${drillIndex}`,
-      question_index: drillIndex,
-      is_correct: isCorrect,
-      elapsed_ms: Math.min(elapsedMs, 600000),
-      answer_meta: {
-        // 아이가 무엇을 골랐는지, 그때까지 무엇이 잠겼는지 남긴다.
-        selected_answer: answer,
-        locked_answers: wrongDrillAnswers,
-        wrong_count_before: wrongDrillAnswers.length,
-        correct_answer: currentDrill.correct,
-        visual_type: currentDrill.visual.type,
-        misconception: activeSession.misconception,
-      },
-    }), "시도 기록");
-  }
-
-  /**
-   * 가르치기 응답 1건. 아이가 적거나 고른 내용을 그대로 남긴다.
-   *
-   * <p>모르미 대화 원문은 Mormi-AI 가 따로 보관하지만, AI 시나리오가 붙은 세션은
-   * 아직 일부뿐이라 그쪽에만 기대면 대부분의 세션에서 응답이 사라진다.
-   * 연구 분석에 필요한 만큼은 여기에서 학습 기록으로도 남긴다.
-   */
-  function postTeachAttempt(
-    isCorrect: boolean,
-    meta: Record<string, unknown>,
-    questionIndex = 0,
-  ) {
-    const sessionId = learningSessionId.current;
-    if (!sessionId) return;
-    teachAttemptCounter.current += 1;
-    const attemptNo = teachAttemptCounter.current;
-    const elapsedMs = nowMs() - startedAt.current;
-    fireAndForget(() => api.recordAttempt(sessionId, {
-      activity: "teach",
-      attempt_no: attemptNo,
-      item_id: `${activeSession.id}:teach:l${ladder}`,
-      question_index: questionIndex,
-      is_correct: isCorrect,
-      elapsed_ms: Math.min(elapsedMs, 600000),
-      answer_meta: {
-        ladder_level: ladder,
-        teach_prompt: teachingProblem.prompt,
-        correct_answer: teachingProblem.correct,
-        conversation_id: conversationId.current,
-        ...meta,
-      },
-    }), "가르치기 기록");
+    const selectedChoiceIndex = currentDrill.answers.indexOf(answer);
+    const selectedChoiceId = `${activeSession.id}:${drillIndex}:choice:${Math.max(0, selectedChoiceIndex)}`;
+    const lockedChoiceIds = wrongDrillAnswers.map((lockedAnswer) => {
+      const lockedIndex = currentDrill.answers.indexOf(lockedAnswer);
+      return `${activeSession.id}:${drillIndex}:choice:${Math.max(0, lockedIndex)}`;
+    });
+    const writeAttempt = async () => {
+      const sessionId = await learningSessionPromise.current;
+      if (!sessionId) throw new Error("학습 세션을 만들지 못했습니다.");
+      await api.recordAttempt(sessionId, {
+        activity: "drill",
+        attempt_no: attemptNo,
+        item_id: `${activeSession.id}:${drillIndex}`,
+        question_index: drillIndex,
+        is_correct: isCorrect,
+        elapsed_ms: Math.min(elapsedMs, 600000),
+        answer_meta: {
+          selected_choice_id: selectedChoiceId,
+          locked_choice_ids: lockedChoiceIds,
+          misconception_tag: isCorrect ? undefined : `${activeSession.id}_wrong_choice`,
+          response_category: isCorrect ? "correct_choice" : "incorrect_choice",
+          input_kind: "choices",
+        },
+      });
+    };
+    const queued = attemptWriteQueue.current.then(writeAttempt);
+    attemptWriteQueue.current = queued.catch((error: unknown) => {
+      attemptWriteError.current = error;
+      console.error("[mormi-api] 반복 학습 기록 실패", error);
+    });
   }
 
   function answerDrill(answer: string) {
@@ -1393,166 +1172,86 @@ export function MoramiApp() {
     }
   }
 
-  function beginTeaching() {
-    const prompt = simpleTeachPrompt(activeSession);
+  function applyTeachingConversation(nextConversation: MormiConversation) {
+    const nextTurn = nextConversation.turn;
+    setMormiConversation(nextConversation);
+    setDialogue(nextTurn.mormi.text);
+    setExpression(expressionFromMormiMood(nextTurn.mormi.mood));
+    setSolvedAtLevel(scaffoldLevel(nextTurn));
+    setTeachChoiceIds([]);
+    setTeachFillValues({});
+    setTeachText("");
+    if (nextTurn.completion?.outcome === "bright_exit") {
+      setTeachingNote(null);
+    } else if (nextTurn.note_update) {
+      setTeachingNote(nextTurn.note_update);
+    }
+    if (nextTurn.status === "completed" && soundOn) playLearningChime();
+  }
+
+  async function beginTeaching() {
     setStage("teach");
-    setExpression("confused");
-    setDialogue(prompt);
-    setLadder(4);
-    setTeachText("");
-    setTeachReason("");
-    setSelectedTeachAnswer("");
-    setSelectedTeachReason("");
-    setGuidedTeachStep(0);
-    setModelTeachStep(0);
-    setTeachSending(false);
-    teachMessageId.current = 2;
-    setTeachMessages([{ id: 1, role: "morami", text: prompt }]);
-  }
-
-  function lowerLadder(message: string) {
-    setExpression("confused");
-    setDialogue(message);
-    appendTeachMessage("morami", message);
-    if (ladder > 0) setLadder((level) => level - 1);
-  }
-
-  function solveTeaching(level: number, reply = "응! 네가 알려 줘서 이제 알겠어.", nextExpression: Expression = "happy", askForReply = true) {
-    setTeachSolved(true);
-    setSolvedAtLevel(level);
-    setDialogue(reply);
-    setExpression(nextExpression);
-    appendTeachMessage("morami", reply);
-    if (soundOn) playLearningChime();
-    if (askForReply) void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy", level);
-  }
-
-  async function submitTeachText() {
-    const submittedText = teachText.trim();
-    const submittedReason = teachReason.trim();
-    const response = [submittedText, submittedReason].filter(Boolean).join(". ");
-    if (!response || teachSending) return;
-    const prompt = simpleTeachPrompt(activeSession);
-    const conversation = [...teachMessages.map(({ role, text }) => ({ role, text })), { role: "child" as const, text: response }];
-    appendTeachMessage("child", response);
-    setTeachText("");
-    setTeachReason("");
+    setTeachError("");
     setTeachSending(true);
-    const turn = await requestMoramiTurn(activeSession, "teach_message", "무엇을 먼저 하면 될까?", ladder, {
-      childMessage: response,
-      teachPrompt: prompt,
-      learnerName: childName,
-      conversation,
-      learnerId: learner.id,
-      learningSessionId: learningSessionId.current,
-      conversationId: conversationId.current,
-      turnId: conversationTurnId.current,
-    });
-    setTeachSending(false);
-    if (turn) rememberConversation(turn);
-    const directAnswerMatches = answersMatch(response, teachingProblem.correct);
-    const reasonInput = ladder === 4 ? response : submittedReason;
-    const reasonMatches = teachingScaffold.reasonKeywords.some((keyword) => reasonInput.replaceAll(" ", "").includes(keyword.replaceAll(" ", "")));
-    const levelEvidenceMatches = ladder === 4 ? directAnswerMatches && reasonMatches : directAnswerMatches || reasonMatches;
-    // AI 대화가 붙은 세션에서는 이해 판정을 프런트가 다시 하지 않는다(계약서 1절).
-    const understood = turn?.source === "mormi-ai"
-      ? Boolean(turn.understood)
-      : turn?.source === "anthropic" && typeof turn.understood === "boolean"
-        ? levelEvidenceMatches || (ladder < 4 && turn.understood)
-        : levelEvidenceMatches || (ladder < 4 && teachResponseMatches(response, activeSession));
-    postTeachAttempt(understood, {
-      response_type: "free_text",
-      child_text: response,
-      answer_text: submittedText,
-      reason_text: submittedReason,
-      morami_prompt: prompt,
-      morami_reply: turn?.dialogue,
-      dialogue_source: turn?.source ?? "none",
-      direct_answer_matches: directAnswerMatches,
-      reason_matches: reasonMatches,
-      child_turn_no: conversation.filter((message) => message.role === "child").length,
-    });
-    if (understood) {
-      solveTeaching(ladder, turn?.dialogue, turn?.expression ?? "happy", false);
-    } else {
-      const retry = turn?.dialogue || "아직 잘 모르겠어. 무엇을 먼저 하면 될까?";
-      setExpression(turn?.expression ?? "confused");
-      setDialogue(retry);
-      appendTeachMessage("morami", retry);
+    setMormiConversation(null);
+    setTeachingNote(null);
+    try {
+      const sessionId = await learningSessionPromise.current;
+      await attemptWriteQueue.current;
+      if (!sessionId || attemptWriteError.current) {
+        throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
+      }
+      applyTeachingConversation(await startHomeTeaching(sessionId));
+    } catch (error) {
+      console.error("[mormi-api] 가르치기 시작 실패", error);
+      setTeachError("가르치기를 준비하지 못했어요. 잠시 후 다시 눌러 주세요.");
+    } finally {
+      setTeachSending(false);
     }
   }
 
-  function askForTeachHelp() {
-    const messages: Record<number, string> = {
-      4: "괜찮아! 답과 이유를 짧게 나눠서 적어 보자.",
-      3: "이제 준비된 보기에서 답과 이유를 골라 보자.",
-      2: "하나씩 세고 비교하면서 차례대로 같이 풀어 보자.",
-      1: "이번에는 내가 먼저 보여 줄게. 같은 순서로 같이 해 보자.",
-    };
-    if (ladder > 0) lowerLadder(messages[ladder]);
+  function completionValues(turn: MormiTurn): Record<string, string | number | boolean | string[]> {
+    const raw = turn.input.config.completion_values;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    return Object.fromEntries(
+      Object.entries(raw).filter((entry): entry is [string, string | number | boolean | string[]] => {
+        const value = entry[1];
+        return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+          || (Array.isArray(value) && value.every((item) => typeof item === "string"));
+      }),
+    );
   }
 
-  function submitTeachChoices() {
-    if (!selectedTeachAnswer || !selectedTeachReason) return;
-    const correct = answersMatch(selectedTeachAnswer, teachingProblem.correct)
-      && selectedTeachReason === teachingScaffold.reasonCorrect;
-    postTeachAttempt(correct, {
-      response_type: "choice",
-      selected_answer: selectedTeachAnswer,
-      selected_reason: selectedTeachReason,
-      correct_reason: teachingScaffold.reasonCorrect,
-    });
-    if (correct) {
-      solveTeaching(2);
-      return;
+  async function submitTeachingResponse(
+    type: MormiResponseType,
+    payload: Pick<Parameters<typeof submitMormiResponseThroughBe>[1], "text" | "choice_ids" | "values"> = {},
+  ) {
+    if (!mormiConversation || teachSending || teachingComplete) return;
+    setTeachError("");
+    setTeachSending(true);
+    try {
+      const nextConversation = await submitMormiResponseThroughBe(mormiConversation.conversation_id, {
+        turn_id: mormiConversation.turn.turn_id,
+        type,
+        latency_ms: Math.min(nowMs() - startedAt.current, 600000),
+        ...payload,
+      });
+      applyTeachingConversation(nextConversation);
+    } catch (error) {
+      console.error("[mormi-api] 가르치기 응답 실패", error);
+      setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
+    } finally {
+      setTeachSending(false);
     }
-    setExpression("confused");
-    setDialogue("답과 이유를 다시 한 번 이어서 골라 볼까?");
-  }
-
-  function answerGuidedTeaching(answer: string) {
-    const step = teachingScaffold.guidedSteps[guidedTeachStep];
-    postTeachAttempt(answersMatch(answer, step.correct), {
-      response_type: "guided_step",
-      selected_answer: answer,
-      step_prompt: step.prompt,
-      step_correct: step.correct,
-    }, guidedTeachStep);
-    if (!answersMatch(answer, step.correct)) {
-      setExpression("confused");
-      setDialogue("이 단계만 다시 천천히 생각해 보자.");
-      return;
-    }
-    if (guidedTeachStep >= teachingScaffold.guidedSteps.length - 1) {
-      solveTeaching(1);
-      return;
-    }
-    setGuidedTeachStep((current) => current + 1);
-    setExpression("calm");
-    setDialogue("맞아! 다음 단계도 같이 해 보자.");
-  }
-
-  function advanceModelTeaching() {
-    if (modelTeachStep >= teachingScaffold.modelLines.length - 1) {
-      solveTeaching(0, "같이 끝까지 해냈어! 이제 나도 방법을 알겠어.", "happy", false);
-      return;
-    }
-    setModelTeachStep((current) => current + 1);
-    setExpression("calm");
-    setDialogue("내가 하는 순서를 보고 다음도 같이 눌러 줘.");
   }
 
   function goWrap() {
-    if (teachSolved && !teachRewardGranted) {
-      setTeachRewardGranted(true);
-      setSessionCoins((coins) => coins + TEACH_REWARD);
-      captureMormeyEvent("teach_reward_earned", { session_id: activeSession.id, reward: TEACH_REWARD, scaffold_level: solvedAtLevel });
-      if (soundOn) playCoinRewardSound(200);
-      setStage("teachReward");
+    if (!teachingComplete || teachSending) return;
+    if (hasTeachingNote) {
+      setStage("wrap");
       return;
     }
-    setStage("wrap");
-    void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy");
+    void finish(false);
   }
 
   function beginHomework() {
@@ -1565,11 +1264,11 @@ export function MoramiApp() {
       setHomeworkCorrect(nextCorrect);
       if (nextCorrect >= transferTarget) {
         setHomeworkSolved(true);
-        void askMorami("homework_correct", "우와, 생활 문제도 풀었어!", "celebrate");
+        showMoramiFallback("우와, 생활 문제도 풀었어!", "celebrate");
         saveReport(true);
       } else {
         setHomeworkIndex((index) => index + 1);
-        void askMorami("homework_correct", "하나 풀었어! 다음 것도 알려 줘.", "happy");
+        showMoramiFallback("하나 풀었어! 다음 것도 알려 줘.", "happy");
       }
     } else {
       setExpression("confused");
@@ -1577,50 +1276,63 @@ export function MoramiApp() {
     }
   }
 
-  function finish(transfer = homeworkSolved) {
+  async function finish(transfer = homeworkSolved) {
     if (finishInProgress.current) return;
     finishInProgress.current = true;
-    saveReport(transfer);
-    const next = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
-    localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
-
-    // 세션 종료와 보상 확정. 완료 목록·지갑·카페 해금은 서버 응답을 기준으로 덮어쓴다.
-    const sessionId = learningSessionId.current;
-    if (sessionId) {
+    setTeachError("");
+    setTeachSending(true);
+    try {
+      const sessionId = await learningSessionPromise.current;
+      await attemptWriteQueue.current;
+      if (!sessionId || attemptWriteError.current) {
+        throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
+      }
+      const result = await api.completeSession(sessionId, {
+        transfer_solved: transfer,
+        timed_out: false,
+        scaffold_level: scaffoldLevel(teachingTurn),
+        elapsed_seconds: elapsedSeconds.current,
+      });
+      const next = result.completed_session_ids;
+      setCompletedSessionIds(next);
+      setCoinBalance(result.wallet_balance);
+      setSessionCoins(result.total_reward);
+      setTeachRewardAmount(result.teach_reward);
+      setTeachRewardGranted(result.teach_reward > 0);
       learningSessionId.current = null;
-      fireAndForget(async () => {
-        const result = await api.completeSession(sessionId, {
-          // 가르치기 500원은 백엔드가 이 대화를 AI 에 재확인한 뒤에만 지급한다.
-          // 값이 없으면 보상 없이 세션만 종료된다.
-          conversation_id: conversationId.current ?? undefined,
-          transfer_solved: transfer,
-          timed_out: timedOut,
-          scaffold_level: solvedAtLevel,
-          elapsed_seconds: elapsedSeconds.current,
-        });
-        setCompletedSessionIds(result.completed_session_ids);
-        setCoinBalance(result.wallet_balance);
-      }, "세션 완료");
-    }
+      learningSessionPromise.current = null;
+      localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
+      localStorage.setItem("mormey-coins", String(result.wallet_balance));
+      saveReport(transfer);
 
-    captureMormeyEvent("session_completed", {
-      session_id: activeSession.id,
-      elapsed_seconds: elapsedSeconds.current,
-      drill_attempts: drillAttempts,
-      scaffold_level: solvedAtLevel,
-      completed_at_home: true,
-    });
-    if (!isCafeUnlocked(completedSessionIds) && isCafeUnlocked(next)) {
-      captureMormeyEvent("theme_unlocked", { theme: "cafe" });
+      captureMormeyEvent("session_completed", {
+        session_id: activeSession.id,
+        elapsed_seconds: elapsedSeconds.current,
+        drill_attempts: drillAttempts,
+        scaffold_level: scaffoldLevel(teachingTurn),
+        completed_at_home: true,
+      });
+      if (!isCafeUnlocked(completedSessionIds) && isCafeUnlocked(next)) {
+        captureMormeyEvent("theme_unlocked", { theme: "cafe" });
+      }
+      if (result.teach_reward > 0) {
+        captureMormeyEvent("teach_reward_earned", {
+          session_id: activeSession.id,
+          reward: result.teach_reward,
+          scaffold_level: scaffoldLevel(teachingTurn),
+        });
+        if (soundOn) playCoinRewardSound(200);
+        setStage("teachReward");
+      } else {
+        setStage("complete");
+      }
+    } catch (error) {
+      console.error("[mormi-api] 세션 완료 실패", error);
+      setTeachError("학습 결과를 저장하지 못했어요. 다시 시도해 주세요.");
+      finishInProgress.current = false;
+    } finally {
+      setTeachSending(false);
     }
-    setCompletedSessionIds(next);
-    const storedBalance = Number(localStorage.getItem("mormey-coins"));
-    const baseBalance = Number.isFinite(storedBalance) ? Math.max(coinBalance, storedBalance) : coinBalance;
-    const nextBalance = baseBalance + sessionCoins;
-    localStorage.setItem("mormey-coins", String(nextBalance));
-    setCoinBalance(nextBalance);
-    setStage("complete");
-    void askMorami("session_complete", "오늘도 나를 가르쳐 줘서 고마워!", "celebrate");
   }
 
   function openSession(nextIndex: number) {
@@ -1641,40 +1353,37 @@ export function MoramiApp() {
     setCoinReward(null);
     setDrillLocked(false);
     setMastered(false);
-    setLadder(4);
     setTeachText("");
-    setTeachReason("");
-    setSelectedTeachAnswer("");
-    setSelectedTeachReason("");
-    setGuidedTeachStep(0);
-    setModelTeachStep(0);
+    setTeachChoiceIds([]);
+    setTeachFillValues({});
+    setMormiConversation(null);
+    setTeachingNote(null);
     setTeachSending(false);
-    teachMessageId.current = 2;
-    setTeachMessages([{ id: 1, role: "morami", text: simpleTeachPrompt(sessions[nextIndex]) }]);
-    setTeachSolved(false);
+    setTeachError("");
     setTeachRewardGranted(false);
+    setTeachRewardAmount(0);
     setSolvedAtLevel(null);
-    setFloorFails(0);
-    setBrightCarry(false);
     setHomeworkSolved(false);
     setHomeworkIndex(0);
     setHomeworkCorrect(0);
-    setTimedOut(false);
     startedAt.current = nowMs();
     elapsedSeconds.current = 0;
 
-    // 서버 세션을 연다. variant_seed 를 함께 보내야 나중에 아이가 본 문제를 재구성할 수 있다.
+    // 서버 세션을 즉시 열고, 뒤따르는 drill 기록은 이 Promise 뒤에 순차로 붙인다.
     learningSessionId.current = null;
     attemptCounter.current = 0;
-    teachAttemptCounter.current = 0;
-    // 대화는 세션 단위로 새로 연다. 이전 세션의 식별자를 물려주면 엉뚱한 대화에 보상이 붙는다.
-    conversationId.current = null;
-    conversationTurnId.current = null;
+    attemptWriteError.current = null;
+    attemptWriteQueue.current = Promise.resolve();
     const seed = variantSeed + 97 + nextIndex * 13;
-    fireAndForget(async () => {
-      const started = await api.startSession(sessions[nextIndex].id, seed);
-      learningSessionId.current = started.learning_session_id;
-    }, "학습 세션 시작");
+    learningSessionPromise.current = api.startSession(sessions[nextIndex].id, seed)
+      .then((started) => {
+        learningSessionId.current = started.learning_session_id;
+        return started.learning_session_id;
+      });
+    void learningSessionPromise.current.catch((error: unknown) => {
+      attemptWriteError.current = error;
+      console.error("[mormi-api] 학습 세션 시작 실패", error);
+    });
 
     captureMormeyEvent("lesson_started", { session_id: sessions[nextIndex].id, theme: "home" });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1864,54 +1573,51 @@ export function MoramiApp() {
               <div className="teaching-morami"><Morami expression={expression} /></div>
               <article className="teaching-problem">
                 <span>모르미의 문제</span>
-                <h2>{teachingProblem.prompt}</h2>
-                <ProblemCard problem={teachingProblem} />
+                <h2>{typeof teachingTurn?.visual.data.title === "string" ? teachingTurn.visual.data.title : activeSession.title}</h2>
+                <div className="problem-visual" data-visual-type={teachingTurn?.visual.type ?? "loading"}>
+                  {teachingTurn?.visual.type === "home_teaching" ? <UiIcon name="book" size="large" /> : <UiIcon name="bulb" size="large" />}
+                  <strong>{typeof teachingTurn?.visual.data.subject === "string" ? teachingTurn.visual.data.subject : "모르미가 보여 주는 문제"}</strong>
+                </div>
               </article>
-              {!teachSolved && !brightCarry && (
-                <div className={`teaching-answer teaching-answer--l${ladder}`}>
-                  <p className="teaching-answer-label">{ladder === 4 ? "생각과 이유를 직접 적어 줘" : ladder === 3 ? "답과 이유를 짧게 적어 줘" : ladder === 2 ? "답과 이유를 골라서 이어 줘" : ladder === 1 ? "한 단계씩 같이 완성해 보자" : "모르미를 따라 같이 해 보자"}</p>
-                  {ladder === 4 && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim() && !teachSending) void submitTeachText(); }}>
-                    <p>{teachingScaffold.freePrompt}</p>
-                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); if (teachText.trim() && !teachSending) void submitTeachText(); } }} placeholder="답과 이유를 함께 적어 주세요" rows={3} />
-                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : "모르미에게 알려주기"}</button>
+              {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}
+              {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
+              {teachingTurn && !teachingComplete && (
+                <div className={`teaching-answer teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
+                  <p className="teaching-answer-label">{teachingTurn.pedagogy?.expression_level === "L4" ? "생각과 이유를 직접 알려줘" : teachingTurn.pedagogy?.expression_level === "L3" ? "방법을 짧게 알려줘" : teachingTurn.pedagogy?.expression_level === "L2" ? "필요한 방법을 골라줘" : teachingTurn.pedagogy?.expression_level === "L1" ? "빈칸을 함께 채워줘" : "도움 카드와 같이 해보자"}</p>
+                  {teachingTurn.input.kind === "text" && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim()) void submitTeachingResponse("text", { text: teachText.trim() }); }}>
+                    <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder={teachingTurn.input.placeholder ?? "모르미에게 네 말로 알려줘"} rows={3} disabled={teachSending} />
+                    <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "생각하는 중…" : teachingTurn.input.submit_label ?? "모르미에게 알려주기"}</button>
                   </form>}
-                  {ladder === 3 && <form className="teach-free-response teach-free-response--short" onSubmit={(event) => { event.preventDefault(); if ((teachText.trim() || teachReason.trim()) && !teachSending) void submitTeachText(); }}>
-                    <label>{teachingProblem.prompt}<input value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="짧은 답" /></label>
-                    <label>왜 그렇게 생각했어?<input value={teachReason} onChange={(event) => setTeachReason(event.target.value)} placeholder="예: 사람이 더 적어서" /></label>
-                    <button type="submit" className="send-teach-button" disabled={(!teachText.trim() && !teachReason.trim()) || teachSending}>{teachSending ? "생각하는 중…" : "완료!"}</button>
-                  </form>}
-                  {ladder === 2 && <div className="teaching-choice-pair">
-                    <fieldset><legend>1. {teachingProblem.prompt}</legend><div className="teaching-choice-list">{teachingAnswerOptions.map((answer) => <button className={selectedTeachAnswer === answer ? "is-selected" : ""} key={answer} onClick={() => setSelectedTeachAnswer(answer)}>{readableChoice(answer)}</button>)}</div></fieldset>
-                    <fieldset><legend>2. {teachingScaffold.reasonPrompt}</legend><div className="teaching-choice-list">{teachingScaffold.reasonOptions.map((answer) => <button className={selectedTeachReason === answer ? "is-selected" : ""} key={answer} onClick={() => setSelectedTeachReason(answer)}>{answer}</button>)}</div></fieldset>
-                    <button className="send-teach-button" disabled={!selectedTeachAnswer || !selectedTeachReason} onClick={submitTeachChoices}>답과 이유 이어서 알려주기</button>
+                  {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
+                    <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "이렇게 알려줄게"}</button>
                   </div>}
-                  {ladder === 1 && <div className="guided-teaching">
-                    <div className="guided-progress">{teachingScaffold.guidedSteps.map((_, index) => <i key={index} className={index < guidedTeachStep ? "is-done" : index === guidedTeachStep ? "is-current" : ""}>{index < guidedTeachStep ? "✓" : index + 1}</i>)}</div>
-                    <h3>{teachingScaffold.guidedSteps[guidedTeachStep].prompt}</h3>
-                    <div className="teaching-choice-list">{teachingScaffold.guidedSteps[guidedTeachStep].options.map((answer) => <button key={answer} onClick={() => answerGuidedTeaching(answer)}>{readableChoice(answer)}</button>)}</div>
+                  {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
+                    {typeof teachingTurn.input.config.sentence === "string" && <p>{teachingTurn.input.config.sentence}</p>}
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
+                    <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "빈칸 채우기"}</button>
                   </div>}
-                  {ladder === 0 && <div className="model-teaching">
-                    <span>모르미가 먼저 보여 줄게</span>
-                    <ol>{teachingScaffold.modelLines.slice(0, modelTeachStep + 1).map((line, index) => <li key={line} className={index === modelTeachStep ? "is-current" : "is-done"}><b>{index + 1}</b>{line}</li>)}</ol>
-                    <button className="send-teach-button" onClick={advanceModelTeaching}>{modelTeachStep >= teachingScaffold.modelLines.length - 1 ? "같이 끝내기" : "다음도 같이 하기"}</button>
+                  {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
+                    {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
+                    <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "같이 해보기"}</button>
                   </div>}
+                  {teachingTurn.input.kind === "none" && <p className="teaching-answer-label">모르미가 다음 말을 준비하고 있어.</p>}
+                  {teachingTurn.input.kind !== "none" && <button type="button" className="dictionary-link" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
                 </div>
               )}
-              {(teachSolved || brightCarry) && (
+              {teachingComplete && (
                 <div className="learned-card">
-                  <UiIcon name={teachSolved ? "star" : "sun"} size="large" />
-                  <h2>{teachSolved ? "모르미가 이해했어!" : "오늘의 배움을 챙겼어!"}</h2>
-                  <p>{teachSolved ? "네가 알려 준 방법으로 다시 해 볼게." : "내일 다시 만나면 한 번 더 알려 줘."}</p>
-                  <button className="primary-button" onClick={goWrap}>다음으로 <span className="button-arrow" /></button>
+                  <UiIcon name={brightExit ? "sun" : "star"} size="large" />
+                  <h2>{brightExit ? "오늘의 배움을 챙겼어!" : "모르미가 이해했어!"}</h2>
+                  <p>{teachingTurn.mormi.text}</p>
+                  <button className="primary-button" onClick={goWrap} disabled={teachSending}>{hasTeachingNote ? "별노트 보기" : "오늘 마치기"} <span className="button-arrow" /></button>
                 </div>
               )}
             </div>
             <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
               <div><b>모르미</b><p>{dialogue}</p></div>
-              {!teachSolved && !brightCarry && ladder > 0 && <button type="button" onClick={askForTeachHelp}>도움받기</button>}
-            </div>
-            <div className="teaching-chat-history" aria-hidden="true">
-              {teachMessages.map((message) => <span key={message.id}>{message.role}: {message.text}</span>)}
+              {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
+              {teachError && <p role="alert">{teachError}</p>}
             </div>
           </div>
         </section>
@@ -1919,13 +1625,13 @@ export function MoramiApp() {
 
       {stage === "teachReward" && (
         <section className="teach-reward-scene">
-          <div className="scene-balance"><span className="won-mark">원</span> {(coinBalance + sessionCoins).toLocaleString("ko-KR")}원</div>
+          <div className="scene-balance"><span className="won-mark">원</span> {coinBalance.toLocaleString("ko-KR")}원</div>
           <div className="teach-reward-morami"><Morami expression="celebrate" /></div>
           <div className="teach-reward-copy">
             <div className="teach-reward-dialogue"><b>모르미</b><p>{childName}, 알려줘서 고마워~!</p></div>
-            <h1>모르미를 도와줘서<br /><em>500원을 받았어요!</em></h1>
-            <div className="teach-reward-coins" aria-label="500원 보상">{Array.from({ length: 5 }, (_, index) => <Image key={index} src="/cafe-money/100.png" alt="100원" width={110} height={110} unoptimized />)}</div>
-            <button className="primary-button" onClick={() => { setStage("wrap"); void askMorami("teach_correct", `응! ${simpleLearnedLine(activeSession)}`, "happy"); }}>다음으로 <span className="button-arrow" /></button>
+            <h1>모르미를 도와줘서<br /><em>{teachRewardAmount.toLocaleString("ko-KR")}원을 받았어요!</em></h1>
+            <div className="teach-reward-coins" aria-label={`${teachRewardAmount.toLocaleString("ko-KR")}원 보상`}>{Array.from({ length: Math.max(1, Math.ceil(teachRewardAmount / 100)) }, (_, index) => <Image key={index} src="/cafe-money/100.png" alt="100원" width={110} height={110} unoptimized />)}</div>
+            <button className="primary-button" onClick={() => setStage("complete")}>다음으로 <span className="button-arrow" /></button>
           </div>
         </section>
       )}
@@ -1935,15 +1641,16 @@ export function MoramiApp() {
           <div className="character-column"><Morami expression={expression} /></div>
           <div className="content-column">
             <SpeechBubble><p>{dialogue}</p></SpeechBubble>
-            <article className="star-note">
+            {hasTeachingNote && teachingNote && <article className="star-note">
               <div className="note-ring">별<br />노<br />트</div>
               <div className="note-content">
                 <p><UiIcon name="star" size="small" /> 오늘 모르미가 적은 말</p>
-                <h2>“<em>{simpleLearnedLine(activeSession)}</em>”</h2>
-                <span>모르미가 별노트에 적었어요</span>
+                <h2>“<em>{teachingNote.text}</em>”</h2>
+                <span>{teachingNote.attribution_label}</span>
               </div>
-            </article>
-            <button className="primary-button" onClick={beginHomework}>집에서 오늘 학습 마치기 <span className="button-arrow" /></button>
+            </article>}
+            {teachError && <p role="alert">{teachError}</p>}
+            <button className="primary-button" onClick={beginHomework} disabled={teachSending}>집에서 오늘 학습 마치기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}
@@ -1961,10 +1668,10 @@ export function MoramiApp() {
           <div className="complete-copy">
             <p className="eyebrow">집에서 오늘의 준비 완료</p>
             <h1>모르미와<br /><em>오늘도 해냈어!</em></h1>
-            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원 · 가르치기 +{teachRewardGranted ? TEACH_REWARD : 0}원</small></div></div>
+            <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong><small>내 지갑 {coinBalance.toLocaleString("ko-KR")}원 · 가르치기 +{teachRewardGranted ? teachRewardAmount : 0}원</small></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
-              <span><UiIcon name="star" size="small" /><strong>1개</strong><small>별노트</small></span>
+              <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
             <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>{cafeUnlockedAfterLesson ? "열린 카페로 나가기" : "모르미와 집으로"} <span className="button-arrow" /></button>

@@ -11,6 +11,7 @@ export type MormiMenuItem = {
 };
 
 export type MormiPracticeSummary = {
+  curriculum_session_id?: string;
   skill_id: string;
   question_count: number;
   first_try_correct_count: number;
@@ -42,6 +43,7 @@ export type StartMormiConversation = {
   practice_result_id?: string;
   practice_summary?: MormiPracticeSummary;
   cafe_context?: MormiCafeContext;
+  queue_context?: { left_count: number; right_count: number };
   conversation_storage_consent?: boolean;
   retention_policy?: "no_raw" | "30_days" | "90_days";
 };
@@ -98,6 +100,7 @@ export type MormiTurn = {
   completion: {
     outcome: "taught" | "supported" | "bright_exit";
     teach_reward_eligible: boolean;
+    verified_facts: Record<string, string | number | boolean>;
   } | null;
   pedagogy?: {
     expression_level: "L4" | "L3" | "L2" | "L1" | "L0";
@@ -111,6 +114,18 @@ export type MormiTurn = {
 export type MormiConversation = {
   conversation_id: string;
   turn: MormiTurn;
+  /** Spring BE가 최초 문제와 함께 저장해 새로고침 때 돌려주는 구조 맥락. */
+  scenario_context?: {
+    queue_context?: { left_count: number; right_count: number };
+    cafe_context?: MormiCafeContext;
+  };
+  /** Spring BE가 AI의 검증 슬롯과 생활수학 단계 기록을 맞춘 결과. */
+  stage_progress?: {
+    stage: "queue" | "menu" | "calculate" | "change";
+    completed: boolean;
+    next_stage: "queue" | "menu" | "calculate" | "change" | "complete";
+    source: "pending" | "stage_attempt" | "dialogue_verified_facts";
+  };
 };
 
 export type SubmitMormiResponse = {
@@ -173,4 +188,54 @@ export function submitMormiResponse(conversationId: string, input: SubmitMormiRe
 
 export function recoverMormiConversation(conversationId: string) {
   return requestMormi<MormiConversation>(`/api/mormi/conversations/${encodeURIComponent(conversationId)}`);
+}
+
+/** 운영 경로: 인증 토큰을 가진 FE → Spring BE → FastAPI AI. */
+export async function startHomeTeaching(learningSessionId: string) {
+  const { apiRequest } = await import("./api-client");
+  return apiRequest<MormiConversation>(
+    `/v1/learning-sessions/${encodeURIComponent(learningSessionId)}/teaching`,
+    { method: "POST" },
+  );
+}
+
+export async function startCafeDialogue(
+  visitId: string,
+  input: {
+    scenario_id: "cafe_queue" | "cafe_budget_menu" | "cafe_menu_total" | "cafe_change";
+    queue_context?: { left_count: number; right_count: number };
+    cafe_context?: MormiCafeContext;
+  },
+) {
+  const { apiRequest } = await import("./api-client");
+  return apiRequest<MormiConversation>(`/v1/cafe-visits/${encodeURIComponent(visitId)}/dialogues`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function submitMormiResponseThroughBe(
+  conversationId: string,
+  input: SubmitMormiResponse,
+) {
+  const { apiRequest } = await import("./api-client");
+  return apiRequest<MormiConversation>(
+    `/v1/dialogue/conversations/${encodeURIComponent(conversationId)}/responses`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        choice_ids: [],
+        values: {},
+        response_id: input.response_id || crypto.randomUUID(),
+        ...input,
+      }),
+    },
+  );
+}
+
+export async function recoverMormiConversationThroughBe(conversationId: string) {
+  const { apiRequest } = await import("./api-client");
+  return apiRequest<MormiConversation>(
+    `/v1/dialogue/conversations/${encodeURIComponent(conversationId)}`,
+  );
 }
