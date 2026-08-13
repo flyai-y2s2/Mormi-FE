@@ -45,6 +45,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /\[2수03-07\]/);
   assert.match(curriculum, /\[6수04-04\]/);
   assert.match(curriculum, /curriculumForSession/);
+  assert.match(curriculum, /const fillSentence = \[fillBefore, "\(.+\)", fillAfter\]/);
   // 반복학습용 정적 문항에도 대화 API와 같은 카피 품질 계약을 적용한다.
   assert.doesNotMatch(curriculum, /어떤 방법이 맞을까|퍼진 넓이|느낌으로|눈대중|한눈에 대충|색만 보기|크기만 보기/);
   assert.match(app, /useState<Stage>\("onboarding"\)/);
@@ -166,12 +167,14 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
   assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
   assert.match(app, /<h2>\{teachingProblem\.prompt\}<\/h2>/);
-  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{serverMormiText\}<\/p><\/div>\}/);
+  assert.match(app, /function formatTeachingDisplayText\(text: string\)/);
+  assert.match(app, /text\.replace\(\/\[□▢\]\/g, teachingBlank\)/);
+  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
   assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
   assert.match(app, /\{hasServerMessagePanel && \(/);
-  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{serverMormiText\}<\/p><\/div>\}/);
+  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.match(app, /모르미가 헷갈린 문제/);

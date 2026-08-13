@@ -842,3 +842,40 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-dialogue>.star-note .note-content{padding:13px}
   .teaching-dialogue>.star-note .note-content span{font-size:14px}
 }
+
+/* Final responsive QA: rewards and teaching copy stay readable at every width. */
+.drill-wallet,.mastery-coin-total{box-sizing:border-box;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px}
+.drill-wallet{width:clamp(245px,28vw,320px);min-width:245px;min-height:72px;padding:8px 16px 8px 8px}
+.drill-wallet img{width:58px;height:58px}
+.drill-wallet span,.mastery-coin-total span{align-self:end;line-height:1.2}
+.drill-wallet strong,.mastery-coin-total strong{min-width:0;align-self:start;white-space:nowrap;line-height:1.15;font-variant-numeric:tabular-nums}
+.drill-wallet strong{font-size:clamp(16px,1.45vw,22px)}
+.mastery-coin-total{width:min(100%,360px);min-width:0;min-height:96px;padding:12px 22px}
+.mastery-coin-total img{width:68px;height:68px}
+.mastery-coin-total strong{font-size:clamp(24px,2.2vw,31px)}
+.teaching-answer p,.teaching-dialogue p{overflow-wrap:anywhere}
+
+@media(max-width:900px){
+  .drill-game-status{width:100%;flex-wrap:wrap;justify-content:flex-end}
+  .drill-wallet{flex:0 0 auto}
+  .seed-meter{flex:1 1 240px;min-width:210px}
+  .home-actions,.destination-grid,.figma-cafe-map__stones,.cafe-menu-grid{min-width:0}
+}
+
+@media(max-width:560px){
+  .drill-game-status{justify-content:center}
+  .drill-wallet{width:min(100%,320px);min-width:0}
+  .drill-wallet strong{font-size:17px}
+  .seed-meter{flex-basis:100%;min-width:0}
+  .mastery-coin-total{grid-template-columns:58px minmax(0,1fr);padding:10px 15px}
+  .mastery-coin-total img{width:58px;height:58px}
+  .mastery-coin-total strong{font-size:24px}
+  .teaching-answer p{white-space:pre-wrap}
+}
+
+@media(max-width:380px){
+  .drill-wallet{grid-template-columns:52px minmax(0,1fr);padding-right:11px}
+  .drill-wallet img{width:48px;height:48px}
+  .drill-wallet strong{font-size:15px}
+  .mastery-coin-total strong{font-size:21px}
+}

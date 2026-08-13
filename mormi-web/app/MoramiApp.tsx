@@ -69,6 +69,12 @@ const simpleLearnedLines: Record<string, string> = {
   "clock-quarter": "긴 바늘은 숫자 한 칸에 5분이야.",
 };
 
+const teachingBlank = `(\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0)`;
+
+function formatTeachingDisplayText(text: string) {
+  return text.replace(/[□▢]/g, teachingBlank);
+}
+
 function simpleLearnedLine(session: Session) {
   return simpleLearnedLines[session.id] ?? session.learnedLine;
 }
@@ -1616,7 +1622,7 @@ export function MoramiApp() {
                     <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "선택하기"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
-                    {typeof teachingTurn.input.config.sentence === "string" && <p>{teachingTurn.input.config.sentence}</p>}
+                    {typeof teachingTurn.input.config.sentence === "string" && <p>{formatTeachingDisplayText(teachingTurn.input.config.sentence)}</p>}
                     <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
@@ -1637,7 +1643,7 @@ export function MoramiApp() {
             </div>
             {hasServerMessagePanel && (
               <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-                {serverMormiText && <div><b>모르미</b><p>{serverMormiText}</p></div>}
+                {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
                 {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
                 {teachError && <p role="alert">{teachError}</p>}
                 {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className="teaching-dont-know" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
