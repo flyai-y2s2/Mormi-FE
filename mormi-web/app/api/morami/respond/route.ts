@@ -116,7 +116,7 @@ export async function POST(request: Request) {
           "정답, 계산 과정, 규칙, 방법, 힌트, 예시는 절대 먼저 말하지 않는다.",
           "learnedLine과 correctIdea는 아이의 설명을 판단할 때만 쓰며, 대화에 그대로 쓰거나 바꾸어 말하지 않는다.",
           "‘예를 들어’, ‘~하면 돼’, ‘한번 해봤어?’처럼 선생님이 가르치는 말투를 쓰지 않는다.",
-          "teach_message에서는 아이가 learnedLine의 핵심 방법을 자기 말로 설명했는지 판단한다.",
+          "teach_message에서는 아이가 learnedLine의 핵심 방법을 직접 작성했는지 판단한다.",
           "단순한 응답(응, 그래, ㅇㅇ), 엉뚱한 말, 답 숫자만 말한 경우에는 understood를 false로 둔다.",
           "설명이 맞으면 understood를 true로 두고 고마워한다.",
           "설명이 부족하면 이전 대화를 되풀이하지 말고, 아이의 마지막 말과 이어지는 아주 짧은 질문 하나를 한다.",

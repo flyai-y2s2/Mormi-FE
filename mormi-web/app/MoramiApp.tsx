@@ -739,7 +739,7 @@ function teachingScaffoldFor(session: Session, problem: Problem): TeachingScaffo
     };
   }
   return {
-    freePrompt: "답과 그 이유를 네 말로 알려 줘.", shortPrompt: "답은 무엇이야? 왜 그렇게 생각했어?", reasonPrompt: activeSessionReasonPrompt(session),
+    freePrompt: "답과 그 이유를 직접 적어 줘.", shortPrompt: "답은 무엇이야? 왜 그렇게 생각했어?", reasonPrompt: activeSessionReasonPrompt(session),
     reasonOptions: session.oneWordOptions, reasonCorrect: session.oneWordCorrect, reasonKeywords: [session.fillCorrect, session.oneWordCorrect],
     guidedSteps: [{ prompt: session.oneWordPrompt, options: session.oneWordOptions, correct: session.oneWordCorrect }, answerStep],
     modelLines: [session.hint, simpleLearnedLine(session), `그래서 답은 ${problem.correct}이야.`],
@@ -1009,7 +1009,7 @@ function Onboarding({ onStart }: { onStart: (profile: LearnerProfile) => void })
   if (page === "promise") {
     const steps = [
       ["1", "집에서 연습해요", "카페에 가려고 돈 계산을 여러 번 해봐요"],
-      ["2", "모르미에게 알려줘요", "내가 아는 방법을 모르미에게 말로 설명해요"],
+      ["2", "모르미에게 알려줘요", "내가 아는 방법을 직접 적어서 설명해요"],
       ["3", "카페에 가요", "직접 주문하고 내 손으로 계산해요"],
     ];
     return (
@@ -1697,7 +1697,7 @@ export function MoramiApp() {
               </article>
               {!teachSolved && !brightCarry && (
                 <div className={`teaching-answer teaching-answer--l${ladder}`}>
-                  <p className="teaching-answer-label"><b>L{ladder}</b>{ladder === 4 ? "판단과 이유를 네 말로 설명해 줘" : ladder === 3 ? "답과 이유를 짧게 알려 줘" : ladder === 2 ? "답과 이유를 골라서 이어 줘" : ladder === 1 ? "한 단계씩 같이 완성해 보자" : "모르미를 따라 같이 해 보자"}</p>
+                  <p className="teaching-answer-label"><b>L{ladder}</b>{ladder === 4 ? "판단과 이유를 직접 적어 줘" : ladder === 3 ? "답과 이유를 짧게 적어 줘" : ladder === 2 ? "답과 이유를 골라서 이어 줘" : ladder === 1 ? "한 단계씩 같이 완성해 보자" : "모르미를 따라 같이 해 보자"}</p>
                   {ladder === 4 && <div className="teach-free-response">
                     <p>{teachingScaffold.freePrompt}</p>
                     <textarea value={teachText} onChange={(event) => setTeachText(event.target.value)} placeholder="답과 이유를 함께 적어 주세요" rows={3} />
@@ -1729,7 +1729,7 @@ export function MoramiApp() {
                 <div className="learned-card">
                   <UiIcon name={teachSolved ? "star" : "sun"} size="large" />
                   <h2>{teachSolved ? "모르미가 이해했어!" : "오늘의 배움을 챙겼어!"}</h2>
-                  <p>{teachSolved ? `${childName}가 알려 준 말로 다시 해 볼게.` : "내일 다시 만나면 한 번 더 알려 줘."}</p>
+                  <p>{teachSolved ? `${childName}가 알려 준 방법으로 다시 해 볼게.` : "내일 다시 만나면 한 번 더 알려 줘."}</p>
                   <button className="primary-button" onClick={goWrap}>다음으로 <span className="button-arrow" /></button>
                 </div>
               )}
