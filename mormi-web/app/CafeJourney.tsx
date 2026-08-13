@@ -685,7 +685,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
           {sumChildMenu && <form onSubmit={(event) => { event.preventDefault(); if (sumAnswer.trim()) checkSum(); }}>
           <div className="figma-cafe-sum__equation">
             {[sumMormeyMenu, sumChildMenu].map((item, index) => <div key={item.id}><article><Image src={item.image} alt={item.name} width={190} height={105} unoptimized /><span>{item.name}</span><strong>{item.price.toLocaleString("ko-KR")}원</strong></article>{index === 0 && <b aria-hidden="true">＋</b>}</div>)}
-            <b aria-hidden="true">=</b><label className="figma-cafe-sum__answer"><span>내가 계산한 합계</span><input inputMode="numeric" aria-label="두 메뉴 가격의 합계" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value); setSumFeedback(""); }} placeholder="?" /><b>원</b></label>
+            <b aria-hidden="true">=</b><label className="figma-cafe-sum__answer"><span>내가 계산한 합계</span><input inputMode="numeric" aria-label="두 메뉴 가격의 합계" value={sumAnswer} onChange={(event) => { setSumAnswer(event.target.value); setSumFeedback(""); }} /><b>원</b></label>
           </div>
           {sumFeedback && <p className="figma-cafe-feedback" role="status">{sumFeedback}</p>}
           <button type="submit" className="figma-cafe-action" disabled={!sumAnswer.trim()}>합계 확인</button></form>}

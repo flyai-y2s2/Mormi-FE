@@ -77,6 +77,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
   assert.match(cafe, /sumAnswer/);
+  assert.doesNotMatch(cafe, /aria-label="두 메뉴 가격의 합계"[^>]+placeholder="\?"/);
   assert.doesNotMatch(cafe, /천 원짜리/);
   assert.match(cafe, /type QueueScene = "intro" \| "count-both" \| "count-left" \| "note" \| "clear"/);
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
