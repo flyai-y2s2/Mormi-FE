@@ -189,6 +189,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teachRequestInFlight\.current/);
   assert.match(cafe, /dialogueRequestInFlight\.current/);
   assert.match(app, /teachingTurn\.input\.kind/);
+  assert.match(app, /teaching-playground--\$\{teachingTurn\?\.input\.kind \?\? "loading"\}/);
+  assert.match(app, /teaching-answer--\$\{teachingTurn\.input\.kind\}/);
+  assert.match(app, /className="teaching-dont-know"/);
+  assert.match(app, /stage !== "cafe" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);

@@ -1484,7 +1484,7 @@ export function MoramiApp() {
 
   return (
     <main className={`app-shell app-shell--${stage}`}>
-      {stage !== "onboarding" && stage !== "cafe" && <header className="topbar">
+      {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar">
         <button className="brand brand--button" onClick={showHome} aria-label="모르미 집으로"><span>모</span> 모르미</button>
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
@@ -1580,12 +1580,11 @@ export function MoramiApp() {
 
       {stage === "teach" && (
         <section className="chat-scene teaching-scene">
-          <div className="chat-title">
-            <div><p className="eyebrow">내가 선생님!</p><h1>모르미에게 알려 주기</h1></div>
+          <div className="chat-title teaching-toolbar">
             <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 별노트</button>
           </div>
           <div className="chat-window teaching-stage">
-            <div className="teaching-playground">
+            <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               <div className="teaching-morami"><Morami expression={expression} /></div>
               {teachingProblem && <article className="teaching-problem">
                 <span>모르미가 헷갈린 문제</span>
@@ -1595,7 +1594,7 @@ export function MoramiApp() {
               {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}
               {!teachingTurn && !teachSending && teachError && <div className="learned-card"><UiIcon name="refresh" size="large" /><h2>가르치기를 다시 준비할게</h2><p>{teachError}</p><button className="primary-button" onClick={() => void beginTeaching()}>다시 시도하기 <span className="button-arrow" /></button></div>}
               {teachingTurn && !teachingComplete && (
-                <div className={`teaching-answer teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
+                <div className={`teaching-answer teaching-answer--${teachingTurn.input.kind} teaching-answer--${teachingTurn.pedagogy?.expression_level ?? "L4"}`}>
                   {teachingTurn.input.kind === "text" && <form className="teach-free-response" onSubmit={(event) => { event.preventDefault(); if (teachText.trim()) void submitTeachingResponse("text", { text: teachText.trim() }); }}>
                     <textarea
                       value={teachText}
@@ -1624,7 +1623,6 @@ export function MoramiApp() {
                     {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
                     <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "다음"}</button>
                   </div>}
-                  {teachingTurn.input.kind !== "none" && <button type="button" className="dictionary-link" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
                 </div>
               )}
               {teachingComplete && (
@@ -1641,6 +1639,7 @@ export function MoramiApp() {
                 {serverMormiText && <div><b>모르미</b><p>{serverMormiText}</p></div>}
                 {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
                 {teachError && <p role="alert">{teachError}</p>}
+                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className="teaching-dont-know" disabled={teachSending} onClick={() => void submitTeachingResponse("no_response")}>잘 모르겠어</button>}
               </div>
             )}
           </div>
