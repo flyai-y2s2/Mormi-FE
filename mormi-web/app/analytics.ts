@@ -5,6 +5,8 @@ import posthog from "posthog-js";
 export type MormeyAnalyticsEvent =
   | "onboarding_completed"
   | "onboarding_intro_completed"
+  /** 기기를 바꾼 아이가 참여 번호로 진행도를 이어 받았다. */
+  | "learner_restored"
   | "home_opened"
   | "outside_opened"
   | "lesson_started"

@@ -33,7 +33,14 @@ const stationCopy = [
   { title: "거스름돈 받기", description: "10,000원에서 메뉴값을 빼요", image: "/cafe-stages/change-v3.png" },
 ] as const;
 
-type Props = { learnerName: string; learnerId: number; onBack: () => void; onComplete: () => void };
+type Props = {
+  learnerName: string;
+  learnerId: number;
+  /** 진행도가 알려 준 진행 중 방문. 있으면 새로 만들지 않고 이 방문을 이어 받는다. */
+  activeVisitId?: string | null;
+  onBack: () => void;
+  onComplete: () => void;
+};
 type CafeStage = "queue" | "menu" | "calculate" | "change";
 
 /** 스테이션 순서대로의 AI 시나리오. 화면이 뽑은 문제를 함께 보내야 시작된다. */
@@ -134,7 +141,7 @@ function CafeDialogueControls({
   </aside>;
 }
 
-export function CafeJourney({ onBack, onComplete }: Props) {
+export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueHelp, setQueueHelp] = useState(false);
@@ -180,20 +187,40 @@ export function CafeJourney({ onBack, onComplete }: Props) {
   useEffect(() => {
     stageStartedAt.current = nowMs();
     // 방문 생성이 끝나기 전에 답을 눌러도 유실되지 않도록 같은 Promise를 공유한다.
-    const pending = api.startCafeVisit().then((visit) => {
+    //
+    // 진행 중 방문 id 를 이미 알고 있으면 조회만 한다. POST 는 없을 때 새로 만드는
+    // 부수효과가 있어, 단순 복구에는 쓰지 않는다. 조회가 실패하면(만료·소유자 불일치)
+    // 그때 POST 로 넘어간다.
+    // 이미 끝난 방문 id 가 남아 있을 수 있으므로, 완료된 방문이면 새 방문을 연다.
+    const load = activeVisitId
+      ? api.getCafeVisit(activeVisitId)
+        .then((visit) => (visit.completed_at ? api.startCafeVisit() : visit))
+        .catch(() => api.startCafeVisit())
+      : api.startCafeVisit();
+
+    const pending = load.then((visit) => {
       visitId.current = visit.cafe_visit_id;
       if (visit.stage === "menu") setJourneyProgress((progress) => Math.max(progress, 1));
       if (visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 2));
       if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 3));
       if (visit.stage === "complete") setJourneyProgress(4);
       if (visit.order_total !== null) setMenuFeedback("");
+      setMenuBudget(visit.target_amount);
+
+      // 스테이지별 시도 번호를 이어받는다. 이걸 0 으로 두면 재개 뒤 첫 시도가
+      // attempt_no 1 로 나가고, 서버는 (visit, stage, attempt_no) 멱등키로 이미
+      // 기록된 시도라 보고 새 답을 저장하지 않는다.
+      for (const attempt of visit.attempts) {
+        const current = attemptNos.current[attempt.stage] ?? 0;
+        attemptNos.current[attempt.stage] = Math.max(current, attempt.attempt_no);
+      }
       return visit.cafe_visit_id;
     }).catch((error: unknown) => {
       setDialogueError(error instanceof Error ? error.message : "카페를 불러오지 못했어요.");
       throw error;
     });
     visitPromise.current = pending;
-  }, []);
+  }, [activeVisitId]);
 
   function applyCafeConversation(stage: CafeStage, conversation: MormiConversation) {
     const restoredQueue = conversation.scenario_context?.queue_context;
@@ -606,11 +633,6 @@ export function CafeJourney({ onBack, onComplete }: Props) {
             ))}
           </div>
           <div className="figma-cafe-map__path" aria-hidden="true" />
-          <div className="figma-cafe-map__guide">
-            <span>{Math.min(journeyProgress, 3) + 1}</span>
-            <div><small>지금 할 미션</small><h2>{stationCopy[Math.min(journeyProgress, 3)].title}</h2><p>{stationCopy[Math.min(journeyProgress, 3)].description}</p></div>
-            <button onClick={() => openStation(Math.min(journeyProgress, 3))}>스테이지 시작</button>
-          </div>
         </main>
       )}
 
