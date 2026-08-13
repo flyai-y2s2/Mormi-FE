@@ -273,7 +273,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-morami .morami-frame { width:250px; height:320px; }
 .teaching-problem { width:100%; min-height:340px; padding:0 12px; grid-column:2/4; grid-row:1; justify-self:center; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0; border-radius:0; background:transparent; box-shadow:none; text-align:center; }
 .teaching-problem > span { display:none; }
-.teaching-problem h2 { margin:0 0 4px; font-size:26px; line-height:1.35; }
+.teaching-problem h2 { margin:0 0 4px; font-size:24px; line-height:1.4; }
 .teaching-problem .problem-visual { min-height:290px; padding:2px; display:grid; place-items:center; }
 .teaching-problem .ten-frame { width:260px; }
 .teaching-problem .money-visual { transform:scale(1.05); }
@@ -290,20 +290,20 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-answer-label b { margin-right:7px; padding:5px 7px; border-radius:8px; color:#fff; background:#49ac7f; font-size:11px; }
 .teaching-answer .teach-free-response { margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) 150px; align-items:stretch; gap:10px; border:0; background:transparent; }
 .teaching-answer .teach-free-response>p { margin:0 0 9px; color:#607168; font-size:12px; line-height:1.45; }
-.teaching-answer .teach-free-response textarea { min-height:62px; padding:15px 17px; border:4px solid #78cda6; border-radius:15px; background:#fff; resize:none; font-size:18px; }
-.teaching-answer .teach-free-response>.send-teach-button { width:150px; min-height:62px; margin:0; border-radius:15px; color:#fff; background:#49ac7f; box-shadow:none; font-size:17px; }
+.teaching-answer .teach-free-response textarea { min-height:62px; padding:15px 17px; border:4px solid #78cda6; border-radius:15px; background:#fff; resize:none; font-size:18px; line-height:1.4; }
+.teaching-answer .teach-free-response>.send-teach-button { width:150px; min-height:62px; margin:0; border-radius:15px; color:#fff; background:#49ac7f; box-shadow:none; font-size:18px; line-height:1.4; }
 .teach-free-response--short { display:grid; gap:9px; }.teach-free-response--short label { display:grid; gap:5px; color:#53665d; font-size:11px; font-weight:900; }.teach-free-response--short input { width:100%; min-height:48px; padding:0 12px; border:2px solid #b8dfcd; border-radius:13px; font-size:14px; font-weight:800; }
 .teaching-choice-list { display:grid; gap:9px; }
-.teaching-choice-list button { min-height:60px; padding:8px 12px; border:4px solid #78cda6; border-radius:15px; color:#304c3f; background:#fff; box-shadow:none; cursor:pointer; font-size:20px; font-weight:850; }
+.teaching-choice-list button { min-height:60px; padding:8px 12px; border:4px solid #78cda6; border-radius:15px; color:#304c3f; background:#fff; box-shadow:none; cursor:pointer; font-size:18px; line-height:1.4; font-weight:850; }
 .teaching-choice-list button:hover { transform:translateY(-2px); background:#eefaf4; }
 .teaching-choice-list button.is-selected { border-color:#3ca774; color:#236344; background:#e7f8ef; box-shadow:0 4px 0 #79c69f; }
-.teaching-choice-pair { display:grid; gap:10px; }.teaching-choice-pair fieldset { min-width:0; margin:0; padding:10px; border:2px solid #d9e7df; border-radius:15px; }.teaching-choice-pair legend { padding:0 5px; color:#586a61; font-size:10px; font-weight:900; }.teaching-choice-pair .teaching-choice-list { gap:8px; }.teaching-choice-pair .teaching-choice-list button { min-height:60px; font-size:20px; }.teaching-choice-pair>.send-teach-button { min-height:54px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-weight:950; }.teaching-choice-pair>.send-teach-button:disabled { opacity:.42; }
+.teaching-choice-pair { display:grid; gap:10px; }.teaching-choice-pair fieldset { min-width:0; margin:0; padding:10px; border:2px solid #d9e7df; border-radius:15px; }.teaching-choice-pair legend { padding:0 5px; color:#586a61; font-size:10px; font-weight:900; }.teaching-choice-pair .teaching-choice-list { gap:8px; }.teaching-choice-pair .teaching-choice-list button { min-height:60px; font-size:18px; }.teaching-choice-pair>.send-teach-button { min-height:54px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-size:18px; line-height:1.4; font-weight:950; }.teaching-choice-pair>.send-teach-button:disabled { opacity:.42; }
 .guided-teaching h3 { margin:12px 0; color:#344c41; font-size:17px; line-height:1.4; }.guided-progress { display:flex; align-items:center; gap:5px; }.guided-progress i { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; color:#89958f; background:#e9eeeb; font-size:10px; font-style:normal; font-weight:950; }.guided-progress i.is-current { color:#fff; background:#49ac7f; box-shadow:0 0 0 4px #d9f0e5; }.guided-progress i.is-done { color:#2e805c; background:#d9f0e5; }
-.model-teaching>span { display:block; margin-bottom:9px; color:#7a6545; font-size:12px; font-weight:950; }.model-teaching ol { margin:0 0 12px; padding:0; display:grid; gap:7px; list-style:none; }.model-teaching li { padding:9px; display:flex; align-items:center; gap:8px; border-radius:12px; color:#526158; background:#f1f3f1; font-size:12px; font-weight:850; }.model-teaching li b { width:24px; height:24px; display:grid; place-items:center; flex:0 0 24px; border-radius:50%; color:#fff; background:#9eada6; }.model-teaching li.is-current { color:#315f4a; background:#e7f8ef; }.model-teaching li.is-current b { background:#49ac7f; }.model-teaching .send-teach-button { width:100%; min-height:52px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-weight:950; }
+.model-teaching>span { display:block; margin-bottom:9px; color:#7a6545; font-size:14px; font-weight:950; }.model-teaching ol { margin:0 0 12px; padding:0; display:grid; gap:7px; list-style:none; }.model-teaching li { padding:9px; display:flex; align-items:center; gap:8px; border-radius:12px; color:#526158; background:#f1f3f1; font-size:16px; line-height:1.4; font-weight:850; }.model-teaching li b { width:24px; height:24px; display:grid; place-items:center; flex:0 0 24px; border-radius:50%; color:#fff; background:#9eada6; }.model-teaching li.is-current { color:#315f4a; background:#e7f8ef; }.model-teaching li.is-current b { background:#49ac7f; }.model-teaching .send-teach-button { width:100%; min-height:52px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-size:18px; line-height:1.4; font-weight:950; }
 .teaching-playground > .learned-card { width:100%; margin:0; padding:24px 14px; grid-column:2/4; grid-row:1/3; border-radius:28px; }
 .teaching-dialogue { min-height:185px; margin-top:0; padding:30px 58px 34px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:16px; border:7px solid #78cda6; border-radius:20px; background:#fff; box-shadow:none; }
-.teaching-dialogue b { display:block; margin-bottom:9px; font-size:30px; line-height:1; }
-.teaching-dialogue p { margin:0; color:#202924; font-size:26px; line-height:1.4; font-weight:700; }
+.teaching-dialogue b { display:block; margin-bottom:9px; font-size:22px; line-height:1.2; }
+.teaching-dialogue p { margin:0; color:#202924; font-size:20px; line-height:1.5; font-weight:700; }
 .teaching-dialogue > button.teaching-dont-know { min-width:0; min-height:0; padding:4px; position:absolute; right:24px; bottom:14px; border:0; color:#858b87; background:transparent; box-shadow:none; cursor:pointer; font-size:13px; line-height:1.2; font-weight:600; text-decoration:none; }
 .teaching-dialogue > button.teaching-dont-know:hover { color:#626864; background:transparent; transform:none; }
 .teaching-chat-history { display:none; }
@@ -803,7 +803,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-problem .problem-visual{width:100%;min-width:0;min-height:245px;padding:0;overflow:hidden}
   .teaching-problem .money-visual{transform:none}
   .teaching-dialogue{min-height:170px;padding:26px 38px 30px;border-width:6px}
-  .teaching-dialogue b{font-size:25px}.teaching-dialogue p{font-size:21px}
+  .teaching-dialogue b{font-size:21px}.teaching-dialogue p{font-size:19px}
 }
 
 @media(max-width:560px){
@@ -829,7 +829,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-problem .chart-visual>div{width:auto;min-width:0;flex:1}
   .teaching-problem .calendar-visual{padding:12px 8px}
   .teaching-dialogue{min-height:145px;padding:22px 20px 32px;border-width:5px;border-radius:18px}
-  .teaching-dialogue b{font-size:21px}.teaching-dialogue p{font-size:17px}
+  .teaching-dialogue b{font-size:19px}.teaching-dialogue p{font-size:17px}
   .teaching-dialogue>.star-note .note-content{padding:13px}
   .teaching-dialogue>.star-note .note-content span{font-size:14px}
 }
