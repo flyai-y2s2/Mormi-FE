@@ -39,6 +39,9 @@ const p = (prompt: string, answers: string[], correct: string, visual: Visual): 
 function lesson(spec: LessonSpec): Session {
   const keyIndex = spec.rule.indexOf(spec.key);
   const learnedLine = spec.rule.join(" ");
+  const fillBefore = spec.rule.slice(0, keyIndex).join(" ");
+  const fillAfter = spec.rule.slice(keyIndex + 1).join(" ");
+  const fillSentence = [fillBefore, "□", fillAfter].filter(Boolean).join(" ");
   return {
     id: spec.id,
     subject: spec.subject,
@@ -53,11 +56,11 @@ function lesson(spec: LessonSpec): Session {
     learnedLine,
     sentenceWords: [...spec.rule, spec.distractor],
     targetSentence: spec.rule,
-    fillBefore: spec.rule.slice(0, keyIndex).join(" "),
-    fillAfter: spec.rule.slice(keyIndex + 1).join(" "),
+    fillBefore,
+    fillAfter,
     fillCorrect: spec.key,
     fillOptions: spec.keyOptions,
-    oneWordPrompt: "어떤 방법이 맞을까?",
+    oneWordPrompt: fillSentence,
     oneWordCorrect: spec.key,
     oneWordOptions: spec.keyOptions,
     hint: spec.hint,
@@ -74,7 +77,7 @@ function lesson(spec: LessonSpec): Session {
 const addedSessions: Session[] = [
   lesson({
     id: "number-count", subject: "number", unit: "수 감각", title: "수를 빠뜨리지 않고 세어요", level: 1,
-    memoryTitle: ["하나씩 짝지으면", "빠뜨리지 않아!"], rule: ["하나씩", "가리키며", "마지막 수를", "말해!"], key: "가리키며", keyOptions: ["가리키며", "한꺼번에", "눈을 감고"], distractor: "건너뛰며", hint: "센 것과 세지 않은 것을 자리를 나누어 봐.", misconception: "대상을 빠뜨리거나 같은 것을 두 번 셈", mistake: "점이 일곱 개니까 여섯이라고 하면 되지?",
+    memoryTitle: ["하나씩 가리키면", "빠뜨리지 않아!"], rule: ["하나씩", "가리키며", "마지막 수를", "말해!"], key: "가리키며", keyOptions: ["가리키며", "눈으로만", "건너뛰며"], distractor: "다시 세며", hint: "센 것과 세지 않은 것을 자리를 나누어 봐.", misconception: "대상을 빠뜨리거나 같은 것을 두 번 셈", mistake: "점을 세다가 하나를 빼먹었어. 빠뜨리지 않으려면 어떻게 세면 돼?",
     drills: [
       p("점은 모두 몇 개일까?", ["3", "4", "5"], "3", { type: "ten-frame", count: 3 }),
       p("점은 모두 몇 개일까?", ["5", "4", "6"], "5", { type: "ten-frame", count: 5 }),
@@ -87,7 +90,7 @@ const addedSessions: Session[] = [
   }),
   lesson({
     id: "number-compare", subject: "number", unit: "수 감각", title: "수의 크기를 비교해요", level: 2,
-    memoryTitle: ["서로 짝지어 보면", "더 많은 쪽이 보여!"], rule: ["두 수는", "하나씩", "짝지어", "비교해!"], key: "짝지어", keyOptions: ["짝지어", "색으로", "느낌으로"], distractor: "섞어서", hint: "두 줄을 같은 자리에서 시작해 남는 점을 찾아.", misconception: "점의 간격이나 크기를 수량으로 판단함", mistake: "점이 넓게 퍼져 있으면 언제나 더 많지?",
+    memoryTitle: ["하나씩 짝지으면", "더 많은 쪽이 보여!"], rule: ["양쪽 점을", "하나씩 짝지으면", "어느 쪽이 많은지", "알 수 있어!"], key: "하나씩 짝지으면", keyOptions: ["하나씩 짝지으면", "왼쪽만 세면", "오른쪽만 세면"], distractor: "한쪽만 보면", hint: "두 줄을 같은 자리에서 시작해 남는 점을 찾아.", misconception: "두 무리 중 한쪽만 확인하고 수량을 판단함", mistake: "나는 왼쪽 점이 더 많아 보여. 어느 쪽이 많고 어떻게 비교해?",
     drills: [
       p("어느 쪽이 더 많을까?", ["왼쪽", "오른쪽", "같아"], "오른쪽", { type: "ten-frame", count: 3, secondCount: 5 }),
       p("어느 쪽이 더 많을까?", ["왼쪽", "오른쪽", "같아"], "왼쪽", { type: "ten-frame", count: 8, secondCount: 6 }),
@@ -179,7 +182,7 @@ const addedSessions: Session[] = [
   }),
   lesson({
     id: "divide-share", subject: "division", unit: "나눗셈", title: "똑같이 나누어요", level: 1,
-    memoryTitle: ["하나씩 번갈아 주면", "똑같이 나눌 수 있어!"], rule: ["나눗셈은", "하나씩", "번갈아", "나누어!"], key: "번갈아", keyOptions: ["번갈아", "한쪽에만", "눈대중으로"], distractor: "몰아서", hint: "모든 사람에게 하나씩 주는 일을 반복해.", misconception: "한 사람에게 먼저 모두 주고 남은 것을 나눔", mistake: "사탕 8개를 2명에게 나누면 한 명이 6개를 가져도 되지?",
+    memoryTitle: ["하나씩 번갈아 주면", "똑같이 나눌 수 있어!"], rule: ["나눗셈은", "똑같이", "나누는", "거야!"], key: "똑같이", keyOptions: ["똑같이", "한 사람에게만", "서로 다르게"], distractor: "몰아서", hint: "모든 사람에게 하나씩 주는 일을 반복해.", misconception: "한 사람에게 먼저 모두 주고 남은 것을 나눔", mistake: "사탕 8개를 2명에게 나누면 한 명이 6개를 가져도 되지?",
     drills: [
       p("6개를 2명에게 똑같이 나누면 한 명당?", ["3개", "2개", "4개"], "3개", { type: "groups", groups: 2, each: 3, mode: "share" }),
       p("8개를 4명에게 똑같이 나누면 한 명당?", ["2개", "4개", "3개"], "2개", { type: "groups", groups: 4, each: 2, mode: "share" }),
@@ -298,7 +301,7 @@ const addedSessions: Session[] = [
   }),
   lesson({
     id: "geometry-position", subject: "geometry", unit: "도형·공간", title: "위치와 방향을 말해요", level: 3,
-    memoryTitle: ["기준을 먼저 정하면", "위치를 말할 수 있어!"], rule: ["위치는", "기준에서", "방향과", "거리를", "말해!"], key: "기준에서", keyOptions: ["기준에서", "내 느낌으로", "반대에서"], distractor: "아무 데서", hint: "무엇을 기준으로 왼쪽·오른쪽·앞·뒤인지 먼저 말해.", misconception: "말하는 사람과 듣는 사람의 기준 방향을 섞음", mistake: "기준이 없어도 왼쪽이라고만 말하면 모두 알지?",
+    memoryTitle: ["기준을 먼저 정하면", "위치를 말할 수 있어!"], rule: ["세모를 기준으로 보면", "별은", "오른쪽에", "있어!"], key: "오른쪽에", keyOptions: ["오른쪽에", "왼쪽에", "위쪽에"], distractor: "아래쪽에", hint: "무엇을 기준으로 왼쪽·오른쪽·앞·뒤인지 먼저 말해.", misconception: "말하는 사람과 듣는 사람의 기준 방향을 섞음", mistake: "나는 별이 세모의 왼쪽에 있다고 했어. 세모에서 보면 어느 쪽이야?",
     drills: [
       p("별은 세모의 어느 쪽일까?", ["오른쪽", "왼쪽", "위"], "오른쪽", { type: "pattern", items: ["△", "★"], missingIndex: -1 }),
       p("원은 네모의 어느 쪽일까?", ["왼쪽", "오른쪽", "아래"], "왼쪽", { type: "pattern", items: ["●", "■"], missingIndex: -1 }),

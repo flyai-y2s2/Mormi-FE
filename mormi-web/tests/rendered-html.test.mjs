@@ -45,6 +45,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /\[2수03-07\]/);
   assert.match(curriculum, /\[6수04-04\]/);
   assert.match(curriculum, /curriculumForSession/);
+  // 반복학습용 정적 문항에도 대화 API와 같은 카피 품질 계약을 적용한다.
+  assert.doesNotMatch(curriculum, /어떤 방법이 맞을까|퍼진 넓이|느낌으로|눈대중|한눈에 대충|색만 보기|크기만 보기/);
   assert.match(app, /useState<Stage>\("onboarding"\)/);
   assert.match(app, /className="drill-choice-prompt">\{currentDrill\.prompt\}/);
   assert.doesNotMatch(app, /onboarding-promise/);
