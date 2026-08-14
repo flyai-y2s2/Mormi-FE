@@ -955,9 +955,11 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, onCafe }: {
+function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
+  /** 한 번이라도 카페에 다녀왔는지. 다녀왔으면 다시 연습하러 가는 안내로 바꾼다. */
+  cafeVisited: boolean;
   onCafe: () => void;
 }) {
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
@@ -969,12 +971,12 @@ function OutsideHub({ unlocked, cafeTheme, onCafe }: {
   return (
     <section className="journey-hub journey-hub--outside">
       <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
-      <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{isUnlocked ? "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!" : "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!"}</p></div>
+      <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "카페 가는 거 이제 자신 있어! 또 연습하러 가자!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
       <div className="destination-grid">
         <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} disabled={!isUnlocked} onClick={onCafe}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{isUnlocked ? "모르미와 들어가기 →" : "집에서 복습하기 →"}</strong></div>
+          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : "모르미와 들어가기 →"}</strong></div>
         </button>
         <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span><UiIcon name="lock" size="small" /> 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
       </div>
@@ -1715,14 +1717,16 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
 
+      {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
+          네 스테이지가 모두 열린 연습 모드로 돌아온다. */}
       {stage === "cafe" && <CafeJourney
         learnerName={childName}
         learnerId={learner.id}
         activeVisitId={activeCafeVisitId}
         onBack={showOutside}
-        onComplete={() => { setActiveCafeVisitId(null); showHome(); }}
+        onComplete={showHome}
       />}
 
       {stage === "curriculum" && (

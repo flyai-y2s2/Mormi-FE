@@ -27,13 +27,16 @@ test("server-renders the Morami onboarding", async () => {
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeJourney.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/journey-config.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/cafe-menu.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
 
@@ -77,49 +80,59 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(cafe, /스테이지 시작/);
   assert.match(cafe, /data-figma-node="74:4"/);
   assert.match(cafe, /data-figma-node="74:6"/);
-  assert.match(cafe, /data-figma-node="74:8"/);
-  assert.match(cafe, /data-figma-node="74:10"/);
-  assert.match(cafe, /id: "milk", name: "우유"[^\n]+milk\.png\?v=2/);
-  assert.match(cafe, /id: "strawberry-juice", name: "딸기주스"[^\n]+strawberry-juice\.png\?v=2/);
-  assert.match(cafe, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
+  assert.match(cafeMenu, /id: "milk", name: "우유"[^\n]+milk\.png\?v=2/);
+  assert.match(cafeMenu, /id: "strawberry-juice", name: "딸기주스"[^\n]+strawberry-juice\.png\?v=2/);
+  assert.match(cafeMenu, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
-  assert.match(cafe, /sumAnswer/);
-  assert.doesNotMatch(cafe, /aria-label="두 메뉴 가격의 합계"[^>]+placeholder="\?"/);
   assert.doesNotMatch(cafe, /천 원짜리/);
   assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "clear"/);
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
-  assert.match(cafe, /className=\{queueCounts\.left === 1 \? "is-mirrored" : ""\} src="\/cafe-stages\/queue-v2\.png"/);
-  assert.match(cafe, /카페 대기줄: 왼쪽 줄 \$\{queueCounts\.left\}명, 오른쪽 줄 \$\{queueCounts\.right\}명/);
+  assert.match(stageVisual, /className=\{left < right \? "is-mirrored" : ""\}\s*\n\s*src="\/cafe-stages\/queue-v2\.png"/);
+  assert.match(stageVisual, /카페 대기줄: 왼쪽 줄 \$\{left\}명, 오른쪽 줄 \$\{right\}명/);
   assert.doesNotMatch(cafe, /className="queue-story-lines"/);
-  // 줄 서기 질문은 화면에 적어 두지 않고 모르미가 그때그때 건넨다.
-  assert.match(cafe, /mormiLines\.queue \|\| "모르미의 질문을 불러오는 중이에요\."/);
+  // 스테이지 질문은 화면에 적어 두지 않고 모르미가 그때그때 건넨다.
+  assert.match(cafe, /queue: "모르미의 질문을 불러오는 중이에요\."/);
   assert.doesNotMatch(cafe, /주문하려면 줄을 서야 하나 봐|각각 사람들이 몇 명씩 있어|더 짧은 줄에는 몇 명이 있어/);
   // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
-  assert.match(cafe, /queue-story-dialogue[\s\S]{0,900}queue-story-visual[\s\S]{0,900}queue-teaching-answer/);
+  // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
+  assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
   assert.match(cafe, /모르미의 공부노트/);
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
   assert.match(cafe, /learnerName/);
-  assert.match(cafe, /우리 장바구니/);
   assert.match(cafe, /budgets = \[8000, 9000, 10000\]/);
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
-  assert.match(cafe, /예산을 .*원 초과했어요/);
   assert.match(cafe, /내 메뉴 골라 줘서 고마워/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
   assert.match(cafe, />완료!</);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(cafe, /turn\.help_card\?\.visible/);
+  assert.match(talkStage, /turn\.help_card\?\.visible/);
   assert.match(cafe, /STAGE 1 CLEAR!/);
-  assert.match(cafe, /figma-cafe-sum__equation[\s\S]{0,800}<Image src=\{item\.image\}/);
-  assert.match(cafe, /cafe-sum-menu-picker/);
-  assert.match(cafe, /두 메뉴 가격의 합계/);
-  assert.match(cafe, /checkSum/);
-  assert.match(cafe, /changeChangeMoney/);
-  assert.match(cafe, /가진 돈 10,000원/);
+  // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
+  // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.
+  assert.equal((cafe.match(/<CafeTalkStage\b/g) || []).length, 4);
+  assert.doesNotMatch(cafe, /checkSum|checkChange|orderMenu|changeChangeMoney|toggleMenu/);
+  assert.doesNotMatch(cafe, /cafe-sum-menu-picker|figma-cafe-sum__|figma-cafe-change__|cafe-change-order|우리 장바구니/);
+  assert.doesNotMatch(cafe, /두 메뉴 가격의 합계|가진 돈 10,000원|받을 돈을 눌러 담아요/);
+  assert.doesNotMatch(css, /\.cafe-sum-menu-picker|\.figma-cafe-sum__|\.figma-cafe-change__|\.cafe-change-order/);
+  // 입력창은 스테이지마다 하나뿐이다. 패널 밖에 같은 컨트롤을 또 붙이면 어디에 답할지 흐려진다.
+  assert.doesNotMatch(cafe, /activeDialogueStage/);
+  assert.equal((cafe.match(/<CafeDialogueControls\b/g) || []).length, 0);
+  assert.equal((talkStage.match(/<CafeDialogueControls\b/g) || []).length, 1);
+  // 정오 판정과 시도 기록은 서버가 대화의 verified_facts 로만 한다.
+  assert.doesNotMatch(cafe, /api\.cafeQueue|api\.cafeMenu|api\.cafePayment|api\.cafeChange/);
+  assert.match(cafe, /conversation\.stage_progress\.completed/);
+  // 문제 그림은 화면이 새로 만들지 않고 모르미가 보낸 visual 계약을 그대로 그린다.
+  assert.match(stageVisual, /conversation\.turn\.visual/);
+  assert.match(stageVisual, /type === "cafe_menu"/);
+  assert.match(stageVisual, /type === "cafe_calculation" \|\| type === "money_calculation"/);
+  // 모르미 표정은 대화의 mood 를 따라간다. 한 표정으로 굳혀 두지 않는다.
+  assert.match(talkStage, /conversation\?\.turn\.mormi\.mood/);
+  assert.match(talkStage, /celebrating: "\/morami\/celebrate-cutout\.png"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
   assert.match(journey, /cafe-money\/100\.png/);
