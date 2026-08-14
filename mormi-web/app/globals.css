@@ -1124,7 +1124,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe--queue .queue-star-note{right:18px;top:14px}
   /* 장면 안에서는 그림만 늘었다 줄었다 하고, 대화와 입력은 제 높이를 지킨다. */
   .figma-cafe--queue .queue-story-scene{
-    flex:1 1 auto;min-height:0;padding:44px 40px 0;
+    flex:1 1 auto;min-height:0;padding:44px 40px 12px;
     display:flex;flex-direction:column;justify-content:center;
   }
   .figma-cafe--queue .queue-story-task{flex:1 1 auto;min-height:0;justify-content:center;gap:12px}
