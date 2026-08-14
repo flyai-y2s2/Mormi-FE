@@ -987,11 +987,11 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .ui-icon--lock::after{content:"";width:42%;height:42%;position:absolute;left:29%;top:4%;border:4px solid #8d78bd;border-bottom:0;border-radius:50% 50% 0 0}
 .ui-icon--lock i{width:4px;height:10px;position:absolute;left:calc(50% - 2px);bottom:17%;z-index:2;border-radius:3px;background:#fff}
 .journey-nav button{display:flex;align-items:center;justify-content:center;gap:7px}.journey-nav button .ui-icon{filter:none}.journey-nav button.is-active .ui-icon--asset>img{filter:drop-shadow(0 3px 3px rgba(0,0,0,.18))}
-.player-hud{width:100%;padding:8px;position:static;display:grid;grid-template-columns:90px 100px minmax(190px,1fr);gap:7px;border-radius:24px;background:rgba(255,253,248,.95)}
+.player-hud{width:100%;padding:8px;position:static;display:grid;grid-template-columns:minmax(126px,.82fr) minmax(144px,.92fr) minmax(250px,1.72fr);gap:7px;border-radius:24px;background:rgba(255,253,248,.95)}
 .player-hud>.player-stat,.player-hud>.player-wallet{min-width:0;min-height:70px;padding:7px 9px;display:flex;align-items:center;gap:7px;border:3px solid #fff;border-radius:19px;box-shadow:0 6px 0 #cee4d9}
 .player-hud>.player-stat{background:#edf8f2}.player-hud>.player-stat--star{background:#fff7d8;box-shadow:0 6px 0 #ebd995}
 .player-hud .player-stat>span,.player-hud .player-wallet>span{min-width:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;color:#43574e;background:transparent}
-.player-hud small{color:#718178;font-size:10px;font-weight:900;line-height:1.2}.player-hud b{padding:0;color:#28483b;background:transparent;font-size:23px;line-height:1.1}
+.player-hud small{color:#718178;font-size:10px;font-weight:900;line-height:1.2;white-space:nowrap;word-break:keep-all}.player-hud b{padding:0;color:#28483b;background:transparent;font-size:23px;line-height:1.1;white-space:nowrap;word-break:keep-all}
 .player-hud>.player-wallet{background:linear-gradient(135deg,#fff7cc,#fffdf3);box-shadow:0 6px 0 #e8ce72}.player-wallet>img{width:58px;height:58px;flex:0 0 58px;object-fit:contain;filter:drop-shadow(0 7px 7px rgba(107,76,13,.18))}.player-hud .player-wallet strong{padding:0;color:#745313;background:transparent;font-size:clamp(20px,1.7vw,26px);white-space:nowrap;line-height:1.05}
 .daily-quest b,.cafe-required-lessons>div>strong,.outside-scene-head .eyebrow{display:flex;align-items:center;gap:7px}.home-main-actions button>span{display:grid;place-items:center}.home-main-actions button>span .ui-icon{--icon-size:50px;filter:none}
 .destination-card--soon>span{display:flex;align-items:center;gap:6px}.destination-card--soon>span .ui-icon{filter:none}.outside-scene-head{justify-content:flex-start}
@@ -1004,7 +1004,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .home-room-main{padding-top:0;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:22px}
   .home-room-copy-column,.home-room-character-column{height:min(600px,calc(100svh - 154px));min-height:520px}
   .home-room-character-column{padding-top:52px}
-  .player-hud{margin:0;grid-template-columns:1fr 1fr}
+  .player-hud{margin:0;grid-template-columns:minmax(118px,1fr) minmax(132px,1fr)}
   .player-hud>.player-wallet{grid-column:1/3;justify-content:center}
   .home-room-morami .morami-frame{width:min(36vw,340px);height:min(43vh,410px)}
 }
@@ -1014,7 +1014,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .home-room-copy-column,.home-room-character-column{width:min(620px,100%);height:auto;min-height:0;margin:0 auto;transform:none}
   .home-room-copy-column{gap:9px}
   .home-room-character-column{padding-top:0;grid-template-rows:auto auto;gap:18px}
-  .player-hud{width:100%;margin:0;grid-template-columns:1fr 1fr 1.5fr;gap:6px;padding:7px;border-radius:21px}
+  .player-hud{width:100%;margin:0;grid-template-columns:minmax(104px,.9fr) minmax(116px,1fr) minmax(210px,1.7fr);gap:6px;padding:7px;border-radius:21px}
   .player-hud>.player-stat,.player-hud>.player-wallet{min-height:64px;padding:6px 8px;gap:6px;border-radius:16px}.player-hud .ui-icon--large{--icon-size:34px}.player-wallet>img{width:50px;height:50px;flex-basis:50px}.player-hud b{font-size:17px}.player-hud .player-wallet strong{font-size:19px}
   .home-room-copy-column .home-room-copy{height:auto;margin-top:0}.home-room-morami{transform:none}.home-room-morami .morami-frame{width:230px;height:270px}.home-main-actions button>span .ui-icon{--icon-size:43px}
 }
@@ -1147,4 +1147,49 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe--queue .queue-clear-scene>img{height:min(420px,100%)}
   .figma-cafe--queue .cafe-ai-followup{flex:0 0 auto;margin:10px auto 0;padding:12px 16px}
   .figma-cafe--queue .cafe-ai-followup .cafe-ai-dont-know{margin-top:8px}
+}
+
+/* 줄서기도 집에서 복습한 뒤의 '모르미 가르치기'와 같은 읽기 순서를 쓴다.
+   문제 → 답하기 → 모르미의 대화 순서를 유지하고, 기존 카페 로직은 건드리지 않는다. */
+.figma-cafe--queue{padding:0 24px 28px;background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed}
+.figma-cafe--queue>.figma-cafe__bar{display:none}
+.figma-cafe--queue .figma-cafe-queue-story{width:min(1135px,100%);min-height:100svh;margin:0 auto;padding:104px 28px 18px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.queue-teaching-toolbar{width:calc(100% - 56px);height:88px;position:absolute;left:28px;top:20px;z-index:8;display:flex;align-items:flex-start;justify-content:space-between}
+.queue-teaching-back{min-height:48px;padding:0 18px;display:flex;align-items:center;gap:8px;border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.94);box-shadow:0 5px 0 #cce7da;cursor:pointer;font-size:15px;font-weight:900}
+.queue-teaching-back span{font-size:21px;line-height:1}.queue-teaching-back:hover{background:#effaf4;transform:translateY(-1px)}
+.queue-teaching-toolbar .queue-star-note{width:96px;height:88px;min-width:96px;padding:8px;position:static;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;border-radius:44px;color:#62509d;background:#f0eaff;box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);font-size:12px;line-height:1.15;text-align:center}
+.queue-teaching-toolbar .queue-star-note span{color:#765fc0;font-size:24px;line-height:1}
+.queue-teaching-playground{min-height:426px;display:grid;grid-template-columns:220px minmax(390px,1fr) 280px;align-items:end;gap:18px}
+.queue-teaching-morami{width:220px;height:310px;align-self:end;justify-self:center;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 16px 22px rgba(58,74,64,.12))}
+.figma-cafe--queue .queue-story-scene{width:100%;min-height:410px;padding:0;position:static;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:transparent}
+.queue-teaching-heading{display:grid;justify-items:center;gap:9px;text-align:center}.queue-teaching-heading>span{padding:6px 11px;border-radius:10px;color:#7662b0;background:#f2eeff;font-size:13px;line-height:1.2;font-weight:950}.queue-teaching-heading h1{margin:0;color:#24463a;font-size:clamp(27px,2.5vw,36px);line-height:1.2;letter-spacing:-1.3px;font-weight:950}
+.figma-cafe--queue .queue-story-visual{width:100%;min-height:0;margin:0;position:relative;overflow:hidden;border:0;border-radius:28px;background:#fffaf0;box-shadow:0 9px 0 rgba(225,209,174,.7)}
+.figma-cafe--queue .queue-story-visual img{width:100%;height:310px;display:block;object-fit:cover;object-position:center}.figma-cafe--queue .queue-story-visual img.is-mirrored{transform:scaleX(-1)}
+.figma-cafe--queue .queue-story-visual figcaption{position:absolute;left:0;right:0;bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 13%;pointer-events:none}.figma-cafe--queue .queue-story-visual figcaption span{justify-self:center;padding:6px 12px;border:2px solid #fff;border-radius:999px;color:#705242;background:rgba(255,250,240,.95);box-shadow:0 3px 8px rgba(74,52,36,.13);font-size:13px;font-weight:950}
+.queue-teaching-answer{width:100%;min-width:0;align-self:center}.queue-teaching-answer .cafe-ai-followup{width:100%;margin:0;padding:14px;border-color:#78cda6;background:rgba(255,255,255,.96);box-shadow:0 6px 0 #cce7da}.queue-teaching-answer .cafe-ai-choices{grid-template-columns:1fr}.queue-teaching-answer .cafe-ai-followup label{font-size:14px;font-weight:850}.queue-teaching-answer .cafe-ai-followup .cafe-ai-dont-know{color:#59665f;font-size:15px;font-weight:850}
+.figma-cafe--queue .queue-story-input{width:100%;margin:0;position:static;display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:8px}.figma-cafe--queue .queue-story-input input{width:100%;min-width:0;height:62px;padding:0 15px;border:4px solid #78cda6;border-radius:15px;background:#fff;font-size:16px}.figma-cafe--queue .queue-story-input button{min-height:62px;padding:0 10px;border:0;border-radius:15px;color:#fff;background:#49ac7f;font-size:17px;font-weight:950}.figma-cafe--queue .queue-story-input button:disabled{opacity:.42}
+.figma-cafe--queue .queue-story-options{width:100%;margin:0;position:static;display:grid;grid-template-columns:1fr;gap:9px}.figma-cafe--queue .queue-story-options button{width:100%;min-width:0;min-height:58px;padding:8px 12px;border:4px solid #78cda6;border-radius:15px;color:#304c3f;background:#fff;box-shadow:none;font-size:18px;font-weight:850}.figma-cafe--queue .queue-story-options button:hover{color:#236344;background:#e7f8ef;transform:translateY(-2px)}
+.figma-cafe--queue .queue-story-dialogue{min-height:176px;margin:20px 0 0;padding:28px 48px 30px;position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;border:7px solid #78cda6;border-radius:20px;background:#fff;box-shadow:none}.figma-cafe--queue .queue-story-dialogue b{margin:0;font-size:22px}.figma-cafe--queue .queue-story-dialogue p{margin:0;padding-right:0;color:#202924;font-size:20px;line-height:1.5;font-weight:700}.figma-cafe--queue .queue-story-dialogue small{margin:0;color:#a2603e;font-size:13px;font-weight:900}
+.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know{min-width:150px;min-height:44px;margin:2px 0 0;padding:8px 16px;position:static;align-self:flex-end;border:3px solid #9cb7aa;border-radius:14px;color:#485850;background:#f7fbf9;box-shadow:0 4px 0 #d7e3dd;cursor:pointer;font-size:16px;line-height:1.25;font-weight:850}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know::after{content:none}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know:disabled{cursor:wait;opacity:.72}
+
+@media(max-width:960px){
+  .queue-teaching-playground{grid-template-columns:160px minmax(320px,1fr) 220px;gap:12px}
+  .queue-teaching-morami{width:160px;height:245px}
+  .figma-cafe--queue .queue-story-visual img{height:270px}
+  .figma-cafe--queue .queue-story-options button{min-height:50px}
+}
+@media(max-width:760px){
+  .figma-cafe--queue{padding:0 12px 24px;background-attachment:scroll}
+  .figma-cafe--queue .figma-cafe-queue-story{min-height:100svh;padding:86px 10px 14px}
+  .queue-teaching-toolbar{width:calc(100% - 20px);height:70px;left:10px;top:10px}.queue-teaching-back{min-height:43px;padding:0 13px;font-size:13px}.queue-teaching-toolbar .queue-star-note{width:78px;height:66px;min-width:78px;padding:5px;border-radius:33px;font-size:10px}.queue-teaching-toolbar .queue-star-note span{font-size:19px}
+  .queue-teaching-playground{min-height:0;grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto auto;align-items:end;gap:12px 10px}
+  .figma-cafe--queue .queue-story-scene{min-height:0;grid-column:1/3;grid-row:1;gap:10px}.queue-teaching-heading h1{font-size:25px}.queue-teaching-heading>span{font-size:11px}
+  .figma-cafe--queue .queue-story-visual{border-radius:22px}.figma-cafe--queue .queue-story-visual img{height:auto;aspect-ratio:16/10;object-fit:cover}.figma-cafe--queue .queue-story-visual figcaption{bottom:8px;padding:0 8%}.figma-cafe--queue .queue-story-visual figcaption span{padding:4px 8px;font-size:11px}
+  .queue-teaching-morami{width:112px;height:150px;grid-column:1;grid-row:2}.queue-teaching-answer{grid-column:2;grid-row:2;align-self:center}
+  .figma-cafe--queue .queue-story-options{grid-template-columns:repeat(3,1fr);gap:5px}.figma-cafe--queue .queue-story-options button{min-height:48px;padding:5px;font-size:14px}.figma-cafe--queue .queue-story-input{grid-template-columns:minmax(0,1fr) 68px;gap:5px}.figma-cafe--queue .queue-story-input input,.figma-cafe--queue .queue-story-input button{height:54px;min-height:54px;font-size:13px}.figma-cafe--queue .queue-story-input input{padding:0 9px}
+  .figma-cafe--queue .queue-story-dialogue{min-height:158px;margin-top:12px;padding:21px 18px 24px;border-width:5px}.figma-cafe--queue .queue-story-dialogue b{font-size:19px}.figma-cafe--queue .queue-story-dialogue p{font-size:16px}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know{min-width:132px;min-height:40px;font-size:14px}
+}
+@media(max-width:430px){
+  .queue-teaching-playground{grid-template-columns:86px minmax(0,1fr);gap:9px 7px}.queue-teaching-morami{width:86px;height:120px}.queue-teaching-heading h1{font-size:22px}.figma-cafe--queue .queue-story-visual img{aspect-ratio:4/3}.queue-teaching-start{min-height:52px;font-size:15px}
+  .figma-cafe--queue .queue-story-options{grid-template-columns:repeat(3,1fr)}.figma-cafe--queue .queue-story-dialogue{padding:18px 14px 22px}.figma-cafe--queue .queue-story-dialogue p{font-size:15px}
 }

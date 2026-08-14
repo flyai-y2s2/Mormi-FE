@@ -52,7 +52,7 @@ const menuItemsForAi = menu.map(({ id, name, price, image }) => ({
   price,
   image_url: image,
 }));
-type QueueScene = "intro" | "count-both" | "count-left" | "note" | "clear";
+type QueueScene = "dialogue" | "note" | "clear";
 type MenuScene = "brief" | "mormey-pick" | "choose" | "thanks";
 const budgets = [8000, 9000, 10000] as const;
 
@@ -65,6 +65,16 @@ function randomQueueCounts() {
   // queue-v2.png에는 왼쪽 2명·오른쪽 1명이 있다. 이미지와 학습 문제의
   // 인원 수가 어긋나지 않도록 같은 장면을 좌우 반전한 경우만 함께 사용한다.
   return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
+}
+
+function getProblemPrompt(conversation: MormiConversation | undefined) {
+  const problem = conversation?.turn.visual.data.problem;
+  if (problem && typeof problem === "object" && !Array.isArray(problem)) {
+    const prompt = (problem as Record<string, unknown>).prompt;
+    if (typeof prompt === "string" && prompt.trim()) return prompt.trim();
+  }
+  const prompt = conversation?.turn.visual.data.prompt;
+  return typeof prompt === "string" && prompt.trim() ? prompt.trim() : "";
 }
 
 function CafeDialogueControls({
@@ -144,10 +154,7 @@ function CafeDialogueControls({
 export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
-  const [queueHelp, setQueueHelp] = useState(false);
-  const [queueFeedback, setQueueFeedback] = useState("");
-  const [queueScene, setQueueScene] = useState<QueueScene>("intro");
-  const [queueCountAnswer, setQueueCountAnswer] = useState("");
+  const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [menuScene, setMenuScene] = useState<MenuScene>("brief");
   const [menuBudget, setMenuBudget] = useState<number>(10000);
@@ -328,7 +335,6 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     if (finalizedStages.current[stage]) return;
     finalizedStages.current[stage] = true;
     if (stage === "queue") {
-      setQueueFeedback("");
       if (cafeTalks.current.queue?.turn.note_update) {
         setQueueScene("note");
       } else {
@@ -382,10 +388,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     if (index === 0) {
       const counts = randomQueueCounts();
       setQueueCounts(counts);
-      setQueueScene("intro");
-      setQueueCountAnswer("");
-      setQueueFeedback("");
-      setQueueHelp(false);
+      setQueueScene("dialogue");
       openCafeDialogue("queue", {
         scenario_id: cafeScenarioByStation[0],
         queue_context: { left_count: counts.left, right_count: counts.right },
@@ -427,55 +430,6 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     }
     setStep((["queue", "menu", "sum", "change"] as CafeStep[])[index]);
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
-  }
-
-  async function submitQueueCounts() {
-    if (!queueCountAnswer.trim()) return;
-    // 정오와 무관하게 아이 원문을 AI에 먼저 전달한다. 부분 답·창의적 오답은
-    // 발화 이해기가 직전 질문과 함께 해석하고, 화면은 그 반응을 그대로 보여 준다.
-    await sendCafeAnswer("queue", queueCountAnswer);
-    const numbers = queueCountAnswer.match(/[1-5]/g)?.map(Number) ?? [];
-    if (numbers.length < 2 || numbers[0] !== queueCounts.left || numbers[1] !== queueCounts.right) {
-      setQueueFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
-      setQueueHelp(true);
-      return;
-    }
-    setQueueFeedback("");
-    setQueueScene("count-left");
-  }
-
-  async function chooseLeftCount(count: number) {
-    const shorterCount = Math.min(queueCounts.left, queueCounts.right);
-    const id = visitId.current ?? await visitPromise.current;
-    let result: StageResult | null = null;
-    if (id) {
-      // 좌우 인원과 아이의 답을 함께 보낸다. 정오 판정은 서버가 한다.
-      const attemptNo = nextAttemptNo("queue");
-      const elapsedMs = stageElapsedMs();
-      try {
-        result = await api.cafeQueue(id, {
-        left_count: queueCounts.left,
-        right_count: queueCounts.right,
-        chosen_count: count,
-        scaffold_used: queueHelp,
-        attempt_no: attemptNo,
-        elapsed_ms: elapsedMs,
-        });
-        markStageValidated("queue", result);
-      } catch (error: unknown) {
-        setQueueFeedback(error instanceof Error ? error.message : "줄 서기 답을 저장하지 못했어요.");
-        return;
-      }
-    }
-    const conversation = await sendCafeAnswer("queue", `왼쪽 줄은 ${queueCounts.left}명, 오른쪽 줄은 ${queueCounts.right}명이야. 더 짧은 줄은 ${count}명이야.`);
-    if (count === shorterCount && result?.is_correct) {
-      setQueueFeedback(conversation?.turn.status === "completed" ? "" : "모르미가 한 가지를 더 궁금해해요.");
-      captureMormeyEvent("cafe_queue_answered", { correct: true, scaffold_used: queueHelp, left_count: queueCounts.left, right_count: queueCounts.right, learner_answer: queueCountAnswer });
-      return;
-    }
-    setQueueFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
-    setQueueHelp(true);
-    captureMormeyEvent("cafe_queue_answered", { correct: false, answer: count });
   }
 
   function finishQueueStory() {
@@ -605,9 +559,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     setChangeFeedback("모르미가 아직 헷갈리는 부분을 다시 물어보고 있어요.");
   }
 
-  const activeDialogueStage: CafeStage | null = step === "queue"
-    ? "queue"
-    : step === "menu"
+  const activeDialogueStage: CafeStage | null = step === "menu"
       ? "menu"
       : step === "sum"
         ? "calculate"
@@ -652,18 +604,35 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
 
       {step === "queue" && (
         <main className={`figma-cafe-panel figma-cafe-queue-story is-${queueScene}`} data-figma-node="74:4">
-          {queueScene !== "clear" && <button className="queue-star-note" aria-label="별노트"><span aria-hidden="true">★</span> 별노트</button>}
+          {queueScene !== "clear" && <div className="queue-teaching-toolbar">
+            <button className="queue-teaching-back" onClick={returnToMap}><span aria-hidden="true">←</span> 이전으로</button>
+            <span className="queue-star-note" aria-label="궁금해 사전"><span aria-hidden="true">▤</span> 궁금해 사전</span>
+          </div>}
 
           {queueScene !== "note" && queueScene !== "clear" && (
-            <section className="queue-story-scene" aria-label="카페의 두 줄">
-              <div className="queue-story-task">
+            <section className="queue-teaching-playground" aria-label="카페의 두 줄">
+              <Image className="queue-teaching-morami" src="/morami/confused-cutout.png" alt="줄 서기를 배우는 모르미" width={300} height={360} unoptimized />
+              <article className="queue-story-scene">
+                <div className="queue-teaching-heading">
+                  <span>모르미가 헷갈린 문제</span>
+                  {getProblemPrompt(cafeConversations.queue) && <h1>{getProblemPrompt(cafeConversations.queue)}</h1>}
+                </div>
                 <figure className="queue-story-visual">
                   <Image className={queueCounts.left === 1 ? "is-mirrored" : ""} src="/cafe-stages/queue-v2.png" alt={`카페 대기줄: 왼쪽 줄 ${queueCounts.left}명, 오른쪽 줄 ${queueCounts.right}명`} width={900} height={675} unoptimized />
                   <figcaption><span>왼쪽 줄</span><span>오른쪽 줄</span></figcaption>
                 </figure>
-                {queueScene === "count-both" && <form className="queue-story-input" onSubmit={(event) => { event.preventDefault(); submitQueueCounts(); }}><input aria-label="양쪽 줄의 사람 수" value={queueCountAnswer} onChange={(event) => setQueueCountAnswer(event.target.value)} placeholder="답변을 입력해 주세요" /><button type="submit" disabled={!queueCountAnswer.trim()}>완료</button></form>}
-                {queueScene === "count-left" && <div className="queue-story-options" aria-label="더 짧은 줄 사람 수 선택">{[1, 2, 3, 4, 5].map((count) => <button key={count} onClick={() => chooseLeftCount(count)}>{count}명</button>)}</div>}
-              </div>
+              </article>
+              <aside className="queue-teaching-answer">
+                <CafeDialogueControls
+                  conversation={cafeConversations.queue}
+                  inputText={dialogueInputs.queue ?? ""}
+                  sending={dialogueSending}
+                  onInput={(value) => setDialogueInputs((current) => ({ ...current, queue: value }))}
+                  onSubmit={(response) => { void sendCafeResponse("queue", response).then(() => {
+                    setDialogueInputs((current) => ({ ...current, queue: "" }));
+                  }); }}
+                />
+              </aside>
             </section>
           )}
 
@@ -685,11 +654,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             {/* 모르미가 방금 한 말이 있으면 그걸 쓴다. 노트 장면은 마무리 문구를 유지한다. */}
             <p>{queueScene === "note"
               ? `${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`
-              : mormiLines.queue || (queueScene === "intro" ? "어? 주문하려면 줄을 서야 하나 봐. 그런데 어느 줄에 서면 좋을지 모르겠어..." : queueScene === "count-both" ? "왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어?" : "더 짧은 줄에는 몇 명이 있어?")}</p>
-            {queueFeedback && <small role="status">{queueFeedback}</small>}
-            {queueScene === "intro" && <button className="queue-story-next" onClick={() => setQueueScene("count-both")}>다음으로</button>}
-            {queueScene === "count-both" && <button onClick={() => { setQueueHelp(true); void sendCafeResponse("queue", { type: "no_response" }); }}>잘 모르겠어</button>}
-            {queueScene === "count-left" && <button onClick={() => { setQueueHelp(true); void sendCafeResponse("queue", { type: "no_response" }); }}>잘 모르겠어</button>}
+              : mormiLines.queue || "모르미의 질문을 불러오는 중이에요."}</p>
             {queueScene === "note" && <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>}
           </section>}
         </main>
