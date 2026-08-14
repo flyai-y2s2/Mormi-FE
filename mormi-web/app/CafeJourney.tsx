@@ -534,13 +534,22 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   }
 
   function finishMenuStory() {
+    // 메뉴 고르기에서 곧장 넘어올 때도 계산 스테이지 대화를 새로 연다.
+    // 이걸 빼면 대화가 없어 turn.status 가 "completed" 가 되지 않고,
+    // 합계를 맞혀도 스테이지가 끝나지 않는다.
+    const nextSumMenu = randomItem(menu);
     setJourneyProgress((progress) => Math.max(progress, 2));
-    setSumMormeyMenuId(randomItem(menu).id);
+    setSumMormeyMenuId(nextSumMenu.id);
     setSumChildMenuId("");
     setSumAnswer("");
     setSumFeedback("");
+    openCafeDialogue("calculate", {
+      scenario_id: cafeScenarioByStation[2],
+      cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
+    });
     setStep("sum");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    captureMormeyEvent("cafe_station_started", { station_index: 3, station: cafeStations[2] });
   }
 
   async function checkSum() {
