@@ -1806,17 +1806,17 @@ export function MoramiApp() {
           </div>
           <div className="chat-window teaching-stage">
             {/* 아이는 모르미의 질문을 먼저 읽고 그 다음에 문제를 본다: 말풍선이 위, 문제와 답이 아래. */}
-            <div className="teaching-talk">
-              <div className="teaching-morami"><Morami expression={expression} /></div>
-              {hasServerMessagePanel && !teachingComplete && (
+            {hasServerMessagePanel && !teachingComplete && (
+              <div className="teaching-talk">
+                <div className="teaching-morami"><Morami expression={expression} /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
                   {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
                   {teachError && <p role="alert">{teachError}</p>}
                   {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               {/* 문제 문구는 모르미 말풍선이 이미 물어보고 있다. 위에 같은 질문을 또 띄우면 아이가 두 번 읽는다. */}
               {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
