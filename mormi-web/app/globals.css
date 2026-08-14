@@ -594,11 +594,11 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-map,.figma-cafe-panel{width:min(1133px,100%);min-height:744px;margin:auto;position:relative;overflow:hidden;border:5px solid #765cff;border-radius:22px;background:#cfe2f7;box-shadow:0 26px 70px rgba(49,58,68,.22)}.figma-cafe-map{padding:80px 20px 34px}.figma-cafe-map__stones{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);align-items:start}.figma-cafe-map__stones>button{min-width:0;min-height:280px;padding:0 8px;position:relative;border:0;color:#2c3e50;background:transparent;cursor:pointer}.figma-cafe-map__stones strong{height:54px;display:block;font-size:clamp(17px,2.15vw,27px);white-space:nowrap}.figma-cafe-map__stones span{width:100%;height:180px;display:grid;place-items:center;position:relative}.figma-cafe-map__stones span::after{content:"";width:84%;height:54px;position:absolute;bottom:7px;z-index:-1;border-radius:50%;background:#e7c98e}.figma-cafe-map__stones img{width:100%;height:160px;object-fit:contain}.figma-cafe-map__stones button:first-child img{transform:scale(1.1)}.figma-cafe-map__stones button:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.7)}.figma-cafe-map__stones button.is-current span::after{outline:5px solid #4879dc;background:#f0a8b7}.figma-cafe-map__stones button.is-current{animation:keyPulse 1.35s ease-in-out infinite alternate}.figma-cafe-map__stones button.is-complete::after{content:"✓";width:34px;height:34px;position:absolute;right:23px;top:45px;display:grid;place-items:center;z-index:3;border-radius:50%;color:#fff;background:#50a36d;font-weight:950}.figma-cafe-map__stones em{position:absolute;right:42%;top:126px;z-index:3;font-size:28px;font-style:normal}.figma-cafe-map__path{height:5px;position:absolute;left:9%;right:9%;top:255px;z-index:1;border-top:4px dashed rgba(255,255,255,.95);transform:rotate(1.5deg)}.figma-cafe-action,.figma-cafe-done button{min-height:64px;border:0;border-radius:16px;color:#fff;background:linear-gradient(#5c89db,#315ab2);box-shadow:0 7px 0 #294c9a;cursor:pointer;font-size:23px;font-weight:900}
 .figma-cafe-panel{padding:28px 32px;border:2px solid rgba(209,199,173,.78);border-radius:0;color:#29241f;background:#fffced}.figma-cafe-panel>h1,.figma-cafe-panel__heading h1{margin:0;font-size:28px;font-weight:650}.figma-cafe-panel>h2{margin:42px 0 0;text-align:center;font-size:28px;font-weight:550}.figma-cafe-feedback{min-height:27px;margin:12px auto;color:#387257;text-align:center;font-size:17px;font-weight:900}.figma-cafe-action{min-width:265px;min-height:62px;margin:14px auto 0;display:block;background:#b8e0b2;box-shadow:none;color:#29241f;font-size:21px}.figma-cafe-action:disabled{opacity:.45;cursor:not-allowed}
 .figma-cafe-queue::before{content:"";width:664px;height:421px;position:absolute;left:50%;top:139px;transform:translateX(-50%);border-radius:24px;background:#ebf2ff}.figma-cafe-queue>*{position:relative;z-index:1}.figma-cafe-queue__choice{width:664px;margin:130px auto 0;display:grid;grid-template-columns:315px 349px}.figma-cafe-queue__choice button{height:251px;padding:44px 34px;display:grid;grid-template-rows:auto 1fr auto;border:0;color:#29241f;background:#f0e5cc;cursor:pointer;text-align:left}.figma-cafe-queue__choice button:first-child{border-radius:24px 0 0 24px}.figma-cafe-queue__choice button:last-child{border-radius:0 24px 24px 0;background:#e8f5e5;text-align:right}.figma-cafe-queue__choice b{font-size:24px;font-weight:500}.figma-cafe-queue__choice span{align-self:center;font-size:42px;letter-spacing:12px;white-space:nowrap}.figma-cafe-queue__choice strong{font-size:28px;font-weight:500}.figma-cafe-queue__choice button:hover{box-shadow:inset 0 0 0 5px #7896cf}.figma-cafe-hint{width:633px;min-height:76px;margin:44px auto 0;display:block;border:0;border-radius:24px;color:#29241f;background:#ebf2ff;cursor:pointer;font-size:20px}.figma-cafe-help-text{margin:8px 0 0;color:#66717c;text-align:center}
-.figma-cafe-panel__heading{display:flex;align-items:center;justify-content:space-between}.figma-cafe-panel__heading>strong{min-width:250px;padding:17px 24px;border:1px solid #d1c7ad;border-radius:20px;background:#ffeb99;text-align:center;font-size:18px;font-weight:500}.figma-cafe-menu__layout{margin-top:24px;display:grid;grid-template-columns:1fr 225px;gap:42px}.figma-cafe-menu__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:27px 30px}.figma-cafe-menu__grid button{min-width:0;height:195px;padding:9px 16px 12px;display:grid;grid-template-rows:106px 1fr;overflow:hidden;border:1px solid #d1c7ad;border-radius:20px;color:#29241f;background:#faf0d6;cursor:pointer;text-align:left}.figma-cafe-menu__grid button.is-selected{border:4px solid #74a869;padding:6px 13px 9px;background:#eef7e9}.figma-cafe-menu__grid img{width:100%;height:105px;object-fit:contain}.figma-cafe-menu__grid span{display:flex;flex-direction:column;justify-content:end}.figma-cafe-menu__grid b{font-size:19px;font-weight:500}.figma-cafe-menu__grid strong{margin-top:6px;font-size:18px;font-weight:500}.figma-cafe-menu aside{min-height:420px;padding:28px 24px;display:flex;flex-direction:column;border:1px solid #d1c7ad;border-radius:20px;background:#f0f5e8;text-align:center}.figma-cafe-menu aside h2{margin:0;font-size:20px;font-weight:500}.figma-cafe-menu aside ul{min-height:52px;margin:13px 0 0;padding:0;color:#66735f;list-style:none;font-size:13px}.figma-cafe-menu aside>strong,.figma-cafe-menu aside>b{font-size:28px;font-weight:500}.figma-cafe-menu aside>p{margin:35px 0 12px;font-size:20px}.figma-cafe-menu aside button{min-height:88px;margin:auto -24px -152px;border:0;border-radius:20px;color:#29241f;background:#b8e0b2;cursor:pointer;font-size:24px}.figma-cafe-menu aside button:disabled{opacity:.45;cursor:not-allowed}
-.figma-cafe-sum__equation{margin:60px 5% 0;display:flex;align-items:center;justify-content:center;gap:22px}.figma-cafe-sum__equation>div{display:flex;align-items:center;gap:20px}.figma-cafe-sum__equation article{width:270px;min-height:230px;padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:22px;background:#faf0d6}.figma-cafe-sum__equation article img{width:110px;height:80px;object-fit:contain}.figma-cafe-sum__equation article span{font-size:20px}.figma-cafe-sum__equation article strong{margin-top:22px;font-size:28px;font-weight:500}.figma-cafe-sum__equation>b,.figma-cafe-sum__equation>div>b{font-size:35px;font-weight:500}.figma-cafe-sum__equation label{width:240px;min-height:160px;padding:18px;display:grid;grid-template-columns:1fr auto;align-items:center;border-radius:22px;background:#e8f5e5}.figma-cafe-sum__equation label>span{grid-column:1/3;font-size:14px;text-align:center}.figma-cafe-sum__equation input{width:100%;min-width:0;border:0;outline:0;color:#29241f;background:transparent;font-size:30px;text-align:right}.figma-cafe-sum__equation small{font-size:23px}.figma-cafe-money-hint{width:70%;min-height:95px;margin:68px auto 0;padding:18px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border-radius:22px;background:#ebf2ff}.figma-cafe-money-hint span{font-size:16px}
-.figma-cafe-pay__layout{margin:35px auto 0;display:grid;grid-template-columns:250px 1fr;gap:28px}.figma-cafe-pay__layout>aside{padding:22px;display:flex;flex-direction:column;border:2px dashed #cdbd9d;border-radius:22px;background:#fffaf1}.figma-cafe-pay__layout>aside>span{margin-bottom:18px;color:#766b58}.figma-cafe-pay__layout>aside p{display:flex;justify-content:space-between}.figma-cafe-pay__layout>aside>strong{margin-top:auto;padding-top:18px;border-top:2px solid #ded1b8;font-size:22px}.figma-cafe-pay__layout>aside small{margin-top:14px;color:#a35a2f;font-size:16px;font-weight:900}.figma-cafe-wallet{display:grid;grid-template-columns:1fr 1fr;gap:10px}.figma-cafe-wallet article{padding:10px;display:grid;grid-template-columns:110px 70px 1fr;align-items:center;gap:7px;border:1px solid #d1c7ad;border-radius:18px;background:#faf0d6}.figma-cafe-wallet img{width:105px;height:70px;object-fit:contain}.figma-cafe-wallet article>b{font-size:15px}.figma-cafe-wallet article>div,.figma-cafe-change__builder article>div{display:grid;grid-template-columns:38px 48px 38px;align-items:center;gap:3px}.figma-cafe-wallet button,.figma-cafe-change__builder article button{width:38px;height:38px;border:0;border-radius:12px;color:#fff;background:#5c8b67;cursor:pointer;font-size:21px}.figma-cafe-wallet button:disabled,.figma-cafe-change__builder article button:disabled{color:#9b9b90;background:#e1e1d8;cursor:not-allowed}.figma-cafe-wallet output,.figma-cafe-change__builder output{text-align:center;font-weight:850}.figma-cafe-total{margin-top:15px;padding:15px 20px;display:flex;justify-content:space-between;border-radius:18px;background:#e8f5e5}.figma-cafe-total strong{font-size:26px}
-.figma-cafe-change__equation{width:78%;min-height:100px;margin:48px auto 0;display:grid;place-items:center;border-radius:22px;background:#f0e5cc;font-size:26px}.figma-cafe-change>p:not(.figma-cafe-feedback){margin:43px 0 20px;text-align:center;font-size:22px}.figma-cafe-change__builder{display:grid;grid-template-columns:240px 240px 290px;justify-content:center;gap:40px}.figma-cafe-change__builder article{min-height:150px;padding:15px;display:grid;grid-template-columns:90px 1fr;align-items:center;border-radius:22px;background:#cce8c4}.figma-cafe-change__builder article.is-500{background:#f2db9c}.figma-cafe-change__builder article img{width:88px;height:70px;object-fit:contain}.figma-cafe-change__builder article>strong{text-align:center;font-size:21px}.figma-cafe-change__builder article>div{grid-column:1/3;justify-content:center}.figma-cafe-change__builder aside{min-height:205px;padding:25px;display:flex;flex-direction:column;justify-content:center;border-radius:22px;background:#ebf2ff}.figma-cafe-change__builder aside span{margin-bottom:10px;font-size:15px}.figma-cafe-change__builder aside p{margin:4px 0}.figma-cafe-change__builder aside strong{margin-top:12px;font-size:22px}.figma-cafe-done{display:grid;grid-template-columns:420px 1fr;align-items:center;gap:36px;border-radius:32px}.figma-cafe-done>img{width:100%;height:470px;object-fit:contain}.figma-cafe-done span{color:#4a7e60;font-weight:900}.figma-cafe-done h1{margin:8px 0 18px;font-size:48px}.figma-cafe-done p{color:#626d65;font-size:18px;line-height:1.7}.figma-cafe-done button{min-width:250px;padding:0 24px}
-@media(max-width:430px){.figma-cafe{padding:8px 7px 24px}.figma-cafe__bar{grid-template-columns:82px 1fr;gap:6px;margin-bottom:8px}.figma-cafe__bar>button{font-size:11px}.figma-cafe__bar>div{gap:3px}.figma-cafe__bar span{font-size:0}.figma-cafe__bar span:not(:last-child)::after{width:8px}.figma-cafe-map,.figma-cafe-panel{min-height:calc(100svh - 76px)}.figma-cafe-map{padding:42px 10px 20px}.figma-cafe-map__stones{grid-template-columns:1fr 1fr;gap:15px 4px}.figma-cafe-map__stones>button{min-height:170px}.figma-cafe-map__stones strong{height:36px;font-size:14px}.figma-cafe-map__stones span{height:115px}.figma-cafe-map__stones img{height:110px}.figma-cafe-map__stones span::after{height:37px}.figma-cafe-map__path{display:none}.figma-cafe-panel{padding:20px 12px}.figma-cafe-panel>h1,.figma-cafe-panel__heading h1{font-size:21px}.figma-cafe-panel>h2{margin-top:28px;font-size:20px}.figma-cafe-queue::before{width:calc(100% - 24px);height:340px;top:100px}.figma-cafe-queue__choice{width:100%;margin-top:95px;grid-template-columns:1fr 1fr}.figma-cafe-queue__choice button{height:230px;padding:25px 12px}.figma-cafe-queue__choice b{font-size:18px}.figma-cafe-queue__choice span{font-size:24px;letter-spacing:4px}.figma-cafe-queue__choice strong{font-size:21px}.figma-cafe-hint{width:100%;min-height:58px;margin-top:32px;font-size:15px}.figma-cafe-panel__heading{align-items:flex-start;gap:8px}.figma-cafe-panel__heading>strong{min-width:120px;padding:10px 6px;font-size:12px}.figma-cafe-menu__layout{grid-template-columns:1fr;gap:12px}.figma-cafe-menu__grid{grid-template-columns:1fr 1fr;gap:8px}.figma-cafe-menu__grid button{height:170px;padding:7px;grid-template-rows:95px 1fr}.figma-cafe-menu__grid img{height:95px}.figma-cafe-menu__grid b{font-size:15px}.figma-cafe-menu__grid strong{font-size:14px}.figma-cafe-menu aside{min-height:240px;padding:15px}.figma-cafe-menu aside ul{min-height:30px}.figma-cafe-menu aside>p{margin:13px 0 5px}.figma-cafe-menu aside button{min-height:60px;margin:15px 0 0}.figma-cafe-sum__equation{margin:34px 0 0;flex-wrap:wrap;gap:8px}.figma-cafe-sum__equation article{width:135px;min-height:180px;padding:10px}.figma-cafe-sum__equation article strong{font-size:18px}.figma-cafe-sum__equation label{width:170px;min-height:100px}.figma-cafe-money-hint{width:100%;margin-top:25px}.figma-cafe-pay__layout{grid-template-columns:1fr}.figma-cafe-wallet{grid-template-columns:1fr}.figma-cafe-wallet article{grid-template-columns:90px 63px 1fr}.figma-cafe-wallet img{width:85px}.figma-cafe-change__equation{width:100%;min-height:85px;margin-top:30px;padding:12px;font-size:18px;text-align:center}.figma-cafe-change__builder{grid-template-columns:1fr 1fr;gap:8px}.figma-cafe-change__builder article{min-height:140px;padding:8px;grid-template-columns:65px 1fr}.figma-cafe-change__builder article img{width:62px}.figma-cafe-change__builder article>strong{font-size:16px}.figma-cafe-change__builder aside{grid-column:1/3;min-height:150px}.figma-cafe-done{grid-template-columns:1fr;text-align:center}.figma-cafe-done>img{height:280px}.figma-cafe-done h1{font-size:34px}}
+.figma-cafe-panel__heading{display:flex;align-items:center;justify-content:space-between}.figma-cafe-panel__heading>strong{min-width:250px;padding:17px 24px;border:1px solid #d1c7ad;border-radius:20px;background:#ffeb99;text-align:center;font-size:18px;font-weight:500}.figma-cafe-menu aside{min-height:420px;padding:28px 24px;display:flex;flex-direction:column;border:1px solid #d1c7ad;border-radius:20px;background:#f0f5e8;text-align:center}.figma-cafe-menu aside h2{margin:0;font-size:20px;font-weight:500}.figma-cafe-menu aside ul{min-height:52px;margin:13px 0 0;padding:0;color:#66735f;list-style:none;font-size:13px}.figma-cafe-menu aside>strong,.figma-cafe-menu aside>b{font-size:28px;font-weight:500}.figma-cafe-menu aside>p{margin:35px 0 12px;font-size:20px}.figma-cafe-menu aside button{min-height:88px;margin:auto -24px -152px;border:0;border-radius:20px;color:#29241f;background:#b8e0b2;cursor:pointer;font-size:24px}.figma-cafe-menu aside button:disabled{opacity:.45;cursor:not-allowed}
+.figma-cafe-money-hint{width:70%;min-height:95px;margin:68px auto 0;padding:18px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border-radius:22px;background:#ebf2ff}.figma-cafe-money-hint span{font-size:16px}
+.figma-cafe-pay__layout{margin:35px auto 0;display:grid;grid-template-columns:250px 1fr;gap:28px}.figma-cafe-pay__layout>aside{padding:22px;display:flex;flex-direction:column;border:2px dashed #cdbd9d;border-radius:22px;background:#fffaf1}.figma-cafe-pay__layout>aside>span{margin-bottom:18px;color:#766b58}.figma-cafe-pay__layout>aside p{display:flex;justify-content:space-between}.figma-cafe-pay__layout>aside>strong{margin-top:auto;padding-top:18px;border-top:2px solid #ded1b8;font-size:22px}.figma-cafe-pay__layout>aside small{margin-top:14px;color:#a35a2f;font-size:16px;font-weight:900}.figma-cafe-wallet{display:grid;grid-template-columns:1fr 1fr;gap:10px}.figma-cafe-wallet article{padding:10px;display:grid;grid-template-columns:110px 70px 1fr;align-items:center;gap:7px;border:1px solid #d1c7ad;border-radius:18px;background:#faf0d6}.figma-cafe-wallet img{width:105px;height:70px;object-fit:contain}.figma-cafe-wallet article>b{font-size:15px}.figma-cafe-wallet article>div{display:grid;grid-template-columns:38px 48px 38px;align-items:center;gap:3px}.figma-cafe-wallet button{width:38px;height:38px;border:0;border-radius:12px;color:#fff;background:#5c8b67;cursor:pointer;font-size:21px}.figma-cafe-wallet button:disabled{color:#9b9b90;background:#e1e1d8;cursor:not-allowed}.figma-cafe-wallet output{text-align:center;font-weight:850}.figma-cafe-total{margin-top:15px;padding:15px 20px;display:flex;justify-content:space-between;border-radius:18px;background:#e8f5e5}.figma-cafe-total strong{font-size:26px}
+.figma-cafe-done{display:grid;grid-template-columns:420px 1fr;align-items:center;gap:36px;border-radius:32px}.figma-cafe-done>img{width:100%;height:470px;object-fit:contain}.figma-cafe-done span{color:#4a7e60;font-weight:900}.figma-cafe-done h1{margin:8px 0 18px;font-size:48px}.figma-cafe-done p{color:#626d65;font-size:18px;line-height:1.7}.figma-cafe-done button{min-width:250px;padding:0 24px}
+@media(max-width:430px){.figma-cafe{padding:8px 7px 24px}.figma-cafe__bar{grid-template-columns:82px 1fr;gap:6px;margin-bottom:8px}.figma-cafe__bar>button{font-size:11px}.figma-cafe__bar>div{gap:3px}.figma-cafe__bar span{font-size:0}.figma-cafe__bar span:not(:last-child)::after{width:8px}.figma-cafe-map,.figma-cafe-panel{min-height:calc(100svh - 76px)}.figma-cafe-map{padding:42px 10px 20px}.figma-cafe-map__stones{grid-template-columns:1fr 1fr;gap:15px 4px}.figma-cafe-map__stones>button{min-height:170px}.figma-cafe-map__stones strong{height:36px;font-size:14px}.figma-cafe-map__stones span{height:115px}.figma-cafe-map__stones img{height:110px}.figma-cafe-map__stones span::after{height:37px}.figma-cafe-map__path{display:none}.figma-cafe-panel{padding:20px 12px}.figma-cafe-panel>h1,.figma-cafe-panel__heading h1{font-size:21px}.figma-cafe-panel>h2{margin-top:28px;font-size:20px}.figma-cafe-queue::before{width:calc(100% - 24px);height:340px;top:100px}.figma-cafe-queue__choice{width:100%;margin-top:95px;grid-template-columns:1fr 1fr}.figma-cafe-queue__choice button{height:230px;padding:25px 12px}.figma-cafe-queue__choice b{font-size:18px}.figma-cafe-queue__choice span{font-size:24px;letter-spacing:4px}.figma-cafe-queue__choice strong{font-size:21px}.figma-cafe-hint{width:100%;min-height:58px;margin-top:32px;font-size:15px}.figma-cafe-panel__heading{align-items:flex-start;gap:8px}.figma-cafe-panel__heading>strong{min-width:120px;padding:10px 6px;font-size:12px}.figma-cafe-menu aside{min-height:240px;padding:15px}.figma-cafe-menu aside ul{min-height:30px}.figma-cafe-menu aside>p{margin:13px 0 5px}.figma-cafe-menu aside button{min-height:60px;margin:15px 0 0}.figma-cafe-money-hint{width:100%;margin-top:25px}.figma-cafe-pay__layout{grid-template-columns:1fr}.figma-cafe-wallet{grid-template-columns:1fr}.figma-cafe-wallet article{grid-template-columns:90px 63px 1fr}.figma-cafe-wallet img{width:85px}.figma-cafe-done{grid-template-columns:1fr;text-align:center}.figma-cafe-done>img{height:280px}.figma-cafe-done h1{font-size:34px}}
 
 @media (max-width: 760px) {
   .onboarding-name-card input { min-height:58px; font-size:20px; }.onboarding-tutorial { padding:70px 12px 24px; }.onboarding-skip--top { right:9px; top:10px; }.tutorial-card { min-height:calc(100svh - 100px); padding:22px 15px; display:flex; flex-direction:column; gap:0; }.tutorial-card .morami-frame { width:180px; height:200px; }.tutorial-card h1 { font-size:27px; }.tutorial-card > div:last-child { width:100%; }.tutorial-choices button { min-height:52px; font-size:14px; }
@@ -641,45 +641,48 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-action,.figma-cafe-done button{
   border:0;color:#29241f;background:#b8e0b2;box-shadow:none;font-weight:500;
 }
+/* 네 스테이지를 다 깬 뒤 지도에서 바로 집으로 갈 수 있게 두는 버튼. */
+.figma-cafe-map__heading>.figma-cafe-action{min-height:52px;margin-top:16px;padding:0 26px;font-size:18px}
+/* 완료 화면의 보조 선택지. 주 버튼(집으로)보다 가벼워 보여야 한다. */
+.figma-cafe-done__practice{
+  color:#4f3528;background:#f7dfc2;
+}
 .figma-cafe-feedback{padding:0;background:transparent}
 .figma-cafe-queue::before{background:#ebf2ff}
 .figma-cafe-queue__choice button{border:0;background:#f0e5cc;box-shadow:none}
 .figma-cafe-queue__choice button:last-child{background:#e8f5e5}
-.figma-cafe-menu__layout{grid-template-columns:minmax(0,1fr) 225px;gap:42px}
-.figma-cafe-menu__grid{gap:27px 30px}
-.figma-cafe-menu__grid button{
-  height:195px;padding:9px 16px 12px;grid-template-rows:106px 1fr;
-  border:1px solid #d1c7ad;background:#faf0d6;box-shadow:none;
-}
-.figma-cafe-menu__grid button:hover{transform:none;border-color:#d1c7ad;box-shadow:none}
-.figma-cafe-menu__grid button.is-selected{border:4px solid #74a869;background:#eef7e9;box-shadow:none}
-.figma-cafe-menu__grid img{height:105px}.figma-cafe-menu__grid b{font-size:19px;font-weight:500}.figma-cafe-menu__grid strong{font-weight:500}
+
+
+
+
+
+
 .figma-cafe-panel__heading>strong{border-color:#d1c7ad;color:#29241f;background:#ffeb99;font-weight:500}
 .figma-cafe-menu aside{min-height:420px;border:1px solid #d1c7ad;background:#f0f5e8;box-shadow:none}
 .figma-cafe-menu aside button{min-height:88px;margin:35px 0 -123px;border-radius:20px;color:#29241f;background:#b8e0b2;font-weight:500}
-.figma-cafe-sum__equation{margin-top:60px;gap:12px}
-.figma-cafe-sum__equation article{min-height:230px;border:0;background:#faf0d6;box-shadow:none}
-.figma-cafe-sum__equation article span{font-size:22px;font-weight:500}.figma-cafe-sum__equation article strong{font-size:28px;font-weight:500}
-.figma-cafe-sum__equation label{min-height:160px;border:0;background:#e8f5e5}
-.figma-cafe-sum__equation label>span{font-weight:500}.figma-cafe-sum__equation input{font-weight:500}
-.figma-cafe-sum__equation label>div{display:grid;grid-template-columns:minmax(0,1fr) 28px;align-items:center;direction:ltr}
-.figma-cafe-sum__equation label input{width:100%;text-align:right}.figma-cafe-sum__equation label small{display:block;text-align:left}
+
+
+
+
+
+
+
 .figma-cafe-money-hint{width:70%;min-height:95px;margin-top:68px;padding:18px;gap:12px;background:#ebf2ff}
 .figma-cafe-money-hint span{width:auto;display:inline;color:#29241f;font-size:18px;line-height:normal;white-space:nowrap}
 .figma-cafe-pay__layout>aside,.figma-cafe-wallet article{background:#fffaf1}
-.figma-cafe-change__equation{border:0;background:#f0e5cc}
-.figma-cafe-change__builder aside{background:#ebf2ff}
+
+
 @media(max-width:900px){
-  .figma-cafe__bar{display:block}.figma-cafe-sum__equation{grid-template-columns:minmax(150px,1fr) 32px minmax(150px,1fr)}
+  .figma-cafe__bar{display:block}
 }
 @media(max-width:430px){
   .figma-cafe{padding:7px 6px 24px;background-attachment:scroll}
   .figma-cafe__bar{min-height:40px;margin-bottom:6px;padding:0;background:transparent}.figma-cafe__bar>button{min-height:38px}
   .figma-cafe-map{border-radius:18px}.figma-cafe-panel{padding:20px 12px;border-radius:0;background:#fffced}
-  .figma-cafe-menu__layout{gap:12px}.figma-cafe-menu__grid{gap:8px}
-  .figma-cafe-menu__grid button{height:170px;grid-template-rows:95px 1fr}.figma-cafe-menu__grid img{height:95px}
+  
+  
   .figma-cafe-menu aside button{min-height:60px;margin:15px 0 0}
-  .figma-cafe-sum__equation{margin-top:34px;gap:6px}.figma-cafe-sum__equation article{min-height:180px}
+  
   .figma-cafe-money-hint{width:100%;margin-top:25px;padding:14px 8px;gap:8px}.figma-cafe-money-hint span{font-size:13px}
 }
 
@@ -719,8 +722,8 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   min-height:720px;padding:34px 38px;border:4px solid rgba(255,255,255,.9);border-radius:34px;
   background:rgba(255,252,246,.9);box-shadow:0 28px 70px rgba(71,47,32,.2);backdrop-filter:blur(8px);
 }
-.figma-cafe-mission-title{text-align:center}.figma-cafe-mission-title>span,.figma-cafe-panel__heading>div>span{display:inline-block;padding:5px 11px;border-radius:999px;color:#8e5d3d;background:#f7e0c4;font-size:11px;font-weight:950;letter-spacing:.08em}
-.figma-cafe-mission-title h1,.figma-cafe-panel__heading h1{margin:7px 0 2px;color:#4f3528;font-size:34px;font-weight:950;letter-spacing:-1.5px}.figma-cafe-mission-title p,.figma-cafe-panel__heading p{margin:0;color:#7c6c62;font-size:15px}
+.figma-cafe-panel__heading>div>span{display:inline-block;padding:5px 11px;border-radius:999px;color:#8e5d3d;background:#f7e0c4;font-size:11px;font-weight:950;letter-spacing:.08em}
+.figma-cafe-panel__heading h1{margin:7px 0 2px;color:#4f3528;font-size:34px;font-weight:950;letter-spacing:-1.5px}.figma-cafe-panel__heading p{margin:0;color:#7c6c62;font-size:15px}
 
 .figma-cafe-queue::before{display:none}.figma-cafe-queue__choice{width:min(850px,100%);margin:35px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .figma-cafe-queue__choice .queue-lane{height:390px;padding:22px 25px;position:relative;display:flex;flex-direction:column;align-items:stretch;border:4px solid #fff;border-radius:30px;color:#4f3528;background:linear-gradient(180deg,#fff7e8,#f7e1bf);box-shadow:0 14px 0 #dfbd8d,0 22px 35px rgba(99,65,38,.15);text-align:left;transition:transform .2s,box-shadow .2s;overflow:hidden}
@@ -736,30 +739,25 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-guide{width:min(650px,100%);margin:38px auto 0;display:flex;align-items:center;justify-content:center}.figma-cafe-guide img{width:76px;height:76px;position:relative;z-index:2;object-fit:contain}.figma-cafe-hint{width:auto;min-height:58px;margin:0 0 0 -10px;padding:0 28px 0 34px;border:3px solid #fff;border-radius:20px;background:#eaf1ff;box-shadow:0 8px 20px rgba(77,91,116,.12);font-size:14px;font-weight:850}
 
 .figma-cafe-panel__heading{align-items:center}.figma-cafe-panel__heading>div h1{margin:6px 0 1px}.figma-cafe-panel__heading>strong{min-width:210px;padding:13px 20px;border:3px solid #fff;border-radius:18px;background:#ffe394;box-shadow:0 7px 0 #e5bd58;font-size:14px;font-weight:850}.figma-cafe-panel__heading>strong b{margin-left:8px;font-size:21px}
-.figma-cafe-menu__layout{margin-top:30px;grid-template-columns:minmax(0,1fr) 235px;gap:24px}.figma-cafe-menu__grid{gap:16px}.figma-cafe-menu__grid button{height:205px;padding:10px 14px 13px;position:relative;grid-template-rows:118px 1fr;border:3px solid #fff;border-radius:24px;background:rgba(255,246,225,.94);box-shadow:0 8px 0 #e7d1ad,0 13px 22px rgba(91,64,40,.1);transition:transform .2s,box-shadow .2s}.figma-cafe-menu__grid button:hover{transform:translateY(-4px);border-color:#fff;box-shadow:0 12px 0 #e7d1ad,0 17px 28px rgba(91,64,40,.15)}.figma-cafe-menu__grid button.is-selected{padding:10px 14px 13px;border-color:#7abd8a;background:#eef9ed;box-shadow:0 8px 0 #7abd8a,0 13px 22px rgba(68,115,76,.14)}
-.figma-cafe-menu__grid img{height:118px;filter:drop-shadow(0 8px 7px rgba(81,52,28,.16))}.figma-cafe-menu__grid span{padding:0 5px}.figma-cafe-menu__grid b{font-size:17px;font-weight:900}.figma-cafe-menu__grid strong{color:#9b5f31;font-size:17px;font-weight:900}.menu-check{width:28px;height:28px;position:absolute;right:10px;top:10px;z-index:2;display:grid;place-items:center;border-radius:50%;color:transparent;background:#eee6d9;font-style:normal}.is-selected .menu-check{color:#fff;background:#62a975}
-.figma-cafe-menu aside{min-height:425px;padding:22px 18px;border:3px solid #fff;border-radius:26px;background:rgba(241,249,237,.96);box-shadow:0 9px 0 #c9ddc3,0 16px 28px rgba(68,91,62,.1)}.order-tray-icon{font-size:34px}.figma-cafe-menu aside h2{font-size:20px;font-weight:950}.figma-cafe-menu aside ul{min-height:93px;margin:15px 0;padding:10px 0;border-top:2px dashed #c9d6c5;border-bottom:2px dashed #c9d6c5}.figma-cafe-menu aside li{margin:6px 0;display:flex;justify-content:space-between;gap:7px;font-size:12px}.figma-cafe-menu aside li.is-empty{justify-content:center;color:#8b9786}.order-tray-total{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;text-align:left}.order-tray-total span{color:#6c7968;font-size:12px}.order-tray-total strong,.order-tray-total>b{font-size:22px;text-align:right}.order-tray-total>b{color:#5d9c70}
+
+
+.figma-cafe-menu aside{min-height:425px;padding:22px 18px;border:3px solid #fff;border-radius:26px;background:rgba(241,249,237,.96);box-shadow:0 9px 0 #c9ddc3,0 16px 28px rgba(68,91,62,.1)}.figma-cafe-menu aside h2{font-size:20px;font-weight:950}.figma-cafe-menu aside ul{min-height:93px;margin:15px 0;padding:10px 0;border-top:2px dashed #c9d6c5;border-bottom:2px dashed #c9d6c5}.figma-cafe-menu aside li{margin:6px 0;display:flex;justify-content:space-between;gap:7px;font-size:12px}.figma-cafe-menu aside li.is-empty{justify-content:center;color:#8b9786}
 .figma-cafe-menu aside button{min-height:66px;margin:auto 0 0;border:0;border-radius:18px;color:#fff;background:#5ca276;box-shadow:0 6px 0 #3f7b56;font-size:17px;font-weight:950}
 
-.figma-cafe-sum__equation{margin-top:45px}.figma-cafe-sum__equation article{min-height:230px;border:4px solid #fff;border-radius:28px;background:#fff2d5;box-shadow:0 10px 0 #e5cfa1,0 17px 27px rgba(87,61,38,.1)}.figma-cafe-sum__equation article span{font-weight:900}.figma-cafe-sum__equation article strong{color:#9a5c2d;font-weight:950}.figma-cafe-sum__equation label{border:4px solid #fff;border-radius:28px;background:#e7f7e7;box-shadow:0 10px 0 #b9dbbb,0 17px 27px rgba(60,97,65,.1)}.figma-cafe-sum__equation label>span{font-weight:900}.figma-cafe-sum__equation input{font-weight:950}.figma-cafe-money-hint{margin-top:50px;border:3px solid #fff;background:#e8f0ff;box-shadow:0 8px 20px rgba(69,88,122,.1)}.figma-cafe-money-hint>b{width:100%;color:#5d6e8c;font-size:13px;text-align:center}.figma-cafe-money-hint span{padding:5px 8px;border:1px solid #b9cae7;border-radius:8px;background:#fff;color:#4a6084;font-size:12px;font-weight:900}
+.figma-cafe-money-hint{margin-top:50px;border:3px solid #fff;background:#e8f0ff;box-shadow:0 8px 20px rgba(69,88,122,.1)}.figma-cafe-money-hint>b{width:100%;color:#5d6e8c;font-size:13px;text-align:center}.figma-cafe-money-hint span{padding:5px 8px;border:1px solid #b9cae7;border-radius:8px;background:#fff;color:#4a6084;font-size:12px;font-weight:900}
 .figma-cafe-action{border:3px solid #fff;color:#fff;background:#62aa7a;box-shadow:0 6px 0 #417b55;font-weight:950}
-.figma-cafe-pay__layout{margin-top:34px}.figma-cafe-pay__layout>aside{border:4px solid #fff;border-radius:26px;background:#fff6e7;box-shadow:0 9px 0 #e3cba7}.figma-cafe-pay__layout>aside>span{color:#8e6244;font-weight:900}.figma-cafe-pay__layout>aside>strong{border-color:#dcc4a2}.figma-cafe-wallet{gap:14px}.figma-cafe-wallet article{padding:13px;border:3px solid #fff;border-radius:22px;background:#fffaf0;box-shadow:0 7px 0 #e1d2b7}.figma-cafe-wallet img{filter:drop-shadow(0 6px 6px rgba(57,44,27,.15))}.figma-cafe-wallet button,.figma-cafe-change__builder article button{background:#62a97a;box-shadow:0 4px 0 #3e7a54}.figma-cafe-total{border:3px solid #fff;background:#e4f4e6;box-shadow:0 7px 0 #bad6be}
-.figma-cafe-change__equation{margin-top:36px;border:4px solid #fff;border-radius:24px;background:#f5e4c8;box-shadow:0 8px 0 #dfc39a;font-weight:850}.figma-cafe-change>p:not(.figma-cafe-feedback){font-weight:850}.figma-cafe-change__builder article{border:4px solid #fff;border-radius:25px;background:#dff1dc;box-shadow:0 8px 0 #aed1aa}.figma-cafe-change__builder article.is-500{background:#f8e3a5;box-shadow:0 8px 0 #ddbf68}.figma-cafe-change__builder aside{border:4px solid #fff;border-radius:25px;background:#e7efff;box-shadow:0 8px 0 #bdcce8}.figma-cafe-change__builder aside span{color:#60708e;font-weight:900}
-@media(max-width:760px){.figma-cafe__bar{grid-template-columns:78px 1fr}.figma-cafe__place{display:none}.figma-cafe__bar .figma-cafe__steps{justify-content:center}.figma-cafe-panel{padding:25px 17px}.figma-cafe-queue__choice{gap:10px}.figma-cafe-queue__choice .queue-lane{height:330px;padding:15px 12px}.queue-lane__people{gap:3px!important}.queue-lane__people>i{transform:scale(.75);margin:0 -6px}.figma-cafe-menu__layout{grid-template-columns:1fr}.figma-cafe-menu aside{min-height:280px}.figma-cafe-sum__equation{grid-template-columns:1fr 28px 1fr}.figma-cafe-sum__equation label{grid-column:1/4}}
-@media(max-width:430px){.figma-cafe__bar .figma-cafe__steps{display:flex}.figma-cafe-panel{border-radius:24px}.figma-cafe-mission-title h1,.figma-cafe-panel__heading h1{font-size:25px}.figma-cafe-queue__choice{grid-template-columns:1fr}.figma-cafe-queue__choice .queue-lane{height:260px}.queue-lane__people{margin:8px 0}.figma-cafe-menu__grid{grid-template-columns:1fr 1fr}.figma-cafe-menu__grid button{height:175px;grid-template-rows:95px 1fr}.figma-cafe-menu__grid img{height:95px}}
+.figma-cafe-pay__layout{margin-top:34px}.figma-cafe-pay__layout>aside{border:4px solid #fff;border-radius:26px;background:#fff6e7;box-shadow:0 9px 0 #e3cba7}.figma-cafe-pay__layout>aside>span{color:#8e6244;font-weight:900}.figma-cafe-pay__layout>aside>strong{border-color:#dcc4a2}.figma-cafe-wallet{gap:14px}.figma-cafe-wallet article{padding:13px;border:3px solid #fff;border-radius:22px;background:#fffaf0;box-shadow:0 7px 0 #e1d2b7}.figma-cafe-wallet img{filter:drop-shadow(0 6px 6px rgba(57,44,27,.15))}.figma-cafe-wallet button{background:#62a97a;box-shadow:0 4px 0 #3e7a54}.figma-cafe-total{border:3px solid #fff;background:#e4f4e6;box-shadow:0 7px 0 #bad6be}
+
+@media(max-width:760px){.figma-cafe__bar{grid-template-columns:78px 1fr}.figma-cafe__place{display:none}.figma-cafe__bar .figma-cafe__steps{justify-content:center}.figma-cafe-panel{padding:25px 17px}.figma-cafe-queue__choice{gap:10px}.figma-cafe-queue__choice .queue-lane{height:330px;padding:15px 12px}.queue-lane__people{gap:3px!important}.queue-lane__people>i{transform:scale(.75);margin:0 -6px}.figma-cafe-menu aside{min-height:280px}}
+@media(max-width:430px){.figma-cafe__bar .figma-cafe__steps{display:flex}.figma-cafe-panel{border-radius:24px}.figma-cafe-panel__heading h1{font-size:25px}.figma-cafe-queue__choice{grid-template-columns:1fr}.figma-cafe-queue__choice .queue-lane{height:260px}.queue-lane__people{margin:8px 0}}
 
 /* Mission 3: selected food photos + tactile money picker */
-.figma-cafe-sum__equation{
-  width:min(930px,100%);margin:30px auto 0;display:flex;align-items:center;justify-content:center;gap:12px;
-}
-.figma-cafe-sum__equation>div{display:flex;align-items:center;gap:12px}
-.figma-cafe-sum__equation article{
-  width:205px;min-height:185px;padding:13px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.figma-cafe-sum__equation article img{width:130px;height:82px;margin-bottom:3px;object-fit:contain;filter:drop-shadow(0 7px 6px rgba(81,52,28,.16))}
-.figma-cafe-sum__equation article span{font-size:17px}.figma-cafe-sum__equation article strong{margin-top:8px;font-size:22px}
-.figma-cafe-sum__equation .figma-cafe-sum__total{width:175px;min-height:138px;background:#e7f7e7;box-shadow:0 9px 0 #b9dbbb,0 16px 25px rgba(60,97,65,.1)}
-.figma-cafe-sum__equation .figma-cafe-sum__total span{color:#56745d;font-size:14px}.figma-cafe-sum__equation .figma-cafe-sum__total strong{color:#3d7250;font-size:25px}
+
+
+
+
+
+
 .figma-cafe-sum-wallet{
   width:min(1000px,100%);margin:34px auto 0;padding:20px;border:4px solid #fff;border-radius:28px;
   background:rgba(234,241,255,.93);box-shadow:0 10px 0 #c6d4eb,0 18px 32px rgba(69,88,122,.12);
@@ -770,13 +768,13 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-sum-wallet .figma-cafe-wallet img{width:100%;height:76px;object-fit:contain}.figma-cafe-sum-wallet .figma-cafe-wallet article>b{color:#60483a;font-size:14px}
 .figma-cafe-sum-wallet .figma-cafe-wallet article>div{grid-template-columns:38px 52px 38px}.figma-cafe-sum-wallet .figma-cafe-wallet output{color:#4f3528;font-size:14px}
 .figma-cafe-sum-wallet .figma-cafe-total{margin-top:16px;padding:13px 20px;align-items:center}.figma-cafe-sum-wallet .figma-cafe-total span{font-weight:850}.figma-cafe-sum-wallet .figma-cafe-total strong{color:#3d7250;font-size:27px}
-.figma-cafe-sum .figma-cafe-action{margin-top:25px}
+
 @media(max-width:760px){
-  .figma-cafe-sum__equation{gap:7px;flex-wrap:wrap}.figma-cafe-sum__equation>div{gap:7px}.figma-cafe-sum__equation article{width:145px;min-height:160px;padding:9px}.figma-cafe-sum__equation article img{width:100px;height:68px}.figma-cafe-sum__equation .figma-cafe-sum__total{width:155px;min-height:105px}
+  
   .figma-cafe-sum-wallet{padding:14px}.figma-cafe-sum-wallet .figma-cafe-wallet{grid-template-columns:1fr 1fr;gap:9px}.figma-cafe-sum-wallet .figma-cafe-wallet article{min-height:155px}.figma-cafe-sum-wallet .figma-cafe-wallet img{height:66px}
 }
 @media(max-width:430px){
-  .figma-cafe-sum__equation article{width:124px;min-height:145px}.figma-cafe-sum__equation article span{font-size:14px}.figma-cafe-sum__equation article strong{font-size:17px}.figma-cafe-sum__equation .figma-cafe-sum__total{width:145px}
+  
   .figma-cafe-sum-wallet__heading h2{font-size:18px}.figma-cafe-sum-wallet .figma-cafe-wallet article>div{grid-template-columns:34px 43px 34px}.figma-cafe-sum-wallet .figma-cafe-wallet button{width:34px;height:34px}
 }
 
@@ -808,45 +806,40 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* Stage 1 dialogue flow — follows the provided five-screen storyboard */
 .figma-cafe-queue-story{min-height:744px;padding:24px 34px 26px;position:relative;display:flex;flex-direction:column;background:rgba(255,252,240,.94)}
 .figma-cafe--queue .figma-cafe__bar{display:none}
-.queue-star-note{width:66px;height:66px;position:absolute;right:24px;top:20px;z-index:5;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;color:#745b25;background:#fff2b2;box-shadow:0 6px 18px rgba(89,72,35,.14);font-size:24px}.queue-star-note span{font-size:9px;font-weight:950}
-.queue-story-scene{min-height:470px;padding:16px 70px 0;position:relative;display:grid;grid-template-columns:280px 1fr;align-items:end}.queue-story-morami{width:270px;height:330px;position:relative;z-index:2;object-fit:contain;object-position:center bottom}.queue-story-lines{height:330px;display:flex;align-items:flex-start;justify-content:center;gap:105px;padding-top:20px}.queue-story-lines>div{display:flex;flex-direction:column;align-items:center;gap:-4px}.queue-story-lines i{width:76px;height:83px;position:relative;display:block}.queue-story-lines i b{width:49px;height:49px;position:absolute;left:14px;top:0;border:4px solid #fff;border-radius:50%;background:#efc19c;box-shadow:0 4px 9px rgba(80,53,38,.12)}.queue-story-lines i span{width:39px;height:47px;position:absolute;left:19px;top:39px;border:4px solid #fff;border-radius:16px 16px 7px 7px;background:#ef9ba0}.queue-story-lines>div i:nth-child(2) span{background:#74b9d9}.queue-story-lines>div i:nth-child(3) span{background:#f0c85e}.queue-story-lines>div:last-child i:first-child span{background:#b397d1}
-.queue-story-input{position:absolute;right:42px;bottom:12px;display:flex;align-items:center;gap:10px}.queue-story-input input{width:420px;height:58px;padding:0 20px;border:4px solid #79cda5;border-radius:17px;background:#fff;color:#34473e;font-size:18px;outline:none}.queue-story-input button,.queue-story-options button{min-height:58px;padding:0 20px;border:0;border-radius:16px;color:#fff;background:#72c79f;font-size:17px;font-weight:950}.queue-story-input button:disabled{opacity:.5}.queue-story-options{position:absolute;right:52px;bottom:50px;display:grid;gap:9px}.queue-story-options button{min-width:150px;border:4px solid #79cda5;color:#33453d;background:#fff;box-shadow:none}.queue-story-options button:hover{color:#fff;background:#72c79f}
+
+
+
 .queue-story-dialogue{min-height:150px;margin-top:auto;padding:24px 34px 25px;position:relative;border:5px solid #79cda5;border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 8px 23px rgba(55,91,72,.1)}.queue-story-dialogue b{display:block;margin-bottom:8px;font-size:27px}.queue-story-dialogue p{margin:0;color:#20241f;font-size:22px;font-weight:760;line-height:1.5}.queue-story-dialogue small{display:block;margin-top:6px;color:#b16e43;font-size:13px;font-weight:900}.queue-story-dialogue button{position:absolute;right:24px;bottom:14px;border:0;color:#6a756f;background:transparent;font-size:13px}.queue-story-dialogue button::after{content:"";margin-left:5px;display:inline-block;border-left:11px solid #72c79f;border-top:7px solid transparent;border-bottom:7px solid transparent}
 .queue-note-scene{min-height:450px;padding:42px 75px 10px;display:grid;grid-template-columns:280px 1fr;align-items:center;gap:38px}.queue-note-scene>img{width:270px;height:330px;object-fit:contain}.queue-note-scene>article{min-height:265px;padding:42px 45px;position:relative;border:4px solid #8e7ed0;border-radius:24px;background:#fff5e7;box-shadow:14px 14px 0 #ddd6ff}.queue-note-scene>article::before{content:"";height:18px;position:absolute;left:28px;right:28px;top:-12px;border-radius:10px;background:repeating-linear-gradient(90deg,#ef6f91 0 11px,#765cff 11px 19px,#fff 19px 28px)}.queue-note-scene article span{color:#6b5da9;font-size:17px;font-weight:950}.queue-note-scene article h2{margin:30px 0 8px;color:#3f3b36;font-size:24px;line-height:1.45}.queue-note-scene article p{color:#6e675e;font-size:15px}.queue-note-scene article small{position:absolute;right:30px;bottom:20px;color:#af8f68}
 .queue-clear-scene{min-height:670px;padding:70px 55px;display:grid;grid-template-columns:390px 1fr;align-items:center;gap:35px}.queue-clear-scene>img{width:360px;height:420px;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(80,56,31,.14))}.queue-clear-scene>div{padding:40px;border:4px solid #fff;border-radius:34px;background:#fff;box-shadow:0 12px 0 #c9e2d0,0 22px 45px rgba(56,86,68,.13)}.queue-clear-scene span{display:inline-block;padding:6px 12px;border-radius:999px;color:#fff;background:#62a97a;font-size:12px;font-weight:950}.queue-clear-scene h1{margin:18px 0 35px;color:#3f5448;font-size:35px;line-height:1.4}.queue-clear-scene button{width:190px;min-height:60px;border:0;border-radius:17px;color:#fff;background:#72c79f;box-shadow:0 6px 0 #4c9c75;font-size:18px;font-weight:950}
-@media(max-width:760px){.figma-cafe-queue-story{padding:18px 13px}.queue-story-scene{min-height:430px;padding:35px 5px 0;grid-template-columns:150px 1fr}.queue-story-morami{width:150px;height:250px}.queue-story-lines{height:280px;gap:28px}.queue-story-lines i{transform:scale(.78);margin:-8px}.queue-story-input{left:12px;right:12px;bottom:4px}.queue-story-input input{width:100%}.queue-story-options{right:10px;bottom:25px}.queue-story-options button{min-width:120px}.queue-story-dialogue{min-height:185px;padding:20px 18px 45px}.queue-story-dialogue b{font-size:22px}.queue-story-dialogue p{font-size:17px}.queue-note-scene{padding:40px 10px 10px;grid-template-columns:140px 1fr;gap:8px}.queue-note-scene>img{width:140px;height:240px}.queue-note-scene>article{padding:32px 18px}.queue-note-scene article h2{font-size:18px}.queue-clear-scene{padding:35px 10px;grid-template-columns:1fr;text-align:center}.queue-clear-scene>img{width:230px;height:260px;margin:auto}.queue-clear-scene>div{padding:25px 15px}.queue-clear-scene h1{font-size:25px}}
+@media(max-width:760px){.figma-cafe-queue-story{padding:18px 13px}.queue-story-dialogue{min-height:185px;padding:20px 18px 45px}.queue-story-dialogue b{font-size:22px}.queue-story-dialogue p{font-size:17px}.queue-note-scene{padding:40px 10px 10px;grid-template-columns:140px 1fr;gap:8px}.queue-note-scene>img{width:140px;height:240px}.queue-note-scene>article{padding:32px 18px}.queue-note-scene article h2{font-size:18px}.queue-clear-scene{padding:35px 10px;grid-template-columns:1fr;text-align:center}.queue-clear-scene>img{width:230px;height:260px;margin:auto}.queue-clear-scene>div{padding:25px 15px}.queue-clear-scene h1{font-size:25px}}
 
 /* Queue story polish: clear people, stable controls, one next arrow */
-.queue-star-note{min-width:104px;width:auto;height:42px;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:7px;border:2px solid #f0d879;border-radius:14px;color:#725b2b;background:#fff8d8;box-shadow:0 4px 0 #ead78d;font-size:13px;font-weight:950}.queue-star-note span{color:#efb72f;font-size:18px;line-height:1}
-.queue-story-scene{min-height:485px;padding:58px 55px 10px;grid-template-columns:260px minmax(0,1fr);align-items:center;gap:35px}.queue-story-morami{width:250px;height:320px}.queue-story-task{min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:18px}.queue-story-lines{min-height:300px;height:auto;align-items:stretch;gap:30px;padding:0}.queue-story-lines>div{width:min(210px,45%);padding:13px 12px 7px;display:flex;flex-direction:column;align-items:center;border:3px solid #f0e2cf;border-radius:24px;background:rgba(255,255,255,.72);box-shadow:0 8px 20px rgba(88,61,40,.07)}.queue-story-lines>div>strong{width:100%;margin-bottom:4px;color:#765b49;font-size:14px;text-align:center}.queue-story-lines i{width:72px;height:78px;flex:0 0 78px}.queue-story-lines i b{width:46px;height:46px;left:13px;background:linear-gradient(#754d38 0 31%,#efc19c 32%)}.queue-story-lines i b::before{content:"••";position:absolute;left:12px;top:18px;color:#49362c;font-size:11px;letter-spacing:5px}.queue-story-lines i b::after{content:"⌣";position:absolute;left:16px;top:24px;color:#9b5e50;font-size:12px}.queue-story-lines i span{width:42px;height:41px;left:15px;top:38px}.queue-story-lines i em,.queue-story-lines i small{width:10px;height:17px;position:absolute;top:58px;z-index:2;border-radius:6px;background:#70554a}.queue-story-lines i em{left:18px}.queue-story-lines i small{right:18px}.queue-story-lines>div i:nth-child(3) span{background:#74b9d9}.queue-story-lines>div i:nth-child(4) span{background:#f0c85e}.queue-story-lines>div:last-child i:nth-child(2) span{background:#b397d1}.queue-story-lines>div:last-child i:nth-child(3) span{background:#74b9d9}
-.queue-story-input{width:min(570px,100%);margin:0 auto;position:static;display:grid;grid-template-columns:1fr 92px;gap:10px}.queue-story-input input{width:100%;min-width:0}.queue-story-options{width:min(570px,100%);margin:0 auto;position:static;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.queue-story-options button{min-width:0;box-shadow:0 4px 0 #c5e5d5}.queue-story-dialogue button::after{content:none}.queue-story-dialogue .queue-story-next::after{content:"";margin-left:7px;display:inline-block;border-left:11px solid #72c79f;border-top:7px solid transparent;border-bottom:7px solid transparent}.queue-note-scene>article{min-height:250px;display:flex;flex-direction:column;justify-content:center;box-shadow:12px 12px 0 #ddd6ff}.queue-note-scene article h2{margin:25px 0 0}
+.queue-story-task{min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:18px}
+.queue-story-dialogue button::after{content:none}.queue-story-dialogue .queue-story-next::after{content:"";margin-left:7px;display:inline-block;border-left:11px solid #72c79f;border-top:7px solid transparent;border-bottom:7px solid transparent}.queue-note-scene>article{min-height:250px;display:flex;flex-direction:column;justify-content:center;box-shadow:12px 12px 0 #ddd6ff}.queue-note-scene article h2{margin:25px 0 0}
 
-/* Menu story: mission → Mormey's choice → learner choice → thanks */
-.cafe-menu-brief,.cafe-menu-mormey,.cafe-menu-thanks{min-height:610px;padding:55px 70px;display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:45px;border:3px solid #fff;border-radius:30px;background:linear-gradient(135deg,#fffaf0,#f4e2c6);box-shadow:0 11px 0 #dfc6a2}.cafe-menu-brief>div>span,.cafe-menu-mormey>div>span,.cafe-menu-thanks>div>span{display:inline-block;padding:6px 12px;border-radius:999px;color:#fff;background:#e56e4f;font-size:11px;font-weight:950}.cafe-menu-brief h1,.cafe-menu-mormey h1,.cafe-menu-thanks h1{margin:12px 0 8px;color:#4f3528;font-size:38px;line-height:1.25}.cafe-menu-brief p,.cafe-menu-mormey p,.cafe-menu-thanks p{color:#78685e;line-height:1.6}.cafe-menu-brief ol{margin:28px 0;padding:0;display:grid;gap:12px;list-style:none}.cafe-menu-brief li{padding:14px 16px;display:flex;align-items:center;gap:12px;border-radius:17px;background:#fff}.cafe-menu-brief li b{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:#fff;background:#e56e4f}.cafe-menu-brief button,.cafe-menu-mormey button,.cafe-menu-thanks button{min-width:190px;min-height:58px;border:0;border-radius:17px;color:#fff;background:#5ca276;box-shadow:0 6px 0 #3f7b56;font-size:17px;font-weight:950}.cafe-menu-brief>img,.cafe-menu-thanks>img{width:100%;height:420px;object-fit:contain}.cafe-menu-mormey{grid-template-columns:.75fr 1.25fr}.cafe-menu-mormey>img{width:100%;height:400px;object-fit:contain}.cafe-menu-mormey>div>div{width:min(390px,100%);margin:22px 0;padding:15px;display:flex;align-items:center;gap:20px;border:3px solid #fff;border-radius:22px;background:#fff4dc;box-shadow:0 7px 0 #e4cc9e}.cafe-menu-mormey>div>div img{width:120px;height:95px;object-fit:contain}.cafe-menu-mormey>div>div strong{display:flex;flex-direction:column;font-size:20px}.cafe-menu-mormey>div>div b{margin-top:5px;color:#a65e31}.figma-cafe-menu__grid button.is-mormey-pick{cursor:default}.figma-cafe-menu__grid button.is-mormey-pick small{margin-top:5px;color:#5d9c70;font-size:10px;font-weight:950}.cafe-menu-thanks{grid-template-columns:.8fr 1.2fr}.cafe-menu-thanks p{padding:18px;border-radius:18px;background:#fff;font-size:18px}.cafe-menu-thanks p strong{color:#5d9c70;font-size:23px}
-@media(max-width:760px){.queue-star-note{right:14px;top:14px}.queue-story-scene{min-height:500px;padding:54px 5px 0;grid-template-columns:130px minmax(0,1fr);gap:8px}.queue-story-morami{width:130px;height:230px}.queue-story-lines{min-height:285px;height:auto;gap:7px}.queue-story-lines>div{width:50%;padding:9px 2px 5px}.queue-story-lines i{transform:scale(.78);margin:-8px}.queue-story-input{grid-template-columns:1fr 72px;gap:6px}.queue-story-input input{padding:0 12px;font-size:14px}.queue-story-input button,.queue-story-options button{padding:0 8px;font-size:13px}.queue-story-options{gap:5px}.cafe-menu-brief,.cafe-menu-mormey,.cafe-menu-thanks{min-height:620px;padding:30px 20px;grid-template-columns:1fr;text-align:center;gap:10px}.cafe-menu-brief h1,.cafe-menu-mormey h1,.cafe-menu-thanks h1{font-size:28px}.cafe-menu-brief ol{text-align:left}.cafe-menu-brief>img,.cafe-menu-mormey>img,.cafe-menu-thanks>img{height:240px}.cafe-menu-mormey>div>div{margin:18px auto}.cafe-menu-thanks>img{order:2}}
+/* Menu story: mission → Mormey's choice → learner choice → thanks */.cafe-menu-thanks{min-height:610px;padding:55px 70px;display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:45px;border:3px solid #fff;border-radius:30px;background:linear-gradient(135deg,#fffaf0,#f4e2c6);box-shadow:0 11px 0 #dfc6a2}.cafe-menu-thanks>div>span{display:inline-block;padding:6px 12px;border-radius:999px;color:#fff;background:#e56e4f;font-size:11px;font-weight:950}.cafe-menu-thanks h1{margin:12px 0 8px;color:#4f3528;font-size:38px;line-height:1.25}.cafe-menu-thanks p{color:#78685e;line-height:1.6}.cafe-menu-thanks button{min-width:190px;min-height:58px;border:0;border-radius:17px;color:#fff;background:#5ca276;box-shadow:0 6px 0 #3f7b56;font-size:17px;font-weight:950}.cafe-menu-thanks>img{width:100%;height:420px;object-fit:contain}.cafe-menu-thanks{grid-template-columns:.8fr 1.2fr}.cafe-menu-thanks p{padding:18px;border-radius:18px;background:#fff;font-size:18px}.cafe-menu-thanks p strong{color:#5d9c70;font-size:23px}
+@media(max-width:760px){.cafe-menu-thanks{min-height:620px;padding:30px 20px;grid-template-columns:1fr;text-align:center;gap:10px}.cafe-menu-thanks h1{font-size:28px}.cafe-menu-thanks>img{height:240px}.cafe-menu-thanks>img{order:2}}
 
 /* Dynamic café practice: budget, addition, and change */
-.order-tray-total .is-over{color:#d95847}.figma-cafe-menu aside:has(.is-over){background:#fff1ec;box-shadow:0 9px 0 #efb7ac,0 16px 28px rgba(120,64,52,.1)}
-.cafe-sum-menu-picker{width:min(1000px,100%);margin:25px auto 0;padding:18px;display:grid;grid-template-columns:220px 1fr;gap:16px;border:4px solid #fff;border-radius:27px;background:#f4ead9;box-shadow:0 8px 0 #ddc8a8}.cafe-sum-menu-picker>div:first-child{padding:12px;display:flex;flex-direction:column;align-items:center;border-radius:20px;background:#fff}.cafe-sum-menu-picker>div:first-child img{width:150px;height:95px;object-fit:contain}.cafe-sum-menu-picker>div:first-child span{color:#6d796f;font-size:11px}.cafe-sum-menu-picker>div:first-child strong{margin-top:5px;text-align:center}.cafe-sum-menu-picker__choices{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.cafe-sum-menu-picker__choices button{min-width:0;padding:7px 4px;display:flex;flex-direction:column;align-items:center;border:3px solid #fff;border-radius:16px;color:#4f3528;background:#fff8e9;box-shadow:0 4px 0 #dfcfb4}.cafe-sum-menu-picker__choices button.is-selected{border-color:#73bd8b;background:#ebf8ed;box-shadow:0 4px 0 #73a982}.cafe-sum-menu-picker__choices img{width:90px;height:65px;object-fit:contain}.cafe-sum-menu-picker__choices span{font-size:11px;font-weight:900}.cafe-sum-menu-picker__choices b{margin-top:3px;color:#9b5f31;font-size:11px}.figma-cafe-sum__answer{width:190px;min-height:145px;padding:15px;display:grid;grid-template-columns:1fr auto;align-items:center;border:4px solid #fff;border-radius:25px;background:#e7f7e7;box-shadow:0 9px 0 #b9dbbb}.figma-cafe-sum__answer span{grid-column:1/3;color:#56745d;font-size:13px;font-weight:900}.figma-cafe-sum__answer input{width:120px;min-width:0;border:0;border-bottom:3px solid #78aa82;color:#3d7250;background:transparent;font-size:28px;font-weight:950;text-align:center;outline:none}.figma-cafe-sum__answer b{color:#3d7250}.cafe-change-order{width:min(610px,100%);margin:25px auto 0;padding:12px 24px;display:grid;grid-template-columns:180px 1fr;align-items:center;border:4px solid #fff;border-radius:27px;background:#fff3dd;box-shadow:0 8px 0 #e2cba3}.cafe-change-order>img{width:170px;height:190px;object-fit:contain}.cafe-change-order>div{display:grid;grid-template-columns:130px 1fr;align-items:center}.cafe-change-order>div>span{grid-column:1/3;color:#8e6244;font-size:12px;font-weight:950}.cafe-change-order>div img{width:120px;height:90px;object-fit:contain}.cafe-change-order>div strong{font-size:18px}
-@media(max-width:760px){.cafe-sum-menu-picker{grid-template-columns:1fr}.cafe-sum-menu-picker__choices{grid-template-columns:repeat(3,1fr)}.cafe-change-order{grid-template-columns:120px 1fr;padding:10px}.cafe-change-order>img{width:120px;height:150px}.cafe-change-order>div{grid-template-columns:90px 1fr}.cafe-change-order>div img{width:85px}.queue-story-lines i{height:64px;flex-basis:64px;transform:scale(.72);margin:-6px}}
+
 
 /* Child-facing simplification and recovery controls */
 .answer-grid--comparison{grid-template-columns:repeat(3,minmax(0,1fr))}
 .answer-grid--comparison button{font-size:clamp(17px,2vw,25px)}
-.queue-story-lines i{width:54px;height:61px;flex:0 0 61px;margin:-3px 0;position:relative;display:block;transform:none}
-.queue-story-lines i::before{content:"";width:34px;height:34px;position:absolute;left:10px;top:0;border:3px solid #fff;border-radius:50%;background:#efc19c;box-shadow:0 3px 8px rgba(80,53,38,.1)}
-.queue-story-lines i span{width:36px;height:32px;position:absolute;left:9px;top:29px;border:3px solid #fff;border-radius:12px 12px 6px 6px;background:#ef9ba0}
-.queue-story-lines i:nth-of-type(2n) span{background:#74b9d9}
-.queue-story-lines i:nth-of-type(3n) span{background:#f0c85e}
-.queue-story-lines>div:last-child i:nth-of-type(1) span{background:#b397d1}
-.cafe-change-hint{width:min(660px,100%);margin:18px auto 0;padding:18px 22px;border:3px solid #fff;border-radius:22px;color:#3f5448;background:#edf8ef;box-shadow:0 6px 0 #c7dfca;text-align:center}
-.cafe-change-hint>strong{display:block;color:#4e8e66;font-size:18px}.cafe-change-hint p{margin:7px 0;font-weight:850}.cafe-change-hint div{margin:10px auto;padding:12px;border-radius:14px;background:#fff;font-size:24px;font-weight:900}.cafe-change-hint small{display:block;color:#6a756f;font-size:14px;font-weight:800}
-.figma-cafe-home-exit{margin:14px auto 0;display:block;border:0;color:#6d756f;background:transparent;font-size:14px;font-weight:850;text-decoration:underline;cursor:pointer}
-@media(max-width:760px){.queue-story-lines i{height:52px;flex-basis:52px;margin:-2px 0;transform:scale(.78)}.answer-grid--comparison{gap:8px}.answer-grid--comparison button{padding:10px 5px}}
 
-/* 카페 맵의 줄 서기 카드와 스테이지의 시각자료를 같은 3D 대기줄 장면으로 통일한다. */
-.queue-story-scene{min-height:485px;padding:58px 55px 10px;display:block}.queue-story-task{width:min(760px,100%);margin:0 auto;gap:14px}.queue-story-visual{width:100%;margin:0;position:relative;overflow:hidden;border:3px solid #f0e2cf;border-radius:30px;background:#fffaf0;box-shadow:0 10px 24px rgba(88,61,40,.08)}.queue-story-visual img{width:100%;height:350px;display:block;object-fit:cover;object-position:center;transition:transform .2s ease}.queue-story-visual img.is-mirrored{transform:scaleX(-1)}.queue-story-visual figcaption{position:absolute;left:0;right:0;bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 15%;pointer-events:none}.queue-story-visual figcaption span{justify-self:center;padding:7px 13px;border:2px solid rgba(255,255,255,.9);border-radius:999px;color:#705242;background:rgba(255,250,240,.94);box-shadow:0 3px 8px rgba(74,52,36,.13);font-size:14px;font-weight:950}.queue-story-input,.queue-story-options{margin-top:0}.queue-story-options{grid-template-columns:repeat(5,1fr)}
-@media(max-width:760px){.queue-story-scene{min-height:500px;padding:54px 5px 0}.queue-story-task{width:100%;gap:10px}.queue-story-visual{border-radius:22px}.queue-story-visual img{height:auto;aspect-ratio:4/3;object-fit:cover}.queue-story-visual figcaption{bottom:10px;padding:0 7%;gap:4px}.queue-story-visual figcaption span{padding:5px 8px;font-size:12px}.queue-story-options{grid-template-columns:repeat(3,1fr)}}
+
+
+
+
+
+
+
+.figma-cafe-home-exit{margin:14px auto 0;display:block;border:0;color:#6d756f;background:transparent;font-size:14px;font-weight:850;text-decoration:underline;cursor:pointer}
+@media(max-width:760px){.answer-grid--comparison{gap:8px}.answer-grid--comparison button{padding:10px 5px}}
+
+/* 카페 맵의 줄 서기 카드와 스테이지의 시각자료를 같은 3D 대기줄 장면으로 통일한다. */.queue-story-task{width:min(760px,100%);margin:0 auto;gap:14px}
+@media(max-width:760px){.queue-story-task{width:100%;gap:10px}}
 
 /* Local-only Mormi-AI contract lab */
 .ai-test-page{min-height:100svh;padding:42px clamp(18px,4vw,64px) 70px;color:#2f332f;background:radial-gradient(circle at 10% 5%,#f2fff3 0,transparent 26%),linear-gradient(145deg,#fbfaf4,#f0f7ed)}
@@ -952,20 +945,12 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 /* Café menu cards: keep the content grouped instead of leaving a tall empty foot. */
-.figma-cafe-menu__grid{align-items:start}
-.figma-cafe-menu__grid button{
-  height:166px;min-height:0;padding:8px 12px 10px;grid-template-rows:88px auto;align-content:start;text-align:center
-}
-.figma-cafe-menu__grid button.is-selected{padding:8px 12px 10px}
-.figma-cafe-menu__grid img{height:86px}
-.figma-cafe-menu__grid span{padding:0;justify-content:start;align-items:center;line-height:1.2}
-.figma-cafe-menu__grid strong{margin-top:4px}
-.figma-cafe-menu__grid button.is-mormey-pick small{margin-top:3px}
 
-@media(max-width:430px){
-  .figma-cafe-menu__grid button,.figma-cafe-menu__grid button.is-selected{height:148px;padding:7px 8px 9px;grid-template-rows:76px auto}
-  .figma-cafe-menu__grid img{height:74px}
-}
+
+
+
+
+
 
 /* Unified illustrated navigation and a calmer, larger home HUD. */
 .ui-icon--asset{position:relative;overflow:visible;flex:0 0 var(--icon-size);clip-path:none!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;filter:none!important}
@@ -996,7 +981,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .destination-card--soon>span{display:flex;align-items:center;gap:6px}.destination-card--soon>span .ui-icon{filter:none}.outside-scene-head{justify-content:flex-start}
 .cafe-place-icon{position:relative}.cafe-place-icon::before{content:"";width:18px;height:13px;border:2px solid #6d4633;border-radius:2px 2px 6px 6px;background:#fff5e3}.cafe-place-icon::after{content:"";width:8px;height:9px;margin-left:-4px;border:2px solid #6d4633;border-left:0;border-radius:0 7px 7px 0}.cafe-place-icon i{width:10px;height:7px;position:absolute;left:8px;top:5px;border-left:2px solid #78ad91;border-right:2px solid #78ad91;border-radius:50%}
 .destination-card:disabled{cursor:not-allowed}.destination-card:disabled img{filter:saturate(.6) brightness(.86)}
-.figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-menu__layout,.figma-cafe-pay__layout,.figma-cafe-change__builder{min-width:0;max-width:100%}
+.figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-pay__layout{min-width:0;max-width:100%}
 
 @media(max-width:1100px){
   .journey-hub--home{padding:18px 24px 54px}
@@ -1128,16 +1113,12 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe--queue .figma-cafe-queue-story{
     flex:1 1 auto;min-height:0;margin:0 auto;padding:14px 30px 16px;
   }
-  .figma-cafe--queue .queue-star-note{right:18px;top:14px}
+  
   /* 장면 안에서는 그림만 늘었다 줄었다 하고, 대화와 입력은 제 높이를 지킨다. */
-  .figma-cafe--queue .queue-story-scene{
-    flex:1 1 auto;min-height:0;padding:44px 40px 12px;
-    display:flex;flex-direction:column;justify-content:center;
-  }
   .figma-cafe--queue .queue-story-task{flex:1 1 auto;min-height:0;justify-content:center;gap:12px}
-  .figma-cafe--queue .queue-story-visual{flex:1 1 auto;min-height:150px;display:flex}
-  .figma-cafe--queue .queue-story-visual img{flex:1;min-width:0;height:100%}
-  .figma-cafe--queue .queue-story-input,.figma-cafe--queue .queue-story-options{flex:0 0 auto}
+  
+  
+  
   .figma-cafe--queue .queue-story-dialogue{flex:0 0 auto;min-height:0;padding:18px 30px 32px}
   .figma-cafe--queue .queue-note-scene,.figma-cafe--queue .queue-clear-scene{
     flex:1 1 auto;min-height:0;padding-top:24px;padding-bottom:10px;
@@ -1148,74 +1129,46 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe--queue .cafe-ai-followup .cafe-ai-dont-know{margin-top:8px}
 }
 
-/* 줄서기도 집에서 복습한 뒤의 '모르미 가르치기'와 같은 읽기 순서를 쓴다.
-   문제 → 답하기 → 모르미의 대화 순서를 유지하고, 기존 카페 로직은 건드리지 않는다. */
-.figma-cafe--queue{padding:0 24px 28px;background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed}
-.figma-cafe--queue>.figma-cafe__bar{display:none}
-.figma-cafe--queue .figma-cafe-queue-story{width:min(1135px,100%);min-height:100svh;margin:0 auto;padding:104px 28px 18px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
-.queue-teaching-toolbar{width:calc(100% - 56px);height:88px;position:absolute;left:28px;top:20px;z-index:8;display:flex;align-items:flex-start;justify-content:space-between}
-.queue-teaching-back{min-height:48px;padding:0 18px;display:flex;align-items:center;gap:8px;border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.94);box-shadow:0 5px 0 #cce7da;cursor:pointer;font-size:15px;font-weight:900}
-.queue-teaching-back span{font-size:21px;line-height:1}.queue-teaching-back:hover{background:#effaf4;transform:translateY(-1px)}
-.queue-teaching-toolbar .queue-star-note{width:96px;height:88px;min-width:96px;padding:8px;position:static;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;border-radius:44px;color:#62509d;background:#f0eaff;box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);font-size:12px;line-height:1.15;text-align:center}
-.queue-teaching-toolbar .queue-star-note span{color:#765fc0;font-size:24px;line-height:1}
-.queue-teaching-playground{min-height:426px;display:grid;grid-template-columns:220px minmax(390px,1fr) 280px;align-items:end;gap:18px}
-.queue-teaching-morami{width:220px;height:310px;align-self:end;justify-self:center;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 16px 22px rgba(58,74,64,.12))}
-.figma-cafe--queue .queue-story-scene{width:100%;min-height:410px;padding:0;position:static;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:transparent}
-.figma-cafe--queue .queue-story-visual{width:100%;min-height:0;margin:0;position:relative;overflow:hidden;border:0;border-radius:28px;background:#fffaf0;box-shadow:0 9px 0 rgba(225,209,174,.7)}
-.figma-cafe--queue .queue-story-visual img{width:100%;height:310px;display:block;object-fit:cover;object-position:center}.figma-cafe--queue .queue-story-visual img.is-mirrored{transform:scaleX(-1)}
-.figma-cafe--queue .queue-story-visual figcaption{position:absolute;left:0;right:0;bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 13%;pointer-events:none}.figma-cafe--queue .queue-story-visual figcaption span{justify-self:center;padding:6px 12px;border:2px solid #fff;border-radius:999px;color:#705242;background:rgba(255,250,240,.95);box-shadow:0 3px 8px rgba(74,52,36,.13);font-size:13px;font-weight:950}
-.queue-teaching-answer{width:100%;min-width:0;align-self:center}.queue-teaching-answer .cafe-ai-followup{width:100%;margin:0;padding:14px;border-color:#78cda6;background:rgba(255,255,255,.96);box-shadow:0 6px 0 #cce7da}.queue-teaching-answer .cafe-ai-choices{grid-template-columns:1fr}.queue-teaching-answer .cafe-ai-followup label{font-size:14px;font-weight:850}.queue-teaching-answer .cafe-ai-followup .cafe-ai-dont-know{color:#59665f;font-size:15px;font-weight:850}
-.figma-cafe--queue .queue-story-input{width:100%;margin:0;position:static;display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:8px}.figma-cafe--queue .queue-story-input input{width:100%;min-width:0;height:62px;padding:0 15px;border:4px solid #78cda6;border-radius:15px;background:#fff;font-size:16px}.figma-cafe--queue .queue-story-input button{min-height:62px;padding:0 10px;border:0;border-radius:15px;color:#fff;background:#49ac7f;font-size:17px;font-weight:950}.figma-cafe--queue .queue-story-input button:disabled{opacity:.42}
-.figma-cafe--queue .queue-story-options{width:100%;margin:0;position:static;display:grid;grid-template-columns:1fr;gap:9px}.figma-cafe--queue .queue-story-options button{width:100%;min-width:0;min-height:58px;padding:8px 12px;border:4px solid #78cda6;border-radius:15px;color:#304c3f;background:#fff;box-shadow:none;font-size:18px;font-weight:850}.figma-cafe--queue .queue-story-options button:hover{color:#236344;background:#e7f8ef;transform:translateY(-2px)}
-.figma-cafe--queue .queue-story-dialogue{min-height:176px;margin:20px 0 0;padding:28px 48px 30px;position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;border:7px solid #78cda6;border-radius:20px;background:#fff;box-shadow:none}.figma-cafe--queue .queue-story-dialogue b{margin:0;font-size:22px}.figma-cafe--queue .queue-story-dialogue p{margin:0;padding-right:0;color:#202924;font-size:20px;line-height:1.5;font-weight:700}.figma-cafe--queue .queue-story-dialogue small{margin:0;color:#a2603e;font-size:13px;font-weight:900}
-.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know{min-width:150px;min-height:44px;margin:2px 0 0;padding:8px 16px;position:static;align-self:flex-end;border:3px solid #9cb7aa;border-radius:14px;color:#485850;background:#f7fbf9;box-shadow:0 4px 0 #d7e3dd;cursor:pointer;font-size:16px;line-height:1.25;font-weight:850}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know::after{content:none}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know:disabled{cursor:wait;opacity:.72}
 
-@media(max-width:960px){
-  .queue-teaching-playground{grid-template-columns:160px minmax(320px,1fr) 220px;gap:12px}
-  .queue-teaching-morami{width:160px;height:245px}
-  .figma-cafe--queue .queue-story-visual img{height:270px}
-  .figma-cafe--queue .queue-story-options button{min-height:50px}
-}
-@media(max-width:760px){
-  .figma-cafe--queue{padding:0 12px 24px;background-attachment:scroll}
-  .figma-cafe--queue .figma-cafe-queue-story{min-height:100svh;padding:86px 10px 14px}
-  .queue-teaching-toolbar{width:calc(100% - 20px);height:70px;left:10px;top:10px}.queue-teaching-back{min-height:43px;padding:0 13px;font-size:13px}.queue-teaching-toolbar .queue-star-note{width:78px;height:66px;min-width:78px;padding:5px;border-radius:33px;font-size:10px}.queue-teaching-toolbar .queue-star-note span{font-size:19px}
-  .queue-teaching-playground{min-height:0;grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto auto;align-items:end;gap:12px 10px}
-  .figma-cafe--queue .queue-story-scene{min-height:0;grid-column:1/3;grid-row:1;gap:10px}
-  .figma-cafe--queue .queue-story-visual{border-radius:22px}.figma-cafe--queue .queue-story-visual img{height:auto;aspect-ratio:16/10;object-fit:cover}.figma-cafe--queue .queue-story-visual figcaption{bottom:8px;padding:0 8%}.figma-cafe--queue .queue-story-visual figcaption span{padding:4px 8px;font-size:11px}
-  .queue-teaching-morami{width:112px;height:150px;grid-column:1;grid-row:2}.queue-teaching-answer{grid-column:2;grid-row:2;align-self:center}
-  .figma-cafe--queue .queue-story-options{grid-template-columns:repeat(3,1fr);gap:5px}.figma-cafe--queue .queue-story-options button{min-height:48px;padding:5px;font-size:14px}.figma-cafe--queue .queue-story-input{grid-template-columns:minmax(0,1fr) 68px;gap:5px}.figma-cafe--queue .queue-story-input input,.figma-cafe--queue .queue-story-input button{height:54px;min-height:54px;font-size:13px}.figma-cafe--queue .queue-story-input input{padding:0 9px}
-  .figma-cafe--queue .queue-story-dialogue{min-height:158px;margin-top:12px;padding:21px 18px 24px;border-width:5px}.figma-cafe--queue .queue-story-dialogue b{font-size:19px}.figma-cafe--queue .queue-story-dialogue p{font-size:16px}.figma-cafe--queue .queue-story-dialogue .queue-teaching-dont-know{min-width:132px;min-height:40px;font-size:14px}
-}
-@media(max-width:430px){
-  .queue-teaching-playground{grid-template-columns:86px minmax(0,1fr);gap:9px 7px}.queue-teaching-morami{width:86px;height:120px}.figma-cafe--queue .queue-story-visual img{aspect-ratio:4/3}.queue-teaching-start{min-height:52px;font-size:15px}
-  .figma-cafe--queue .queue-story-options{grid-template-columns:repeat(3,1fr)}.figma-cafe--queue .queue-story-dialogue{padding:18px 14px 22px}.figma-cafe--queue .queue-story-dialogue p{font-size:15px}
-}
-
-/* ── 줄 서기 스테이지: 한 화면에 담는 세로 흐름 ────────────────────────
+/* ── 카페 대화 화면: 네 스테이지가 공유하는 세로 흐름 ──────────────────
    ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
    세 덩이가 100svh 안에서 끝나야 아이가 답을 쓰러 아래로 스크롤하지 않는다.
-   높이는 vh 를 섞은 clamp 로 잡아, 노트북처럼 낮은 화면에서 먼저 줄어든다. */
-.figma-cafe--queue{height:100svh;min-height:0;padding:0 clamp(10px,2vw,24px);overflow:auto;display:flex;flex-direction:column}
-.figma-cafe--queue .figma-cafe-queue-story.is-dialogue{
+   높이는 vh 를 섞은 clamp 로 잡아, 노트북처럼 낮은 화면에서 먼저 줄어든다.
+   입력 경로는 모르미 대화 하나뿐이라 화면에 폼 창을 따로 두지 않는다. */
+.figma-cafe.is-talk{
+  height:100svh;min-height:0;padding:0 clamp(10px,2vw,24px);overflow:auto;
+  display:flex;flex-direction:column;
+  background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed
+}
+.figma-cafe.is-talk>.figma-cafe__bar{display:none}
+.figma-cafe.is-talk .cafe-talk{
   width:min(940px,100%);height:100%;min-height:0;margin:0 auto;
   padding:clamp(10px,1.8vh,18px) clamp(4px,1.4vw,16px) clamp(10px,2vh,20px);
   display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px);
+  border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible
 }
 
 /* 툴바는 그림 위에 떠 있지 않고 흐름의 첫 줄이 된다. 겹침이 없어야 아래 여백을 계산할 수 있다. */
-.is-dialogue .queue-teaching-toolbar{width:100%;height:auto;position:static;flex:0 0 auto;align-items:center}
-.is-dialogue .queue-teaching-back{min-height:clamp(38px,5vh,46px);padding:0 16px;font-size:clamp(13px,1.6vh,15px)}
-.is-dialogue .queue-teaching-toolbar .queue-star-note{
-  width:auto;min-width:0;height:auto;padding:clamp(7px,1vh,10px) 15px;
-  flex-direction:row;gap:7px;border-radius:999px;font-size:clamp(12px,1.5vh,14px)
+.cafe-talk-toolbar{width:100%;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between}
+.cafe-talk-back{
+  min-height:clamp(38px,5vh,46px);padding:0 16px;display:flex;align-items:center;gap:8px;
+  border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.94);
+  box-shadow:0 5px 0 #cce7da;cursor:pointer;font-size:clamp(13px,1.6vh,15px);font-weight:900
 }
-.is-dialogue .queue-teaching-toolbar .queue-star-note span{font-size:clamp(15px,2vh,19px)}
+.cafe-talk-back span{font-size:21px;line-height:1}
+.cafe-talk-back:hover{background:#effaf4;transform:translateY(-1px)}
+.cafe-talk-note{
+  padding:clamp(7px,1vh,10px) 15px;display:flex;align-items:center;gap:7px;
+  border-radius:999px;color:#62509d;background:#f0eaff;
+  box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);
+  font-size:clamp(12px,1.5vh,14px);font-weight:950
+}
+.cafe-talk-note span{color:#765fc0;font-size:clamp(15px,2vh,19px);line-height:1}
 
-.queue-teaching-flow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
+.cafe-talk-flow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
 
 /* ① 질문: 캐릭터와 말풍선이 한 줄. 글 길이만큼만 높이를 쓴다. */
-.is-dialogue .queue-story-dialogue{
+.cafe-talk-bubble{
   flex:0 0 auto;min-height:0;margin:0;
   padding:clamp(10px,1.6vh,18px) clamp(14px,2.2vw,24px);
   display:grid;grid-template-columns:clamp(56px,8vw,92px) minmax(0,1fr);align-items:center;
@@ -1224,52 +1177,112 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 /* 칸을 명시해 둔다. 좁은 화면 규칙이 모르미를 아랫줄로 내려 보내면
    말풍선이 캐릭터 칸으로 밀려 들어가 글자가 한 자씩 끊긴다. */
-.is-dialogue .queue-teaching-morami{
+.cafe-talk-morami{
   grid-column:1;grid-row:1;
   width:100%;height:clamp(62px,10vh,104px);align-self:center;justify-self:center;
   object-fit:contain;object-position:center bottom;filter:drop-shadow(0 9px 13px rgba(58,74,64,.14))
 }
-.is-dialogue .queue-story-dialogue__bubble{grid-column:2;grid-row:1;min-width:0}
-.is-dialogue .queue-story-dialogue b{display:block;margin:0 0 3px;color:#3f6655;font-size:clamp(14px,1.9vh,19px)}
-.is-dialogue .queue-story-dialogue p{margin:0;padding:0;color:#202924;font-size:clamp(16px,2.4vh,23px);font-weight:800;line-height:1.4}
+.cafe-talk-bubble__text{grid-column:2;grid-row:1;min-width:0}
+.cafe-talk-bubble b{display:block;margin:0 0 3px;color:#3f6655;font-size:clamp(14px,1.9vh,19px)}
+.cafe-talk-bubble p{margin:0;color:#202924;font-size:clamp(16px,2.4vh,23px);font-weight:800;line-height:1.4}
 
-/* ② 문제 그림: 남는 세로 공간을 전부 가져간다.
-   사람을 세는 문제라 한 명도 잘리면 안 된다. 바깥 칸이 높이를 받고,
+/* ② 문제 그림: 남는 세로 공간을 전부 가져간다. */
+.cafe-talk-stage{flex:1 1 auto;min-height:clamp(120px,20vh,190px);display:flex;align-items:center;justify-content:center}
+.cafe-talk-stage>*{max-height:100%}
+
+/* 줄 서기 사진. 사람을 세는 문제라 한 명도 잘리면 안 된다. 바깥 칸이 높이를 받고,
    그림틀은 원본 비율(4:3)을 지킨 채 그 안에서만 커졌다 작아진다.
    틀과 그림의 비율이 같으니 "왼쪽 줄·오른쪽 줄" 이름표도 늘 줄 바로 아래에 붙는다. */
-.is-dialogue .queue-story-stage{
-  flex:1 1 auto;min-height:clamp(120px,20vh,190px);
-  display:flex;align-items:center;justify-content:center
-}
-.is-dialogue .queue-story-visual{
+.cafe-talk-queue{
   flex:0 0 auto;display:block;
   height:100%;max-height:100%;width:auto;max-width:100%;aspect-ratio:900/675;margin:0;
   position:relative;overflow:hidden;border:0;border-radius:24px;
   background:#fffaf0;box-shadow:0 8px 0 rgba(225,209,174,.7)
 }
-.is-dialogue .queue-story-visual img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;aspect-ratio:auto}
-.is-dialogue .queue-story-visual figcaption{bottom:clamp(8px,1.4vh,14px);padding:0 13%}
-.is-dialogue .queue-story-visual figcaption span{padding:5px 11px;font-size:clamp(11px,1.5vh,13px)}
+.cafe-talk-queue img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center}
+.cafe-talk-queue img.is-mirrored{transform:scaleX(-1)}
+.cafe-talk-queue figcaption{
+  position:absolute;left:0;right:0;bottom:clamp(8px,1.4vh,14px);
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 13%;pointer-events:none
+}
+.cafe-talk-queue figcaption span{
+  justify-self:center;padding:5px 11px;border:2px solid #fff;border-radius:999px;
+  color:#705242;background:rgba(255,250,240,.95);box-shadow:0 3px 8px rgba(74,52,36,.13);
+  font-size:clamp(11px,1.5vh,13px);font-weight:950
+}
+
+/* 메뉴판과 가로식이 같은 카드를 쓴다. 그림 높이는 남는 세로에 맞춰 줄어든다. */
+.cafe-talk-card{
+  min-width:0;padding:clamp(6px,1vh,11px) clamp(5px,.8vw,10px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  border:3px solid #fff;border-radius:18px;color:#4f3528;background:#fffaf0;box-shadow:0 5px 0 #e3d3b4
+}
+.cafe-talk-card img{width:100%;height:clamp(46px,9vh,96px);object-fit:contain}
+.cafe-talk-card b{font-size:clamp(12px,1.6vh,15px);font-weight:900}
+.cafe-talk-card strong{color:#9b5f31;font-size:clamp(13px,1.8vh,17px)}
+.cafe-talk-card small{margin-top:2px;color:#5d9c70;font-size:clamp(9px,1.2vh,11px);font-weight:950}
+.cafe-talk-card.is-mormi{border-color:#f0c89a;background:#fff4dc;box-shadow:0 5px 0 #e4c99c}
+.cafe-talk-card.is-child{border-color:#73bd8b;background:#ebf8ed;box-shadow:0 5px 0 #73a982}
+.cafe-talk-card.is-plain img,.cafe-talk-card.is-money b{color:#6d796f}
+
+.cafe-talk-menu{width:100%;max-height:100%;display:flex;flex-direction:column;gap:clamp(5px,1vh,10px);overflow:auto}
+.cafe-talk-menu__budget{margin:0;color:#5b6f61;font-size:clamp(12px,1.7vh,15px);font-weight:850;text-align:center}
+.cafe-talk-menu__budget b{color:#3d7250;font-size:clamp(14px,2vh,19px)}
+.cafe-talk-menu__grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(5px,.8vw,10px)}
+
+.cafe-talk-equation{
+  width:100%;max-height:100%;
+  display:flex;align-items:center;justify-content:center;gap:clamp(6px,1.4vw,18px)
+}
+.cafe-talk-equation>.cafe-talk-card{width:clamp(110px,22vw,200px)}
+.cafe-talk-equation>b{color:#5b6f61;font-size:clamp(22px,4vh,40px)}
+.cafe-talk-equation__answer{
+  min-width:clamp(58px,9vw,88px);padding:clamp(8px,1.6vh,18px) 0;
+  border:4px dashed #9dc9ae;border-radius:20px;background:#f1f8ef;
+  color:#3d7250;font-size:clamp(24px,4.4vh,44px);font-weight:950;text-align:center
+}
+.cafe-talk-success{
+  margin:0;padding:clamp(14px,2.4vh,28px);border:4px solid #fff;border-radius:23px;
+  color:#4d805d;background:#e9f8eb;box-shadow:0 7px 0 #bfddc4;
+  font-size:clamp(16px,2.4vh,22px);font-weight:950;text-align:center
+}
 
 /* ③ 알려주기: 늘 화면 맨 아래. 입력칸과 버튼을 한 줄에 두어 세로를 아낀다. */
-.is-dialogue .queue-teaching-answer{flex:0 0 auto;width:100%;align-self:stretch}
-.is-dialogue .queue-teaching-answer .cafe-ai-followup{
+.cafe-talk-answer{flex:0 0 auto;width:100%;min-width:0;align-self:stretch}
+.cafe-talk-answer .cafe-ai-followup{
   width:100%;margin:0;padding:clamp(9px,1.4vh,15px) clamp(11px,1.8vw,17px);
   border-color:#78cda6;background:rgba(255,255,255,.97);box-shadow:0 6px 0 #cce7da
 }
-.is-dialogue .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) clamp(92px,12vw,128px);align-items:end;gap:9px}
-.is-dialogue .cafe-ai-followup label{gap:5px;color:#3f6655;font-size:clamp(12px,1.5vh,14px);font-weight:850}
-.is-dialogue .cafe-ai-followup input{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
-.is-dialogue .cafe-ai-followup form>button{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
-.is-dialogue .cafe-ai-choices{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-.is-dialogue .cafe-ai-choices button{min-height:clamp(44px,5.6vh,56px)}
-.is-dialogue .cafe-help-card{margin-bottom:10px;padding:10px 13px;font-size:clamp(13px,1.6vh,15px)}
-.is-dialogue .cafe-ai-followup .cafe-ai-dont-know{margin:7px auto 0;min-height:0;padding:4px 8px;font-size:clamp(13px,1.6vh,15px)}
+.cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) clamp(92px,12vw,128px);align-items:end;gap:9px}
+.cafe-talk-answer .cafe-ai-followup label{gap:5px;color:#3f6655;font-size:clamp(12px,1.5vh,14px);font-weight:850}
+.cafe-talk-answer .cafe-ai-followup input{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
+.cafe-talk-answer .cafe-ai-followup form>button{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
+.cafe-talk-answer .cafe-ai-choices{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.cafe-talk-answer .cafe-ai-choices button{min-height:clamp(44px,5.6vh,56px)}
+.cafe-talk-answer .cafe-help-card{margin-bottom:10px;padding:10px 13px;font-size:clamp(13px,1.6vh,15px)}
+.cafe-talk-answer .cafe-ai-followup .cafe-ai-dont-know{margin:7px auto 0;min-height:0;padding:4px 8px;color:#59665f;font-size:clamp(13px,1.6vh,15px);font-weight:850}
 
 /* 좁은 화면에서도 순서는 그대로다. 캐릭터만 더 작아져 질문 글이 두 줄 안에 들어온다. */
 @media(max-width:760px){
-  .figma-cafe--queue{padding:0 10px}
-  .is-dialogue .queue-story-dialogue{border-width:4px;border-radius:18px;grid-template-columns:52px minmax(0,1fr);gap:10px}
-  .is-dialogue .queue-story-visual{border-radius:18px}
-  .is-dialogue .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
+  .figma-cafe.is-talk{padding:0 10px;background-attachment:scroll}
+  .cafe-talk-bubble{border-width:4px;border-radius:18px;grid-template-columns:52px minmax(0,1fr);gap:10px}
+  .cafe-talk-queue{border-radius:18px}
+  .cafe-talk-menu__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cafe-talk-equation{gap:7px}
+  .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
+}
+
+/* 줄 서기의 공부노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
+.figma-cafe--queue{padding:0 24px 28px;background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed}
+.figma-cafe--queue>.figma-cafe__bar{display:none}
+.figma-cafe--queue .figma-cafe-queue-story{width:min(1135px,100%);min-height:100svh;margin:0 auto;padding:40px 28px 18px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+.figma-cafe--queue .queue-story-dialogue{min-height:176px;margin:20px 0 0;padding:28px 48px 30px;position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;border:7px solid #78cda6;border-radius:20px;background:#fff;box-shadow:none}
+.figma-cafe--queue .queue-story-dialogue b{margin:0;font-size:22px}
+.figma-cafe--queue .queue-story-dialogue p{margin:0;padding-right:0;color:#202924;font-size:20px;line-height:1.5;font-weight:700}
+@media(max-width:760px){
+  .figma-cafe--queue{padding:0 12px 24px;background-attachment:scroll}
+  .figma-cafe--queue .figma-cafe-queue-story{min-height:100svh;padding:24px 10px 14px}
+  .figma-cafe--queue .queue-story-dialogue{min-height:158px;margin-top:12px;padding:21px 18px 24px;border-width:5px}
+  .figma-cafe--queue .queue-story-dialogue b{font-size:19px}
+  .figma-cafe--queue .queue-story-dialogue p{font-size:16px}
 }

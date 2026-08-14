@@ -238,6 +238,8 @@ export async function startCafeDialogue(
     scenario_id: "cafe_queue" | "cafe_budget_menu" | "cafe_menu_total" | "cafe_change";
     queue_context?: { left_count: number; right_count: number };
     cafe_context?: MormiCafeContext;
+    /** 이미 끝낸 스테이지를 다시 연습할 때 true. 서버가 새 회차 대화를 연다. */
+    restart?: boolean;
   },
 ) {
   const { apiRequest } = await import("./api-client");
