@@ -174,8 +174,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /teachingProblemMatchingTurn|numbersMentionedIn|teachingFocusProblem/);
   assert.doesNotMatch(app, /childFriendlyTeachingLine|childFriendlyTeachingChoice|teachingDialogue|teachingInputLabel/);
   assert.match(app, /function teachingProblemFromTurn\(turn: MormiTurn \| null, fallback: Problem\): Problem \| null/);
-  // 실제 문제 문구는 문제 그림 위에서 크게 보여 주고, 서버 대화는 아래 대화창에 분리한다.
-  assert.match(app, /<div className="teaching-problem-heading"><span>모르미가 헷갈린 문제<\/span><h2>\{teachingProblem\.prompt\}<\/h2><\/div>/);
+  // 문제 문구는 모르미 말풍선만 물어본다. 그림 위에 같은 질문을 다시 적지 않는다.
+  assert.doesNotMatch(app, /teaching-problem-heading/);
   assert.match(app, /teaching-problem--\$\{teachingProblem\.visual\.type\}/);
   assert.match(app, /function formatTeachingDisplayText\(text: string\)/);
   assert.match(app, /text\.replace\(\/\[□▢\]\/g, teachingBlank\)/);
@@ -187,7 +187,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
-  assert.match(app, /모르미가 헷갈린 문제/);
+  assert.doesNotMatch(app, /모르미가 헷갈린 문제/);
   assert.match(app, /<ProblemCard problem=\{teachingProblem\}/);
   assert.match(app, /event\.key !== "Enter" \|\| event\.shiftKey \|\| event\.nativeEvent\.isComposing/);
   assert.match(app, /mark === missing \? "\?" : mark/);
