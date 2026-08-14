@@ -918,11 +918,6 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
 
   return (
     <section className="journey-hub journey-hub--home">
-      <div className="player-hud" aria-label="나의 모험 정보">
-        <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
-        <div className="player-stat player-stat--star"><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></div>
-        <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
-      </div>
       <div className="home-room-main">
         <div className="home-room-copy-column">
           <nav className="journey-nav journey-nav--home-card" aria-label="장소 이동">
@@ -939,7 +934,14 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
             </div>
           </div>
         </div>
-        <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
+        <div className="home-room-character-column">
+          <div className="player-hud" aria-label="나의 모험 정보">
+            <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
+            <div className="player-stat player-stat--star"><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></div>
+            <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
+          </div>
+          <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
+        </div>
       </div>
       {!unlocked && nextSession && <button className="home-next-lesson" onClick={() => onOpenSession(sessions.findIndex((session) => session.id === nextSession.id))}><span>카페까지 {requiredSessions.length - done}개 남았어요</span><b>다음 필수 개념: {nextSession.title} →</b></button>}
     </section>
