@@ -1805,8 +1805,19 @@ export function MoramiApp() {
             <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)} aria-label="궁금해 사전 열기"><UiIcon name="book" size="small" /> 궁금해 사전</button>
           </div>
           <div className="chat-window teaching-stage">
-            <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
+            {/* 아이는 모르미의 질문을 먼저 읽고 그 다음에 문제를 본다: 말풍선이 위, 문제와 답이 아래. */}
+            <div className="teaching-talk">
               <div className="teaching-morami"><Morami expression={expression} /></div>
+              {hasServerMessagePanel && !teachingComplete && (
+                <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
+                  {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
+                  {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
+                  {teachError && <p role="alert">{teachError}</p>}
+                  {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
+                </div>
+              )}
+            </div>
+            <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
               {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
                 <div className="teaching-problem-heading"><span>모르미가 헷갈린 문제</span><h2>{teachingProblem.prompt}</h2></div>
                 <ProblemCard problem={teachingProblem} />
@@ -1854,14 +1865,6 @@ export function MoramiApp() {
                 </div>
               )}
             </div>
-            {hasServerMessagePanel && !teachingComplete && (
-              <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
-                {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
-                {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
-                {teachError && <p role="alert">{teachError}</p>}
-                {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
-              </div>
-            )}
           </div>
         </section>
       )}

@@ -217,9 +217,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /stage !== "cafe" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
   assert.match(app, /<div className="mastery-stars" aria-label="별 5개">(?:<UiIcon name="star" size="large" \/>){5}<\/div>/);
-  assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:16px[^}]*font-weight:850/);
+  assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:14px[^}]*font-weight:850/);
   assert.match(css, /button\.teaching-dont-know\.is-loading::before/);
-  assert.match(css, /teaching-answer--button[^}]*grid-column:3[^}]*justify-self:end[^}]*transform:none/);
+  // 질문(말풍선)이 위, 문제와 답이 아래로 한 줄기로 읽히는 세로 배치를 지킨다.
+  assert.match(app, /<div className="teaching-talk">\s*<div className="teaching-morami">/);
+  assert.match(css, /\.teaching-talk \{[^}]*width:min\(600px,100%\); position:relative/);
+  assert.match(css, /\.teaching-stage \{[^}]*flex-direction:column/);
+  assert.match(css, /teaching-answer--button \{[^}]*width:min\(600px,100%\)[^}]*transform:none/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(css, /\.today-badges > span \{/);
