@@ -86,14 +86,16 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /sumAnswer/);
   assert.doesNotMatch(cafe, /aria-label="두 메뉴 가격의 합계"[^>]+placeholder="\?"/);
   assert.doesNotMatch(cafe, /천 원짜리/);
-  assert.match(cafe, /type QueueScene = "intro" \| "count-both" \| "count-left" \| "note" \| "clear"/);
+  assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "clear"/);
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
   assert.match(cafe, /className=\{queueCounts\.left === 1 \? "is-mirrored" : ""\} src="\/cafe-stages\/queue-v2\.png"/);
   assert.match(cafe, /카페 대기줄: 왼쪽 줄 \$\{queueCounts\.left\}명, 오른쪽 줄 \$\{queueCounts\.right\}명/);
   assert.doesNotMatch(cafe, /className="queue-story-lines"/);
-  assert.match(cafe, /어\? 주문하려면 줄을 서야 하나 봐/);
-  assert.match(cafe, /왼쪽 줄이랑 오른쪽 줄에는 각각 사람들이 몇 명씩 있어\?/);
-  assert.match(cafe, /더 짧은 줄에는 몇 명이 있어\?/);
+  // 줄 서기 질문은 화면에 적어 두지 않고 모르미가 그때그때 건넨다.
+  assert.match(cafe, /mormiLines\.queue \|\| "모르미의 질문을 불러오는 중이에요\."/);
+  assert.doesNotMatch(cafe, /주문하려면 줄을 서야 하나 봐|각각 사람들이 몇 명씩 있어|더 짧은 줄에는 몇 명이 있어/);
+  // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
+  assert.match(cafe, /queue-story-dialogue[\s\S]{0,900}queue-story-visual[\s\S]{0,900}queue-teaching-answer/);
   assert.match(cafe, /모르미의 공부노트/);
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
@@ -105,7 +107,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /randomItem\(menu\)/);
   assert.match(cafe, /예산을 .*원 초과했어요/);
   assert.match(cafe, /내 메뉴 골라 줘서 고마워/);
-  assert.match(cafe, /finishMenuStory[\s\S]{0,500}setStep\("sum"\)/);
+  assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
   assert.match(cafe, />완료!</);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);

@@ -599,16 +599,26 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             <span className="queue-star-note" aria-label="궁금해 사전"><span aria-hidden="true">▤</span> 궁금해 사전</span>
           </div>}
 
+          {/* 아이는 위에서 아래로 한 줄기로 읽는다: ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
+              세 덩이를 한 화면(100svh) 안에 담아, 답을 쓰려고 아래로 스크롤할 일이 없게 한다. */}
           {queueScene !== "note" && queueScene !== "clear" && (
-            <section className="queue-teaching-playground" aria-label="카페의 두 줄">
-              <Image className="queue-teaching-morami" src="/morami/confused-cutout.png" alt="줄 서기를 배우는 모르미" width={300} height={360} unoptimized />
-              <article className="queue-story-scene">
-                {/* 문제 문구는 모르미 대화에서 이미 물어본다. 장면 위에 같은 질문을 또 두지 않는다. */}
+            <section className="queue-teaching-flow" aria-label="카페의 두 줄">
+              <section className="queue-story-dialogue">
+                <Image className="queue-teaching-morami" src="/morami/confused-cutout.png" alt="줄 서기를 배우는 모르미" width={300} height={360} unoptimized />
+                <div className="queue-story-dialogue__bubble">
+                  <b>모르미</b>
+                  <p>{mormiLines.queue || "모르미의 질문을 불러오는 중이에요."}</p>
+                </div>
+              </section>
+              {/* 문제 문구는 모르미 대화에서 이미 물어본다. 장면 위에 같은 질문을 또 두지 않는다.
+                  세는 문제라 한 명이라도 잘리면 안 된다. 바깥 칸이 남는 높이를 갖고,
+                  그림은 원본 비율 그대로 그 안에 맞춰 들어간다. */}
+              <div className="queue-story-stage">
                 <figure className="queue-story-visual">
                   <Image className={queueCounts.left === 1 ? "is-mirrored" : ""} src="/cafe-stages/queue-v2.png" alt={`카페 대기줄: 왼쪽 줄 ${queueCounts.left}명, 오른쪽 줄 ${queueCounts.right}명`} width={900} height={675} unoptimized />
                   <figcaption><span>왼쪽 줄</span><span>오른쪽 줄</span></figcaption>
                 </figure>
-              </article>
+              </div>
               <aside className="queue-teaching-answer">
                 <CafeDialogueControls
                   conversation={cafeConversations.queue}
@@ -636,13 +646,11 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             </section>
           )}
 
-          {queueScene !== "clear" && <section className="queue-story-dialogue">
+          {/* 노트 장면은 그림 대신 공부노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
+          {queueScene === "note" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            {/* 모르미가 방금 한 말이 있으면 그걸 쓴다. 노트 장면은 마무리 문구를 유지한다. */}
-            <p>{queueScene === "note"
-              ? `${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`
-              : mormiLines.queue || "모르미의 질문을 불러오는 중이에요."}</p>
-            {queueScene === "note" && <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>}
+            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
+            <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>
           </section>}
         </main>
       )}

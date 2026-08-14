@@ -1191,3 +1191,85 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .queue-teaching-playground{grid-template-columns:86px minmax(0,1fr);gap:9px 7px}.queue-teaching-morami{width:86px;height:120px}.figma-cafe--queue .queue-story-visual img{aspect-ratio:4/3}.queue-teaching-start{min-height:52px;font-size:15px}
   .figma-cafe--queue .queue-story-options{grid-template-columns:repeat(3,1fr)}.figma-cafe--queue .queue-story-dialogue{padding:18px 14px 22px}.figma-cafe--queue .queue-story-dialogue p{font-size:15px}
 }
+
+/* ── 줄 서기 스테이지: 한 화면에 담는 세로 흐름 ────────────────────────
+   ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
+   세 덩이가 100svh 안에서 끝나야 아이가 답을 쓰러 아래로 스크롤하지 않는다.
+   높이는 vh 를 섞은 clamp 로 잡아, 노트북처럼 낮은 화면에서 먼저 줄어든다. */
+.figma-cafe--queue{height:100svh;min-height:0;padding:0 clamp(10px,2vw,24px);overflow:auto;display:flex;flex-direction:column}
+.figma-cafe--queue .figma-cafe-queue-story.is-dialogue{
+  width:min(940px,100%);height:100%;min-height:0;margin:0 auto;
+  padding:clamp(10px,1.8vh,18px) clamp(4px,1.4vw,16px) clamp(10px,2vh,20px);
+  display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px);
+}
+
+/* 툴바는 그림 위에 떠 있지 않고 흐름의 첫 줄이 된다. 겹침이 없어야 아래 여백을 계산할 수 있다. */
+.is-dialogue .queue-teaching-toolbar{width:100%;height:auto;position:static;flex:0 0 auto;align-items:center}
+.is-dialogue .queue-teaching-back{min-height:clamp(38px,5vh,46px);padding:0 16px;font-size:clamp(13px,1.6vh,15px)}
+.is-dialogue .queue-teaching-toolbar .queue-star-note{
+  width:auto;min-width:0;height:auto;padding:clamp(7px,1vh,10px) 15px;
+  flex-direction:row;gap:7px;border-radius:999px;font-size:clamp(12px,1.5vh,14px)
+}
+.is-dialogue .queue-teaching-toolbar .queue-star-note span{font-size:clamp(15px,2vh,19px)}
+
+.queue-teaching-flow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
+
+/* ① 질문: 캐릭터와 말풍선이 한 줄. 글 길이만큼만 높이를 쓴다. */
+.is-dialogue .queue-story-dialogue{
+  flex:0 0 auto;min-height:0;margin:0;
+  padding:clamp(10px,1.6vh,18px) clamp(14px,2.2vw,24px);
+  display:grid;grid-template-columns:clamp(56px,8vw,92px) minmax(0,1fr);align-items:center;
+  gap:clamp(10px,1.6vw,18px);
+  border:5px solid #78cda6;border-radius:22px;background:#fff;box-shadow:0 6px 0 #cfe9dc
+}
+/* 칸을 명시해 둔다. 좁은 화면 규칙이 모르미를 아랫줄로 내려 보내면
+   말풍선이 캐릭터 칸으로 밀려 들어가 글자가 한 자씩 끊긴다. */
+.is-dialogue .queue-teaching-morami{
+  grid-column:1;grid-row:1;
+  width:100%;height:clamp(62px,10vh,104px);align-self:center;justify-self:center;
+  object-fit:contain;object-position:center bottom;filter:drop-shadow(0 9px 13px rgba(58,74,64,.14))
+}
+.is-dialogue .queue-story-dialogue__bubble{grid-column:2;grid-row:1;min-width:0}
+.is-dialogue .queue-story-dialogue b{display:block;margin:0 0 3px;color:#3f6655;font-size:clamp(14px,1.9vh,19px)}
+.is-dialogue .queue-story-dialogue p{margin:0;padding:0;color:#202924;font-size:clamp(16px,2.4vh,23px);font-weight:800;line-height:1.4}
+
+/* ② 문제 그림: 남는 세로 공간을 전부 가져간다.
+   사람을 세는 문제라 한 명도 잘리면 안 된다. 바깥 칸이 높이를 받고,
+   그림틀은 원본 비율(4:3)을 지킨 채 그 안에서만 커졌다 작아진다.
+   틀과 그림의 비율이 같으니 "왼쪽 줄·오른쪽 줄" 이름표도 늘 줄 바로 아래에 붙는다. */
+.is-dialogue .queue-story-stage{
+  flex:1 1 auto;min-height:clamp(120px,20vh,190px);
+  display:flex;align-items:center;justify-content:center
+}
+.is-dialogue .queue-story-visual{
+  flex:0 0 auto;display:block;
+  height:100%;max-height:100%;width:auto;max-width:100%;aspect-ratio:900/675;margin:0;
+  position:relative;overflow:hidden;border:0;border-radius:24px;
+  background:#fffaf0;box-shadow:0 8px 0 rgba(225,209,174,.7)
+}
+.is-dialogue .queue-story-visual img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;aspect-ratio:auto}
+.is-dialogue .queue-story-visual figcaption{bottom:clamp(8px,1.4vh,14px);padding:0 13%}
+.is-dialogue .queue-story-visual figcaption span{padding:5px 11px;font-size:clamp(11px,1.5vh,13px)}
+
+/* ③ 알려주기: 늘 화면 맨 아래. 입력칸과 버튼을 한 줄에 두어 세로를 아낀다. */
+.is-dialogue .queue-teaching-answer{flex:0 0 auto;width:100%;align-self:stretch}
+.is-dialogue .queue-teaching-answer .cafe-ai-followup{
+  width:100%;margin:0;padding:clamp(9px,1.4vh,15px) clamp(11px,1.8vw,17px);
+  border-color:#78cda6;background:rgba(255,255,255,.97);box-shadow:0 6px 0 #cce7da
+}
+.is-dialogue .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) clamp(92px,12vw,128px);align-items:end;gap:9px}
+.is-dialogue .cafe-ai-followup label{gap:5px;color:#3f6655;font-size:clamp(12px,1.5vh,14px);font-weight:850}
+.is-dialogue .cafe-ai-followup input{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
+.is-dialogue .cafe-ai-followup form>button{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
+.is-dialogue .cafe-ai-choices{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.is-dialogue .cafe-ai-choices button{min-height:clamp(44px,5.6vh,56px)}
+.is-dialogue .cafe-help-card{margin-bottom:10px;padding:10px 13px;font-size:clamp(13px,1.6vh,15px)}
+.is-dialogue .cafe-ai-followup .cafe-ai-dont-know{margin:7px auto 0;min-height:0;padding:4px 8px;font-size:clamp(13px,1.6vh,15px)}
+
+/* 좁은 화면에서도 순서는 그대로다. 캐릭터만 더 작아져 질문 글이 두 줄 안에 들어온다. */
+@media(max-width:760px){
+  .figma-cafe--queue{padding:0 10px}
+  .is-dialogue .queue-story-dialogue{border-width:4px;border-radius:18px;grid-template-columns:52px minmax(0,1fr);gap:10px}
+  .is-dialogue .queue-story-visual{border-radius:18px}
+  .is-dialogue .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
+}
