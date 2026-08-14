@@ -287,37 +287,45 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-back span { font-size:21px; line-height:1; }
 .teaching-back:hover { background:#effaf4; transform:translateY(-1px); }
 .teaching-toolbar .dictionary-pill { width:88px; height:88px; min-height:88px; padding:8px; flex-direction:column; justify-content:center; border-radius:50%; color:#62509d; background:#f0eaff; box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12); font-size:13px; }
-/* 문제를 먼저 보여주고, 모르미의 서버 대화는 그 아래에서 이어진다. */
-.teaching-stage { min-height:704px; padding:100px 28px 14px; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; }
-.teaching-playground { min-height:420px; padding:0; display:grid; grid-template-columns:250px minmax(390px,1fr) 300px; grid-template-rows:340px 70px; align-items:end; column-gap:18px; row-gap:10px; border-radius:0; background:transparent; box-shadow:none; }
-.teaching-morami { grid-column:1; grid-row:1/3; align-self:end; justify-self:center; margin-bottom:0; position:relative; z-index:5; }
-.teaching-morami .morami-frame { width:250px; height:320px; }
-.teaching-problem { width:100%; min-height:340px; padding:0 12px; grid-column:2/4; grid-row:1; justify-self:center; display:flex; flex-direction:column; align-items:center; justify-content:center; border:0; border-radius:0; background:transparent; box-shadow:none; text-align:center; }
-.teaching-problem-heading{margin:0 0 12px;display:grid;justify-items:center;gap:10px}.teaching-problem-heading>span{padding:6px 11px;border-radius:10px;color:#7662b0;background:#f2eeff;font-size:13px;line-height:1.2;font-weight:950}.teaching-problem-heading h2{margin:0;color:#24463a;font-size:clamp(27px,2.6vw,38px);line-height:1.25;letter-spacing:-1.4px;font-weight:950}
-/* origin/main 이 돈 그림에 준 여유를 이어받는다. 문구가 그림 아래로 내려갔으므로 위쪽에 준다. */
-.teaching-problem--money .teaching-problem-heading{margin-bottom:16px}
-.teaching-problem .problem-visual { min-height:290px; padding:2px; display:grid; place-items:center; }
-.teaching-problem .ten-frame { width:260px; }
-.teaching-problem .money-visual { transform:scale(1.05); }
-.teaching-playground--choices .teaching-problem,
-.teaching-playground--fill .teaching-problem,
-.teaching-playground--joint .teaching-problem,
-.teaching-playground--button .teaching-problem { grid-column:2; }
-.teaching-answer { width:100%; min-width:0; padding:0; grid-column:2/4; grid-row:2; align-self:center; border:0; border-radius:0; background:transparent; box-shadow:none; }
+/* 화면은 위에서 아래로 한 줄기로 읽힌다: ① 모르미의 질문 → ② 문제 → ③ 내가 알려주기. */
+.teaching-stage { min-height:704px; padding:104px 28px 20px; display:flex; flex-direction:column; align-items:center; gap:18px; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; }
+
+/* ① 모르미와 말풍선: 질문이 가장 먼저 눈에 들어오는 자리.
+   말풍선·문제·입력이 같은 600px 기둥에 정렬되고, 모르미만 그 왼쪽에서 말을 건다. */
+.teaching-talk { width:min(600px,100%); position:relative; }
+.teaching-morami { width:172px; margin:0 14px 0 0; position:absolute; right:100%; bottom:-26px; z-index:5; }
+/* 방 배경이 밝은 창가로 잘리는 폭에서도 모르미가 묻히지 않게 은은한 빛을 깔아 준다. */
+.teaching-morami::before { content:""; position:absolute; inset:2% -10% -2%; z-index:0; border-radius:50%; background:radial-gradient(circle at 50% 56%,rgba(219,242,231,.95) 30%,rgba(219,242,231,0) 72%); }
+.teaching-morami .morami-frame img { filter:contrast(1.05) saturate(1.08) drop-shadow(0 12px 14px rgba(45,86,68,.26)); }
+.teaching-morami .morami-frame { width:172px; height:222px; }
+
+/* ② 문제: 방 배경 위에서도 또렷하게 읽히도록 흰 카드에 얹는다. */
+.teaching-playground { width:min(600px,100%); min-height:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr); justify-items:center; gap:14px; border-radius:0; background:transparent; box-shadow:none; }
+.teaching-problem { width:min(600px,100%); min-height:0; padding:20px 26px 24px; display:flex; flex-direction:column; align-items:center; gap:14px; border:4px solid #e4f1ea; border-radius:32px; background:rgba(255,255,255,.95); box-shadow:0 16px 36px rgba(52,84,68,.14); text-align:center; }
+.teaching-problem-heading{margin:0;display:grid;justify-items:center;gap:9px}.teaching-problem-heading>span{padding:6px 13px;border-radius:999px;color:#7662b0;background:#f2eeff;font-size:12px;line-height:1.2;font-weight:950}.teaching-problem-heading h2{margin:0;color:#24463a;font-size:clamp(26px,2.4vw,35px);line-height:1.25;letter-spacing:-1.4px;font-weight:950}
+/* 시각자료 래퍼의 기본 최소 높이는 카드 안에서 그대로 빈 여백이 된다. 내용만큼만 차지하게 둔다. */
+.teaching-problem .problem-visual { width:100%; min-height:180px; padding:0; display:grid; place-items:center; }
+.teaching-problem .problem-visual > * { min-height:0; }
+.teaching-problem .ten-frame { width:250px; }
+.teaching-problem .money-visual { transform:none; }
+
+/* ③ 답: 문제 카드와 같은 폭으로 맞춰 시선이 그대로 아래로 떨어진다. */
+.teaching-answer,
 .teaching-answer--choices,
 .teaching-answer--fill,
 .teaching-answer--joint,
-.teaching-answer--button { width:300px; grid-column:3; grid-row:1; align-self:center; justify-self:end; transform:none; }
-.teaching-playground--choices .teaching-problem { width:100%; justify-self:start; transform:translate(-18px, 22px); }
-.teaching-answer--choices { width:300px; align-self:end; justify-self:end; margin-bottom:4px; transform:translateY(22px); }
-.teaching-answer--choices .teaching-choice-list button { width:100%; min-height:62px; padding-inline:18px; white-space:nowrap; }
+.teaching-answer--button { width:min(600px,100%); min-width:0; margin:0; padding:0; transform:none; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.teaching-answer--choices .teaching-choice-list { grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+.teaching-answer--choices .teaching-choice-list button { width:100%; min-height:62px; padding-inline:18px; }
 .teaching-answer--choices .teaching-choice-pair > .send-teach-button { min-height:58px; }
 .teaching-answer-label { margin:0 0 12px; color:#3b5c4d; font-size:14px; font-weight:950; }
 .teaching-answer-label b { margin-right:7px; padding:5px 7px; border-radius:8px; color:#fff; background:#49ac7f; font-size:11px; }
-.teaching-answer .teach-free-response { margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) 150px; align-items:stretch; gap:10px; border:0; background:transparent; }
+.teaching-answer .teach-free-response { margin:0; padding:0; display:grid; grid-template-columns:minmax(0,1fr) 140px; align-items:stretch; gap:10px; border:0; background:transparent; }
 .teaching-answer .teach-free-response>p { margin:0 0 9px; color:#607168; font-size:12px; line-height:1.45; }
-.teaching-answer .teach-free-response textarea { min-height:62px; padding:15px 17px; border:4px solid #78cda6; border-radius:15px; background:#fff; resize:none; font-size:18px; line-height:1.4; }
-.teaching-answer .teach-free-response>.send-teach-button { width:150px; min-height:62px; margin:0; border-radius:15px; color:#fff; background:#49ac7f; box-shadow:none; font-size:18px; line-height:1.4; }
+.teaching-answer .teach-free-response textarea { min-height:64px; padding:16px 18px; border:4px solid #78cda6; border-radius:18px; background:#fff; box-shadow:0 8px 22px rgba(52,84,68,.12); resize:none; font-size:18px; line-height:1.4; }
+.teaching-answer .teach-free-response textarea:focus-visible { outline:0; border-color:#49ac7f; box-shadow:0 0 0 4px #dbf1e6,0 8px 22px rgba(52,84,68,.12); }
+.teaching-answer .teach-free-response>.send-teach-button { width:140px; min-height:64px; margin:0; border-radius:18px; color:#fff; background:#49ac7f; box-shadow:0 6px 0 #35825e,0 10px 22px rgba(52,84,68,.16); font-size:18px; line-height:1.4; font-weight:950; }
+.teaching-answer .teach-free-response>.send-teach-button:disabled { box-shadow:0 6px 0 #a9c9b9; opacity:.55; }
 .teach-free-response--short { display:grid; gap:9px; }.teach-free-response--short label { display:grid; gap:5px; color:#53665d; font-size:11px; font-weight:900; }.teach-free-response--short input { width:100%; min-height:48px; padding:0 12px; border:2px solid #b8dfcd; border-radius:13px; font-size:14px; font-weight:800; }
 .teaching-choice-list { display:grid; gap:9px; }
 .teaching-choice-list button { min-height:60px; padding:8px 12px; border:4px solid #78cda6; border-radius:15px; color:#304c3f; background:#fff; box-shadow:none; cursor:pointer; font-size:18px; line-height:1.4; font-weight:850; }
@@ -326,11 +334,15 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .teaching-choice-pair { display:grid; gap:10px; }.teaching-choice-pair fieldset { min-width:0; margin:0; padding:10px; border:2px solid #d9e7df; border-radius:15px; }.teaching-choice-pair legend { padding:0 5px; color:#586a61; font-size:10px; font-weight:900; }.teaching-choice-pair .teaching-choice-list { gap:8px; }.teaching-choice-pair .teaching-choice-list button { min-height:60px; font-size:18px; }.teaching-choice-pair>.send-teach-button { min-height:54px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-size:18px; line-height:1.4; font-weight:950; }.teaching-choice-pair>.send-teach-button:disabled { opacity:.42; }
 .guided-teaching h3 { margin:12px 0; color:#344c41; font-size:17px; line-height:1.4; }.guided-progress { display:flex; align-items:center; gap:5px; }.guided-progress i { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; color:#89958f; background:#e9eeeb; font-size:10px; font-style:normal; font-weight:950; }.guided-progress i.is-current { color:#fff; background:#49ac7f; box-shadow:0 0 0 4px #d9f0e5; }.guided-progress i.is-done { color:#2e805c; background:#d9f0e5; }
 .model-teaching>span { display:block; margin-bottom:9px; color:#7a6545; font-size:14px; font-weight:950; }.model-teaching ol { margin:0 0 12px; padding:0; display:grid; gap:7px; list-style:none; }.model-teaching li { padding:9px; display:flex; align-items:center; gap:8px; border-radius:12px; color:#526158; background:#f1f3f1; font-size:16px; line-height:1.4; font-weight:850; }.model-teaching li b { width:24px; height:24px; display:grid; place-items:center; flex:0 0 24px; border-radius:50%; color:#fff; background:#9eada6; }.model-teaching li.is-current { color:#315f4a; background:#e7f8ef; }.model-teaching li.is-current b { background:#49ac7f; }.model-teaching .send-teach-button { width:100%; min-height:52px; border:0; border-radius:14px; color:#fff; background:#49ac7f; font-size:18px; line-height:1.4; font-weight:950; }
-.teaching-playground > .learned-card { width:100%; margin:0; padding:24px 14px; grid-column:2/4; grid-row:1/3; border-radius:28px; }
-.teaching-dialogue { min-height:185px; margin:22px 0 0; padding:30px 58px 34px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:16px; border:7px solid #78cda6; border-radius:20px; background:#fff; box-shadow:none; }
-.teaching-dialogue b { display:block; margin-bottom:9px; font-size:22px; line-height:1.2; }
-.teaching-dialogue p { margin:0; color:#202924; font-size:20px; line-height:1.5; font-weight:700; }
-.teaching-dialogue > button.teaching-dont-know { min-width:150px; min-height:44px; margin:-2px 0 0; padding:8px 16px; position:static; align-self:flex-end; border:3px solid #9cb7aa; border-radius:14px; color:#485850; background:#f7fbf9; box-shadow:0 4px 0 #d7e3dd; cursor:pointer; font-size:16px; line-height:1.25; font-weight:850; text-decoration:none; }
+.teaching-playground > .learned-card { width:min(600px,100%); margin:0; padding:26px 18px; border-radius:28px; }
+.teaching-dialogue { min-height:0; margin:0; padding:19px 24px 17px; position:relative; z-index:3; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:10px; border:5px solid #78cda6; border-radius:24px; background:#fff; box-shadow:0 12px 28px rgba(52,84,68,.13); }
+/* 말풍선 꼬리가 모르미를 가리켜 "이 말은 모르미가 한 말"임을 설명 없이 알린다. */
+.teaching-dialogue::before,.teaching-dialogue::after { content:""; width:0; height:0; position:absolute; top:36px; border-top:13px solid transparent; border-bottom:13px solid transparent; }
+.teaching-dialogue::before { left:-23px; border-right:18px solid #78cda6; }
+.teaching-dialogue::after { left:-13px; border-right:18px solid #fff; }
+.teaching-dialogue b { display:block; margin-bottom:5px; color:#3f8c68; font-size:15px; line-height:1.2; letter-spacing:-.3px; }
+.teaching-dialogue p { margin:0; color:#1f2a24; font-size:clamp(20px,1.9vw,24px); line-height:1.45; letter-spacing:-.7px; font-weight:850; }
+.teaching-dialogue > button.teaching-dont-know { min-width:0; min-height:38px; margin:0; padding:0 16px; position:static; align-self:flex-end; border:2px solid #cfe0d7; border-radius:999px; color:#5c7268; background:#f7fbf9; box-shadow:none; cursor:pointer; font-size:14px; line-height:1.25; font-weight:850; text-decoration:none; }
 .teaching-dialogue > button.teaching-dont-know:hover { color:#2f4f40; border-color:#78cda6; background:#eef9f3; transform:translateY(-1px); }
 .teaching-dialogue > button.teaching-dont-know:disabled { opacity:1; cursor:wait; }
 .teaching-dialogue > button.teaching-dont-know.is-loading::before { content:""; width:14px; height:14px; margin-right:8px; display:inline-block; vertical-align:-2px; border:2px solid #c8d8d0; border-top-color:#4ba77f; border-radius:50%; animation:teachHelpSpin .75s linear infinite; }
@@ -837,10 +849,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .queue-story-scene{min-height:485px;padding:58px 55px 10px;display:block}.queue-story-task{width:min(760px,100%);margin:0 auto;gap:14px}.queue-story-visual{width:100%;margin:0;position:relative;overflow:hidden;border:3px solid #f0e2cf;border-radius:30px;background:#fffaf0;box-shadow:0 10px 24px rgba(88,61,40,.08)}.queue-story-visual img{width:100%;height:350px;display:block;object-fit:cover;object-position:center;transition:transform .2s ease}.queue-story-visual img.is-mirrored{transform:scaleX(-1)}.queue-story-visual figcaption{position:absolute;left:0;right:0;bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 15%;pointer-events:none}.queue-story-visual figcaption span{justify-self:center;padding:7px 13px;border:2px solid rgba(255,255,255,.9);border-radius:999px;color:#705242;background:rgba(255,250,240,.94);box-shadow:0 3px 8px rgba(74,52,36,.13);font-size:14px;font-weight:950}.queue-story-input,.queue-story-options{margin-top:0}.queue-story-options{grid-template-columns:repeat(5,1fr)}
 @media(max-width:760px){.queue-story-scene{min-height:500px;padding:54px 5px 0}.queue-story-task{width:100%;gap:10px}.queue-story-visual{border-radius:22px}.queue-story-visual img{height:auto;aspect-ratio:4/3;object-fit:cover}.queue-story-visual figcaption{bottom:10px;padding:0 7%;gap:4px}.queue-story-visual figcaption span{padding:5px 8px;font-size:12px}.queue-story-options{grid-template-columns:repeat(3,1fr)}}
 
-@media(max-width:760px){
-  .teaching-scene{padding:34px 10px 40px}.teaching-scene .chat-title h1{font-size:25px}.teaching-stage{min-height:0;padding:13px 9px 18px;border-radius:27px}.teaching-playground{min-height:0;padding:14px 10px;display:grid;grid-template-columns:100px 1fr;gap:10px}.teaching-morami .morami-frame{width:100px;height:145px}.teaching-problem{min-width:0;min-height:270px;padding:13px;grid-column:2}.teaching-problem-heading{margin-bottom:6px;gap:6px}.teaching-problem-heading>span{font-size:10px}.teaching-problem-heading h2{font-size:23px}.teaching-problem .problem-visual{min-height:170px;transform:scale(.78)}.teaching-answer,.teaching-playground>.learned-card{grid-column:1/3;width:100%;padding:13px}.teaching-choice-list{grid-template-columns:repeat(3,1fr);gap:6px}.teaching-choice-list button{min-height:54px;padding:5px;font-size:13px}.teaching-choice-pair .teaching-choice-list{grid-template-columns:1fr}.teaching-dialogue{min-height:125px;padding:15px;grid-template-columns:1fr}.teaching-dialogue b{font-size:17px}.teaching-dialogue p{font-size:15px}.teaching-dialogue>button{min-height:42px}
-}
-
 /* Local-only Mormi-AI contract lab */
 .ai-test-page{min-height:100svh;padding:42px clamp(18px,4vw,64px) 70px;color:#2f332f;background:radial-gradient(circle at 10% 5%,#f2fff3 0,transparent 26%),linear-gradient(145deg,#fbfaf4,#f0f7ed)}
 .ai-test-header{max-width:1320px;margin:auto;display:flex;align-items:flex-start;justify-content:space-between;gap:24px}.ai-test-header span{color:#55936a;font-size:11px;font-weight:950;letter-spacing:.12em}.ai-test-header h1{margin:7px 0 5px;font-size:clamp(30px,4vw,52px);letter-spacing:-.06em}.ai-test-header p{margin:0;color:#70776f}.ai-test-health{padding:11px 15px;display:flex;align-items:center;gap:8px;border:2px solid #d8e5d8;border-radius:999px;background:#fff;font-size:12px;font-weight:900;white-space:nowrap}.ai-test-health i{width:10px;height:10px;border-radius:50%;background:#a1a9a2}.ai-test-health.is-ready i{background:#4eb975;box-shadow:0 0 0 5px rgba(78,185,117,.13)}.ai-test-health.is-no-llm i{background:#e0a43e}.ai-test-health.is-offline i{background:#d46052}
@@ -865,28 +873,23 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .teaching-dialogue>.star-note .note-content p{margin:0 0 8px;color:#7159a8;font-size:14px}
 .teaching-dialogue>.star-note .note-content span{display:block;padding:10px 13px;overflow-wrap:anywhere;border-radius:13px;color:#347a60;background:#e6f8ef;font-size:15px;line-height:1.55}
 
-/* Responsive teaching board: keep the repeated problem and response controls visible. */
+/* Responsive teaching board: 좁아져도 질문 → 문제 → 답 순서는 그대로 유지한다. */
 @media(max-width:980px){
   .teaching-scene{min-height:0;padding:18px 14px 30px}
   .teaching-toolbar{width:calc(100% - 32px);top:16px;left:16px}
   .teaching-back{min-height:44px;padding:0 14px;font-size:13px}
   .teaching-toolbar .dictionary-pill{width:72px;height:72px;min-height:72px;font-size:11px}
-  .teaching-stage{min-height:680px;padding:96px 12px 12px}
-  .teaching-playground{min-height:390px;grid-template-columns:180px minmax(300px,1fr) 230px;grid-template-rows:310px 70px;align-items:end;column-gap:12px}
-  .teaching-morami{grid-column:1;grid-row:1/3}
-  .teaching-morami .morami-frame{width:180px;height:240px}
-  .teaching-problem{grid-column:2/4;grid-row:1;min-width:0;min-height:310px}
-  .teaching-playground--choices .teaching-problem,.teaching-playground--fill .teaching-problem,.teaching-playground--joint .teaching-problem,.teaching-playground--button .teaching-problem{grid-column:2}
-  .teaching-answer{grid-column:2/4;grid-row:2;width:100%;min-width:0}
-  .teaching-answer--choices,.teaching-answer--fill,.teaching-answer--joint,.teaching-answer--button{width:230px;grid-column:3;grid-row:1;justify-self:end;transform:none}
-  .teaching-playground--choices .teaching-problem{transform:translate(-10px,16px)}
-  .teaching-answer--choices{width:230px;margin-bottom:0;transform:translateY(16px)}
-  .teaching-answer--choices .teaching-choice-list button{min-height:56px;padding-inline:10px;font-size:14px}
-  .teaching-playground>.learned-card{grid-column:2/4;grid-row:1/3;width:100%;min-width:0}
-  .teaching-problem .problem-visual{width:100%;min-width:0;min-height:245px;padding:0;overflow:hidden}
-  .teaching-problem .money-visual{transform:none}
-  .teaching-dialogue{min-height:170px;margin:18px 0 0;padding:26px 38px 30px;border-width:6px}
-  .teaching-dialogue b{font-size:21px}.teaching-dialogue p{font-size:19px}
+  .teaching-stage{min-height:0;padding:92px 12px 16px;gap:14px}
+  /* 모르미를 옆에 세울 자리가 없으면 말풍선 위로 올리고 꼬리를 위로 돌린다. */
+  .teaching-talk{display:flex;flex-direction:column;align-items:flex-start}
+  .teaching-morami{width:132px;margin:0 0 -8px 10px;position:relative;right:auto;bottom:auto}
+  .teaching-morami .morami-frame{width:132px;height:172px}
+  .teaching-dialogue{width:100%;padding:16px 19px 15px}
+  .teaching-dialogue::before,.teaching-dialogue::after{top:auto;border-top:0;border-right:13px solid transparent;border-left:13px solid transparent}
+  .teaching-dialogue::before{left:44px;bottom:100%;border-bottom:15px solid #78cda6}
+  .teaching-dialogue::after{left:44px;bottom:calc(100% - 5px);border-bottom:15px solid #fff}
+  .teaching-problem{padding:17px 18px 20px}
+  .teaching-problem .problem-visual{width:100%;min-width:0;padding:0;overflow:hidden}
 }
 
 @media(max-width:560px){
@@ -894,32 +897,30 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .teaching-toolbar{width:calc(100% - 18px);top:9px;left:9px}
   .teaching-back{min-height:40px;padding:0 11px;border-width:2px;font-size:11px}
   .teaching-toolbar .dictionary-pill{width:58px;height:58px;min-height:58px;font-size:9px}
-  .teaching-stage{padding:78px 2px 8px}
-  .teaching-playground{min-height:500px;padding:0;grid-template-columns:105px minmax(0,1fr);grid-template-rows:300px auto;gap:8px}
-  .teaching-morami{grid-column:1;grid-row:2;justify-self:center;margin-bottom:0}
-  .teaching-morami .morami-frame{width:105px;height:140px}
-  .teaching-problem,.teaching-playground--choices .teaching-problem,.teaching-playground--fill .teaching-problem,.teaching-playground--joint .teaching-problem,.teaching-playground--button .teaching-problem{grid-column:1/3;grid-row:1;width:100%;min-height:300px;padding:6px}
-  .teaching-problem-heading{margin-bottom:8px;gap:7px}.teaching-problem-heading h2{font-size:25px}
-  .teaching-problem .problem-visual{min-height:235px;transform:none}
-  .teaching-problem .ten-frame{width:220px}
-  .teaching-answer,.teaching-answer--choices,.teaching-answer--fill,.teaching-answer--joint,.teaching-answer--button{width:100%;grid-column:2;grid-row:2;align-self:center;transform:none}
-  .teaching-playground--choices{grid-template-rows:300px auto 115px}
-  .teaching-playground--choices .teaching-problem{grid-column:1/3;grid-row:1;transform:none}
-  .teaching-playground--choices .teaching-answer--choices{grid-column:1/3;grid-row:2;width:100%;margin:8px 0 0;transform:none}
-  .teaching-playground--choices .teaching-morami{grid-column:1/3;grid-row:3;justify-self:start;margin:0}
-  .teaching-playground>.learned-card{grid-column:1/3;grid-row:1/3}
-  .teaching-answer .teach-free-response{grid-template-columns:1fr;gap:7px}
-  .teaching-answer .teach-free-response>.send-teach-button{width:100%;min-height:48px}
+  .teaching-stage{padding:74px 4px 12px;gap:11px}
+  .teaching-morami{width:108px;margin-left:6px}
+  .teaching-morami .morami-frame{width:108px;height:142px}
+  .teaching-dialogue{padding:15px 16px 13px;border-width:4px;border-radius:20px}
+  .teaching-dialogue::before{left:36px}
+  .teaching-dialogue::after{left:36px}
+  .teaching-dialogue b{font-size:13px}
+  .teaching-dialogue p{font-size:17px}
+  .teaching-dialogue>.star-note .note-content{padding:13px}
+  .teaching-dialogue>.star-note .note-content span{font-size:14px}
+  .teaching-problem{padding:15px 12px 18px;border-width:3px;border-radius:24px}
+  .teaching-problem-heading{gap:6px}.teaching-problem-heading>span{font-size:11px}.teaching-problem-heading h2{font-size:24px}
+  .teaching-problem .ten-frame{width:210px}
+  .teaching-answer .teach-free-response{grid-template-columns:1fr;gap:8px}
+  .teaching-answer .teach-free-response textarea{min-height:56px;font-size:17px}
+  .teaching-answer .teach-free-response>.send-teach-button{width:100%;min-height:52px}
+  .teaching-answer--choices .teaching-choice-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .teaching-answer--choices .teaching-choice-list button{min-height:54px;padding-inline:8px;font-size:16px}
   .teaching-problem .clock{width:min(220px,70vw)}
   .teaching-problem .measurement-visual{padding:16px 4px}
   .teaching-problem .measurement-visual>div{grid-template-columns:minmax(0,1fr) auto;gap:8px}
   .teaching-problem .chart-visual{width:100%;padding:20px 3px;gap:6px}
   .teaching-problem .chart-visual>div{width:auto;min-width:0;flex:1}
   .teaching-problem .calendar-visual{padding:12px 8px}
-  .teaching-dialogue{min-height:145px;padding:22px 20px 32px;border-width:5px;border-radius:18px}
-  .teaching-dialogue b{font-size:19px}.teaching-dialogue p{font-size:17px}
-  .teaching-dialogue>.star-note .note-content{padding:13px}
-  .teaching-dialogue>.star-note .note-content span{font-size:14px}
 }
 
 /* Final responsive QA: rewards and teaching copy stay readable at every width. */
