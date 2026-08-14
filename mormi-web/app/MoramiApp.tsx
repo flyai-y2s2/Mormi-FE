@@ -1818,8 +1818,8 @@ export function MoramiApp() {
               )}
             </div>
             <div className={`teaching-playground teaching-playground--${teachingTurn?.input.kind ?? "loading"}`}>
+              {/* 문제 문구는 모르미 말풍선이 이미 물어보고 있다. 위에 같은 질문을 또 띄우면 아이가 두 번 읽는다. */}
               {teachingProblem && <article className={`teaching-problem teaching-problem--${teachingProblem.visual.type}`}>
-                <div className="teaching-problem-heading"><span>모르미가 헷갈린 문제</span><h2>{teachingProblem.prompt}</h2></div>
                 <ProblemCard problem={teachingProblem} />
               </article>}
               {!teachingTurn && teachSending && <div className="learned-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>반복 학습 기록을 확인하는 중이야.</p></div>}

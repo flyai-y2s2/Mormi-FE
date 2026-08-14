@@ -67,16 +67,6 @@ function randomQueueCounts() {
   return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
 }
 
-function getProblemPrompt(conversation: MormiConversation | undefined) {
-  const problem = conversation?.turn.visual.data.problem;
-  if (problem && typeof problem === "object" && !Array.isArray(problem)) {
-    const prompt = (problem as Record<string, unknown>).prompt;
-    if (typeof prompt === "string" && prompt.trim()) return prompt.trim();
-  }
-  const prompt = conversation?.turn.visual.data.prompt;
-  return typeof prompt === "string" && prompt.trim() ? prompt.trim() : "";
-}
-
 function CafeDialogueControls({
   conversation,
   inputText,
@@ -613,10 +603,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             <section className="queue-teaching-playground" aria-label="카페의 두 줄">
               <Image className="queue-teaching-morami" src="/morami/confused-cutout.png" alt="줄 서기를 배우는 모르미" width={300} height={360} unoptimized />
               <article className="queue-story-scene">
-                <div className="queue-teaching-heading">
-                  <span>모르미가 헷갈린 문제</span>
-                  {getProblemPrompt(cafeConversations.queue) && <h1>{getProblemPrompt(cafeConversations.queue)}</h1>}
-                </div>
+                {/* 문제 문구는 모르미 대화에서 이미 물어본다. 장면 위에 같은 질문을 또 두지 않는다. */}
                 <figure className="queue-story-visual">
                   <Image className={queueCounts.left === 1 ? "is-mirrored" : ""} src="/cafe-stages/queue-v2.png" alt={`카페 대기줄: 왼쪽 줄 ${queueCounts.left}명, 오른쪽 줄 ${queueCounts.right}명`} width={900} height={675} unoptimized />
                   <figcaption><span>왼쪽 줄</span><span>오른쪽 줄</span></figcaption>
