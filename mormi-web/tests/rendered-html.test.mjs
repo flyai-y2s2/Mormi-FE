@@ -371,6 +371,15 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(printStyles, /\.domain-detail-panel\{display:none!important\}/);
   assert.match(printStyles, /overflow:visible!important/);
   assert.doesNotMatch(printStyles, /overflow:hidden|zoom\s*:/);
+  const readablePrintRules = [...printStyles.matchAll(/\.(?:summary-strips|domain-status|diagnostic-highlights|diagnostic-evidence)[^{]*\{[^}]*\}/g)]
+    .map(([rule]) => rule)
+    .join("\n");
+  assert.doesNotMatch(readablePrintRules, /font-size:[5-8]px/);
+  assert.match(printStyles, /\.report-paper\{[^}]*font-size:12px/);
+  assert.match(printStyles, /\.summary-strips p\{font-size:12px/);
+  assert.match(printStyles, /\.domain-status\{[^}]*font-size:11px/);
+  assert.match(printStyles, /\.diagnostic-highlights p\{[^}]*font-size:12px/);
+  assert.match(printStyles, /\.diagnostic-evidence span\{[^}]*font-size:11px/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {

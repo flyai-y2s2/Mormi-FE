@@ -127,6 +127,15 @@ export function groupDiagnosticDomains(report: DiagnosticReportDto): DiagnosticD
   return [...groups.values()].map((group) => ({ ...group, statuses: [...group.statuses] }));
 }
 
+/** Counts actual comparable records; LIFE's one trend is not duplicated for its two score series. */
+export function diagnosticComparablePointCounts(group: DiagnosticDomainGroup): { total: number; recent: number } {
+  const trends = [group.drill_trend, group.teach_trend, group.life_trend].filter((trend) => trend !== undefined);
+  return {
+    total: trends.reduce((sum, trend) => sum + trend.points.length, 0),
+    recent: trends.reduce((sum, trend) => sum + trend.points.filter((point) => point.recent).length, 0),
+  };
+}
+
 export function chooseDiagnosticSelection(
   groups: readonly DiagnosticDomainGroup[],
   preferredMode: DiagnosticMode,
@@ -136,19 +145,10 @@ export function chooseDiagnosticSelection(
   const current = modeGroups.find((group) => group.domain_id === preferredDomainId);
   if (current) return current;
 
-  // Comparable history is the sum of actual plotted points across each grouped
-  // drill, teach, and life trend. LIFE is counted once rather than once per score series.
-  const evidenceCounts = (group: DiagnosticDomainGroup) => {
-    const trends = [group.drill_trend, group.teach_trend, group.life_trend].filter((trend) => trend !== undefined);
-    return {
-      total: trends.reduce((sum, trend) => sum + trend.points.length, 0),
-      recent: trends.reduce((sum, trend) => sum + trend.points.filter((point) => point.recent).length, 0),
-    };
-  };
   const candidates = modeGroups.length > 0 ? modeGroups : groups;
   return [...candidates].sort((left, right) => {
-    const leftCounts = evidenceCounts(left);
-    const rightCounts = evidenceCounts(right);
+    const leftCounts = diagnosticComparablePointCounts(left);
+    const rightCounts = diagnosticComparablePointCounts(right);
     if (leftCounts.total !== rightCounts.total) return rightCounts.total - leftCounts.total;
     if (leftCounts.recent !== rightCounts.recent) return rightCounts.recent - leftCounts.recent;
     if (left.domain_id === right.domain_id) return 0;

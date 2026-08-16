@@ -11,6 +11,7 @@ import type {
 import {
   chartPoints,
   chooseDiagnosticSelection,
+  diagnosticComparablePointCounts,
   diagnosticSeriesForDomain,
   groupDiagnosticDomains,
   isEmptyDiagnosticReport,
@@ -270,6 +271,51 @@ test("breaks equal-history selection ties by recent points and then domain id", 
 
   assert.equal(chooseDiagnosticSelection([lessRecent, moreRecentZ], "HOME", "")?.domain_id, "money-zeta");
   assert.equal(chooseDiagnosticSelection([moreRecentZ, moreRecentA], "HOME", "")?.domain_id, "money-beta");
+});
+
+test("ignores misleading trend totals and ranks by actual comparable points", () => {
+  const misleading = {
+    domain_id: "money-reported",
+    label: "보고 합계가 큰 영역",
+    mode: "HOME" as const,
+    drill_trend: {
+      ...domainTrend("money-reported", "보고 합계가 큰 영역 · 반복학습", [
+        trend("2026-08-01", 50, true, { evidence_id: "reported:1" }),
+      ]),
+      total_count: 999,
+      recent_count: 999,
+    },
+    statuses: [],
+  };
+  const actualHistory = {
+    domain_id: "money-actual",
+    label: "실제 기록이 많은 영역",
+    mode: "HOME" as const,
+    drill_trend: domainTrend("money-actual", "실제 기록이 많은 영역 · 반복학습", [
+      trend("2026-08-01", 50, false, { evidence_id: "actual:1" }),
+      trend("2026-08-02", 60, true, { evidence_id: "actual:2" }),
+    ]),
+    statuses: [],
+  };
+
+  assert.equal(chooseDiagnosticSelection([misleading, actualHistory], "HOME", "")?.domain_id, "money-actual");
+});
+
+test("counts a LIFE trend once and selects the LIFE domain with more actual points", () => {
+  const lifeDomain = (domain_id: string, pointCount: number) => ({
+    domain_id,
+    label: domain_id,
+    mode: "LIFE" as const,
+    life_trend: domainTrend(domain_id, domain_id, Array.from({ length: pointCount }, (_, index) => (
+      trend(`2026-08-${String(index + 1).padStart(2, "0")}`, 50 + index, index > 0, { evidence_id: `${domain_id}:${index}` })
+    ))),
+    statuses: [],
+  });
+  const shorter = lifeDomain("life-shorter", 3);
+  const richer = lifeDomain("life-richer", 4);
+
+  assert.deepEqual(diagnosticComparablePointCounts(shorter), { total: 3, recent: 2 });
+  assert.equal(chooseDiagnosticSelection([shorter, richer], "LIFE", "")?.domain_id, "life-richer");
 });
 
 test("keeps different HOME recent boundaries on their own series without mutating evidence", () => {
