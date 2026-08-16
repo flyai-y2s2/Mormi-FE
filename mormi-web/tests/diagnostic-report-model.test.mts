@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { DiagnosticReportDto, SpeechEvidenceDto } from "../app/api-client.ts";
+import type {
+  AvailableSpeechEvidenceDto,
+  DiagnosticReportDto,
+  SpeechEvidenceDto,
+} from "../app/api-client.ts";
 import { chartPoints, statusLabel } from "../app/report/diagnostic-report-model.ts";
 
 function trend(
@@ -133,4 +137,11 @@ test("diagnostic fixtures mirror Spring's empty and speech-evidence JSON shapes"
   assert.equal(speechText(available), "동전을 세 개 더해서 여섯 개예요.");
   assert.equal(available.past.hint_level, undefined);
   assert.equal(available.recent.expression_level, undefined);
+
+  const impossibleAvailableMessage: AvailableSpeechEvidenceDto = {
+    ...available,
+    // @ts-expect-error Spring omits the available branch's null message.
+    message: null,
+  };
+  assert.equal("message" in impossibleAvailableMessage, true);
 });

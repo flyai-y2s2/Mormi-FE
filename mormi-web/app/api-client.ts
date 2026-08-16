@@ -222,8 +222,8 @@ type SpeechEvidenceBaseDto = {
 
 export type AvailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
   available: true;
-  /** Spring currently omits its null message, but clients may safely accept it. */
-  message?: string | null;
+  /** Spring constructs null and omits this field through its NON_NULL policy. */
+  message?: never;
   past: SpeechSampleDto;
   recent: SpeechSampleDto;
   change_summary: string;
