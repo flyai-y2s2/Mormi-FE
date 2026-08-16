@@ -336,7 +336,10 @@ test("server-renders the individual diagnostic report shell", async () => {
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
-  const dashboard = await readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8");
+  const [dashboard, trendChart] = await Promise.all([
+    readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/ReportTrendChart.tsx", import.meta.url), "utf8"),
+  ]);
 
   assert.match(dashboard, /api\.diagnosticReport\(controller\.signal\)/);
   assert.match(dashboard, /role="tablist"/);
@@ -351,6 +354,11 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(dashboard, /AbortController/);
   assert.match(dashboard, /isEmptyDiagnosticReport/);
   assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
+  assert.match(trendChart, /recentWindowLayout\.description/);
+  assert.match(trendChart, /diagnostic-chart__recent--shared/);
+  assert.match(trendChart, /diagnostic-chart__recent-ribbon--primary/);
+  assert.match(trendChart, /diagnostic-chart__recent-ribbon--secondary/);
+  assert.match(trendChart, /최근 구간/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {

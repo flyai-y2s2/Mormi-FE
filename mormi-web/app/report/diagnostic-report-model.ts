@@ -50,6 +50,21 @@ export type DiagnosticSeriesChartPoint = DiagnosticSeriesPoint & {
   y: number;
 };
 
+export type DiagnosticRecentWindow = {
+  series_id: DiagnosticChartSeries["id"];
+  label: string;
+  start: number;
+  end: number;
+  start_at: string;
+  end_at: string;
+};
+
+export type DiagnosticRecentWindowLayout = {
+  kind: "none" | "shared" | "per-series";
+  windows: DiagnosticRecentWindow[];
+  description: string;
+};
+
 const statusLabels: Record<DiagnosticStatus, string> = {
   STABLE: "안정",
   DEVELOPING: "발달 중",
@@ -156,6 +171,71 @@ export function diagnosticSeriesForDomain(group: DiagnosticDomainGroup): Diagnos
     seriesFromTrend("life-independent", "독립 수행", group.life_trend, "independent_score"),
     seriesFromTrend("life-supported", "도움 후 완료", group.life_trend, "supported_score"),
   ];
+}
+
+function topicLabel(label: string): string {
+  const finalCharacter = label.at(-1);
+  if (!finalCharacter) return label;
+  const codePoint = finalCharacter.charCodeAt(0);
+  const hasFinalConsonant = codePoint >= 0xac00 && codePoint <= 0xd7a3 && (codePoint - 0xac00) % 28 !== 0;
+  return `${label}${hasFinalConsonant ? "은" : "는"}`;
+}
+
+function shortDate(value: string): string {
+  return value.slice(0, 10);
+}
+
+/** Keeps each server trend's recent flags attached to that trend's own time boundary. */
+export function recentWindowsForSeries(
+  series: readonly DiagnosticChartSeries[],
+): DiagnosticRecentWindowLayout {
+  const activeSeries = series.map((item) => {
+    const datedPoints = item.points
+      .map((point) => ({ point, time: Date.parse(point.occurred_at) }))
+      .filter((entry) => Number.isFinite(entry.time))
+      .sort((left, right) => left.time - right.time || left.point.evidence_id.localeCompare(right.point.evidence_id));
+    return { item, datedPoints };
+  }).filter(({ datedPoints }) => datedPoints.length > 0);
+
+  const windows = activeSeries.flatMap(({ item, datedPoints }) => {
+    const firstRecent = datedPoints.find(({ point }) => point.recent);
+    if (!firstRecent) return [];
+    const lastPoint = datedPoints.at(-1)!;
+    return [{
+      series_id: item.id,
+      label: item.label,
+      start: firstRecent.time,
+      end: lastPoint.time,
+      start_at: firstRecent.point.occurred_at,
+      end_at: lastPoint.point.occurred_at,
+    }];
+  });
+
+  if (windows.length === 0) {
+    return { kind: "none", windows, description: "최근 기록으로 표시된 구간이 없습니다." };
+  }
+
+  const sharedBoundary = windows.length === activeSeries.length
+    && windows.every((window) => window.start === windows[0]!.start);
+  if (sharedBoundary) {
+    return {
+      kind: "shared",
+      windows,
+      description: `${windows.map((window) => window.label).join(", ")} 최근 구간은 ${shortDate(windows[0]!.start_at)}에 함께 시작합니다.`,
+    };
+  }
+
+  const windowDescriptions = windows.map((window) => (
+    `${topicLabel(window.label)} ${shortDate(window.start_at)}부터 ${shortDate(window.end_at)}까지`
+  ));
+  const missingDescriptions = activeSeries
+    .filter(({ item }) => !windows.some((window) => window.series_id === item.id))
+    .map(({ item }) => `${topicLabel(item.label)} 최근 구간 표시 없음`);
+  return {
+    kind: "per-series",
+    windows,
+    description: `계열별 최근 구간: ${[...windowDescriptions, ...missingDescriptions].join(", ")}입니다.`,
+  };
 }
 
 export function isEmptyDiagnosticReport(report: DiagnosticReportDto): boolean {
