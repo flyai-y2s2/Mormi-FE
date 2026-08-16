@@ -8,7 +8,6 @@ import {
   readStoredLearner,
   type DiagnosticMode,
   type DiagnosticReportDto,
-  type SpeechEvidenceDto,
 } from "../api-client";
 import { DomainDetail } from "./DomainDetail";
 import { ReportTrendChart } from "./ReportTrendChart";
@@ -21,13 +20,18 @@ import {
   type DiagnosticDomainGroup,
   type DiagnosticEvidenceKind,
 } from "./diagnostic-report-model";
+import {
+  evidenceLinksForRefs,
+  modeForTabKey,
+  reportRequestAccepted,
+  selectionAfterRefresh,
+  speechLoadDecision,
+  speechStateAfterResult,
+  type DiagnosticEvidenceLink,
+  type DiagnosticSpeechState,
+} from "./diagnostic-report-interactions";
 
 type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
-type SpeechState =
-  | { state: "loading" }
-  | { state: "error"; message: string }
-  | { state: "ready"; evidence: SpeechEvidenceDto };
-
 const reportModes = ["HOME", "LIFE"] as const;
 const modeLabels: Record<DiagnosticMode, string> = { HOME: "집 · 개념", LIFE: "실생활 · 응용" };
 const directionLabels = {
@@ -75,6 +79,30 @@ function statusSummary(group: DiagnosticDomainGroup) {
   ));
 }
 
+function EvidenceLinks({
+  refs,
+  groups,
+  onActivate,
+}: {
+  refs: readonly string[];
+  groups: readonly DiagnosticDomainGroup[];
+  onActivate: (link: DiagnosticEvidenceLink) => void;
+}) {
+  const links = evidenceLinksForRefs(refs, groups);
+  if (links.length === 0) return <span className="diagnostic-evidence-empty">근거 없음</span>;
+  return (
+    <div className="diagnostic-evidence-links" aria-label="연결된 근거">
+      {links.map((link) => link.target ? (
+        <button className="diagnostic-evidence-link" type="button" key={link.ref} onClick={() => onActivate(link)}>
+          {link.label}
+        </button>
+      ) : (
+        <span className="diagnostic-evidence-link diagnostic-evidence-link--static" key={link.ref}>{link.label}</span>
+      ))}
+    </div>
+  );
+}
+
 export function ReportDashboard() {
   const [report, setReport] = useState<DiagnosticReportDto | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -83,7 +111,7 @@ export function ReportDashboard() {
   const [mode, setMode] = useState<DiagnosticMode>("HOME");
   const [selectedDomainId, setSelectedDomainId] = useState("");
   const [expandedDomainId, setExpandedDomainId] = useState<string | null>(null);
-  const [speechByDomain, setSpeechByDomain] = useState<Record<string, SpeechState>>({});
+  const [speechByDomain, setSpeechByDomain] = useState<Record<string, DiagnosticSpeechState>>({});
   const reportRef = useRef<DiagnosticReportDto | null>(null);
   const modeRef = useRef<DiagnosticMode>("HOME");
   const selectedDomainRef = useRef("");
@@ -91,6 +119,9 @@ export function ReportDashboard() {
   const reportSequenceRef = useRef(0);
   const speechControllersRef = useRef(new Map<string, AbortController>());
   const tabRefs = useRef<Partial<Record<DiagnosticMode, HTMLButtonElement>>>({});
+  const chartSectionRef = useRef<HTMLElement | null>(null);
+  const domainSelectorRefs = useRef(new Map<string, HTMLButtonElement>());
+  const domainStatusRefs = useRef(new Map<string, HTMLButtonElement>());
 
   const cancelSpeechRequests = useCallback(() => {
     speechControllersRef.current.forEach((controller) => controller.abort());
@@ -113,7 +144,7 @@ export function ReportDashboard() {
 
     try {
       const data = await api.diagnosticReport(controller.signal);
-      if (controller.signal.aborted || reportSequenceRef.current !== sequence) return;
+      if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
       if (isEmptyDiagnosticReport(data)) {
         cancelSpeechRequests();
         setSpeechByDomain({});
@@ -128,18 +159,17 @@ export function ReportDashboard() {
       }
 
       const groups = groupDiagnosticDomains(data);
-      const nextGroup = chooseDiagnosticSelection(groups, previousMode, previousDomainId);
-      const nextMode = nextGroup?.mode ?? "HOME";
+      const nextSelection = selectionAfterRefresh(groups, previousMode, previousDomainId);
       cancelSpeechRequests();
       setSpeechByDomain({});
       setExpandedDomainId(null);
       reportRef.current = data;
       setReport(data);
-      setMode(nextMode);
-      setSelectedDomainId(nextGroup?.domain_id ?? "");
+      setMode(nextSelection.mode);
+      setSelectedDomainId(nextSelection.domain_id);
       setLoadState("ready");
     } catch (error: unknown) {
-      if (controller.signal.aborted || reportSequenceRef.current !== sequence) return;
+      if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
       if (error instanceof ApiError && error.status === 401) {
         cancelSpeechRequests();
         setSpeechByDomain({});
@@ -158,7 +188,7 @@ export function ReportDashboard() {
         setNotice("리포트 데이터를 불러오지 못했습니다.");
       }
     } finally {
-      if (reportSequenceRef.current === sequence) {
+      if (reportRequestAccepted(reportSequenceRef.current, sequence, false)) {
         setRefreshing(false);
         if (reportControllerRef.current === controller) reportControllerRef.current = null;
       }
@@ -206,16 +236,36 @@ export function ReportDashboard() {
 
   const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     const currentMode = event.currentTarget.dataset.mode as DiagnosticMode;
-    const currentIndex = reportModes.indexOf(currentMode);
-    let nextMode: DiagnosticMode | null = null;
-    if (event.key === "ArrowRight") nextMode = reportModes[(currentIndex + 1) % reportModes.length];
-    if (event.key === "ArrowLeft") nextMode = reportModes[(currentIndex - 1 + reportModes.length) % reportModes.length];
-    if (event.key === "Home") nextMode = reportModes[0];
-    if (event.key === "End") nextMode = reportModes.at(-1)!;
+    const nextMode = modeForTabKey(currentMode, event.key);
     if (!nextMode) return;
     event.preventDefault();
     selectMode(nextMode);
     window.requestAnimationFrame(() => tabRefs.current[nextMode]?.focus());
+  };
+
+  const loadSpeechEvidence = (domain: DiagnosticDomainGroup) => {
+    const domainId = domain.domain_id;
+    const cached = speechByDomain[domainId];
+    if (speechLoadDecision(cached) === "reuse") return;
+    speechControllersRef.current.get(domainId)?.abort();
+    const controller = new AbortController();
+    speechControllersRef.current.set(domainId, controller);
+    setSpeechByDomain((current) => ({ ...current, [domainId]: { state: "loading" } }));
+    void api.diagnosticSpeechEvidence(domainId, controller.signal).then(
+      (evidence) => {
+        if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
+        speechControllersRef.current.delete(domainId);
+        setSpeechByDomain((current) => ({ ...current, [domainId]: speechStateAfterResult({ ok: true, evidence }) }));
+      },
+      () => {
+        if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
+        speechControllersRef.current.delete(domainId);
+        setSpeechByDomain((current) => ({
+          ...current,
+          [domainId]: speechStateAfterResult({ ok: false, message: "발화 근거를 불러오지 못했습니다. 영역을 닫았다가 다시 열어 주세요." }),
+        }));
+      },
+    );
   };
 
   const openDomain = (domain: DiagnosticDomainGroup) => {
@@ -227,28 +277,32 @@ export function ReportDashboard() {
     setMode(domain.mode);
     setSelectedDomainId(domainId);
     setExpandedDomainId(domainId);
+    loadSpeechEvidence(domain);
+  };
 
-    const cached = speechByDomain[domainId];
-    if (cached?.state === "ready" || cached?.state === "loading") return;
-    speechControllersRef.current.get(domainId)?.abort();
-    const controller = new AbortController();
-    speechControllersRef.current.set(domainId, controller);
-    setSpeechByDomain((current) => ({ ...current, [domainId]: { state: "loading" } }));
-    void api.diagnosticSpeechEvidence(domainId, controller.signal).then(
-      (evidence) => {
-        if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
-        speechControllersRef.current.delete(domainId);
-        setSpeechByDomain((current) => ({ ...current, [domainId]: { state: "ready", evidence } }));
-      },
-      () => {
-        if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
-        speechControllersRef.current.delete(domainId);
-        setSpeechByDomain((current) => ({
-          ...current,
-          [domainId]: { state: "error", message: "발화 근거를 불러오지 못했습니다. 영역을 닫았다가 다시 열어 주세요." },
-        }));
-      },
-    );
+  const activateEvidenceLink = (link: DiagnosticEvidenceLink) => {
+    if (!link.target) return;
+    const target = link.target;
+    const domain = groupedDomains.find((item) => item.domain_id === target.domain_id && item.mode === target.mode);
+    if (!domain) return;
+    setMode(target.mode);
+    setSelectedDomainId(target.domain_id);
+    if (target.expand_speech) {
+      setExpandedDomainId(target.domain_id);
+      loadSpeechEvidence(domain);
+    } else {
+      setExpandedDomainId(null);
+    }
+    window.requestAnimationFrame(() => {
+      if (target.focus === "domain") {
+        const statusButton = domainStatusRefs.current.get(target.domain_id);
+        statusButton?.focus();
+        statusButton?.scrollIntoView({ block: "center" });
+      } else {
+        chartSectionRef.current?.scrollIntoView({ block: "start" });
+        domainSelectorRefs.current.get(target.domain_id)?.focus();
+      }
+    });
   };
 
   const stateTitle = loadState === "loading"
@@ -309,17 +363,17 @@ export function ReportDashboard() {
               <SectionHeading id="summary-title" eyebrow="AT A GLANCE" title="현재 상태 요약" />
               <div className="summary-strips">
                 {([
-                  ["개념 수행", report.current_summary.concept_performance, "영역 근거"],
-                  ["설명 변화", report.current_summary.explanation_change, "발화 근거"],
-                  ["실생활 적용", report.current_summary.life_transfer, "수행 근거"],
-                ] as const).map(([label, summary, evidenceLabel]) => (
-                  <article key={label}><strong>{label}</strong><p>{summary.text}</p><small>{evidenceLabel} · {summary.evidence_refs.length}건</small></article>
+                  ["개념 수행", report.current_summary.concept_performance],
+                  ["설명 변화", report.current_summary.explanation_change],
+                  ["실생활 적용", report.current_summary.life_transfer],
+                ] as const).map(([label, summary]) => (
+                  <article key={label}><strong>{label}</strong><p>{summary.text}</p><EvidenceLinks refs={summary.evidence_refs} groups={groupedDomains} onActivate={activateEvidenceLink} /></article>
                 ))}
               </div>
               {report.narrative_fallback && <p className="diagnostic-fallback">현재 요약은 검증된 기록을 바탕으로 한 기본 문장으로 표시됩니다.</p>}
             </section>
 
-            <section className="diagnostic-section diagnostic-trends" aria-labelledby="trend-title">
+            <section className="diagnostic-section diagnostic-trends" aria-labelledby="trend-title" ref={chartSectionRef}>
               <SectionHeading id="trend-title" eyebrow="CHANGE OVER TIME" title="학습 변화" detail={chartDetail} />
               <div className="diagnostic-tabs" role="tablist" aria-label="학습 환경 선택">
                 {reportModes.map((item) => {
@@ -348,6 +402,7 @@ export function ReportDashboard() {
                 {modeDomains.map((domain) => (
                   <button
                     key={domain.domain_id}
+                    ref={(element) => { if (element) domainSelectorRefs.current.set(domain.domain_id, element); else domainSelectorRefs.current.delete(domain.domain_id); }}
                     type="button"
                     className={selectedDomain?.domain_id === domain.domain_id ? "is-active" : ""}
                     aria-pressed={selectedDomain?.domain_id === domain.domain_id}
@@ -380,7 +435,7 @@ export function ReportDashboard() {
                   const panelId = `domain-detail-${domain.domain_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
                   return (
                     <div className={`domain-row ${expanded ? "is-expanded" : ""}`} key={domain.domain_id}>
-                      <button type="button" className="domain-status-button" aria-expanded={expanded} aria-controls={panelId} onClick={() => openDomain(domain)}>
+                      <button ref={(element) => { if (element) domainStatusRefs.current.set(domain.domain_id, element); else domainStatusRefs.current.delete(domain.domain_id); }} type="button" className="domain-status-button" aria-expanded={expanded} aria-controls={panelId} onClick={() => openDomain(domain)}>
                         <span><strong>{domain.label}</strong></span>
                         <span className="domain-status-stack">{statusSummary(domain)}</span>
                         <i aria-hidden="true">{expanded ? "−" : "+"}</i>
@@ -393,8 +448,8 @@ export function ReportDashboard() {
             </section>
 
             <section className="diagnostic-highlights" aria-label="좋아진 점과 계속 관찰할 점">
-              <article><span aria-hidden="true">↗</span><div><strong>좋아진 점</strong><p>{report.improved_point.text}</p><small>근거 {report.improved_point.evidence_refs.length}건</small></div></article>
-              <article><span aria-hidden="true">○</span><div><strong>계속 관찰할 점</strong><p>{report.observe_point.text}</p><small>근거 {report.observe_point.evidence_refs.length}건</small></div></article>
+              <article><span aria-hidden="true">↗</span><div><strong>좋아진 점</strong><p>{report.improved_point.text}</p><EvidenceLinks refs={report.improved_point.evidence_refs} groups={groupedDomains} onActivate={activateEvidenceLink} /></div></article>
+              <article><span aria-hidden="true">○</span><div><strong>계속 관찰할 점</strong><p>{report.observe_point.text}</p><EvidenceLinks refs={report.observe_point.evidence_refs} groups={groupedDomains} onActivate={activateEvidenceLink} /></div></article>
             </section>
             <section className="diagnostic-evidence" aria-label="분석 근거 수">
               {([

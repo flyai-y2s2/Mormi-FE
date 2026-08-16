@@ -336,8 +336,9 @@ test("server-renders the individual diagnostic report shell", async () => {
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
-  const [dashboard, trendChart, css] = await Promise.all([
+  const [dashboard, interactions, trendChart, css] = await Promise.all([
     readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/diagnostic-report-interactions.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/report/ReportTrendChart.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
@@ -362,6 +363,18 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(trendChart, /최근 구간/);
   assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
   assert.match(dashboard, /className="domain-detail-panel"/);
+  assert.match(dashboard, /className="diagnostic-evidence-link"/);
+  assert.match(dashboard, /<p>\{summary\.text\}<\/p><EvidenceLinks refs=\{summary\.evidence_refs\}/);
+  assert.match(dashboard, /<p>\{report\.improved_point\.text\}<\/p><EvidenceLinks refs=\{report\.improved_point\.evidence_refs\}/);
+  assert.match(dashboard, /onClick=\{\(\) => onActivate\(link\)\}/);
+  assert.match(dashboard, /activateEvidenceLink/);
+  assert.match(dashboard, /scrollIntoView/);
+  assert.match(dashboard, /expand_speech/);
+  assert.match(dashboard, /speechLoadDecision/);
+  assert.match(dashboard, /reportRequestAccepted/);
+  assert.match(interactions, /export function evidenceLinksForRefs/);
+  assert.doesNotMatch(dashboard, /evidence_refs\.length\}건/);
+  assert.match(css, /\.diagnostic-evidence-link\{[^}]*min-height:44px/);
 
   const printStyles = css.slice(css.indexOf("@media print"), css.indexOf("/* 툴바", css.indexOf("@media print")));
   assert.match(printStyles, /@page\{size:A4 portrait;margin:8mm\}/);
@@ -379,6 +392,7 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(printStyles, /\.summary-strips p\{font-size:12px/);
   assert.match(printStyles, /\.domain-status\{[^}]*font-size:11px/);
   assert.match(printStyles, /\.diagnostic-highlights p\{[^}]*font-size:12px/);
+  assert.match(printStyles, /\.diagnostic-evidence-link\{[^}]*min-height:0[^}]*font-size:11px/);
   assert.match(printStyles, /\.diagnostic-evidence span\{[^}]*font-size:11px/);
   const ribbonTextPrintRule = printStyles.match(/\.diagnostic-chart__recent-ribbon text\{([^}]*)\}/);
   assert.ok(ribbonTextPrintRule, "print must override per-series recent-ribbon labels");

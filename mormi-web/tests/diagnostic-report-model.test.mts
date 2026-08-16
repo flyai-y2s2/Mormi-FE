@@ -18,6 +18,15 @@ import {
   recentWindowsForSeries,
   statusLabel,
 } from "../app/report/diagnostic-report-model.ts";
+import {
+  evidenceLinksForRefs,
+  modeForTabKey,
+  parseDiagnosticEvidenceRef,
+  reportRequestAccepted,
+  selectionAfterRefresh,
+  speechLoadDecision,
+  speechStateAfterResult,
+} from "../app/report/diagnostic-report-interactions.ts";
 
 function trend(
   occurred_at: string,
@@ -54,6 +63,95 @@ test("statusLabel uses teacher-facing Korean labels", () => {
   assert.equal(statusLabel("DEVELOPING"), "발달 중");
   assert.equal(statusLabel("SUPPORT_NEEDED"), "지원 필요");
   assert.equal(statusLabel("OBSERVING"), "관찰 중");
+});
+
+test("parses direct, wrapped, and global diagnostic evidence references", () => {
+  assert.deepEqual(parseDiagnosticEvidenceRef("drill:money-count"), {
+    kind: "domain", activity: "drill", domain_id: "money-count",
+  });
+  assert.deepEqual(parseDiagnosticEvidenceRef("speech:money-count"), {
+    kind: "domain", activity: "speech", domain_id: "money-count",
+  });
+  assert.deepEqual(parseDiagnosticEvidenceRef("observe:life:calculate"), {
+    kind: "domain", activity: "life", domain_id: "calculate",
+  });
+  assert.deepEqual(parseDiagnosticEvidenceRef("improved:insufficient-history"), {
+    kind: "global", label: "장기 비교 근거 부족",
+  });
+  assert.deepEqual(parseDiagnosticEvidenceRef("observe:next-records"), {
+    kind: "global", label: "다음 학습 기록 필요",
+  });
+});
+
+test("maps evidence refs to human-readable domain activities and navigation targets", () => {
+  const groups = [
+    { domain_id: "money-count", label: "돈 세기", mode: "HOME" as const, statuses: [] },
+    { domain_id: "calculate", label: "메뉴 값 계산하기", mode: "LIFE" as const, statuses: [] },
+  ];
+
+  assert.deepEqual(evidenceLinksForRefs([
+    "drill:money-count",
+    "teach:money-count",
+    "speech:money-count",
+    "observe:life:calculate",
+    "improved:insufficient-history",
+  ], groups), [
+    { ref: "drill:money-count", label: "돈 세기 · 반복학습 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
+    { ref: "teach:money-count", label: "돈 세기 · 모르미 가르치기 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
+    { ref: "speech:money-count", label: "돈 세기 · 발화 비교 근거", target: { mode: "HOME", domain_id: "money-count", focus: "domain", expand_speech: true } },
+    { ref: "observe:life:calculate", label: "메뉴 값 계산하기 · 실생활 수행 근거", target: { mode: "LIFE", domain_id: "calculate", focus: "chart", expand_speech: false } },
+    { ref: "improved:insufficient-history", label: "장기 비교 근거 부족", target: null },
+  ]);
+});
+
+test("keeps malformed and unknown evidence refs readable but non-interactive", () => {
+  const groups = [{ domain_id: "money-count", label: "돈 세기", mode: "HOME" as const, statuses: [] }];
+  assert.deepEqual(parseDiagnosticEvidenceRef("teach:missing:extra"), {
+    kind: "unknown", raw: "teach:missing:extra",
+  });
+  assert.deepEqual(evidenceLinksForRefs(["drill:missing", "future:evidence"], groups), [
+    { ref: "drill:missing", label: "기타 근거 (drill:missing)", target: null },
+    { ref: "future:evidence", label: "기타 근거 (future:evidence)", target: null },
+  ]);
+});
+
+test("executes keyboard, refresh, speech-cache, and stale-request interaction decisions", () => {
+  const groups = [
+    { domain_id: "money-count", label: "돈 세기", mode: "HOME" as const, statuses: [] },
+    { domain_id: "calculate", label: "메뉴 값 계산하기", mode: "LIFE" as const, statuses: [] },
+  ];
+  assert.equal(modeForTabKey("HOME", "ArrowRight"), "LIFE");
+  assert.equal(modeForTabKey("HOME", "ArrowLeft"), "LIFE");
+  assert.equal(modeForTabKey("LIFE", "Home"), "HOME");
+  assert.equal(modeForTabKey("HOME", "End"), "LIFE");
+  assert.equal(modeForTabKey("HOME", "Enter"), null);
+  assert.deepEqual(selectionAfterRefresh(groups, "LIFE", "calculate"), { mode: "LIFE", domain_id: "calculate" });
+  assert.deepEqual(selectionAfterRefresh(groups, "LIFE", "removed"), { mode: "LIFE", domain_id: "calculate" });
+
+  const unavailable: SpeechEvidenceDto = {
+    available: false,
+    domain_id: "money-count",
+    verified_elements: [],
+    message: "비교 가능한 발화 근거가 부족합니다.",
+  };
+  const readyUnavailable = speechStateAfterResult({ ok: true, evidence: unavailable });
+  assert.equal(speechLoadDecision(readyUnavailable), "reuse");
+  const available: SpeechEvidenceDto = {
+    available: true,
+    domain_id: "money-count",
+    verified_elements: ["합성"],
+    past: { evidence_id: "past", utterance: "세 개예요.", occurred_at: "2026-08-01" },
+    recent: { evidence_id: "recent", utterance: "세 개 더해서 여섯 개예요.", occurred_at: "2026-08-08" },
+    change_summary: "도움 없이 설명했습니다.",
+  };
+  assert.equal(speechLoadDecision(speechStateAfterResult({ ok: true, evidence: available })), "reuse");
+  const retryable = speechStateAfterResult({ ok: false, message: "다시 시도" });
+  assert.deepEqual(retryable, { state: "error", message: "다시 시도" });
+  assert.equal(speechLoadDecision(retryable), "fetch");
+  assert.equal(speechLoadDecision(undefined), "fetch");
+  assert.equal(reportRequestAccepted(4, 4, false), true);
+  assert.equal(reportRequestAccepted(5, 4, false), false);
+  assert.equal(reportRequestAccepted(4, 4, true), false);
 });
 
 test("chartPoints orders ties deterministically and preserves point metadata for accessible series", () => {
