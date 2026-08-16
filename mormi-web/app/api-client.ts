@@ -115,6 +115,116 @@ export type ReportSummaryDto = {
   first_try_correct_count: number;
 };
 
+export type DiagnosticMode = "HOME" | "LIFE";
+export type DiagnosticStatus = "STABLE" | "DEVELOPING" | "SUPPORT_NEEDED" | "OBSERVING";
+export type DiagnosticDirection = "IMPROVING" | "DECLINING" | "MAINTAINING" | "INSUFFICIENT_HISTORY";
+
+export type DiagnosticLearnerDto = {
+  learner_id: number;
+  display_name: string;
+};
+
+export type DiagnosticDataRangeDto = {
+  first_at: string | null;
+  last_at: string | null;
+  total_home_sessions: number;
+  total_life_visits: number;
+};
+
+export type DiagnosticEvidenceTextDto = {
+  text: string;
+  evidence_refs: string[];
+};
+
+export type DiagnosticCurrentSummaryDto = {
+  concept_performance: DiagnosticEvidenceTextDto;
+  explanation_change: DiagnosticEvidenceTextDto;
+  life_transfer: DiagnosticEvidenceTextDto;
+};
+
+export type DiagnosticHighlightDto = DiagnosticEvidenceTextDto;
+
+export type DiagnosticEvidenceCountsDto = {
+  home_sessions: number;
+  drill_attempts: number;
+  teach_conversations: number;
+  life_visits: number;
+  speech_samples: number;
+};
+
+export type DiagnosticTrendPointDto = {
+  evidence_id: string;
+  label: string;
+  occurred_at: string;
+  independent_score: number;
+  supported_score: number;
+  recent: boolean;
+};
+
+export type DiagnosticDomainTrendDto = {
+  domain_id: string;
+  label: string;
+  points: DiagnosticTrendPointDto[];
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticHomeModeReportDto = {
+  mode: "HOME";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticLifeModeReportDto = {
+  mode: "LIFE";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticModeReportDto = DiagnosticHomeModeReportDto | DiagnosticLifeModeReportDto;
+
+type DiagnosticDomainStatusBase = {
+  domain_id: string;
+  label: string;
+  direction: DiagnosticDirection;
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticDomainStatusDto =
+  | (DiagnosticDomainStatusBase & { status: "STABLE" })
+  | (DiagnosticDomainStatusBase & { status: "DEVELOPING" })
+  | (DiagnosticDomainStatusBase & { status: "SUPPORT_NEEDED" })
+  | (DiagnosticDomainStatusBase & { status: "OBSERVING" });
+
+export type DiagnosticReportDto = {
+  learner: DiagnosticLearnerDto;
+  data_range: DiagnosticDataRangeDto;
+  current_summary: DiagnosticCurrentSummaryDto;
+  modes: DiagnosticModeReportDto[];
+  domains: DiagnosticDomainStatusDto[];
+  improved_point: DiagnosticHighlightDto;
+  observe_point: DiagnosticHighlightDto;
+  evidence_counts: DiagnosticEvidenceCountsDto;
+  narrative_fallback: boolean;
+};
+
+export type SpeechSampleDto = {
+  evidence_id: string;
+  utterance: string;
+  hint_level: string;
+  expression_level: string;
+  occurred_at: string;
+};
+
+export type SpeechEvidenceDto = {
+  domain_id: string;
+  available: boolean;
+  message: string | null;
+  past: SpeechSampleDto | null;
+  recent: SpeechSampleDto | null;
+  verified_elements: string[];
+  change_summary: string | null;
+};
+
 export type AttemptView = {
   attempt_id: number;
   activity: string;
@@ -307,6 +417,16 @@ export const api = {
 
   reportHistory(limit = 8) {
     return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
+  },
+
+  diagnosticReport() {
+    return apiRequest<DiagnosticReportDto>("/v1/reports/diagnostic");
+  },
+
+  diagnosticSpeechEvidence(domainId: string) {
+    return apiRequest<SpeechEvidenceDto>(
+      `/v1/reports/diagnostic/speech-evidence?domain_id=${encodeURIComponent(domainId)}`,
+    );
   },
 
   /** 새로고침 복구용. 시도 전체가 함께 온다. */
