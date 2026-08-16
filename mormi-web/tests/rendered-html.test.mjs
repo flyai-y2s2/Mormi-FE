@@ -380,6 +380,12 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(printStyles, /\.domain-status\{[^}]*font-size:11px/);
   assert.match(printStyles, /\.diagnostic-highlights p\{[^}]*font-size:12px/);
   assert.match(printStyles, /\.diagnostic-evidence span\{[^}]*font-size:11px/);
+  const ribbonTextPrintRule = printStyles.match(/\.diagnostic-chart__recent-ribbon text\{([^}]*)\}/);
+  assert.ok(ribbonTextPrintRule, "print must override per-series recent-ribbon labels");
+  const ribbonPrintFontSize = Number(ribbonTextPrintRule[1].match(/font-size:([\d.]+)px/)?.[1]);
+  assert.ok(ribbonPrintFontSize >= 19, "recent-ribbon print labels must be at least 19 SVG units");
+  assert.match(printStyles, /\.diagnostic-chart__recent-ribbon rect\{[^}]*height:22px/);
+  assert.match(printStyles, /\.diagnostic-chart__recent-ribbon--secondary\{[^}]*transform:translateY\(7px\)/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {
