@@ -269,6 +269,34 @@ test("keeps different HOME recent boundaries on their own series without mutatin
   assert.equal(JSON.stringify(series), before, "recent-window calculation must not mutate series evidence");
 });
 
+test("keeps equal-start HOME windows separate when their series end at different times", () => {
+  const layout = recentWindowsForSeries([
+    {
+      id: "home-drill",
+      label: "반복학습",
+      points: [
+        { evidence_id: "drill:1", label: "첫 연습", occurred_at: "2026-08-08", score: 55, recent: true },
+        { evidence_id: "drill:2", label: "둘째 연습", occurred_at: "2026-08-22", score: 75, recent: true },
+      ],
+      total_count: 2,
+      recent_count: 2,
+    },
+    {
+      id: "home-teach",
+      label: "모르미 가르치기",
+      points: [
+        { evidence_id: "teach:1", label: "첫 설명", occurred_at: "2026-08-08", score: 60, recent: true },
+        { evidence_id: "teach:2", label: "둘째 설명", occurred_at: "2026-08-29", score: 80, recent: true },
+      ],
+      total_count: 2,
+      recent_count: 2,
+    },
+  ]);
+
+  assert.equal(layout.kind, "per-series");
+  assert.deepEqual(layout.windows.map((window) => window.end_at), ["2026-08-22", "2026-08-29"]);
+});
+
 test("uses one shared recent band when all active LIFE series have the same boundary", () => {
   const sharedPoints = [
     { evidence_id: "life:1", label: "첫 방문", occurred_at: "2026-08-01", score: 40, recent: false },
@@ -281,7 +309,7 @@ test("uses one shared recent band when all active LIFE series have the same boun
 
   assert.equal(layout.kind, "shared");
   assert.deepEqual(layout.windows.map((window) => window.start_at), ["2026-08-15", "2026-08-15"]);
-  assert.match(layout.description, /2026-08-15에 함께 시작/);
+  assert.match(layout.description, /2026-08-15부터 2026-08-15까지 같은 구간/);
 });
 
 test("empty diagnostic report requires zero completed counts and no trend points", () => {

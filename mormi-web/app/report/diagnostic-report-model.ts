@@ -215,13 +215,15 @@ export function recentWindowsForSeries(
     return { kind: "none", windows, description: "최근 기록으로 표시된 구간이 없습니다." };
   }
 
-  const sharedBoundary = windows.length === activeSeries.length
-    && windows.every((window) => window.start === windows[0]!.start);
-  if (sharedBoundary) {
+  const sharedInterval = windows.length === activeSeries.length
+    && windows.every((window) => (
+      window.start === windows[0]!.start && window.end === windows[0]!.end
+    ));
+  if (sharedInterval) {
     return {
       kind: "shared",
       windows,
-      description: `${windows.map((window) => window.label).join(", ")} 최근 구간은 ${shortDate(windows[0]!.start_at)}에 함께 시작합니다.`,
+      description: `${windows.map((window) => window.label).join(", ")} 최근 구간은 ${shortDate(windows[0]!.start_at)}부터 ${shortDate(windows[0]!.end_at)}까지 같은 구간입니다.`,
     };
   }
 
