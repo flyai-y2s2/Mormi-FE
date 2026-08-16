@@ -18,6 +18,7 @@ export function statusLabel(status: DiagnosticStatus): string {
 }
 
 function clampScore(score: number): number {
+  if (!Number.isFinite(score)) return 0;
   return Math.min(100, Math.max(0, score));
 }
 

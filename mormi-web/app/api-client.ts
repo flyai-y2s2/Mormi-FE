@@ -125,8 +125,8 @@ export type DiagnosticLearnerDto = {
 };
 
 export type DiagnosticDataRangeDto = {
-  first_at: string | null;
-  last_at: string | null;
+  first_at?: string;
+  last_at?: string;
   total_home_sessions: number;
   total_life_visits: number;
 };
@@ -210,20 +210,34 @@ export type DiagnosticReportDto = {
 export type SpeechSampleDto = {
   evidence_id: string;
   utterance: string;
-  hint_level: string;
-  expression_level: string;
+  hint_level?: string;
+  expression_level?: string;
   occurred_at: string;
 };
 
-export type SpeechEvidenceDto = {
+type SpeechEvidenceBaseDto = {
   domain_id: string;
-  available: boolean;
-  message: string | null;
-  past: SpeechSampleDto | null;
-  recent: SpeechSampleDto | null;
   verified_elements: string[];
-  change_summary: string | null;
 };
+
+export type AvailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: true;
+  /** Spring currently omits its null message, but clients may safely accept it. */
+  message?: string | null;
+  past: SpeechSampleDto;
+  recent: SpeechSampleDto;
+  change_summary: string;
+};
+
+export type UnavailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: false;
+  message: string;
+  past?: never;
+  recent?: never;
+  change_summary?: never;
+};
+
+export type SpeechEvidenceDto = AvailableSpeechEvidenceDto | UnavailableSpeechEvidenceDto;
 
 export type AttemptView = {
   attempt_id: number;
