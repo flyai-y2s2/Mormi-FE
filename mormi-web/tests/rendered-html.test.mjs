@@ -322,13 +322,26 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(calendarBlock, /correct: "8일"|highlight: 31/);
 });
 
-test("server-renders the adult mathematics report", async () => {
+test("server-renders the individual diagnostic report shell", async () => {
   const response = await render("/report");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /학습 리포트/);
-  assert.match(html, /반복 시도/);
-  assert.match(html, /전이 확인/);
+  assert.match(html, /현재 상태 요약/);
+  assert.match(html, /학습 변화/);
+  assert.match(html, /영역별 현재 상태/);
+  assert.match(html, /집 · 개념/);
+  assert.match(html, /실생활 · 응용/);
+  assert.doesNotMatch(html, /지갑 잔액|이번 세션 보상|우선순위 높음/);
+});
+
+test("diagnostic report uses the approved interactive data contract", async () => {
+  const dashboard = await readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8");
+
+  assert.match(dashboard, /api\.diagnosticReport\(\)/);
+  assert.match(dashboard, /role="tablist"/);
+  assert.match(dashboard, /role="tab"/);
+  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId\)/);
+  assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {
