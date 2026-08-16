@@ -3,10 +3,19 @@ import test from "node:test";
 
 import type {
   AvailableSpeechEvidenceDto,
+  DiagnosticDomainStatusDto,
+  DiagnosticDomainTrendDto,
   DiagnosticReportDto,
   SpeechEvidenceDto,
 } from "../app/api-client.ts";
-import { chartPoints, statusLabel } from "../app/report/diagnostic-report-model.ts";
+import {
+  chartPoints,
+  chooseDiagnosticSelection,
+  diagnosticSeriesForDomain,
+  groupDiagnosticDomains,
+  isEmptyDiagnosticReport,
+  statusLabel,
+} from "../app/report/diagnostic-report-model.ts";
 
 function trend(
   occurred_at: string,
@@ -144,4 +153,99 @@ test("diagnostic fixtures mirror Spring's empty and speech-evidence JSON shapes"
     message: null,
   };
   assert.equal("message" in impossibleAvailableMessage, true);
+});
+
+function domainTrend(
+  domain_id: string,
+  label: string,
+  points: ReturnType<typeof trend>[],
+): DiagnosticDomainTrendDto {
+  return { domain_id, label, points, total_count: points.length, recent_count: points.filter((point) => point.recent).length };
+}
+
+function domainStatus(
+  domain_id: string,
+  label: string,
+  status: DiagnosticDomainStatusDto["status"],
+): DiagnosticDomainStatusDto {
+  return { domain_id, label, status, direction: "IMPROVING", total_count: 2, recent_count: 1 };
+}
+
+test("groups duplicate HOME records into one domain and sources drill and teach independently", () => {
+  const drill = domainTrend("money-count", "돈 세기 · 반복학습", [
+    trend("2026-08-01", 30, false, { evidence_id: "drill:1", supported_score: 99 }),
+  ]);
+  const teach = domainTrend("money-count", "돈 세기 · 설명 독립성", [
+    trend("2026-08-08", 70, true, { evidence_id: "teach:1", supported_score: 5 }),
+  ]);
+  const life = domainTrend("calculate", "메뉴 값 계산하기", [
+    trend("2026-08-09", 60, true, { evidence_id: "life:1", supported_score: 100 }),
+  ]);
+  const report: DiagnosticReportDto = {
+    learner: { learner_id: 7, display_name: "학습자" },
+    data_range: { total_home_sessions: 2, total_life_visits: 1 },
+    current_summary: {
+      concept_performance: { text: "개념 근거", evidence_refs: ["drill:1"] },
+      explanation_change: { text: "설명 근거", evidence_refs: ["teach:1"] },
+      life_transfer: { text: "생활 근거", evidence_refs: ["life:1"] },
+    },
+    modes: [{ mode: "HOME", domains: [drill, teach] }, { mode: "LIFE", domains: [life] }],
+    domains: [
+      domainStatus("money-count", "돈 세기 · 반복학습", "DEVELOPING"),
+      domainStatus("money-count", "돈 세기 · 설명 독립성", "STABLE"),
+      domainStatus("calculate", "메뉴 값 계산하기", "OBSERVING"),
+    ],
+    improved_point: { text: "좋아진 근거", evidence_refs: ["teach:1"] },
+    observe_point: { text: "관찰 근거", evidence_refs: ["life:1"] },
+    evidence_counts: { home_sessions: 2, drill_attempts: 1, teach_conversations: 1, life_visits: 1, speech_samples: 0 },
+    narrative_fallback: false,
+  };
+  const before = JSON.stringify(report);
+
+  const groups = groupDiagnosticDomains(report);
+
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups.map((group) => group.domain_id), ["money-count", "calculate"]);
+  assert.equal(groups[0]?.label, "돈 세기");
+  assert.deepEqual(groups[0]?.statuses.map((item) => item.kind), ["drill", "teach"]);
+  assert.deepEqual(groups[1]?.statuses.map((item) => item.kind), ["life"]);
+
+  const homeSeries = diagnosticSeriesForDomain(groups[0]!);
+  assert.deepEqual(homeSeries.map((series) => series.id), ["home-drill", "home-teach"]);
+  assert.deepEqual(homeSeries.map((series) => series.points[0]?.score), [30, 70]);
+  assert.deepEqual(homeSeries.map((series) => series.points[0]?.evidence_id), ["drill:1", "teach:1"]);
+  assert.deepEqual(homeSeries.map((series) => series.points[0]?.recent), [false, true]);
+
+  const lifeSeries = diagnosticSeriesForDomain(groups[1]!);
+  assert.deepEqual(lifeSeries.map((series) => series.id), ["life-independent", "life-supported"]);
+  assert.deepEqual(lifeSeries.map((series) => series.points[0]?.score), [60, 100]);
+  assert.equal(JSON.stringify(report), before, "grouping must not mutate the server response");
+
+  assert.equal(chooseDiagnosticSelection(groups, "HOME", "money-count")?.domain_id, "money-count");
+  assert.equal(chooseDiagnosticSelection(groups, "LIFE", "missing")?.domain_id, "calculate");
+});
+
+test("empty diagnostic report requires zero completed counts and no trend points", () => {
+  const empty: DiagnosticReportDto = {
+    learner: { learner_id: 7, display_name: "학습자" },
+    data_range: { total_home_sessions: 0, total_life_visits: 0 },
+    current_summary: {
+      concept_performance: { text: "근거 없음", evidence_refs: [] },
+      explanation_change: { text: "근거 없음", evidence_refs: [] },
+      life_transfer: { text: "근거 없음", evidence_refs: [] },
+    },
+    modes: [{ mode: "HOME", domains: [] }, { mode: "LIFE", domains: [] }],
+    domains: [],
+    improved_point: { text: "근거 없음", evidence_refs: [] },
+    observe_point: { text: "근거 없음", evidence_refs: [] },
+    evidence_counts: { home_sessions: 0, drill_attempts: 0, teach_conversations: 0, life_visits: 0, speech_samples: 0 },
+    narrative_fallback: true,
+  };
+
+  assert.equal(isEmptyDiagnosticReport(empty), true);
+  assert.equal(isEmptyDiagnosticReport({ ...empty, data_range: { total_home_sessions: 1, total_life_visits: 0 } }), false);
+  assert.equal(isEmptyDiagnosticReport({
+    ...empty,
+    modes: [{ mode: "HOME", domains: [domainTrend("money-count", "돈 세기 · 반복학습", [trend("2026-08-01", 50, true)])] }, { mode: "LIFE", domains: [] }],
+  }), false);
 });

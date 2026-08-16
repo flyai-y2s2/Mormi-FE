@@ -331,16 +331,25 @@ test("server-renders the individual diagnostic report shell", async () => {
   assert.match(html, /영역별 현재 상태/);
   assert.match(html, /집 · 개념/);
   assert.match(html, /실생활 · 응용/);
+  assert.match(html, /마지막 학습 기록/);
   assert.doesNotMatch(html, /지갑 잔액|이번 세션 보상|우선순위 높음/);
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
   const dashboard = await readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8");
 
-  assert.match(dashboard, /api\.diagnosticReport\(\)/);
+  assert.match(dashboard, /api\.diagnosticReport\(controller\.signal\)/);
   assert.match(dashboard, /role="tablist"/);
   assert.match(dashboard, /role="tab"/);
-  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId\)/);
+  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId, controller\.signal\)/);
+  assert.match(dashboard, /새로 계산/);
+  assert.match(dashboard, /마지막 학습 기록/);
+  assert.doesNotMatch(dashboard, /최근 갱신/);
+  assert.match(dashboard, /tabIndex=\{mode === item \? 0 : -1\}/);
+  assert.match(dashboard, /onKeyDown=\{handleTabKeyDown\}/);
+  assert.match(dashboard, /aria-labelledby=\{`diagnostic-tab-\$\{panelMode\.toLowerCase\(\)\}`\}/);
+  assert.match(dashboard, /AbortController/);
+  assert.match(dashboard, /isEmptyDiagnosticReport/);
   assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
 });
 

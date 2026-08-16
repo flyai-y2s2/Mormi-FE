@@ -364,22 +364,27 @@ export async function apiRequest<T>(
     headers.authorization = `Bearer ${token}`;
   }
 
-  const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+  const requestController = new AbortController();
+  const abortFromCaller = () => requestController.abort(init.signal?.reason);
+  if (init.signal?.aborted) abortFromCaller();
+  else init.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeoutId = window.setTimeout(() => requestController.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
-      signal: init.signal ?? timeoutController.signal,
+      signal: requestController.signal,
     });
-  } catch {
-    if (timeoutController.signal.aborted) {
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+    if (requestController.signal.aborted) {
       throw new ApiError(504, "request_timeout", "모르미를 불러오는 데 시간이 걸리고 있어요. 다시 시도해 주세요.");
     }
     throw new ApiError(503, "network_error", "학습 서버에 연결하지 못했어요. 다시 시도해 주세요.");
   } finally {
     window.clearTimeout(timeoutId);
+    init.signal?.removeEventListener("abort", abortFromCaller);
   }
   if (!response.ok) {
     let code = "http_error";
@@ -433,13 +438,14 @@ export const api = {
     return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
   },
 
-  diagnosticReport() {
-    return apiRequest<DiagnosticReportDto>("/v1/reports/diagnostic");
+  diagnosticReport(signal?: AbortSignal) {
+    return apiRequest<DiagnosticReportDto>("/v1/reports/diagnostic", { signal });
   },
 
-  diagnosticSpeechEvidence(domainId: string) {
+  diagnosticSpeechEvidence(domainId: string, signal?: AbortSignal) {
     return apiRequest<SpeechEvidenceDto>(
       `/v1/reports/diagnostic/speech-evidence?domain_id=${encodeURIComponent(domainId)}`,
+      { signal },
     );
   },
 

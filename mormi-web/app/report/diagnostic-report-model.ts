@@ -1,9 +1,53 @@
-import type { DiagnosticStatus, DiagnosticTrendPointDto } from "../api-client";
+import type {
+  DiagnosticDomainStatusDto,
+  DiagnosticDomainTrendDto,
+  DiagnosticMode,
+  DiagnosticReportDto,
+  DiagnosticStatus,
+  DiagnosticTrendPointDto,
+} from "../api-client";
 
 export type DiagnosticChartPoint = DiagnosticTrendPointDto & {
   x: number;
   y: number;
   accessible_label: string;
+};
+
+export type DiagnosticEvidenceKind = "drill" | "teach" | "life";
+
+export type DiagnosticGroupedStatus = DiagnosticDomainStatusDto & {
+  kind: DiagnosticEvidenceKind;
+};
+
+export type DiagnosticDomainGroup = {
+  domain_id: string;
+  label: string;
+  mode: DiagnosticMode;
+  drill_trend?: DiagnosticDomainTrendDto;
+  teach_trend?: DiagnosticDomainTrendDto;
+  life_trend?: DiagnosticDomainTrendDto;
+  statuses: DiagnosticGroupedStatus[];
+};
+
+export type DiagnosticSeriesPoint = {
+  evidence_id: string;
+  label: string;
+  occurred_at: string;
+  score: number;
+  recent: boolean;
+};
+
+export type DiagnosticChartSeries = {
+  id: "home-drill" | "home-teach" | "life-independent" | "life-supported";
+  label: string;
+  points: DiagnosticSeriesPoint[];
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticSeriesChartPoint = DiagnosticSeriesPoint & {
+  x: number;
+  y: number;
 };
 
 const statusLabels: Record<DiagnosticStatus, string> = {
@@ -20,6 +64,132 @@ export function statusLabel(status: DiagnosticStatus): string {
 function clampScore(score: number): number {
   if (!Number.isFinite(score)) return 0;
   return Math.min(100, Math.max(0, score));
+}
+
+function baseDomainLabel(label: string): string {
+  return label.replace(/ · (?:반복학습|설명 독립성)$/u, "");
+}
+
+function homeKind(label: string): "drill" | "teach" | null {
+  if (label.endsWith(" · 반복학습")) return "drill";
+  if (label.endsWith(" · 설명 독립성")) return "teach";
+  return null;
+}
+
+/** Groups Spring's drill/teach rows into the single domain unit used by the report UI. */
+export function groupDiagnosticDomains(report: DiagnosticReportDto): DiagnosticDomainGroup[] {
+  const groups = new Map<string, DiagnosticDomainGroup>();
+
+  for (const modeReport of report.modes) {
+    for (const trend of modeReport.domains) {
+      const existing = groups.get(trend.domain_id);
+      const group = existing ?? {
+        domain_id: trend.domain_id,
+        label: baseDomainLabel(trend.label),
+        mode: modeReport.mode,
+        statuses: [],
+      };
+      if (modeReport.mode === "LIFE") group.life_trend = trend;
+      else if (homeKind(trend.label) === "drill") group.drill_trend = trend;
+      else if (homeKind(trend.label) === "teach") group.teach_trend = trend;
+      groups.set(trend.domain_id, group);
+    }
+  }
+
+  for (const status of report.domains) {
+    const kind = homeKind(status.label) ?? "life";
+    const existing = groups.get(status.domain_id);
+    const group = existing ?? {
+      domain_id: status.domain_id,
+      label: baseDomainLabel(status.label),
+      mode: kind === "life" ? "LIFE" : "HOME",
+      statuses: [],
+    };
+    group.statuses.push({ ...status, kind });
+    groups.set(status.domain_id, group);
+  }
+
+  return [...groups.values()].map((group) => ({ ...group, statuses: [...group.statuses] }));
+}
+
+export function chooseDiagnosticSelection(
+  groups: readonly DiagnosticDomainGroup[],
+  preferredMode: DiagnosticMode,
+  preferredDomainId: string,
+): DiagnosticDomainGroup | undefined {
+  return groups.find((group) => group.mode === preferredMode && group.domain_id === preferredDomainId)
+    ?? groups.find((group) => group.mode === preferredMode)
+    ?? groups[0];
+}
+
+function seriesFromTrend(
+  id: DiagnosticChartSeries["id"],
+  label: string,
+  trend: DiagnosticDomainTrendDto,
+  score: "independent_score" | "supported_score",
+): DiagnosticChartSeries {
+  return {
+    id,
+    label,
+    points: trend.points.map((point) => ({
+      evidence_id: point.evidence_id,
+      label: point.label,
+      occurred_at: point.occurred_at,
+      score: point[score],
+      recent: point.recent,
+    })),
+    total_count: trend.total_count,
+    recent_count: trend.recent_count,
+  };
+}
+
+/** Preserves each server trend's own timeline instead of deriving one mode from another. */
+export function diagnosticSeriesForDomain(group: DiagnosticDomainGroup): DiagnosticChartSeries[] {
+  if (group.mode === "HOME") {
+    const series: DiagnosticChartSeries[] = [];
+    if (group.drill_trend) series.push(seriesFromTrend("home-drill", "반복학습", group.drill_trend, "independent_score"));
+    if (group.teach_trend) series.push(seriesFromTrend("home-teach", "모르미 가르치기", group.teach_trend, "independent_score"));
+    return series;
+  }
+  if (!group.life_trend) return [];
+  return [
+    seriesFromTrend("life-independent", "독립 수행", group.life_trend, "independent_score"),
+    seriesFromTrend("life-supported", "도움 후 완료", group.life_trend, "supported_score"),
+  ];
+}
+
+export function isEmptyDiagnosticReport(report: DiagnosticReportDto): boolean {
+  const noCompletedRecords = report.data_range.total_home_sessions === 0 && report.data_range.total_life_visits === 0;
+  const noTrendPoints = report.modes.every((mode) => mode.domains.every((domain) => domain.points.length === 0));
+  return noCompletedRecords && noTrendPoints;
+}
+
+export function chartSeriesPoints(
+  points: readonly DiagnosticSeriesPoint[],
+  width: number,
+  height: number,
+  range?: { start: number; end: number },
+): DiagnosticSeriesChartPoint[] {
+  const chronological = [...points].sort((left, right) => {
+    const timeDifference = Date.parse(left.occurred_at) - Date.parse(right.occurred_at);
+    if (Number.isFinite(timeDifference) && timeDifference !== 0) return timeDifference;
+    const dateDifference = left.occurred_at.localeCompare(right.occurred_at);
+    return dateDifference || left.evidence_id.localeCompare(right.evidence_id);
+  });
+  if (chronological.length === 0) return [];
+  const fallbackDenominator = chronological.length - 1;
+  const timeSpan = range ? range.end - range.start : 0;
+  return chronological.map((point, index) => {
+    const occurredAt = Date.parse(point.occurred_at);
+    const rangedX = range && timeSpan > 0 && Number.isFinite(occurredAt)
+      ? ((occurredAt - range.start) / timeSpan) * width
+      : fallbackDenominator === 0 ? width / 2 : (index / fallbackDenominator) * width;
+    return {
+      ...point,
+      x: rangedX,
+      y: height - (height * clampScore(point.score)) / 100,
+    };
+  });
 }
 
 function chronologicalPoints(points: readonly DiagnosticTrendPointDto[]): DiagnosticTrendPointDto[] {

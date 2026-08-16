@@ -1157,7 +1157,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   width:min(1080px,calc(100% - 40px));height:72px;margin:0 auto;padding:0 8px;
   display:flex;align-items:center;justify-content:space-between;gap:16px;border:0;background:transparent;
 }
-.report-header>div{display:flex;align-items:center;gap:14px}.report-brand{color:#276f56;font-size:21px;font-weight:950;text-decoration:none}
+.report-header>div{display:flex;align-items:center;gap:14px}.report-brand{min-height:44px;padding:0 4px;display:inline-flex;align-items:center;color:#276f56;font-size:21px;font-weight:950;text-decoration:none}
 .report-header>div>span{padding-left:14px;border-left:1px solid rgba(55,93,77,.18);color:#72857c;font-size:13px}
 .back-to-child{
   min-height:44px;padding:0 15px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(55,93,77,.12);border-radius:999px;
@@ -1173,6 +1173,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .diagnostic-hero>div>p:last-child{margin:14px 0 0;color:#657c71;font-size:15px;line-height:1.65}
 .diagnostic-range{margin:0;display:grid;gap:7px}.diagnostic-range>div{display:grid;grid-template-columns:72px 1fr;gap:12px;font-size:12px}
 .diagnostic-range dt{color:#87968f}.diagnostic-range dd{margin:0;color:#40584e;font-weight:850;text-align:right;font-variant-numeric:tabular-nums}
+.diagnostic-range-actions{display:grid;gap:13px}.diagnostic-refresh{min-height:44px;padding:0 15px;justify-self:end;border:1px solid #bcd8cb;border-radius:999px;color:#2f7156;background:#edf8f2;cursor:pointer;font-size:12px;font-weight:900}.diagnostic-refresh:disabled{opacity:.62;cursor:wait}
 .diagnostic-section{padding-top:39px}.diagnostic-section-heading{margin-bottom:18px;display:flex;align-items:end;justify-content:space-between;gap:24px}
 .diagnostic-section-heading span{display:block;margin-bottom:5px;color:#4a9174;font-size:9px;font-weight:950;letter-spacing:.14em}
 .diagnostic-section-heading h2{margin:0;color:#243d33;font-size:24px;letter-spacing:-.8px}
@@ -1187,6 +1188,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .diagnostic-state>span{width:54px;height:54px;display:grid;place-items:center;border-radius:50%;color:#36795e;background:#e3f3eb;font-weight:950;letter-spacing:3px}
 .diagnostic-state h2{margin:0 0 5px;font-size:20px}.diagnostic-state p{margin:0;color:#71827a;font-size:13px}
 .diagnostic-state button{min-height:44px;padding:0 16px;border:0;border-radius:14px;color:#fff;background:#397e63;cursor:pointer;font-weight:850}
+.diagnostic-ready-notice{margin:22px 0 -12px;padding:11px 14px;border-radius:14px;color:#725e34;background:#fbf1d5;font-size:11px;font-weight:800}
 .diagnostic-outline{padding-top:4px;opacity:.48}.diagnostic-outline .diagnostic-section{min-height:96px;border-top:1px solid #dfe8e3}.diagnostic-outline .diagnostic-tabs{margin-bottom:0}.diagnostic-outline button:disabled{cursor:default;box-shadow:none}
 .diagnostic-tabs{width:max-content;margin-bottom:13px;padding:4px;display:flex;gap:4px;border-radius:999px;background:#e9f1ed}
 .diagnostic-tabs button{min-height:44px;padding:0 22px;border:0;border-radius:999px;color:#637970;background:transparent;cursor:pointer;font-size:13px;font-weight:900}
@@ -1210,11 +1212,13 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .domain-empty{margin:0;padding:28px 4px;color:#71847a;font-size:12px}
 .domain-status-button>span:first-child strong,.domain-status-button>span:first-child small{display:block}.domain-status-button>span:first-child strong{font-size:15px}.domain-status-button>span:first-child small{margin-top:4px;color:#899790;font-size:10px}
 .domain-status{padding:7px 11px;border-radius:999px;color:#3d725c;background:#eaf5ef;font-size:11px;font-weight:850;white-space:nowrap}
+.domain-status-stack{display:grid;justify-items:start;gap:5px}.domain-status b{margin-right:7px;color:inherit;font-size:9px}
 .domain-status--developing{color:#80642a;background:#fbf0ce}.domain-status--support_needed{color:#8a5148;background:#fae9e5}.domain-status--observing{color:#63756d;background:#edf1ef}
 .domain-status-button>i{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;color:#4d7c68;background:#edf5f1;font-size:19px;font-style:normal}
 .domain-row.is-expanded{margin:8px -12px 12px;padding:0 12px 12px;border:0;border-radius:23px;background:#f5faf7}
 .domain-detail{padding:18px 4px 5px;display:grid;grid-template-columns:180px minmax(0,1fr);gap:28px;border-top:1px solid #dfe9e3}
 .domain-detail__status{padding:8px 4px}.domain-detail__status span,.domain-detail__status strong,.domain-detail__status small{display:block}
+.domain-detail__status-row{margin-top:10px;padding-top:10px;border-top:1px solid #dce8e2}.domain-detail__status-row:first-of-type{margin-top:7px;padding-top:0;border-top:0}.domain-detail__status-row strong{margin:3px 0;font-size:13px}
 .domain-detail__status span{color:#83938b;font-size:10px;font-weight:850}.domain-detail__status strong{margin:7px 0;color:#2b664e;font-size:15px}.domain-detail__status small{color:#7e8e86;font-size:10px;line-height:1.5}
 .domain-detail__evidence h3{margin:7px 0 13px;font-size:14px}.domain-detail__message{margin:0;padding:18px;border-radius:15px;color:#687a71;background:#fff;font-size:12px}
 .speech-comparison{display:grid;grid-template-columns:1fr 1fr;gap:10px}.speech-sample{min-width:0;padding:15px;border-radius:17px;background:#fff}
@@ -1233,17 +1237,17 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 
 @media(max-width:760px){
   .report-header{width:min(100% - 24px,1040px)}.report-paper{width:calc(100% - 20px);margin-bottom:28px;padding:30px 20px;border-radius:28px}
-  .diagnostic-hero{grid-template-columns:1fr;gap:22px}.diagnostic-range{max-width:360px}.diagnostic-section-heading{align-items:flex-start;flex-direction:column;gap:7px}.diagnostic-section-heading>p{text-align:left}
+  .diagnostic-hero{grid-template-columns:1fr;gap:22px}.diagnostic-range-actions,.diagnostic-range{width:100%;max-width:360px}.diagnostic-refresh{justify-self:start}.diagnostic-section-heading{align-items:flex-start;flex-direction:column;gap:7px}.diagnostic-section-heading>p{text-align:left}
   .summary-strips article{grid-template-columns:1fr;gap:5px}.summary-strips small{text-align:left}.diagnostic-tabs{width:100%}.diagnostic-tabs button{flex:1;padding:0 12px}
   .diagnostic-chart-panel{min-height:0;padding:11px 7px 0;border-radius:20px}.diagnostic-chart-legend{padding:0 8px;justify-content:flex-start;flex-wrap:wrap;gap:8px 13px}
-  .domain-status-button{grid-template-columns:minmax(0,1fr) 32px;gap:9px}.domain-status{grid-column:1;grid-row:2;justify-self:start}.domain-status-button>i{grid-column:2;grid-row:1/3}
+  .domain-status-button{grid-template-columns:minmax(0,1fr) 32px;gap:9px}.domain-status-stack{grid-column:1;grid-row:2}.domain-status{justify-self:start}.domain-status-button>i{grid-column:2;grid-row:1/3}
   .domain-detail{grid-template-columns:1fr;gap:8px}.speech-comparison,.diagnostic-highlights{grid-template-columns:1fr}.diagnostic-evidence{justify-content:flex-start;flex-wrap:wrap;gap:8px 0}.diagnostic-evidence span{padding:0 10px}
 }
 @media(max-width:430px){.report-header>div>span{display:none}.report-paper{padding:26px 15px}.diagnostic-hero h1{font-size:29px}.diagnostic-domain-selector{margin-inline:-5px}.speech-sample{padding:13px}}
 @media(prefers-reduced-motion:reduce){.report-page *{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @media print{
   @page{size:A4;margin:10mm}.report-page{background:#fff}.report-header{display:none}.report-paper{width:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#fff}
-  .diagnostic-hero{padding-bottom:20px}.diagnostic-section{padding-top:22px}.diagnostic-tabs,.diagnostic-domain-selector{display:none}.diagnostic-chart-panel{min-height:0;padding:4px 10px;background:#fff}
+  .diagnostic-hero{padding-bottom:20px}.diagnostic-refresh{display:none}.diagnostic-section{padding-top:22px}.diagnostic-tabs,.diagnostic-domain-selector{display:none}.diagnostic-chart-panel{min-height:0;padding:4px 10px;background:#fff}
   .diagnostic-chart{max-height:235px}.domain-status-button{min-height:52px}.domain-row,.summary-strips article,.diagnostic-highlights{break-inside:avoid}.domain-status-button>i{display:none}
 }
 

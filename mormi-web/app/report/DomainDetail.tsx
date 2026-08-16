@@ -1,5 +1,5 @@
-import type { DiagnosticDomainStatusDto, SpeechEvidenceDto } from "../api-client";
-import { statusLabel } from "./diagnostic-report-model";
+import type { SpeechEvidenceDto } from "../api-client";
+import { statusLabel, type DiagnosticDomainGroup, type DiagnosticEvidenceKind } from "./diagnostic-report-model";
 
 type SpeechState =
   | { state: "loading" }
@@ -7,7 +7,7 @@ type SpeechState =
   | { state: "ready"; evidence: SpeechEvidenceDto };
 
 type DomainDetailProps = {
-  domain: DiagnosticDomainStatusDto;
+  domain: DiagnosticDomainGroup;
   speech?: SpeechState;
 };
 
@@ -17,6 +17,12 @@ const directionLabels = {
   MAINTAINING: "장기 유지",
   INSUFFICIENT_HISTORY: "최근 근거 추가",
 } as const;
+
+const kindLabels: Record<DiagnosticEvidenceKind, string> = {
+  drill: "반복학습",
+  teach: "모르미 가르치기",
+  life: "실생활 수행",
+};
 
 function EvidenceSample({ label, sample }: {
   label: string;
@@ -41,8 +47,13 @@ export function DomainDetail({ domain, speech }: DomainDetailProps) {
     <div className="domain-detail">
       <div className="domain-detail__status">
         <span>현재 상태</span>
-        <strong>{statusLabel(domain.status)} · {directionLabels[domain.direction]}</strong>
-        <small>동일 영역 누적 {domain.total_count}회 · 최근 {domain.recent_count}회</small>
+        {domain.statuses.map((item) => (
+          <div className="domain-detail__status-row" key={`${item.kind}-${item.label}`}>
+            <small>{kindLabels[item.kind]}</small>
+            <strong>{statusLabel(item.status)} · {directionLabels[item.direction]}</strong>
+            <small>누적 {item.total_count}회 · 최근 {item.recent_count}회</small>
+          </div>
+        ))}
       </div>
       <div className="domain-detail__evidence" aria-live="polite">
         <h3>같은 영역의 설명 변화</h3>

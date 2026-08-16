@@ -1,10 +1,9 @@
 import { useId } from "react";
-import type { DiagnosticDomainTrendDto, DiagnosticMode, DiagnosticTrendPointDto } from "../api-client";
-import { chartPoints } from "./diagnostic-report-model";
+import { chartSeriesPoints, type DiagnosticChartSeries } from "./diagnostic-report-model";
 
 type ReportTrendChartProps = {
-  mode: DiagnosticMode;
-  trend: DiagnosticDomainTrendDto;
+  label: string;
+  series: DiagnosticChartSeries[];
 };
 
 const WIDTH = 760;
@@ -14,15 +13,7 @@ const PLOT_TOP = 28;
 const PLOT_WIDTH = 680;
 const PLOT_HEIGHT = 180;
 
-function seriesPoints(points: readonly DiagnosticTrendPointDto[], field: "independent_score" | "supported_score") {
-  return chartPoints(
-    points.map((point) => ({ ...point, independent_score: point[field] })),
-    PLOT_WIDTH,
-    PLOT_HEIGHT,
-  ).map((point) => ({ ...point, x: point.x + PLOT_LEFT, y: point.y + PLOT_TOP }));
-}
-
-function pathFor(points: ReturnType<typeof seriesPoints>): string {
+function pathFor(points: ReturnType<typeof chartSeriesPoints>): string {
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
 }
 
@@ -31,29 +22,41 @@ function safeScore(score: number): number {
   return Math.min(100, Math.max(0, score));
 }
 
-export function ReportTrendChart({ mode, trend }: ReportTrendChartProps) {
+export function ReportTrendChart({ label, series }: ReportTrendChartProps) {
   const titleId = useId().replace(/:/g, "");
   const descriptionId = useId().replace(/:/g, "");
-  const primaryLabel = mode === "HOME" ? "반복학습" : "독립 수행";
-  const secondaryLabel = mode === "HOME" ? "모르미 가르치기" : "도움 후 완료";
-  const primary = seriesPoints(trend.points, "independent_score");
-  const secondary = seriesPoints(trend.points, "supported_score");
-  const firstRecentIndex = primary.findIndex((point) => point.recent);
-  const recentStart = firstRecentIndex < 0
+  const allPoints = series.flatMap((item) => item.points);
+  const datedPoints = allPoints
+    .map((point) => ({ point, time: Date.parse(point.occurred_at) }))
+    .filter((item) => Number.isFinite(item.time))
+    .sort((left, right) => left.time - right.time || left.point.evidence_id.localeCompare(right.point.evidence_id));
+  const timeRange = datedPoints.length > 0
+    ? { start: datedPoints[0].time, end: datedPoints.at(-1)!.time }
+    : undefined;
+  const plottedSeries = series.map((item) => ({
+    ...item,
+    points: chartSeriesPoints(item.points, PLOT_WIDTH, PLOT_HEIGHT, timeRange)
+      .map((point) => ({ ...point, x: point.x + PLOT_LEFT, y: point.y + PLOT_TOP })),
+  }));
+  const recentTimes = datedPoints.filter((item) => item.point.recent).map((item) => item.time);
+  const firstRecentTime = recentTimes.length > 0 ? Math.min(...recentTimes) : null;
+  const recentStart = firstRecentTime === null
     ? null
-    : firstRecentIndex === 0
+    : !timeRange || timeRange.end === timeRange.start
       ? PLOT_LEFT
-      : (primary[firstRecentIndex - 1].x + primary[firstRecentIndex].x) / 2;
+      : PLOT_LEFT + ((firstRecentTime - timeRange.start) / (timeRange.end - timeRange.start)) * PLOT_WIDTH;
 
-  if (trend.points.length === 0) {
+  if (allPoints.length === 0) {
     return <p className="diagnostic-chart-empty">이 영역의 시계열 근거가 아직 없습니다.</p>;
   }
 
   return (
     <div className="diagnostic-chart-wrap">
       <div className="diagnostic-chart-legend" aria-hidden="true">
-        <span className="is-primary"><i />{primaryLabel}</span>
-        <span className="is-secondary"><i />{secondaryLabel}</span>
+        {series.map((item) => {
+          const secondary = item.id === "home-teach" || item.id === "life-supported";
+          return <span key={item.id} className={secondary ? "is-secondary" : "is-primary"}><i />{item.label}</span>;
+        })}
         <span className="is-recent"><i />최근 구간</span>
       </div>
       <svg
@@ -62,9 +65,9 @@ export function ReportTrendChart({ mode, trend }: ReportTrendChartProps) {
         role="img"
         aria-labelledby={`${titleId} ${descriptionId}`}
       >
-        <title id={titleId}>{trend.label} 전체 학습 변화</title>
+        <title id={titleId}>{label} 전체 학습 변화</title>
         <desc id={descriptionId}>
-          {primaryLabel}은 실선과 원으로, {secondaryLabel}은 점선과 사각형으로 표시하며 최근 기록 구간에는 옅은 음영이 있습니다.
+          {series.map((item) => `${item.label}은 ${item.id === "home-teach" || item.id === "life-supported" ? "점선과 사각형" : "실선과 원"}`).join(", ")}으로 표시하며 최근 기록 구간에는 옅은 음영이 있습니다.
         </desc>
         {recentStart !== null && (
           <rect
@@ -86,39 +89,45 @@ export function ReportTrendChart({ mode, trend }: ReportTrendChartProps) {
             </g>
           );
         })}
-        <g className="diagnostic-chart__series diagnostic-chart__series--primary">
-          <title>{primaryLabel} 계열</title>
-          {primary.length > 1 && <path d={pathFor(primary)} />}
-          {primary.map((point) => (
-            <circle key={point.evidence_id} cx={point.x} cy={point.y} r="5">
-              <title>{`${point.label}, ${point.occurred_at}, ${primaryLabel} ${safeScore(point.independent_score)}%${point.recent ? ", 최근 기록" : ""}`}</title>
-            </circle>
-          ))}
-        </g>
-        <g className="diagnostic-chart__series diagnostic-chart__series--secondary">
-          <title>{secondaryLabel} 계열</title>
-          {secondary.length > 1 && <path d={pathFor(secondary)} />}
-          {secondary.map((point) => (
-            <rect key={point.evidence_id} x={point.x - 5} y={point.y - 5} width="10" height="10" rx="1">
-              <title>{`${point.label}, ${point.occurred_at}, ${secondaryLabel} ${safeScore(point.independent_score)}%${point.recent ? ", 최근 기록" : ""}`}</title>
-            </rect>
-          ))}
-        </g>
+        {plottedSeries.map((item) => {
+          const secondary = item.id === "home-teach" || item.id === "life-supported";
+          return (
+          <g key={item.id} className={`diagnostic-chart__series diagnostic-chart__series--${secondary ? "secondary" : "primary"}`}>
+            <title>{item.label} 계열</title>
+            {item.points.length > 1 && <path d={pathFor(item.points)} />}
+            {item.points.map((point) => !secondary ? (
+              <circle key={point.evidence_id} cx={point.x} cy={point.y} r="5">
+                <title>{`${point.label}, ${point.occurred_at}, ${item.label} ${safeScore(point.score)}%${point.recent ? ", 최근 기록" : ""}`}</title>
+              </circle>
+            ) : (
+              <rect key={point.evidence_id} x={point.x - 5} y={point.y - 5} width="10" height="10" rx="1">
+                <title>{`${point.label}, ${point.occurred_at}, ${item.label} ${safeScore(point.score)}%${point.recent ? ", 최근 기록" : ""}`}</title>
+              </rect>
+            ))}
+          </g>
+          );
+        })}
         <text className="diagnostic-chart__date" x={PLOT_LEFT} y="238">
-          {primary[0]?.occurred_at.slice(0, 10)}
+          {datedPoints[0]?.point.occurred_at.slice(0, 10)}
         </text>
         <text className="diagnostic-chart__date" x={PLOT_LEFT + PLOT_WIDTH} y="238" textAnchor="end">
-          {primary.at(-1)?.occurred_at.slice(0, 10)}
+          {datedPoints.at(-1)?.point.occurred_at.slice(0, 10)}
         </text>
       </svg>
-      <ol className="sr-only">
-        {trend.points.map((point) => (
-          <li key={point.evidence_id}>
-            {point.label}, {point.occurred_at}, {primaryLabel} {safeScore(point.independent_score)}%, {secondaryLabel} {safeScore(point.supported_score)}%
-            {point.recent ? ", 최근 기록" : ""}
-          </li>
+      <div className="sr-only">
+        {series.map((item) => (
+          <section key={item.id} aria-label={`${item.label} 기록`}>
+            <h3>{item.label}</h3>
+            <ol>
+              {item.points.map((point) => (
+                <li key={point.evidence_id}>
+                  {point.label}, {point.occurred_at}, {safeScore(point.score)}%{point.recent ? ", 최근 기록" : ""}
+                </li>
+              ))}
+            </ol>
+          </section>
         ))}
-      </ol>
+      </div>
     </div>
   );
 }
