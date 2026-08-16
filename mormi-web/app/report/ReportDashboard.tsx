@@ -198,8 +198,9 @@ export function ReportDashboard() {
     : undefined;
 
   const selectMode = (nextMode: DiagnosticMode) => {
+    const nextSelection = chooseDiagnosticSelection(groupedDomains, nextMode, selectedDomainId);
     setMode(nextMode);
-    setSelectedDomainId(groupedDomains.find((domain) => domain.mode === nextMode)?.domain_id ?? "");
+    setSelectedDomainId(nextSelection?.domain_id ?? "");
     setExpandedDomainId(null);
   };
 
@@ -384,7 +385,7 @@ export function ReportDashboard() {
                         <span className="domain-status-stack">{statusSummary(domain)}</span>
                         <i aria-hidden="true">{expanded ? "−" : "+"}</i>
                       </button>
-                      {expanded && <div id={panelId}><DomainDetail domain={domain} speech={speechByDomain[domain.domain_id]} /></div>}
+                      {expanded && <div className="domain-detail-panel" id={panelId}><DomainDetail domain={domain} speech={speechByDomain[domain.domain_id]} /></div>}
                     </div>
                   );
                 })}

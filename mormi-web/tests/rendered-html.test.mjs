@@ -336,9 +336,10 @@ test("server-renders the individual diagnostic report shell", async () => {
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
-  const [dashboard, trendChart] = await Promise.all([
+  const [dashboard, trendChart, css] = await Promise.all([
     readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/report/ReportTrendChart.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(dashboard, /api\.diagnosticReport\(controller\.signal\)/);
@@ -359,6 +360,17 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(trendChart, /diagnostic-chart__recent-ribbon--primary/);
   assert.match(trendChart, /diagnostic-chart__recent-ribbon--secondary/);
   assert.match(trendChart, /최근 구간/);
+  assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
+  assert.match(dashboard, /className="domain-detail-panel"/);
+
+  const printStyles = css.slice(css.indexOf("@media print"), css.indexOf("/* 툴바", css.indexOf("@media print")));
+  assert.match(printStyles, /@page\{size:A4 portrait;margin:8mm\}/);
+  assert.match(printStyles, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(printStyles, /\.diagnostic-chart\{height:150px;max-height:150px/);
+  assert.match(printStyles, /\.diagnostic-refresh,\.diagnostic-tabs,\.diagnostic-domain-selector\{display:none!important\}/);
+  assert.match(printStyles, /\.domain-detail-panel\{display:none!important\}/);
+  assert.match(printStyles, /overflow:visible!important/);
+  assert.doesNotMatch(printStyles, /overflow:hidden|zoom\s*:/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {

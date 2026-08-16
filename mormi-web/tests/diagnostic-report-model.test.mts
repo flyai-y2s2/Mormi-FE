@@ -226,6 +226,52 @@ test("groups duplicate HOME records into one domain and sources drill and teach 
   assert.equal(chooseDiagnosticSelection(groups, "LIFE", "missing")?.domain_id, "calculate");
 });
 
+test("selects the richest comparable history while preserving a valid current domain", () => {
+  const moneyBudget = {
+    domain_id: "money-budget",
+    label: "예산 세우기",
+    mode: "HOME" as const,
+    drill_trend: domainTrend("money-budget", "예산 세우기 · 반복학습", [
+      trend("2026-08-01", 40, true, { evidence_id: "budget:1" }),
+    ]),
+    statuses: [],
+  };
+  const moneyCount = {
+    domain_id: "money-count",
+    label: "돈 세기",
+    mode: "HOME" as const,
+    drill_trend: domainTrend("money-count", "돈 세기 · 반복학습", Array.from({ length: 5 }, (_, index) => (
+      trend(`2026-08-${String(index + 1).padStart(2, "0")}`, 40 + index, index >= 3, { evidence_id: `count:drill:${index}` })
+    ))),
+    teach_trend: domainTrend("money-count", "돈 세기 · 설명 독립성", Array.from({ length: 4 }, (_, index) => (
+      trend(`2026-08-${String(index + 10).padStart(2, "0")}`, 50 + index, index >= 2, { evidence_id: `count:teach:${index}` })
+    ))),
+    statuses: [],
+  };
+
+  assert.equal(chooseDiagnosticSelection([moneyBudget, moneyCount], "HOME", "")?.domain_id, "money-count");
+  assert.equal(chooseDiagnosticSelection([moneyCount, moneyBudget], "HOME", "missing")?.domain_id, "money-count");
+  assert.equal(chooseDiagnosticSelection([moneyCount, moneyBudget], "HOME", "money-budget")?.domain_id, "money-budget");
+});
+
+test("breaks equal-history selection ties by recent points and then domain id", () => {
+  const candidate = (domain_id: string, recent: boolean[]) => ({
+    domain_id,
+    label: domain_id,
+    mode: "HOME" as const,
+    drill_trend: domainTrend(domain_id, `${domain_id} · 반복학습`, recent.map((isRecent, index) => (
+      trend(`2026-08-${String(index + 1).padStart(2, "0")}`, 50, isRecent, { evidence_id: `${domain_id}:${index}` })
+    ))),
+    statuses: [],
+  });
+  const lessRecent = candidate("money-alpha", [false, true]);
+  const moreRecentZ = candidate("money-zeta", [true, true]);
+  const moreRecentA = candidate("money-beta", [true, true]);
+
+  assert.equal(chooseDiagnosticSelection([lessRecent, moreRecentZ], "HOME", "")?.domain_id, "money-zeta");
+  assert.equal(chooseDiagnosticSelection([moreRecentZ, moreRecentA], "HOME", "")?.domain_id, "money-beta");
+});
+
 test("keeps different HOME recent boundaries on their own series without mutating evidence", () => {
   const series = [
     {

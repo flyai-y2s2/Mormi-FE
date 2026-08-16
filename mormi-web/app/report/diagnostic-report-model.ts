@@ -132,9 +132,28 @@ export function chooseDiagnosticSelection(
   preferredMode: DiagnosticMode,
   preferredDomainId: string,
 ): DiagnosticDomainGroup | undefined {
-  return groups.find((group) => group.mode === preferredMode && group.domain_id === preferredDomainId)
-    ?? groups.find((group) => group.mode === preferredMode)
-    ?? groups[0];
+  const modeGroups = groups.filter((group) => group.mode === preferredMode);
+  const current = modeGroups.find((group) => group.domain_id === preferredDomainId);
+  if (current) return current;
+
+  // Comparable history is the sum of actual plotted points across each grouped
+  // drill, teach, and life trend. LIFE is counted once rather than once per score series.
+  const evidenceCounts = (group: DiagnosticDomainGroup) => {
+    const trends = [group.drill_trend, group.teach_trend, group.life_trend].filter((trend) => trend !== undefined);
+    return {
+      total: trends.reduce((sum, trend) => sum + trend.points.length, 0),
+      recent: trends.reduce((sum, trend) => sum + trend.points.filter((point) => point.recent).length, 0),
+    };
+  };
+  const candidates = modeGroups.length > 0 ? modeGroups : groups;
+  return [...candidates].sort((left, right) => {
+    const leftCounts = evidenceCounts(left);
+    const rightCounts = evidenceCounts(right);
+    if (leftCounts.total !== rightCounts.total) return rightCounts.total - leftCounts.total;
+    if (leftCounts.recent !== rightCounts.recent) return rightCounts.recent - leftCounts.recent;
+    if (left.domain_id === right.domain_id) return 0;
+    return left.domain_id < right.domain_id ? -1 : 1;
+  })[0];
 }
 
 function seriesFromTrend(
