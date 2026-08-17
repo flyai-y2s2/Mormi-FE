@@ -1132,10 +1132,6 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
     <section className="journey-hub journey-hub--home">
       <div className="home-room-main">
         <div className="home-room-copy-column">
-          <nav className="journey-nav journey-nav--home-card" aria-label="장소 이동">
-            <button className="is-active" type="button"><UiIcon name="home" size="small" />집</button>
-            <button type="button" onClick={onOutside}><UiIcon name="cafe" size="small" />외부</button>
-          </nav>
           <div className="home-room-copy">
             <p className="eyebrow">모르미의 생활 수학</p>
             <h1>오늘은 어떤 걸 할까?</h1>
@@ -1167,13 +1163,12 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe, onHome }: {
+function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
   /** 한 번이라도 카페에 다녀왔는지. 다녀왔으면 다시 연습하러 가는 안내로 바꾼다. */
   cafeVisited: boolean;
   onCafe: () => void;
-  onHome: () => void;
 }) {
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
   const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
@@ -1183,10 +1178,6 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe, onHome }: {
     : `필수 개념 ${requiredCount}개 중 ${remainingCount}개가 남았어요`;
   return (
     <section className="journey-hub journey-hub--outside">
-      <nav className="journey-nav journey-nav--inline" aria-label="장소 이동">
-        <button type="button" onClick={onHome}><UiIcon name="home" size="small" />집</button>
-        <button type="button" className="is-active"><UiIcon name="cafe" size="small" />외부</button>
-      </nav>
       <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
       <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "카페 가는 거 이제 자신 있어! 또 연습하러 가자!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
       <div className="destination-grid">
@@ -1924,10 +1915,17 @@ export function MoramiApp() {
   return (
     <main className={`app-shell app-shell--${stage}`}>
       {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
-        {/* 장소 이동은 각 화면의 내용 안으로 내려갔다. 여기 왼쪽 자리는 프로필이 쓴다. */}
+        {/* 장소 이동은 화면이 바뀌어도 자리가 변하지 않아야 하는 전역 내비다.
+            그래서 콘텐츠가 아니라 프로필과 같은 상단 줄에 둔다. */}
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
-        </div> : <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />}
+        </div> : <div className="topbar-lead">
+          <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />
+          {stage !== "complete" && <nav className="journey-nav journey-nav--top" aria-label="장소 이동">
+            <button type="button" className={stage === "outside" ? "" : "is-active"} onClick={showHome}><UiIcon name="home" size="small" />집</button>
+            <button type="button" className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button>
+          </nav>}
+        </div>}
         <div className="top-actions">
           <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
@@ -1938,7 +1936,7 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} onHome={showHome} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
 
       {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
           네 스테이지가 모두 열린 연습 모드로 돌아온다. */}
@@ -1952,11 +1950,6 @@ export function MoramiApp() {
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">
-          {/* 집에서 복습하는 화면이므로 활성 표시는 집이다. 눌렀을 때는 한 단계 위인 홈으로 올라간다. */}
-          <nav className="journey-nav journey-nav--inline" aria-label="장소 이동">
-            <button type="button" className="is-active" onClick={showHome}><UiIcon name="home" size="small" />집</button>
-            <button type="button" onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button>
-          </nav>
           {!selectedArea ? (
             <>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>

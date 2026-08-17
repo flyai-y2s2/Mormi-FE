@@ -1335,3 +1335,49 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .profile-avatar { width:36px; height:36px; flex-basis:36px; font-size:16px; }
   .profile-sheet { min-width:190px; }
 }
+
+/* 한 화면에 담기. 아이가 누르는 요소의 높이는 그대로 두고 사이 여백만 줄인다.
+   기준 뷰포트는 노트북 세로 780px 안팎(3024x1662 디스플레이에서 브라우저 크롬을 뺀 값). */
+.journey-nav--inline { margin-bottom:8px; }
+.journey-hub--outside { padding-top:14px; padding-bottom:22px; }
+.journey-hub--outside .journey-nav--inline { margin:0 auto 6px; }
+.outside-scene-head h1 { margin-top:0; }
+
+.curriculum-home--room { padding-top:16px; padding-bottom:22px; }
+.curriculum-home .journey-nav--inline { margin-bottom:8px; }
+.room-list-heading { margin-bottom:10px; padding:15px 26px; }
+.room-list-heading h1 { margin:0 0 3px; font-size:30px; }
+.cafe-required-lessons { margin:8px 0 10px; padding:10px; gap:6px; }
+.cafe-required-lessons > div:first-child { padding:0 4px 5px; }
+.other-concepts-toggle { min-height:52px; }
+/* 남은 높이는 큰 덩어리 하나씩만 줄인다. 잔여백을 여러 곳에서 조금씩 깎으면
+   나중에 어디를 되돌려야 하는지 알기 어려워진다. */
+.journey-hub--outside .destination-card { min-height:396px; }
+.journey-hub--outside .outside-scene-head h1 { font-size:39px; }
+.cafe-required-lessons > button { min-height:70px; }
+.room-list-heading { margin-bottom:6px; }
+.cafe-required-lessons { margin-bottom:6px; }
+
+/* 장소 이동을 상단 줄로 올린 안. 프로필과 같은 줄에 두어 전역 내비임을 분명히 하고,
+   비어 있던 상단 가운데를 채워 화면 무게가 아래로 처지지 않게 한다. */
+.topbar-lead { display:flex; align-items:center; gap:14px; justify-self:start; }
+.journey-nav--top { position:static; margin:0; transform:none; background:rgba(255,255,255,.82); }
+.journey-nav--top button { min-width:82px; min-height:42px; }
+/* 탭이 상단으로 갔으므로 콘텐츠는 제목부터 시작한다. */
+.journey-hub--outside { padding-top:6px; }
+.curriculum-home--room { padding-top:8px; }
+@media (max-width:560px) {
+  .topbar-lead { gap:8px; }
+  .journey-nav--top button { min-width:64px; min-height:36px; font-size:13px; }
+}
+
+/* 장소 이동 탭이 상단 줄에 있으므로 topbar 의 좌우 기준선이 화면마다 달라지면 안 된다.
+   홈·복습만 전체 폭이었고 외부는 가운데 정렬이라 탭이 110px 옮겨져 보였다. */
+.app-shell--outside .topbar, .app-shell--complete .topbar { max-width:none; padding-inline:42px; }
+
+/* 카드 안에 있던 탭이 빠졌으므로 남은 한 칸이 열 높이를 그대로 쓰게 한다.
+   그러지 않으면 카드가 내용만큼만 줄어 위로 붙는다. */
+.home-room-copy-column { grid-template-rows:1fr; gap:0; }
+/* 탭이 차지하던 높이(52px + 여백 12px)만큼 위를 비워 카드 위치와 크기를 그대로 둔다.
+   box-sizing:border-box 이므로 열 높이는 그대로고 카드만 원래 크기로 돌아온다. */
+.home-room-copy-column { padding-top:64px; }
