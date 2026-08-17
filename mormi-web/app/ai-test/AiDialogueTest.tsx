@@ -14,7 +14,7 @@ import {
 } from "../mormi-dialogue";
 
 const menu = [
-  { id: "americano", name: "아메리카노", price: 3000, image_url: "/figma/cafe/americano.png?v=2" },
+  { id: "americano", name: "커피", price: 3000, image_url: "/figma/cafe/americano.png?v=2" },
   { id: "milk", name: "우유", price: 2000, image_url: "/figma/cafe/milk.png?v=2" },
   { id: "strawberry-juice", name: "딸기주스", price: 4000, image_url: "/figma/cafe/strawberry-juice.png?v=2" },
   { id: "cookie", name: "쿠키", price: 2000, image_url: "/figma/cafe/cookie.png?v=2" },
@@ -112,7 +112,7 @@ function InputPanel({ conversation, busy, onSubmit }: { conversation: MormiConve
   const [text, setText] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
 
-  if (input.kind === "none") return <p className="ai-test-complete">대화 완료 · 위 결과와 별노트 내용을 확인해 주세요.</p>;
+  if (input.kind === "none") return <p className="ai-test-complete">대화 완료 · 위 결과와 궁금해 사전 내용을 확인해 주세요.</p>;
   if (input.kind === "choices" || input.kind === "fill") {
     return <div className="ai-test-choices">{input.choices.map((choice) => <button key={choice.id} disabled={busy || Boolean(choice.disabled)} onClick={() => onSubmit({ turn_id: conversation.turn.turn_id, type: input.kind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}>{choice.label}{choice.disabled ? " · 모르미 선택" : ""}</button>)}</div>;
   }

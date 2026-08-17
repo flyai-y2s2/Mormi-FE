@@ -843,6 +843,31 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
   );
 }
 
+function CompletedConcepts({ sessionIds, onClose }: { sessionIds: string[]; onClose: () => void }) {
+  const learnedSessions = sessionIds
+    .map((id) => sessions.find((session) => session.id === id))
+    .filter((session): session is Session => Boolean(session));
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div className="modal-backdrop concepts-backdrop" role="dialog" aria-modal="true" aria-label="지금까지 배운 개념">
+      <section className="completed-concepts-card">
+        <header><div><span><UiIcon name="star" size="small" /> 모은 별</span><h2>지금까지 배운 개념</h2></div><button type="button" onClick={onClose} aria-label="닫기">×</button></header>
+        {learnedSessions.length > 0 ? (
+          <ul>{learnedSessions.map((session, index) => <li key={session.id}><i>{index + 1}</i><div><b>{session.title}</b><p>{simpleLearnedLine(session)}</p></div></li>)}</ul>
+        ) : <p className="completed-concepts-empty">복습을 끝내면 배운 개념이 여기에 모여요.</p>}
+      </section>
+    </div>
+  );
+}
+
 /** 참여 번호 입력 규칙. 연구 담당자가 배정한 값과 형식을 맞춰 두어야 그 아이로 저장된다. */
 const normalizeResearchCode = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40);
@@ -1122,7 +1147,7 @@ function ProfileMenu({ name, loggingOut, onLogout }: {
   );
 }
 
-function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
+function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside, onOpenConcepts }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void; onOpenConcepts: () => void }) {
   const requiredSessions = cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session));
   const done = requiredSessions.filter((session) => completedSessionIds.includes(session.id)).length;
   const unlocked = done === requiredSessions.length;
@@ -1147,7 +1172,7 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
         <div className="home-room-character-column">
           <div className="player-hud" aria-label="나의 모험 정보">
             <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
-            <div className="player-stat player-stat--star"><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></div>
+            <button type="button" className="player-stat player-stat--star" onClick={onOpenConcepts} aria-label={`모은 별 ${stars}개, 지금까지 배운 개념 보기`}><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></button>
             <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
           </div>
           <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
@@ -1238,6 +1263,7 @@ export function MoramiApp() {
   const [showOtherConcepts, setShowOtherConcepts] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
+  const [completedConceptsOpen, setCompletedConceptsOpen] = useState(false);
   const [drillIndex, setDrillIndex] = useState(0);
   const [drillCorrect, setDrillCorrect] = useState(0);
   const [drillAttempts, setDrillAttempts] = useState(0);
@@ -1938,7 +1964,7 @@ export function MoramiApp() {
 
       {stage === "onboarding" && <Onboarding onSignup={handleSignup} onLogin={handleLogin} />}
 
-      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
+      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} onOpenConcepts={() => setCompletedConceptsOpen(true)} />}
 
       {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
 
@@ -2084,7 +2110,7 @@ export function MoramiApp() {
                 </div>
               )}
               {teachingComplete && (
-                <div className="learned-card">
+                <div className="learned-card learned-card--reveal">
                   <UiIcon name={brightExit ? "sun" : "star"} size="large" />
                   <h2>{brightExit ? "오늘의 배움을 챙겼어!" : "모르미가 이해했어!"}</h2>
                   <p>{teachingTurn.mormi.text}</p>
@@ -2114,11 +2140,10 @@ export function MoramiApp() {
           <div className="content-column">
             <SpeechBubble><p>{dialogue}</p></SpeechBubble>
             {hasTeachingNote && teachingNote && <article className="star-note">
-              <div className="note-ring">별<br />노<br />트</div>
+              <div className="note-ring">궁금해<br />사전</div>
               <div className="note-content">
                 <p><UiIcon name="star" size="small" /> 오늘 모르미가 적은 말</p>
                 <h2>“<em>{teachingNote.text}</em>”</h2>
-                <span>{teachingNote.attribution_label}</span>
               </div>
             </article>}
             {teachError && <p role="alert">{teachError}</p>}
@@ -2143,15 +2168,16 @@ export function MoramiApp() {
             <div className="session-coin-earned"><Image src="/cafe-money/100.png" alt="이번 세션 보상" width={90} height={90} unoptimized /><div><span>반복학습 + 모르미 가르치기</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원을 얻었어!</strong></div></div>
             <div className="today-badges" aria-label="오늘의 학습 결과">
               <span><UiIcon name="sprout" size="small" /><strong>{masteryTarget}번</strong><small>{activeSession.title} 연습</small></span>
-              <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
+              <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>궁금해 사전</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
-            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
+            <button className="primary-button complete-exit-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}
 
       {dictionaryOpen && <Dictionary session={activeSession} onClose={() => setDictionaryOpen(false)} />}
+      {completedConceptsOpen && <CompletedConcepts sessionIds={completedSessionIds} onClose={() => setCompletedConceptsOpen(false)} />}
     </main>
   );
 }

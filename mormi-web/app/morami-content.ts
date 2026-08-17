@@ -92,7 +92,7 @@ const clockProblem = (hour: number, minute: number, answers: string[]): Problem 
 export const sessions: Session[] = [
   {
     id: "add-pictures", subject: "addition", unit: "덧셈", title: "그림을 모아요", level: 1,
-    memoryTitle: "둘을 모으면\n더 많아져!", memoryDialogue: "어제 지우가 알려 준 ‘모으기’를 별노트에서 다시 봤어!",
+    memoryTitle: "둘을 모으면\n더 많아져!", memoryDialogue: "어제 지우가 알려 준 ‘모으기’를 궁금해 사전에서 다시 봤어!",
     drillIntro: "두 무리를 한곳에 모아 보자. 모두 몇 개인지 알려 줘!",
     drills: [mathProblem(2,3,"+",[5,4,6]), mathProblem(4,2,"+",[6,5,7]), mathProblem(3,5,"+",[8,7,9]), mathProblem(1,6,"+",[7,6,8]), mathProblem(5,4,"+",[9,8,10]), mathProblem(2,7,"+",[9,8,7])],
     teachPrompt: "2개와 3개를 모으면… 4개지?", learnedLine: "더하기는 두 무리를 합치는 거야!",

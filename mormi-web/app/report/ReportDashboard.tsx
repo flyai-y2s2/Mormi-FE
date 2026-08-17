@@ -212,7 +212,7 @@ export function ReportDashboard() {
             <p className="observation-note">{report.synchronized ? "오개념에 한 차례 동조했지만, 힌트 뒤 스스로 수정했습니다." : "오개념에 동조하지 않고 바로 정정했습니다."}</p>
           </article>
           <article className="report-panel note-panel">
-            <span>별노트 기록</span>
+            <span>궁금해 사전 기록</span>
             <div className="mini-star-note"><ReportIcon name="star" /><p>{report.learnedLine}</p></div>
             <small>{report.ladder === 3 ? `${learnerLabel}가 알려줌` : `${learnerLabel}와 같이 공부함`}</small>
           </article>

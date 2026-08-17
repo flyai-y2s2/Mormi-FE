@@ -1445,3 +1445,62 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 목록과 같은 시각 언어로 맞춘다. 회색 두께 그림자(0 6px 0)만 홀로 튀고 있었다. */
 .other-concepts-toggle { border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
 .other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
+
+/* ── 2026-08-17 통합 UI 정리 ───────────────────────────────────── */
+/* 서버가 보낸 문제를 먼저 보고, 그 아래에서 모르미와 대화한다. */
+.teaching-stage > .teaching-playground { order:1; }
+.teaching-stage > .teaching-talk { order:2; }
+.teaching-playground > .learned-card--reveal {
+  width:min(720px,92%); margin:clamp(28px,7vh,76px) auto 0; padding:clamp(30px,5vw,54px);
+  animation:learnedCardReveal .55s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes learnedCardReveal { from { opacity:0; transform:translateY(28px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+/* 홈 카드의 그림과 두 줄 설명을 같은 수직 중심선에 둔다. */
+.home-main-actions button { grid-template-rows:auto auto; align-content:center; }
+.home-main-actions button > span { align-self:center; }
+.home-main-actions b,.home-main-actions small { line-height:1.25; }
+.home-room-copy-column { padding-top:20px; }
+
+/* 별 카드는 버튼이지만 기존 HUD의 모양을 그대로 유지한다. */
+.player-hud button.player-stat { width:100%; padding:0; border:0; font:inherit; text-align:left; cursor:pointer; }
+.player-hud button.player-stat:focus-visible { outline:4px solid #6d55c7; outline-offset:3px; }
+.player-hud button.player-stat:hover { transform:translateY(-2px); }
+
+.concepts-backdrop { padding:20px; }
+.completed-concepts-card { width:min(680px,100%); max-height:min(760px,90svh); padding:28px; overflow:auto; border:4px solid #d9c9f8; border-radius:30px; background:#fffdf8; box-shadow:0 28px 90px rgba(52,42,74,.24); }
+.completed-concepts-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.completed-concepts-card header span { display:flex; align-items:center; gap:7px; color:#7357b9; font-weight:900; }
+.completed-concepts-card header h2 { margin:7px 0 20px; color:#203f34; font-size:clamp(27px,5vw,40px); }
+.completed-concepts-card header button { width:44px; height:44px; border:0; border-radius:50%; color:#66567e; background:#f0eaff; cursor:pointer; font-size:28px; }
+.completed-concepts-card ul { margin:0; padding:0; display:grid; gap:10px; list-style:none; }
+.completed-concepts-card li { min-height:82px; padding:14px 16px; display:grid; grid-template-columns:42px 1fr; align-items:center; gap:13px; border:2px solid #dceee5; border-radius:20px; background:#fff; }
+.completed-concepts-card li i { width:38px; height:38px; display:grid; place-items:center; border-radius:13px; color:#fff; background:#4cad80; font-style:normal; font-weight:900; }
+.completed-concepts-card li b { color:#29463b; font-size:18px; }
+.completed-concepts-card li p,.completed-concepts-empty { margin:4px 0 0; color:#6c7b74; line-height:1.45; }
+
+/* 궁금해 사전은 모르미가 적는 기록이다. 짧고 왼쪽 정렬된 제목으로 읽힌다. */
+.note-ring { padding:8px; line-height:1.3; text-align:center; }
+.note-content { text-align:left; }
+.note-content p { justify-content:flex-start; }
+.complete-exit-button { width:100%; }
+
+/* 메뉴가 늘어나도 잘리지 않으며, 가장 비싼 두 메뉴를 고르면 1만원을 넘길 수 있다. */
+.cafe-talk-menu { padding-bottom:8px; }
+.cafe-talk-menu__grid { grid-template-columns:repeat(4,minmax(112px,1fr)); padding:2px 2px 10px; overflow:visible; }
+
+.figma-cafe-done__actions { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.figma-cafe-done__actions button { width:100%; min-width:0; }
+.figma-cafe-done__practice { margin:0; }
+
+@media (max-width:900px) {
+  .home-room-copy-column { padding-top:0; }
+  .cafe-talk-menu__grid { grid-template-columns:repeat(3,minmax(105px,1fr)); }
+  .figma-cafe-done__actions { grid-template-columns:1fr; }
+}
+@media (max-width:560px) {
+  .completed-concepts-card { padding:20px 14px; border-radius:24px; }
+  .completed-concepts-card li { grid-template-columns:34px 1fr; padding:12px; }
+  .completed-concepts-card li i { width:32px; height:32px; }
+  .cafe-talk-menu__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

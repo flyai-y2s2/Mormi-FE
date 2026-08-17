@@ -233,11 +233,12 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       const picked = cafeTalks.current.menu?.turn.completion?.verified_facts?.child_menu_id;
       const childMenu = menu.find((item) => item.id === picked);
       const mormeyPick = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
+      const total = mormeyPick.price + (childMenu?.price ?? 0);
       captureMormeyEvent("cafe_menu_selected", {
         menu_ids: [mormeyPick.id, childMenu?.id ?? ""].join(","),
-        total: mormeyPick.price + (childMenu?.price ?? 0),
+        total,
         budget: menuBudget,
-        over_budget: false,
+        over_budget: total > menuBudget,
       });
       setMenuScene("thanks");
     } else if (stage === "calculate") {
@@ -436,7 +437,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           {queueScene === "note" && (
             <section className="queue-note-scene">
               <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>모르미의 공부노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2><small>{cafeConversations.queue?.turn.note_update?.attribution_label}</small></article>
+              <article><span>궁금해 사전</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2></article>
             </section>
           )}
           {queueScene === "clear" && (
@@ -516,8 +517,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
           <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p>
-            <button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
-            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div>
+            <div className="figma-cafe-done__actions"><button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
+            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div></div>
         </main>
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
