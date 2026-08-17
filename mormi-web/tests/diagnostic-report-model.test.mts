@@ -20,6 +20,7 @@ import {
 } from "../app/report/diagnostic-report-model.ts";
 import {
   evidenceLinksForRefs,
+  isCompleteReportExample,
   modeForTabKey,
   parseDiagnosticEvidenceRef,
   reportRequestAccepted,
@@ -27,6 +28,12 @@ import {
   speechLoadDecision,
   speechStateAfterResult,
 } from "../app/report/diagnostic-report-interactions.ts";
+
+test("complete example mode only activates for the explicit query flag", () => {
+  assert.equal(isCompleteReportExample("?example=complete"), true);
+  assert.equal(isCompleteReportExample("?example=partial"), false);
+  assert.equal(isCompleteReportExample(""), false);
+});
 
 function trend(
   occurred_at: string,

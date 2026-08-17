@@ -35,6 +35,10 @@ const activityLabels: Record<DiagnosticEvidenceActivity, string> = {
   speech: "발화 비교 근거",
 };
 
+export function isCompleteReportExample(search: string): boolean {
+  return new URLSearchParams(search).get("example") === "complete";
+}
+
 export function parseDiagnosticEvidenceRef(ref: string): ParsedDiagnosticEvidenceRef {
   const parts = ref.split(":");
   if (parts.length === 2 && domainActivities.has(parts[0] as DiagnosticEvidenceActivity) && parts[1]) {

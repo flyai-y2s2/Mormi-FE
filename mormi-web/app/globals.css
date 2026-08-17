@@ -1250,6 +1250,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .diagnostic-hero{padding:0 0 15px;grid-template-columns:minmax(0,1fr) 270px;gap:24px;border-bottom-color:#dfe8e2}
 .diagnostic-learner-name{margin:0 0 5px;display:flex;align-items:baseline;gap:9px}.diagnostic-learner-name span{color:#54806d;font-size:10px;font-weight:900}.diagnostic-learner-name strong{color:#203a30;font-size:18px;letter-spacing:-.45px}
+.diagnostic-learner-name em{padding:3px 7px;border-radius:999px;color:#7a5b22;background:#f8edc9;font-size:9px;font-style:normal;font-weight:900}
 .diagnostic-hero h1{font-size:25px;line-height:1.2;letter-spacing:-1.1px}
 .diagnostic-hero>div>p:last-child{display:none}
 .diagnostic-range-actions{gap:7px}.diagnostic-range{gap:3px}.diagnostic-range>div{grid-template-columns:70px 1fr;gap:8px;font-size:10px}

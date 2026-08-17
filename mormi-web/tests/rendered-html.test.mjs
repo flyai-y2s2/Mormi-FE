@@ -336,10 +336,11 @@ test("server-renders the individual diagnostic report shell", async () => {
 });
 
 test("diagnostic report renders as one compact Korean A4 document", async () => {
-  const [response, css, dashboard] = await Promise.all([
+  const [response, css, dashboard, example] = await Promise.all([
     render("/report"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/complete-report-example.ts", import.meta.url), "utf8"),
   ]);
   assert.equal(response.status, 200);
   const html = await response.text();
@@ -353,6 +354,10 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
   assert.match(css, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /className="diagnostic-learner-name"[\s\S]*?report\.learner\.display_name/);
   assert.match(dashboard, /<h1 id="report-title">개인 진단 리포트<\/h1>/);
+  assert.match(dashboard, /completeDiagnosticReportExample/);
+  assert.match(dashboard, /예시 데이터/);
+  assert.match(example, /display_name: "김민준"/);
+  assert.doesNotMatch(example, /"(?:메뉴 값 계산하기|거스름돈 받기|줄 서기) · 실생활 수행"/);
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
