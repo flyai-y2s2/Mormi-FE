@@ -5,8 +5,10 @@ import posthog from "posthog-js";
 export type MormeyAnalyticsEvent =
   | "onboarding_completed"
   | "onboarding_intro_completed"
-  /** 기기를 바꾼 아이가 참여 번호로 진행도를 이어 받았다. */
+  /** 아이디·비밀번호로 다시 들어와 진행도를 이어 받았다. */
   | "learner_restored"
+  /** 이 기기에서만 나갔다. 다른 기기의 로그인은 남아 있다. */
+  | "logged_out"
   | "home_opened"
   | "outside_opened"
   | "lesson_started"

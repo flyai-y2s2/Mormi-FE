@@ -22,7 +22,10 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
-  assert.match(html, /내 이름 알려주기/);
+  // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
+  // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
+  assert.match(html, /처음 왔어요/);
+  assert.match(html, /전에 하던 게 있어요/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
@@ -253,7 +256,20 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
-  assert.match(app, /너의 이름을 알려줄래/);
+  assert.match(app, /너를 뭐라고 부를까/);
+  // 장소 이동 탭은 앱 전체에 하나만, 상단 줄에 둔다. 화면마다 따로 그리면 장소를
+  // 옮길 때 탭이 함께 움직여 흐름이 끊긴다.
+  const navClasses = app.match(/className="journey-nav[^"]*"/g) || [];
+  assert.equal(navClasses.length, 1);
+  assert.match(navClasses[0], /journey-nav--top/);
+  // topbar 의 좌우 기준선이 화면마다 다르면 상단에 둔 탭이 옮겨져 보인다.
+  assert.match(css, /\.app-shell--outside \.topbar[^{]*\{[^}]*max-width:none/);
+  // 반복 중에는 프로필을 띄우지 않는다. 로그아웃이 눌리면 시도 기록이 끊긴 채 세션이 남는다.
+  assert.match(app, /learningStage \?[\s\S]{0,400}<ProfileMenu/);
+  // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
+  // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
+  assert.match(app, /function submitLogin\(\) \{\n {4}\/\//);
+  assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
   assert.match(app, /teachingNote\.attribution_label/);
