@@ -1306,8 +1306,10 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 
 /* 장소 이동 탭이 화면 내용 안으로 들어간 자리. 좁은 화면에서 .journey-nav 를
    상단에 절대배치하는 규칙(max-width:900px)을 여기서 되돌린다. */
-.journey-nav--inline { position:static; justify-self:start; margin-bottom:16px; transform:none; background:rgba(255,255,255,.92); }
-.journey-hub--outside .journey-nav--inline { margin-bottom:10px; }
+/* 감싸는 컨테이너가 블록이라 nav 가 폭 전체로 늘어난다. 내용만큼만 차지하게 잡는다. */
+.journey-nav--inline { width:fit-content; position:static; margin-bottom:16px; transform:none; background:rgba(255,255,255,.92); }
+/* 외출 화면은 제목이 가운데 정렬이라 탭도 그 위 가운데에 둔다. */
+.journey-hub--outside .journey-nav--inline { margin:0 auto 14px; }
 .curriculum-home .journey-nav--inline { margin-bottom:14px; }
 
 /* 프로필과 계정 메뉴. topbar 왼쪽 자리를 쓴다. */
