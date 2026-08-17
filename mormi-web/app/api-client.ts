@@ -47,8 +47,9 @@ export type ProgressSnapshot = {
   stars: number;
   cafe_unlocked: boolean;
   cafe_required_session_ids: string[];
-  active_learning_session_id: string | null;
-  active_cafe_visit_id: string | null;
+  // 값이 없으면 서버가 키를 아예 빼고 준다. null 이 아니라 undefined 가 들어온다.
+  active_learning_session_id?: string | null;
+  active_cafe_visit_id?: string | null;
 };
 
 export type AttemptResult = {

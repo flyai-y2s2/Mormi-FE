@@ -1392,7 +1392,7 @@ export function MoramiApp() {
         setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
         setCompletedSessionIds(snapshot.completed_session_ids);
         setCoinBalance(snapshot.wallet_balance);
-        setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+        setActiveCafeVisitId(snapshot.active_cafe_visit_id ?? null);
         refreshThemes();
         setStage("home");
         // 이름과 원문은 보내지 않고, 서버가 발급한 가명 id 로만 식별한다.
@@ -1836,7 +1836,7 @@ export function MoramiApp() {
 
     setCompletedSessionIds(snapshot.completed_session_ids);
     setCoinBalance(snapshot.wallet_balance);
-    setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+    setActiveCafeVisitId(snapshot.active_cafe_visit_id ?? null);
     refreshThemes();
 
     // 다른 기기에서 풀던 세션이 남아 있으면 그 화면까지 되돌린다.
