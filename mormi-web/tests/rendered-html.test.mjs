@@ -401,7 +401,12 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.doesNotMatch(css, /\.diagnostic-chart__recent-ribbon/);
   assert.match(trendChart, /최근 구간/);
   assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
-  assert.match(dashboard, /className="domain-detail-panel"/);
+  assert.match(dashboard, /className="domain-category-bar"/);
+  assert.match(dashboard, /aria-pressed=\{expandedDomainId === domain\.domain_id\}/);
+  assert.match(dashboard, /className="domain-category-panel"/);
+  assert.match(dashboard, /<DomainDetail domain=\{expandedDomain\}/);
+  assert.match(dashboard, /className="domain-list domain-print-list"/);
+  assert.match(css, /\.domain-category-bar\{[^}]*display:flex[^}]*flex-wrap:nowrap[^}]*overflow-x:auto/);
   assert.match(dashboard, /className="diagnostic-evidence-link"/);
   assert.match(dashboard, /<p>\{summary\.text\}<\/p><EvidenceLinks refs=\{summary\.evidence_refs\}/);
   assert.match(dashboard, /<p>\{report\.improved_point\.text\}<\/p><EvidenceLinks refs=\{report\.improved_point\.evidence_refs\}/);
@@ -417,10 +422,10 @@ test("diagnostic report uses the approved interactive data contract", async () =
 
   const printStyles = css.slice(css.indexOf("@media print"), css.indexOf("/* 툴바", css.indexOf("@media print")));
   assert.match(printStyles, /@page\{size:A4 portrait;margin:8mm\}/);
-  assert.match(printStyles, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(printStyles, /\.domain-print-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(printStyles, /\.diagnostic-chart\{height:150px;max-height:150px/);
   assert.match(printStyles, /\.diagnostic-refresh,\.diagnostic-tabs,\.diagnostic-domain-selector\{display:none!important\}/);
-  assert.match(printStyles, /\.domain-detail-panel\{display:none!important\}/);
+  assert.match(printStyles, /\.domain-category-bar,\.domain-category-panel\{display:none!important\}/);
   assert.match(printStyles, /overflow:visible!important/);
   assert.doesNotMatch(printStyles, /overflow:hidden|zoom\s*:/);
   const readablePrintRules = [...printStyles.matchAll(/\.(?:summary-strips|domain-status|diagnostic-highlights|diagnostic-evidence)[^{]*\{[^}]*\}/g)]

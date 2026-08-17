@@ -240,6 +240,7 @@ export function ReportDashboard() {
   const groupedDomains = report ? groupDiagnosticDomains(report) : [];
   const modeDomains = groupedDomains.filter((domain) => domain.mode === mode);
   const selectedDomain = modeDomains.find((domain) => domain.domain_id === selectedDomainId) ?? modeDomains[0];
+  const expandedDomain = groupedDomains.find((domain) => domain.domain_id === expandedDomainId);
   const selectedSeries = selectedDomain ? diagnosticSeriesForDomain(selectedDomain) : [];
   const totalCompleted = report ? report.data_range.total_home_sessions + report.data_range.total_life_visits : 0;
   const chartDetail = selectedSeries.length > 0
@@ -299,10 +300,6 @@ export function ReportDashboard() {
 
   const openDomain = (domain: DiagnosticDomainGroup) => {
     const domainId = domain.domain_id;
-    if (expandedDomainId === domainId) {
-      setExpandedDomainId(null);
-      return;
-    }
     setMode(domain.mode);
     setSelectedDomainId(domainId);
     setExpandedDomainId(domainId);
@@ -459,22 +456,44 @@ export function ReportDashboard() {
 
             <section className="diagnostic-section diagnostic-domains" aria-labelledby="domains-title">
               <SectionHeading id="domains-title" title="현재 영역별 상태" detail="영역을 누르면 같은 영역의 발화 변화를 확인할 수 있습니다." />
-              <div className="domain-list">
-                {groupedDomains.length === 0 && <p className="domain-empty">표시할 영역별 근거가 아직 없습니다.</p>}
+              {groupedDomains.length === 0 && <p className="domain-empty">표시할 영역별 근거가 아직 없습니다.</p>}
+              <div className="domain-category-bar" aria-label="상태를 볼 영역 선택">
                 {groupedDomains.map((domain) => {
-                  const expanded = expandedDomainId === domain.domain_id;
-                  const panelId = `domain-detail-${domain.domain_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+                  const buttonId = `domain-category-${domain.domain_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
                   return (
-                    <div className={`domain-row ${expanded ? "is-expanded" : ""}`} key={domain.domain_id}>
-                      <button ref={(element) => { if (element) domainStatusRefs.current.set(domain.domain_id, element); else domainStatusRefs.current.delete(domain.domain_id); }} type="button" className="domain-status-button" aria-expanded={expanded} aria-controls={panelId} onClick={() => openDomain(domain)}>
-                        <span><strong>{domain.label}</strong></span>
-                        <span className="domain-status-stack">{statusSummary(domain)}</span>
-                        <i aria-hidden="true">{expanded ? "−" : "+"}</i>
-                      </button>
-                      {expanded && <div className="domain-detail-panel" id={panelId}><DomainDetail domain={domain} speech={speechByDomain[domain.domain_id]} /></div>}
-                    </div>
+                    <button
+                      key={domain.domain_id}
+                      id={buttonId}
+                      ref={(element) => { if (element) domainStatusRefs.current.set(domain.domain_id, element); else domainStatusRefs.current.delete(domain.domain_id); }}
+                      type="button"
+                      className={expandedDomainId === domain.domain_id ? "is-active" : ""}
+                      aria-pressed={expandedDomainId === domain.domain_id}
+                      aria-controls="domain-category-detail"
+                      onClick={() => openDomain(domain)}
+                    >
+                      {domain.label}
+                    </button>
                   );
                 })}
+              </div>
+              {expandedDomain && (
+                <div
+                  className="domain-category-panel"
+                  id="domain-category-detail"
+                  aria-labelledby={`domain-category-${expandedDomain.domain_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`}
+                >
+                  <DomainDetail domain={expandedDomain} speech={speechByDomain[expandedDomain.domain_id]} />
+                </div>
+              )}
+              <div className="domain-list domain-print-list" aria-label="인쇄용 영역별 상태">
+                {groupedDomains.map((domain) => (
+                  <div className="domain-row" key={domain.domain_id}>
+                    <div className="domain-status-button">
+                      <span><strong>{domain.label}</strong></span>
+                      <span className="domain-status-stack">{statusSummary(domain)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
 
