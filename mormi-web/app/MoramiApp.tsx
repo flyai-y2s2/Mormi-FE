@@ -7,6 +7,7 @@ import {
   api,
   apiEnabled,
   ApiError,
+  clearSession,
   readStoredLearner,
   setUnauthorizedHandler,
   storeSession,
@@ -1057,6 +1058,68 @@ function Onboarding({ onSignup, onLogin }: {
   );
 }
 
+/**
+ * 프로필과 계정 메뉴.
+ *
+ * 문제를 푸는 화면에서는 띄우지 않는다. 반복 중에 로그아웃이 눌리면 그때까지
+ * 서버에 쌓던 시도 기록이 끊긴 채로 세션이 남는다.
+ */
+function ProfileMenu({ name, loggingOut, onLogout }: {
+  name: string;
+  loggingOut: boolean;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function closeOnOutside(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className="profile-menu" ref={rootRef}>
+      <button
+        type="button"
+        className={`profile-trigger${open ? " is-open" : ""}`}
+        onClick={() => setOpen((current) => !current)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <span className="profile-avatar" aria-hidden="true">{name.slice(0, 1)}</span>
+        <b>{name}</b>
+        <i className="profile-caret" aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="profile-sheet" role="menu">
+          {/* 계정 관리는 화면 자리만 잡아 둔다. 누를 수 있게 두면 아무 일도 안 일어나 고장으로 보인다. */}
+          <button type="button" role="menuitem" className="profile-item" disabled>계정 관리<em>준비 중</em></button>
+          <button
+            type="button"
+            role="menuitem"
+            className="profile-item profile-item--logout"
+            onClick={onLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? "나가는 중…" : "로그아웃"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
   const requiredSessions = cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session));
   const done = requiredSessions.filter((session) => completedSessionIds.includes(session.id)).length;
@@ -1104,12 +1167,13 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
+function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe, onHome }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
   /** 한 번이라도 카페에 다녀왔는지. 다녀왔으면 다시 연습하러 가는 안내로 바꾼다. */
   cafeVisited: boolean;
   onCafe: () => void;
+  onHome: () => void;
 }) {
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
   const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
@@ -1119,6 +1183,10 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
     : `필수 개념 ${requiredCount}개 중 ${remainingCount}개가 남았어요`;
   return (
     <section className="journey-hub journey-hub--outside">
+      <nav className="journey-nav journey-nav--inline" aria-label="장소 이동">
+        <button type="button" onClick={onHome}><UiIcon name="home" size="small" />집</button>
+        <button type="button" className="is-active"><UiIcon name="cafe" size="small" />외부</button>
+      </nav>
       <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
       <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "카페 가는 거 이제 자신 있어! 또 연습하러 가자!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
       <div className="destination-grid">
@@ -1147,6 +1215,7 @@ export function MoramiApp() {
     questionIndex: number;
     wrongChoiceIndexes: number[];
   } | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
   const activeSession = useMemo(() => {
@@ -1802,6 +1871,26 @@ export function MoramiApp() {
     }
   }
 
+  /**
+   * 이 기기에서만 로그아웃한다. 다른 기기의 로그인은 그대로 살아 있다.
+   *
+   * 서버 정리가 실패해도 로컬 세션은 지운다. 아이가 기대하는 건 이 기기에서
+   * 빠져나가는 것이지 서버 폐기의 성공 여부가 아니다. 토큰이 이미 만료됐다면
+   * 그 요청은 401 로 떨어지는데, 그건 이미 폐기됐다는 뜻이라 더 할 일이 없다.
+   */
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await api.logout();
+    } catch (error) {
+      console.warn("[mormi-api] 로그아웃 요청 실패", error);
+    }
+    clearSession();
+    captureMormeyEvent("logged_out");
+    returnToAuthScreen();
+    setLoggingOut(false);
+  }
+
   function showHome() {
     captureMormeyEvent("home_opened");
     setStage("home");
@@ -1835,9 +1924,10 @@ export function MoramiApp() {
   return (
     <main className={`app-shell app-shell--${stage}`}>
       {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
+        {/* 장소 이동은 각 화면의 내용 안으로 내려갔다. 여기 왼쪽 자리는 프로필이 쓴다. */}
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
-        </div> : stage === "home" ? <span /> : <nav className="journey-nav" aria-label="장소 이동"><button onClick={showHome}><UiIcon name="home" size="small" />집</button><button className="is-active" onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button></nav>}
+        </div> : <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />}
         <div className="top-actions">
           <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
@@ -1848,7 +1938,7 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} onHome={showHome} />}
 
       {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
           네 스테이지가 모두 열린 연습 모드로 돌아온다. */}
@@ -1862,6 +1952,11 @@ export function MoramiApp() {
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">
+          {/* 집에서 복습하는 화면이므로 활성 표시는 집이다. 눌렀을 때는 한 단계 위인 홈으로 올라간다. */}
+          <nav className="journey-nav journey-nav--inline" aria-label="장소 이동">
+            <button type="button" className="is-active" onClick={showHome}><UiIcon name="home" size="small" />집</button>
+            <button type="button" onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button>
+          </nav>
           {!selectedArea ? (
             <>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>

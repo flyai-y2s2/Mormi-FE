@@ -257,6 +257,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
   assert.match(app, /너를 뭐라고 부를까/);
+  // 장소 이동 탭은 화면마다 같은 자리(내용 맨 위)에 있어야 아이가 매번 눈으로 찾지 않는다.
+  // topbar 왼쪽은 프로필이 쓰므로, 수식어 없는 .journey-nav 가 되살아나면 둘이 겹친다.
+  const navClasses = app.match(/className="journey-nav[^"]*"/g) || [];
+  assert.equal(navClasses.length, 3);
+  assert.ok(navClasses.every((className) => className.includes("journey-nav--")));
+  // 반복 중에는 프로필을 띄우지 않는다. 로그아웃이 눌리면 시도 기록이 끊긴 채 세션이 남는다.
+  assert.match(app, /learningStage \?[\s\S]{0,400}<ProfileMenu/);
   // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
   // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
   assert.match(app, /function submitLogin\(\) \{\n {4}\/\//);
