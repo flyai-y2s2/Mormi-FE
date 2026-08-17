@@ -2084,7 +2084,7 @@ export function MoramiApp() {
                 </div>
               )}
               {teachingComplete && (
-                <div className="learned-card">
+                <div className="learned-card learned-card--reveal">
                   <UiIcon name={brightExit ? "sun" : "star"} size="large" />
                   <h2>{brightExit ? "오늘의 배움을 챙겼어!" : "모르미가 이해했어!"}</h2>
                   <p>{teachingTurn.mormi.text}</p>
@@ -2118,7 +2118,6 @@ export function MoramiApp() {
               <div className="note-content">
                 <p><UiIcon name="star" size="small" /> 오늘 모르미가 적은 말</p>
                 <h2>“<em>{teachingNote.text}</em>”</h2>
-                <span>{teachingNote.attribution_label}</span>
               </div>
             </article>}
             {teachError && <p role="alert">{teachError}</p>}
@@ -2146,7 +2145,7 @@ export function MoramiApp() {
               <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
-            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
+            <button className="primary-button complete-exit-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}

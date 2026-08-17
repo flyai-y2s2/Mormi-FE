@@ -100,8 +100,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
-  assert.match(cafe, /모르미의 공부노트/);
-  assert.match(cafe, /가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다/);
+  assert.match(talkStage, /궁금해 사전/);
+  assert.match(cafe, /queue-note-scene[\s\S]{0,500}<span>별노트<\/span>/);
+  assert.doesNotMatch(cafe, /모르미의 공부노트/);
+  assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
   assert.match(cafe, /learnerName/);
   assert.match(cafe, /budgets = \[8000, 9000, 10000\]/);
@@ -277,8 +279,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
-  assert.match(app, /teachingNote\.attribution_label/);
+  assert.doesNotMatch(app, /<span>\{teachingNote\.attribution_label\}<\/span>/);
   assert.doesNotMatch(app, />별노트에 적기/);
+  assert.match(app, /note-ring">별<br \/>노<br \/>트/);
+  assert.match(app, /<small>별노트<\/small>/);
   assert.match(app, /result\.teach_reward/);
   assert.match(cafe, /figma-cafe-map/);
   assert.match(app, /네 설명이 맞아요/);

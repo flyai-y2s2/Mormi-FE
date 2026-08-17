@@ -14,7 +14,7 @@ import {
 } from "../mormi-dialogue";
 
 const menu = [
-  { id: "americano", name: "아메리카노", price: 3000, image_url: "/figma/cafe/americano.png?v=2" },
+  { id: "americano", name: "커피", price: 3000, image_url: "/figma/cafe/americano.png?v=2" },
   { id: "milk", name: "우유", price: 2000, image_url: "/figma/cafe/milk.png?v=2" },
   { id: "strawberry-juice", name: "딸기주스", price: 4000, image_url: "/figma/cafe/strawberry-juice.png?v=2" },
   { id: "cookie", name: "쿠키", price: 2000, image_url: "/figma/cafe/cookie.png?v=2" },

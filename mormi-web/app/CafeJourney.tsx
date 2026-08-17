@@ -369,7 +369,17 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     <section className={`figma-cafe figma-cafe--${step}${isTalk ? " is-talk" : ""}`}>
       <div className="figma-cafe__bar">
         <button onClick={step === "overview" ? onBack : returnToMap}>← {step === "overview" ? "외출 장소" : "돌아가기"}</button>
-        <strong className="figma-cafe__place"><span className="cafe-place-icon" aria-hidden="true"><i /></span> 모르미 카페</strong>
+        <strong className="figma-cafe__place">
+          <Image
+            className="figma-cafe__place-image"
+            src="/ui/mormi-cafe.png"
+            alt=""
+            width={56}
+            height={56}
+            aria-hidden="true"
+          />
+          모르미 카페
+        </strong>
         <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
         </div>
@@ -425,8 +435,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-queue-story" data-figma-node="74:4">
           {queueScene === "note" && (
             <section className="queue-note-scene">
-              <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>모르미의 공부노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2><small>{cafeConversations.queue?.turn.note_update?.attribution_label}</small></article>
+              <Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={310} height={340} unoptimized />
+              <article><span>별노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2></article>
             </section>
           )}
           {queueScene === "clear" && (
@@ -436,10 +446,10 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             </section>
           )}
 
-          {/* 노트 장면은 그림 대신 공부노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
+          {/* 노트 장면은 그림 대신 별노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
           {queueScene === "note" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
+            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다!`}</p>
             <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>
           </section>}
         </main>
@@ -506,8 +516,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
           <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p>
-            <button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
-            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div>
+            <div className="figma-cafe-done__actions"><button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
+            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div></div>
         </main>
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}

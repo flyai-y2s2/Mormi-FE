@@ -729,7 +729,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .figma-cafe__bar>button{border:0;background:#fff7e9;box-shadow:0 4px 0 #ddc7aa;font-weight:900}
 .figma-cafe__place{display:flex;align-items:center;gap:7px;white-space:nowrap;color:#583929;font-size:17px;font-weight:950}
-.figma-cafe__place>span{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#f1ddc3}
+.figma-cafe__place-image{width:48px;height:48px;flex:0 0 48px;object-fit:contain;filter:drop-shadow(0 4px 5px rgba(89,56,34,.18))}
 .figma-cafe__bar .figma-cafe__steps{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .figma-cafe__steps span{display:flex;align-items:center;gap:5px;color:#948b82;font-size:11px;font-weight:900}
 .figma-cafe__steps span:not(:last-child)::after{content:"";width:18px;border-top:2px dashed #d2ba9e}
@@ -997,7 +997,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .player-hud>.player-wallet{background:linear-gradient(135deg,#fff7cc,#fffdf3);box-shadow:0 6px 0 #e8ce72}.player-wallet>img{width:58px;height:58px;flex:0 0 58px;object-fit:contain;filter:drop-shadow(0 7px 7px rgba(107,76,13,.18))}.player-hud .player-wallet strong{padding:0;color:#745313;background:transparent;font-size:clamp(20px,1.7vw,26px);white-space:nowrap;line-height:1.05}
 .daily-quest b,.cafe-required-lessons>div>strong,.outside-scene-head .eyebrow{display:flex;align-items:center;gap:7px}.home-main-actions button>span{display:grid;place-items:center}.home-main-actions button>span .ui-icon{--icon-size:50px;filter:none}
 .destination-card--soon>span{display:flex;align-items:center;gap:6px}.destination-card--soon>span .ui-icon{filter:none}.outside-scene-head{justify-content:flex-start}
-.cafe-place-icon{position:relative}.cafe-place-icon::before{content:"";width:18px;height:13px;border:2px solid #6d4633;border-radius:2px 2px 6px 6px;background:#fff5e3}.cafe-place-icon::after{content:"";width:8px;height:9px;margin-left:-4px;border:2px solid #6d4633;border-left:0;border-radius:0 7px 7px 0}.cafe-place-icon i{width:10px;height:7px;position:absolute;left:8px;top:5px;border-left:2px solid #78ad91;border-right:2px solid #78ad91;border-radius:50%}
 .destination-card:disabled{cursor:not-allowed}.destination-card:disabled img{filter:saturate(.6) brightness(.86)}
 .figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-pay__layout{min-width:0;max-width:100%}
 
@@ -1290,7 +1289,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
 }
 
-/* 줄 서기의 공부노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
+/* 줄 서기의 별노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
 .figma-cafe--queue{padding:0 24px 28px;background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed}
 .figma-cafe--queue>.figma-cafe__bar{display:none}
 .figma-cafe--queue .figma-cafe-queue-story{width:min(1135px,100%);min-height:100svh;margin:0 auto;padding:40px 28px 18px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
@@ -1446,3 +1445,39 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 목록과 같은 시각 언어로 맞춘다. 회색 두께 그림자(0 6px 0)만 홀로 튀고 있었다. */
 .other-concepts-toggle { border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
 .other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
+
+/* ── 2026-08-17 통합 UI 정리 ───────────────────────────────────── */
+.teaching-playground > .learned-card--reveal {
+  width:min(720px,92%); margin:clamp(28px,7vh,76px) auto 0; padding:clamp(30px,5vw,54px);
+  animation:learnedCardReveal .55s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes learnedCardReveal { from { opacity:0; transform:translateY(28px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+/* 홈 카드의 그림과 두 줄 설명을 같은 수직 중심선에 둔다. */
+.home-main-actions button { grid-template-rows:auto auto; align-content:center; }
+.home-main-actions button > span { align-self:center; }
+.home-main-actions b,.home-main-actions small { line-height:1.25; }
+.home-room-copy-column { padding-top:20px; }
+
+/* 별노트는 모르미가 적는 기록이다. 짧고 왼쪽 정렬된 제목으로 읽힌다. */
+.note-ring { padding:8px; line-height:1.3; text-align:center; }
+.note-content { text-align:left; }
+.note-content p { justify-content:flex-start; }
+.complete-exit-button { width:100%; }
+
+/* 메뉴가 늘어나도 잘리지 않으며, 가장 비싼 두 메뉴를 고르면 1만원을 넘길 수 있다. */
+.cafe-talk-menu { padding-bottom:8px; }
+.cafe-talk-menu__grid { grid-template-columns:repeat(4,minmax(112px,1fr)); padding:2px 2px 10px; overflow:visible; }
+
+.figma-cafe-done__actions { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.figma-cafe-done__actions button { width:100%; min-width:0; }
+.figma-cafe-done__practice { margin:0; }
+
+@media (max-width:900px) {
+  .home-room-copy-column { padding-top:0; }
+  .cafe-talk-menu__grid { grid-template-columns:repeat(3,minmax(105px,1fr)); }
+  .figma-cafe-done__actions { grid-template-columns:1fr; }
+}
+@media (max-width:560px) {
+  .cafe-talk-menu__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
