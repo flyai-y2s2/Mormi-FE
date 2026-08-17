@@ -327,12 +327,29 @@ test("server-renders the individual diagnostic report shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /현재 상태 요약/);
-  assert.match(html, /학습 변화/);
-  assert.match(html, /영역별 현재 상태/);
+  assert.match(html, /세션별 변화/);
+  assert.match(html, /현재 영역별 상태/);
   assert.match(html, /집 · 개념/);
   assert.match(html, /실생활 · 응용/);
   assert.match(html, /마지막 학습 기록/);
   assert.doesNotMatch(html, /지갑 잔액|이번 세션 보상|우선순위 높음/);
+});
+
+test("diagnostic report renders as one compact Korean A4 document", async () => {
+  const [response, css] = await Promise.all([
+    render("/report"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /<article[^>]+data-report-format="a4"/);
+  assert.match(html, /현재 상태 요약/);
+  assert.match(html, /세션별 변화/);
+  assert.match(html, /현재 영역별 상태/);
+  assert.doesNotMatch(html, /INDIVIDUAL LEARNING REPORT|AT A GLANCE|CHANGE OVER TIME|CURRENT EVIDENCE/);
+  assert.match(css, /\.report-paper\{[\s\S]*?width:min\(794px,[\s\S]*?min-height:1123px/);
+  assert.match(css, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {

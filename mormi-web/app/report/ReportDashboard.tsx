@@ -62,10 +62,10 @@ function ReportShellHeader() {
   );
 }
 
-function SectionHeading({ id, eyebrow, title, detail }: { id: string; eyebrow: string; title: string; detail?: string }) {
+function SectionHeading({ id, title, detail }: { id: string; title: string; detail?: string }) {
   return (
     <div className="diagnostic-section-heading">
-      <div><span>{eyebrow}</span><h2 id={id}>{title}</h2></div>
+      <div><h2 id={id}>{title}</h2></div>
       {detail && <p>{detail}</p>}
     </div>
   );
@@ -316,10 +316,9 @@ export function ReportDashboard() {
   return (
     <main className="report-page">
       <ReportShellHeader />
-      <div className="report-paper">
+      <article className="report-paper" data-report-format="a4">
         <section className="diagnostic-hero" aria-labelledby="report-title">
           <div>
-            <p className="diagnostic-kicker">INDIVIDUAL LEARNING REPORT</p>
             <h1 id="report-title">{report ? `${report.learner.display_name}의 개인 진단 리포트` : "개인 진단 리포트"}</h1>
             <p>전체 학습 기록에서 현재 상태와 변화의 근거를 함께 확인합니다.</p>
           </div>
@@ -345,22 +344,22 @@ export function ReportDashboard() {
               {loadState === "error" && <button type="button" onClick={() => void loadReport()}>다시 불러오기</button>}
             </section>
             <div className="diagnostic-outline">
-              <section className="diagnostic-section" aria-labelledby="summary-title"><SectionHeading id="summary-title" eyebrow="AT A GLANCE" title="현재 상태 요약" /></section>
+              <section className="diagnostic-section" aria-labelledby="summary-title"><SectionHeading id="summary-title" title="현재 상태 요약" /></section>
               <section className="diagnostic-section" aria-labelledby="trend-title">
-                <SectionHeading id="trend-title" eyebrow="CHANGE OVER TIME" title="학습 변화" />
+                <SectionHeading id="trend-title" title="세션별 변화" />
                 <div className="diagnostic-tabs" role="tablist" aria-label="학습 환경 선택">
                   <button id="diagnostic-tab-home" type="button" role="tab" aria-selected="true" disabled>집 · 개념</button>
                   <button id="diagnostic-tab-life" type="button" role="tab" aria-selected="false" disabled>실생활 · 응용</button>
                 </div>
               </section>
-              <section className="diagnostic-section" aria-labelledby="domains-title"><SectionHeading id="domains-title" eyebrow="CURRENT EVIDENCE" title="영역별 현재 상태" /></section>
+              <section className="diagnostic-section" aria-labelledby="domains-title"><SectionHeading id="domains-title" title="현재 영역별 상태" /></section>
             </div>
           </>
         ) : (
           <>
             {notice && <p className="diagnostic-ready-notice" role="alert">{notice}</p>}
             <section className="diagnostic-section diagnostic-summary" aria-labelledby="summary-title">
-              <SectionHeading id="summary-title" eyebrow="AT A GLANCE" title="현재 상태 요약" />
+              <SectionHeading id="summary-title" title="현재 상태 요약" />
               <div className="summary-strips">
                 {([
                   ["개념 수행", report.current_summary.concept_performance],
@@ -374,7 +373,7 @@ export function ReportDashboard() {
             </section>
 
             <section className="diagnostic-section diagnostic-trends" aria-labelledby="trend-title" ref={chartSectionRef}>
-              <SectionHeading id="trend-title" eyebrow="CHANGE OVER TIME" title="학습 변화" detail={chartDetail} />
+              <SectionHeading id="trend-title" title="세션별 변화" detail={chartDetail} />
               <div className="diagnostic-tabs" role="tablist" aria-label="학습 환경 선택">
                 {reportModes.map((item) => {
                   const tabId = `diagnostic-tab-${item.toLowerCase()}`;
@@ -427,7 +426,7 @@ export function ReportDashboard() {
             </section>
 
             <section className="diagnostic-section diagnostic-domains" aria-labelledby="domains-title">
-              <SectionHeading id="domains-title" eyebrow="CURRENT EVIDENCE" title="영역별 현재 상태" detail="영역을 누르면 같은 영역의 상세 근거가 펼쳐집니다." />
+              <SectionHeading id="domains-title" title="현재 영역별 상태" detail="영역을 누르면 같은 영역의 발화 변화를 확인할 수 있습니다." />
               <div className="domain-list">
                 {groupedDomains.length === 0 && <p className="domain-empty">표시할 영역별 근거가 아직 없습니다.</p>}
                 {groupedDomains.map((domain) => {
@@ -462,7 +461,7 @@ export function ReportDashboard() {
             </section>
           </>
         )}
-      </div>
+      </article>
     </main>
   );
 }
