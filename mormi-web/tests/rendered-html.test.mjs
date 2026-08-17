@@ -27,7 +27,7 @@ test("server-renders the Morami onboarding", async () => {
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -37,6 +37,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/cafe-menu.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
 
@@ -110,7 +111,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /turn\.help_card\?\.visible/);
+  assert.match(talkStage, /<MormiHelpCard card=\{turn\.help_card\}/);
+  assert.match(dialogueUi, /if \(!card\?\.visible\) return null/);
+  assert.match(dialogueUi, /card\.visual_type/);
+  assert.match(dialogueUi, /choice\.image_url/);
+  assert.match(dialogueContract, /dictionary_ref:/);
   assert.match(cafe, /STAGE 1 CLEAR!/);
   // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
   // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.

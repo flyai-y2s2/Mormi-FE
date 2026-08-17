@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent, identifyLearner } from "./analytics";
 import { api, apiEnabled, ApiError, readStoredLearner, storeSession, type ThemeView } from "./api-client";
 import { CafeJourney } from "./CafeJourney";
+import { dialogueErrorMessage } from "./dialogue-errors";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
 import {
@@ -14,6 +15,7 @@ import {
   type MormiResponseType,
   type MormiTurn,
 } from "./mormi-dialogue";
+import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -28,7 +30,7 @@ const expressions: Record<Expression, string> = {
   celebrate: "/morami/celebrate-cutout.png",
 };
 
-const stageLabels = ["혼자 연습", "가르치기", "별노트", "생활 게임"];
+const stageLabels = ["혼자 연습", "가르치기", "궁금해 사전", "생활 게임"];
 
 // 시계 읽기는 렌더가 아니라 이벤트 핸들러와 이펙트에서만 일어난다.
 // 모듈 스코프에 두어 렌더 중 호출로 오해되지 않게 한다.
@@ -1422,7 +1424,7 @@ export function MoramiApp() {
       } else {
         console.error("[mormi-api] 가르치기 응답 실패 (unexpected)");
       }
-      setTeachError("응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요.");
+      setTeachError(dialogueErrorMessage(error, "응답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요."));
     } finally {
       teachRequestInFlight.current = false;
       setTeachHelpLoading(false);
@@ -1815,7 +1817,7 @@ export function MoramiApp() {
                 <div className="teaching-morami"><Morami expression={expression} /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
-                  {teachingTurn?.help_card?.visible && <article className="star-note"><div className="note-content"><p><UiIcon name="bulb" size="small" /> {teachingTurn.help_card.title}</p><span>{teachingTurn.help_card.body}</span></div></article>}
+                  <MormiHelpCard card={teachingTurn?.help_card ?? null} />
                   {teachError && <p role="alert">{teachError}</p>}
                   {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
                 </div>
@@ -1846,12 +1848,12 @@ export function MoramiApp() {
                     <button type="submit" className="send-teach-button" disabled={!teachText.trim() || teachSending}>{teachSending ? "확인 중…" : "완료"}</button>
                   </form>}
                   {teachingTurn.input.kind === "choices" && <div className="teaching-choice-pair">
-                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}>{readableChoice(choice.label)}</button>)}</div>
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => setTeachChoiceIds((selected) => selected.includes(choice.id) ? [] : [choice.id])}><MormiChoiceContent choice={{ ...choice, label: readableChoice(choice.label) }} /></button>)}</div>
                     <button className="send-teach-button" disabled={teachChoiceIds.length === 0 || teachSending} onClick={() => void submitTeachingResponse("choice", { choice_ids: teachChoiceIds })}>{teachingTurn.input.submit_label ?? "선택하기"}</button>
                   </div>}
                   {teachingTurn.input.kind === "fill" && <div className="teaching-choice-pair">
                     {typeof teachingTurn.input.config.sentence === "string" && teachingProblem?.visual.type !== "money" && <p>{formatTeachingDisplayText(teachingTurn.input.config.sentence)}</p>}
-                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}>{readableChoice(choice.label)}</button>)}</div>
+                    <div className="teaching-choice-list">{teachingTurn.input.choices.map((choice) => <button type="button" className={teachChoiceIds.includes(choice.id) ? "is-selected" : ""} key={choice.id} disabled={teachSending || Boolean(choice.disabled)} onClick={() => { setTeachChoiceIds([choice.id]); setTeachFillValues({ [teachingTurn.input.target_slots[0] ?? "answer"]: choice.label }); }}><MormiChoiceContent choice={{ ...choice, label: readableChoice(choice.label) }} /></button>)}</div>
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
                   {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
@@ -1865,7 +1867,7 @@ export function MoramiApp() {
                   <UiIcon name={brightExit ? "sun" : "star"} size="large" />
                   <h2>{brightExit ? "오늘의 배움을 챙겼어!" : "모르미가 이해했어!"}</h2>
                   <p>{teachingTurn.mormi.text}</p>
-                  <button className="primary-button" onClick={goWrap} disabled={teachSending}>{hasTeachingNote ? "별노트 보기" : "오늘 마치기"} <span className="button-arrow" /></button>
+                  <button className="primary-button" onClick={goWrap} disabled={teachSending}>{hasTeachingNote ? "다음으로" : "오늘 마치기"} <span className="button-arrow" /></button>
                 </div>
               )}
             </div>
