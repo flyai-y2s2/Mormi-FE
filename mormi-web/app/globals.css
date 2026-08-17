@@ -556,6 +556,23 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .promise-panel { width:min(920px,100%); padding:40px; border:5px solid rgba(255,255,255,.75); border-radius:40px; background:rgba(255,252,243,.94); box-shadow:0 25px 75px rgba(54,65,59,.2); text-align:center; }.promise-panel h1 { margin:4px 0 2px; font-size:48px; letter-spacing:-2.5px; }.promise-panel > p:not(.eyebrow) { margin:0 0 26px; color:#718079; }.promise-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }.promise-steps article { min-height:220px; padding:26px 18px; border-radius:28px; background:#fff; box-shadow:0 10px 28px rgba(60,78,69,.09); }.promise-steps i { width:46px; height:46px; margin:0 auto 14px; display:grid; place-items:center; border-radius:50%; color:#fff; background:#4db88a; font-style:normal; font-weight:950; }.promise-steps h2 { margin:0 0 8px; font-size:20px; }.promise-steps p { margin:0; color:#68786f; font-size:14px; line-height:1.65; }.promise-steps article:nth-child(2) i { background:#8b70d7; }.promise-steps article:nth-child(3) i { background:#eaa545; }.promise-cta { width:100%; min-height:70px; margin-top:20px; padding:0 22px; display:flex; align-items:center; justify-content:space-between; border:0; border-radius:22px; color:#51430f; background:#ffdd74; cursor:pointer; font-weight:950; }.promise-cta b { color:#285b47; }
 .onboarding-name-card label { display:block; margin:18px 0 7px; color:#3d6555; font-size:13px; font-weight:950; }.onboarding-name-card input { width:100%; min-height:68px; margin-bottom:14px; padding:0 22px; border:3px solid #a9ddc5; border-radius:20px; color:#2d4038; background:#fffdf6; font-size:24px; font-weight:850; outline:none; }.onboarding-name-card input:focus { border-color:#55ad83; box-shadow:0 0 0 5px rgba(85,173,131,.15); }.onboarding-name-card .primary-button { width:100%; }.onboarding-secondary { width:100%; margin-top:14px; padding:12px; border:0; color:#6d7c74; background:transparent; cursor:pointer; font-size:14px; font-weight:850; text-decoration:underline; text-underline-offset:4px; }
 .onboarding-secondary:hover { color:#3f6655; }
+
+/* 가입·로그인 폼. 입력란마다 오류가 따로 붙으므로 라벨·인풋·오류를 한 덩어리로 감싼다. */
+.auth-field { margin-bottom:14px; }
+.onboarding-name-card .auth-field label { margin:16px 0 7px; display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.auth-field label em { margin-left:8px; color:#7f8f87; font-style:normal; font-size:12px; font-weight:800; letter-spacing:0; }
+.onboarding-name-card .auth-field input { margin-bottom:0; }
+.onboarding-name-card .auth-field.has-error input { border-color:#eda184; background:#fffaf7; }
+.onboarding-name-card .auth-field.has-error input:focus { border-color:#e2805f; box-shadow:0 0 0 5px rgba(226,128,95,.18); }
+.auth-field-error { margin:8px 3px 0; color:#c0503a; font-size:13px; font-weight:850; line-height:1.45; }
+.auth-reveal { padding:3px 5px; border:0; border-radius:8px; color:#3f8767; background:transparent; cursor:pointer; font-size:12px; font-weight:900; text-decoration:underline; text-underline-offset:3px; }
+.auth-reveal:hover { color:#2b6b50; background:rgba(85,173,131,.1); }
+.onboarding-error { margin:2px 0 4px; padding:13px 15px; border-radius:16px; color:#b0452c; background:#fff0e9; font-size:14px; font-weight:850; line-height:1.5; }
+.onboarding-steps { display:flex; gap:7px; margin-bottom:12px; }
+.onboarding-steps i { width:28px; height:7px; border-radius:7px; background:#dde7e1; transition:background .2s; }
+.onboarding-steps i.is-active { background:#55b485; }
+.onboarding-back { width:100%; margin-top:10px; padding:11px; border:0; border-radius:12px; color:#7d8c84; background:transparent; cursor:pointer; font-size:14px; font-weight:850; }
+.onboarding-back:hover { color:#3f6655; background:rgba(85,173,131,.08); }
 .promise-actions { display:grid; }.onboarding-skip { padding:13px; border:0; color:#758078; background:transparent; cursor:pointer; font-weight:850; text-decoration:underline; text-underline-offset:4px; }.onboarding-tutorial { min-height:100svh; padding:80px 24px 40px; display:grid; place-items:center; position:relative; }.onboarding-skip--top { position:absolute; right:30px; top:24px; z-index:3; }.tutorial-progress { position:absolute; top:42px; display:flex; gap:8px; }.tutorial-progress i { width:45px; height:9px; border-radius:9px; background:#d8d8cf; }.tutorial-progress i.is-active { background:#55b485; }.tutorial-card { width:min(920px,100%); min-height:520px; padding:48px; display:grid; grid-template-columns:300px 1fr; align-items:center; gap:25px; border:5px solid rgba(255,255,255,.8); border-radius:40px; background:rgba(255,252,243,.96); box-shadow:0 25px 75px rgba(54,65,59,.2); }.tutorial-card .morami-frame { width:280px; height:340px; }.tutorial-card h1 { margin:5px 0 22px; font-size:38px; line-height:1.25; letter-spacing:-2px; }.tutorial-choices { display:grid; gap:10px; }.tutorial-choices button { min-height:62px; border:3px solid #9fd7bd; border-radius:18px; color:#285743; background:#fff; cursor:pointer; font-size:17px; font-weight:950; }.tutorial-choices button:hover { background:#eaf9f1; transform:translateY(-2px); }.tutorial-feedback { color:#33785b; font-weight:950; }
 
 .journey-hub--home { max-width:none; min-height:calc(100svh - 88px); padding:0 7vw 42px; position:relative; }.home-room-main { min-height:calc(100svh - 160px); display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:4vw; }.home-room-copy-column,.home-room-character-column{width:100%;height:min(650px,calc(100svh - 160px));min-height:560px}.home-room-copy-column{max-width:650px;display:grid;grid-template-rows:auto 1fr;gap:12px}.home-room-character-column{max-width:480px;padding-top:56px;display:grid;grid-template-rows:auto 1fr;align-items:stretch}.journey-nav--home-card{position:static;justify-self:start;transform:none;background:rgba(255,255,255,.92)}.home-room-copy { height:100%;max-width:650px; padding:34px; border-radius:36px; background:rgba(255,252,244,.9); box-shadow:0 22px 60px rgba(54,68,61,.16); backdrop-filter:blur(5px); }.home-room-copy h1 { margin:4px 0 28px; font-size:clamp(42px,5.5vw,70px); letter-spacing:-4px; }.home-main-actions { display:grid; gap:13px; }.home-main-actions button { min-height:105px; padding:18px 22px; display:grid; grid-template-columns:56px 1fr; grid-template-rows:1fr 1fr; align-items:center; column-gap:14px; border:3px solid #dbece3; border-radius:26px; color:#29463b; background:#fff; box-shadow:0 8px 0 #cfe4da,0 16px 26px rgba(60,81,71,.08); cursor:pointer; text-align:left; }.home-main-actions button:last-child { border-color:#f1deb0; box-shadow:0 8px 0 #ead5a2,0 16px 26px rgba(98,79,39,.08); }.home-main-actions button > span { grid-row:1/3; font-size:34px; }.home-main-actions b { align-self:end; font-size:22px; }.home-main-actions small { align-self:start; color:#718078; font-size:13px; }.home-room-morami { min-height:0;align-self:end;justify-self:center;display:grid;align-items:end }.home-room-morami .morami-frame { width:min(34vw,430px); height:min(53vh,500px); }.home-next-lesson { min-width:440px; min-height:64px; padding:10px 18px; position:absolute; left:50%; bottom:24px; transform:translateX(-50%); border:2px solid #63ba93; border-radius:20px; color:#285c47; background:rgba(255,255,255,.94); box-shadow:0 12px 28px rgba(43,77,62,.14); cursor:pointer; }.home-next-lesson span,.home-next-lesson b { display:block; }.home-next-lesson span { color:#8a6c2e; font-size:11px; }.home-next-lesson b { font-size:15px; }
@@ -1287,3 +1304,145 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe--queue .queue-story-dialogue b{font-size:19px}
   .figma-cafe--queue .queue-story-dialogue p{font-size:16px}
 }
+
+/* 장소 이동 탭이 화면 내용 안으로 들어간 자리. 좁은 화면에서 .journey-nav 를
+   상단에 절대배치하는 규칙(max-width:900px)을 여기서 되돌린다. */
+/* 감싸는 컨테이너가 블록이라 nav 가 폭 전체로 늘어난다. 내용만큼만 차지하게 잡는다. */
+.journey-nav--inline { width:fit-content; position:static; margin-bottom:16px; transform:none; background:rgba(255,255,255,.92); }
+/* 외출 화면은 제목이 가운데 정렬이라 탭도 그 위 가운데에 둔다. */
+.journey-hub--outside .journey-nav--inline { margin:0 auto 14px; }
+.curriculum-home .journey-nav--inline { margin-bottom:14px; }
+
+/* 프로필과 계정 메뉴. topbar 왼쪽 자리를 쓴다. */
+.topbar--without-brand .profile-menu { justify-self:start; }
+.profile-menu { position:relative; z-index:30; }
+.profile-trigger { min-height:52px; padding:6px 16px 6px 6px; display:flex; align-items:center; gap:10px; border:1px solid rgba(57,79,70,.1); border-radius:18px; color:#33544a; background:rgba(255,255,255,.82); box-shadow:0 8px 26px rgba(70,94,82,.1); cursor:pointer; }
+.profile-trigger:hover { background:#fff; box-shadow:0 10px 28px rgba(70,94,82,.16); }
+.profile-trigger.is-open { border-color:rgba(47,159,119,.4); background:#fff; }
+.profile-trigger b { max-width:150px; overflow:hidden; font-size:15px; font-weight:900; text-overflow:ellipsis; white-space:nowrap; }
+.profile-avatar { width:40px; height:40px; flex:0 0 40px; display:grid; place-items:center; border-radius:14px; color:#fff; background:linear-gradient(145deg,#7fd9b2,#2f9f77); box-shadow:inset 0 -3px 0 rgba(30,105,78,.22); font-size:18px; font-weight:950; }
+.profile-caret { width:9px; height:9px; border-right:2.5px solid #6b8579; border-bottom:2.5px solid #6b8579; transform:translateY(-3px) rotate(45deg); transition:transform .18s; }
+.profile-trigger.is-open .profile-caret { transform:translateY(1px) rotate(-135deg); }
+.profile-sheet { min-width:216px; padding:7px; position:absolute; left:0; top:calc(100% + 9px); display:grid; gap:3px; border:1px solid rgba(57,79,70,.1); border-radius:20px; background:#fff; box-shadow:0 18px 44px rgba(54,74,65,.2); }
+.profile-item { width:100%; min-height:48px; padding:0 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; border:0; border-radius:14px; color:#35544a; background:transparent; cursor:pointer; font-size:15px; font-weight:900; text-align:left; }
+.profile-item:hover:not(:disabled) { background:#eef8f2; }
+.profile-item:disabled { color:#9aa8a1; cursor:default; }
+.profile-item em { color:#a3b0a9; font-size:12px; font-style:normal; font-weight:800; }
+.profile-item--logout { color:#c0503a; }
+.profile-item--logout:hover:not(:disabled) { background:#fdefe9; }
+@media (max-width:560px) {
+  .profile-trigger { min-height:46px; padding:5px 12px 5px 5px; gap:8px; }
+  .profile-trigger b { max-width:88px; font-size:13px; }
+  .profile-avatar { width:36px; height:36px; flex-basis:36px; font-size:16px; }
+  .profile-sheet { min-width:190px; }
+}
+
+/* 한 화면에 담기. 아이가 누르는 요소의 높이는 그대로 두고 사이 여백만 줄인다.
+   기준 뷰포트는 노트북 세로 780px 안팎(3024x1662 디스플레이에서 브라우저 크롬을 뺀 값). */
+.journey-nav--inline { margin-bottom:8px; }
+.journey-hub--outside { padding-top:14px; padding-bottom:22px; }
+.journey-hub--outside .journey-nav--inline { margin:0 auto 6px; }
+.outside-scene-head h1 { margin-top:0; }
+
+.curriculum-home--room { padding-top:16px; padding-bottom:22px; }
+.curriculum-home .journey-nav--inline { margin-bottom:8px; }
+.room-list-heading { margin-bottom:10px; padding:15px 26px; }
+.room-list-heading h1 { margin:0 0 3px; font-size:30px; }
+.cafe-required-lessons { margin:8px 0 10px; padding:10px; gap:6px; }
+.cafe-required-lessons > div:first-child { padding:0 4px 5px; }
+.other-concepts-toggle { min-height:52px; }
+/* 남은 높이는 큰 덩어리 하나씩만 줄인다. 잔여백을 여러 곳에서 조금씩 깎으면
+   나중에 어디를 되돌려야 하는지 알기 어려워진다. */
+.journey-hub--outside .destination-card { min-height:396px; }
+.journey-hub--outside .outside-scene-head h1 { font-size:39px; }
+.cafe-required-lessons > button { min-height:70px; }
+.room-list-heading { margin-bottom:6px; }
+.cafe-required-lessons { margin-bottom:6px; }
+
+/* 장소 이동을 상단 줄로 올린 안. 프로필과 같은 줄에 두어 전역 내비임을 분명히 하고,
+   비어 있던 상단 가운데를 채워 화면 무게가 아래로 처지지 않게 한다. */
+.topbar-lead { display:flex; align-items:center; gap:14px; justify-self:start; }
+.journey-nav--top { position:static; margin:0; transform:none; background:rgba(255,255,255,.82); }
+.journey-nav--top button { min-width:82px; min-height:42px; }
+/* 탭이 상단으로 갔으므로 콘텐츠는 제목부터 시작한다. */
+.journey-hub--outside { padding-top:6px; }
+.curriculum-home--room { padding-top:8px; }
+@media (max-width:560px) {
+  .topbar-lead { gap:8px; }
+  .journey-nav--top button { min-width:64px; min-height:36px; font-size:13px; }
+}
+
+/* 장소 이동 탭이 상단 줄에 있으므로 topbar 의 좌우 기준선이 화면마다 달라지면 안 된다.
+   홈·복습만 전체 폭이었고 외부는 가운데 정렬이라 탭이 110px 옮겨져 보였다. */
+.app-shell--outside .topbar, .app-shell--complete .topbar { max-width:none; padding-inline:42px; }
+
+/* 카드 안에 있던 탭이 빠졌으므로 남은 한 칸이 열 높이를 그대로 쓰게 한다.
+   그러지 않으면 카드가 내용만큼만 줄어 위로 붙는다. */
+.home-room-copy-column { grid-template-rows:1fr; gap:0; }
+/* 탭이 차지하던 높이(52px + 여백 12px)만큼 위를 비워 카드 위치와 크기를 그대로 둔다.
+   box-sizing:border-box 이므로 열 높이는 그대로고 카드만 원래 크기로 돌아온다. */
+.home-room-copy-column { padding-top:64px; }
+
+/* ── 카페 필수 개념 목록 ──────────────────────────────────────────
+   구분을 선이 아니라 면과 그림자로 만든다. 원래는 컨테이너 배경이 거의 흰색이라
+   흰 항목과 밝기 차가 없었고, 그래서 4px·3px 짜리 진한 초록 테두리로만 경계를
+   만들고 있었다. 다섯 줄이면 초록 선이 열두 개라 화면이 시끄럽다.
+   민트 면 위에 흰 카드가 떠 있는 구조로 바꾸면 선을 거의 지워도 더 잘 갈린다. */
+.cafe-required-lessons {
+  padding:13px; gap:8px; border:0; border-radius:24px;
+  background:linear-gradient(180deg,#e9f7ef,#e2f3e9);
+  box-shadow:inset 0 0 0 1px rgba(62,159,114,.16), 0 10px 30px rgba(39,105,76,.10);
+}
+.cafe-required-lessons > div:first-child { padding:1px 6px 8px; }
+.cafe-required-lessons > div:first-child strong { font-size:18px; }
+
+.cafe-required-lessons > button {
+  min-height:80px; padding:12px 14px; gap:13px;
+  border:1px solid rgba(62,159,114,.16); border-radius:18px;
+  box-shadow:0 1px 0 rgba(39,105,76,.05), 0 4px 12px rgba(39,105,76,.06);
+  transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+.cafe-required-lessons > button:hover {
+  transform:translateY(-2px);
+  border-color:rgba(62,159,114,.34);
+  box-shadow:0 2px 0 rgba(39,105,76,.06), 0 10px 22px rgba(39,105,76,.13);
+}
+.cafe-required-lessons > button:active { transform:translateY(0); }
+
+/* 설명이 10px 이라 읽히지 않았다. 아이가 읽는 글자다. */
+.cafe-required-lessons > button span b { font-size:17px; letter-spacing:-.4px; }
+.cafe-required-lessons > button span small { margin-top:2px; color:#798b82; font-size:12px; line-height:1.4; }
+
+/* 번호는 중립적으로, 완료는 초록으로 채워 끝난 것이 도드라지게 한다. */
+.cafe-required-lessons > button > i { width:38px; height:38px; border-radius:12px; color:#5b8271; background:#eff5f1; box-shadow:inset 0 0 0 1px rgba(62,159,114,.14); font-size:16px; }
+.cafe-required-lessons > button.is-complete > i { color:#fff; background:linear-gradient(160deg,#5cb98d,#33936a); box-shadow:0 3px 8px rgba(43,132,95,.28); }
+
+/* 오른쪽 글자만 있으면 누를 수 있는 것으로 안 보인다. 알약으로 바꾼다. */
+.cafe-required-lessons > button em { padding:7px 13px; border-radius:999px; color:#2c7a5b; background:#eef7f2; font-size:12.5px; }
+.cafe-required-lessons > button.is-complete em { color:#8fa79b; background:transparent; }
+
+/* 다음에 할 하나만 강조한다. 다섯 줄이 같은 무게면 어디를 눌러야 할지 알 수 없다. */
+.cafe-required-lessons > button.is-next {
+  border-color:rgba(62,159,114,.46);
+  box-shadow:0 2px 0 rgba(39,105,76,.07), 0 10px 24px rgba(39,105,76,.15);
+}
+.cafe-required-lessons > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
+.cafe-required-lessons > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
+
+/* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
+   묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
+.room-list-heading { margin-bottom:18px; padding:11px 26px; }
+.room-list-heading h1 { margin:0 0 2px; font-size:29px; }
+.cafe-required-lessons { margin-bottom:14px; }
+.cafe-required-lessons > div:first-child { padding:2px 6px 11px; }
+/* 남은 번호가 거의 안 보였다. 완료(초록)와는 구분하되 존재감은 준다. */
+.cafe-required-lessons > button > i { color:#4a7263; background:#e6efe9; box-shadow:inset 0 0 0 1px rgba(62,159,114,.2); }
+.curriculum-home--room { padding-bottom:14px; }
+
+/* 항목 폭이 918px 이라 제목(왼쪽 끝)과 버튼(오른쪽 끝) 사이가 600px 넘게 비었다.
+   시선이 좌우로 크게 튀어 목록이 읽히지 않는다. 폭을 줄여 한 줄이 한눈에 들어오게 한다. */
+.curriculum-home--room { max-width:880px; }
+
+/* 목록과 같은 시각 언어로 맞춘다. 회색 두께 그림자(0 6px 0)만 홀로 튀고 있었다. */
+.other-concepts-toggle { border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
+.other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
