@@ -273,7 +273,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /learningStage \?[\s\S]{0,400}<ProfileMenu/);
   // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
   // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
-  assert.match(app, /function submitLogin\(\) \{\n {4}\/\//);
+  assert.match(app, /function submitLogin\(\) \{\r?\n {4}\/\//);
   assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
@@ -423,11 +423,18 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(trendChart, /최근 구간/);
   assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
   assert.match(dashboard, /className="domain-category-bar"/);
+  assert.match(dashboard, /const categoryStatus = diagnosticCategoryStatus\(domain\)/);
+  assert.match(dashboard, /domain-category-button--\$\{categoryStatus\.toLowerCase\(\)\}/);
+  assert.match(dashboard, /<small>\{statusLabel\(categoryStatus\)\}<\/small>/);
   assert.match(dashboard, /aria-pressed=\{expandedDomainId === domain\.domain_id\}/);
   assert.match(dashboard, /className="domain-category-panel"/);
   assert.match(dashboard, /<DomainDetail domain=\{expandedDomain\}/);
   assert.match(dashboard, /className="domain-list domain-print-list"/);
   assert.match(css, /\.domain-category-bar\{[^}]*display:flex[^}]*flex-wrap:nowrap[^}]*overflow-x:auto/);
+  assert.match(css, /\.domain-category-button--stable\{[^}]*background:#e7f4ed/);
+  assert.match(css, /\.domain-category-button--developing\{[^}]*background:#fff3cf/);
+  assert.match(css, /\.domain-category-button--support_needed\{[^}]*background:#fbe7e3/);
+  assert.match(css, /\.domain-category-button--observing\{[^}]*background:#edf1ef/);
   assert.match(dashboard, /className="diagnostic-evidence-link"/);
   assert.match(dashboard, /<p>\{summary\.text\}<\/p><EvidenceLinks refs=\{summary\.evidence_refs\}/);
   assert.match(dashboard, /<p>\{report\.improved_point\.text\}<\/p><EvidenceLinks refs=\{report\.improved_point\.evidence_refs\}/);

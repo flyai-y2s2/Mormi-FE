@@ -14,6 +14,7 @@ import { ReportTrendChart } from "./ReportTrendChart";
 import { completeDiagnosticReportExample, completeSpeechEvidenceByDomain } from "./complete-report-example";
 import {
   chooseDiagnosticSelection,
+  diagnosticCategoryStatus,
   diagnosticSeriesForDomain,
   groupDiagnosticDomains,
   isEmptyDiagnosticReport,
@@ -460,18 +461,20 @@ export function ReportDashboard() {
               <div className="domain-category-bar" aria-label="상태를 볼 영역 선택">
                 {groupedDomains.map((domain) => {
                   const buttonId = `domain-category-${domain.domain_id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+                  const categoryStatus = diagnosticCategoryStatus(domain);
                   return (
                     <button
                       key={domain.domain_id}
                       id={buttonId}
                       ref={(element) => { if (element) domainStatusRefs.current.set(domain.domain_id, element); else domainStatusRefs.current.delete(domain.domain_id); }}
                       type="button"
-                      className={expandedDomainId === domain.domain_id ? "is-active" : ""}
+                      className={`domain-category-button domain-category-button--${categoryStatus.toLowerCase()} ${expandedDomainId === domain.domain_id ? "is-active" : ""}`}
                       aria-pressed={expandedDomainId === domain.domain_id}
                       aria-controls="domain-category-detail"
                       onClick={() => openDomain(domain)}
                     >
-                      {domain.label}
+                      <span>{domain.label}</span>
+                      <small>{statusLabel(categoryStatus)}</small>
                     </button>
                   );
                 })}

@@ -11,6 +11,7 @@ import type {
 import {
   chartPoints,
   chooseDiagnosticSelection,
+  diagnosticCategoryStatus,
   diagnosticComparablePointCounts,
   diagnosticSeriesForDomain,
   groupDiagnosticDomains,
@@ -66,7 +67,7 @@ test("chartPoints keeps chronology and maps scores into the SVG plot", () => {
 });
 
 test("statusLabel uses teacher-facing Korean labels", () => {
-  assert.equal(statusLabel("STABLE"), "안정");
+  assert.equal(statusLabel("STABLE"), "양호");
   assert.equal(statusLabel("DEVELOPING"), "발달 중");
   assert.equal(statusLabel("SUPPORT_NEEDED"), "지원 필요");
   assert.equal(statusLabel("OBSERVING"), "관찰 중");
@@ -277,6 +278,29 @@ function domainStatus(
 ): DiagnosticDomainStatusDto {
   return { domain_id, label, status, direction: "IMPROVING", total_count: 2, recent_count: 1 };
 }
+
+test("category status uses the most cautious available learning status", () => {
+  const baseGroup = {
+    domain_id: "money-count",
+    label: "돈 세기",
+    mode: "HOME" as const,
+    statuses: [
+      { ...domainStatus("money-count", "돈 세기 · 문제 정답률", "STABLE"), kind: "drill" as const },
+      { ...domainStatus("money-count", "돈 세기 · 혼자 설명하기", "DEVELOPING"), kind: "teach" as const },
+    ],
+  };
+
+  assert.equal(diagnosticCategoryStatus(baseGroup), "DEVELOPING");
+  assert.equal(diagnosticCategoryStatus({
+    ...baseGroup,
+    statuses: [...baseGroup.statuses, { ...domainStatus("money-count", "돈 세기", "SUPPORT_NEEDED"), kind: "life" as const }],
+  }), "SUPPORT_NEEDED");
+  assert.equal(diagnosticCategoryStatus({
+    ...baseGroup,
+    statuses: baseGroup.statuses.map((item) => ({ ...item, status: "STABLE" as const })),
+  }), "STABLE");
+  assert.equal(diagnosticCategoryStatus({ ...baseGroup, statuses: [] }), "OBSERVING");
+});
 
 test("groups duplicate HOME records into one domain and sources drill and teach independently", () => {
   const drill = domainTrend("money-count", "돈 세기 · 문제 정답률", [

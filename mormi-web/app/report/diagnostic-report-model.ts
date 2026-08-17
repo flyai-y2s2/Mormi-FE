@@ -66,7 +66,7 @@ export type DiagnosticRecentWindowLayout = {
 };
 
 const statusLabels: Record<DiagnosticStatus, string> = {
-  STABLE: "안정",
+  STABLE: "양호",
   DEVELOPING: "발달 중",
   SUPPORT_NEEDED: "지원 필요",
   OBSERVING: "관찰 중",
@@ -74,6 +74,23 @@ const statusLabels: Record<DiagnosticStatus, string> = {
 
 export function statusLabel(status: DiagnosticStatus): string {
   return statusLabels[status];
+}
+
+const categoryStatusPriority: Record<DiagnosticStatus, number> = {
+  STABLE: 0,
+  OBSERVING: 1,
+  DEVELOPING: 2,
+  SUPPORT_NEEDED: 3,
+};
+
+/** Uses the status needing the most attention as the category button's color. */
+export function diagnosticCategoryStatus(group: DiagnosticDomainGroup): DiagnosticStatus {
+  const firstStatus = group.statuses[0]?.status;
+  if (!firstStatus) return "OBSERVING";
+  return group.statuses.slice(1).reduce<DiagnosticStatus>(
+    (current, item) => categoryStatusPriority[item.status] > categoryStatusPriority[current] ? item.status : current,
+    firstStatus,
+  );
 }
 
 function clampScore(score: number): number {
