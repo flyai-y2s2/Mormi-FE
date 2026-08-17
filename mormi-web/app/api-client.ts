@@ -199,7 +199,17 @@ export type LearnerConsent = {
 };
 
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    /**
+     * validation_failed(422) 일 때 서버가 준 필드별 사유.
+     * 요청 본문은 snake_case 인데 여기 키는 camelCase 다(login_id → loginId).
+     * 값은 영어 검증 메시지이므로 화면에는 그대로 쓰지 않는다.
+     */
+    readonly fields?: Record<string, string>,
+  ) {
     super(message);
   }
 }
@@ -292,15 +302,19 @@ export async function apiRequest<T>(
   if (!response.ok) {
     let code = "http_error";
     let message = `요청이 실패했습니다 (${response.status})`;
+    let fields: Record<string, string> | undefined;
     try {
-      const body = await response.json() as { code?: string; message?: string };
+      const body = await response.json() as {
+        code?: string; message?: string; fields?: Record<string, string>;
+      };
       code = body.code || code;
       message = body.message || message;
+      fields = body.fields;
     } catch { /* 본문이 없을 수 있다 */ }
     // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
     // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.
     if (auth && response.status === 401) handleUnauthorized();
-    throw new ApiError(response.status, code, message);
+    throw new ApiError(response.status, code, message, fields);
   }
   if (response.status === 204) return undefined as T;
   return await response.json() as T;
@@ -348,22 +362,6 @@ export const api = {
   /** 해당 학습자의 모든 기기 토큰을 폐기한다. */
   logoutAll() {
     return apiRequest<void>("/v1/auth/logout-all", { method: "POST" });
-  },
-
-  /** @deprecated 연구 코드 온보딩. `signup` 을 쓴다. 화면 전환이 끝나면 제거한다. */
-  createLearner(displayName: string, researchCode: string) {
-    return apiRequest<AuthResponse>("/v1/learners", {
-      method: "POST",
-      body: JSON.stringify({ display_name: displayName, research_code: researchCode }),
-    }, false);
-  },
-
-  /** @deprecated 연구 코드 복구. `login` 을 쓴다. 화면 전환이 끝나면 제거한다. */
-  restoreLearner(researchCode: string) {
-    return apiRequest<AuthResponse>("/v1/learners/auth", {
-      method: "POST",
-      body: JSON.stringify({ research_code: researchCode }),
-    }, false);
   },
 
   progress() {

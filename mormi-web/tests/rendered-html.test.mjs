@@ -22,7 +22,10 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
-  assert.match(html, /내 이름 알려주기/);
+  // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
+  // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
+  assert.match(html, /처음 왔어요/);
+  assert.match(html, /전에 하던 게 있어요/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
@@ -253,7 +256,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
-  assert.match(app, /너의 이름을 알려줄래/);
+  assert.match(app, /너를 뭐라고 부를까/);
+  // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
+  // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
+  assert.match(app, /function submitLogin\(\) \{\n {4}\/\//);
+  assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
   assert.match(app, /teachingNote\.attribution_label/);

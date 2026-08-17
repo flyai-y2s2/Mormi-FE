@@ -3,7 +3,17 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { captureMormeyEvent, identifyLearner } from "./analytics";
-import { api, apiEnabled, ApiError, readStoredLearner, storeSession, type ThemeView } from "./api-client";
+import {
+  api,
+  apiEnabled,
+  ApiError,
+  readStoredLearner,
+  setUnauthorizedHandler,
+  storeSession,
+  type AuthResponse,
+  type ThemeView,
+} from "./api-client";
+import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
 import { CafeJourney } from "./CafeJourney";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
@@ -830,65 +840,204 @@ function Dictionary({ onClose, session }: { onClose: () => void; session: Sessio
   );
 }
 
-/** 참여 번호 입력 규칙. 온보딩과 복구가 같은 형식을 써야 서버가 같은 아이로 찾는다. */
+/** 참여 번호 입력 규칙. 연구 담당자가 배정한 값과 형식을 맞춰 두어야 그 아이로 저장된다. */
 const normalizeResearchCode = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40);
 
-function Onboarding({ onStart, onRestore, submitting, submitError }: {
-  onStart: (name: string, researchCode: string) => void;
-  onRestore: (researchCode: string) => void;
-  submitting: boolean;
-  submitError: string;
+/** 아이디는 영숫자 4~20자. 서버(422)와 같은 기준으로 화면에서 먼저 걸러 낸다. */
+const LOGIN_ID_PATTERN = /^[a-zA-Z0-9]{4,20}$/;
+const PASSWORD_MIN_LENGTH = 8;
+
+function AuthInput({ id, label, hint, error, action, ...inputProps }: {
+  id: string;
+  label: string;
+  /** 라벨 옆 작은 안내. 입력 규칙을 미리 알려 오답 제출을 줄인다. */
+  hint?: string;
+  error?: string;
+  action?: React.ReactNode;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className={`auth-field${error ? " has-error" : ""}`}>
+      <label htmlFor={id}>
+        <span>{label}{hint && <em>{hint}</em>}</span>
+        {action}
+      </label>
+      <input id={id} aria-invalid={error ? true : undefined} {...inputProps} />
+      {error && <p className="auth-field-error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * 가입·로그인 화면.
+ *
+ * 실패 사유는 부모가 아니라 이 폼이 들고 있는다. 같은 401 이라도 폼 전체에 띄울지
+ * 특정 입력란에 붙일지가 갈리는데, 그 판단까지 부모로 올리면 "지금 어느 칸을
+ * 고치는 중인지"를 부모가 알아야 해서 props 가 계속 늘어난다.
+ */
+function Onboarding({ onSignup, onLogin }: {
+  onSignup: (name: string, researchCode: string, loginId: string, password: string) => Promise<AuthFailure | null>;
+  onLogin: (loginId: string, password: string) => Promise<AuthFailure | null>;
 }) {
-  const [page, setPage] = useState<"hello" | "name" | "restore">("hello");
+  const [page, setPage] = useState<"hello" | "signup" | "login">("hello");
+  const [signupStep, setSignupStep] = useState<1 | 2>(1);
   const [name, setName] = useState("");
   const [researchCode, setResearchCode] = useState("");
-  const profile = { name: name.trim() || "친구" };
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [revealPassword, setRevealPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<AuthField, string>>>({});
 
-  function finishOnboarding() {
-    captureMormeyEvent("onboarding_intro_completed");
-    onStart(profile.name, researchCode.trim());
+  /** 화면을 옮길 때는 이전 화면에서 난 오류를 들고 가지 않는다. */
+  function goTo(next: "hello" | "signup" | "login", step: 1 | 2 = 1) {
+    setPage(next);
+    setSignupStep(step);
+    setFormError("");
+    setFieldErrors({});
+    setRevealPassword(false);
   }
 
-  // 기기를 바꾼 아이. 이름은 서버가 갖고 있으므로 참여 번호만 받는다.
-  if (page === "restore") {
+  /** 아이가 고치기 시작한 칸의 오류는 즉시 지운다. 빨간 글씨가 남아 있으면 고쳐도 틀린 것 같다. */
+  function clearFieldError(field: AuthField) {
+    setFormError("");
+    setFieldErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
+  }
+
+  async function submit(run: () => Promise<AuthFailure | null>) {
+    setSubmitting(true);
+    setFormError("");
+    setFieldErrors({});
+    try {
+      const failure = await run();
+      if (!failure) return;
+      setFormError(failure.message ?? "");
+      setFieldErrors(failure.fields ?? {});
+      // 1스텝 값이 문제면 그 화면으로 되돌려야 아이가 고칠 칸을 볼 수 있다.
+      if (failure.fields?.name || failure.fields?.researchCode) setSignupStep(1);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function goToPasswordStep() {
+    const errors: Partial<Record<AuthField, string>> = {};
+    if (!name.trim()) errors.name = "이름을 적어 주세요.";
+    if (!researchCode.trim()) errors.researchCode = "선생님이 알려준 참여 번호를 적어 주세요.";
+    setFieldErrors(errors);
+    if (errors.name || errors.researchCode) return;
+    captureMormeyEvent("onboarding_intro_completed");
+    setSignupStep(2);
+  }
+
+  function submitSignup() {
+    const errors: Partial<Record<AuthField, string>> = {};
+    if (!LOGIN_ID_PATTERN.test(loginId)) errors.loginId = "아이디는 영어와 숫자로 4~20자예요.";
+    if (password.length < PASSWORD_MIN_LENGTH) errors.password = "비밀번호는 8자 이상이어야 해요.";
+    if (errors.loginId || errors.password) {
+      setFieldErrors(errors);
+      return;
+    }
+    void submit(() => onSignup(name.trim(), researchCode.trim(), loginId, password));
+  }
+
+  function submitLogin() {
+    // 로그인에서는 형식 검사를 하지 않는다. 규칙이 나중에 바뀌면 예전 기준으로 만든
+    // 아이디가 화면에서 먼저 막혀, 서버에 물어보지도 못하고 못 들어오게 된다.
+    if (!loginId.trim() || !password) {
+      setFormError("아이디와 비밀번호를 모두 적어 주세요.");
+      return;
+    }
+    void submit(() => onLogin(loginId.trim(), password));
+  }
+
+  const passwordReveal = (
+    <button type="button" className="auth-reveal" onClick={() => setRevealPassword((current) => !current)}>
+      {revealPassword ? "숨기기" : "보기"}
+    </button>
+  );
+
+  if (page === "login") {
     return (
       <section className="onboarding-scene onboarding-scene--name">
         <div className="onboarding-morami"><Morami expression="happy" /></div>
-        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (researchCode.trim()) onRestore(researchCode.trim()); }}>
+        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); submitLogin(); }}>
           <span>모르미</span>
           <h1>다시 만나서 반가워!</h1>
-          <p>참여 번호를 적으면 하던 데부터 이어서 할 수 있어.</p>
-          <label htmlFor="restore-code">참여 번호</label>
-          <input id="restore-code" value={researchCode} onChange={(event) => setResearchCode(normalizeResearchCode(event.target.value))} placeholder="선생님이 알려준 번호" autoComplete="off" />
-          <button className="primary-button" type="submit" disabled={submitting || !researchCode.trim()}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
-          {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
-          <button type="button" className="onboarding-secondary" onClick={() => setPage("name")}>처음 시작하는 거예요</button>
+          <p>아이디와 비밀번호를 넣으면 하던 데부터 이어서 할 수 있어.</p>
+          <AuthInput
+            id="login-id" label="아이디" value={loginId} error={fieldErrors.loginId}
+            onChange={(event) => { setLoginId(event.target.value.trim()); clearFieldError("loginId"); }}
+            placeholder="아이디를 적어 주세요" autoComplete="username" autoCapitalize="off" spellCheck={false}
+          />
+          <AuthInput
+            id="login-password" label="비밀번호" value={password} error={fieldErrors.password} action={passwordReveal}
+            type={revealPassword ? "text" : "password"}
+            onChange={(event) => { setPassword(event.target.value); clearFieldError("password"); }}
+            placeholder="비밀번호를 적어 주세요" autoComplete="current-password"
+          />
+          {formError && <p className="onboarding-error" role="alert">{formError}</p>}
+          <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
+          <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 시작하는 거예요</button>
         </form>
       </section>
     );
   }
 
-  if (page === "name") {
+  if (page === "signup") {
+    const steps = <div className="onboarding-steps" aria-hidden="true"><i className="is-active" /><i className={signupStep === 2 ? "is-active" : ""} /></div>;
+
+    // 아이디·비밀번호. 다음에 다시 들어올 때 쓰는 값이라 만드는 이유를 먼저 말해 준다.
+    if (signupStep === 2) {
+      return (
+        <section className="onboarding-scene onboarding-scene--name">
+          <div className="onboarding-morami"><Morami expression="happy" /></div>
+          <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); submitSignup(); }}>
+            {steps}
+            <span>모르미 · 2/2</span>
+            <h1>이제 열쇠를 만들자!</h1>
+            <p>다음에 올 때 이 아이디와 비밀번호로 들어오면 돼.</p>
+            <AuthInput
+              id="signup-login-id" label="아이디" hint="영어와 숫자로 4~20자" value={loginId} error={fieldErrors.loginId}
+              onChange={(event) => { setLoginId(event.target.value.trim()); clearFieldError("loginId"); }}
+              placeholder="예: minjun01" autoComplete="username" autoCapitalize="off" spellCheck={false}
+            />
+            <AuthInput
+              id="signup-password" label="비밀번호" hint="8자 이상" value={password} error={fieldErrors.password} action={passwordReveal}
+              type={revealPassword ? "text" : "password"}
+              onChange={(event) => { setPassword(event.target.value); clearFieldError("password"); }}
+              placeholder="잊어버리지 않을 비밀번호" autoComplete="new-password"
+            />
+            {formError && <p className="onboarding-error" role="alert">{formError}</p>}
+            <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "만드는 중…" : "가입하고 시작하기"} <span className="button-arrow" /></button>
+            <button type="button" className="onboarding-back" onClick={() => { setSignupStep(1); setFormError(""); }}>‹ 이름 다시 적기</button>
+          </form>
+        </section>
+      );
+    }
+
     return (
       <section className="onboarding-scene onboarding-scene--name">
         <div className="onboarding-morami"><Morami expression="happy" /></div>
-        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); if (name.trim() && (!apiEnabled || researchCode.trim())) finishOnboarding(); }}>
-          <span>모르미</span>
-          <h1>너의 이름을 알려줄래?</h1>
-          <p>앞으로 내가 이름을 불러 줄게!</p>
-          <label htmlFor="learner-name">이름</label>
-          <input id="learner-name" value={name} onChange={(event) => setName(event.target.value.slice(0, 12))} placeholder="이름을 적어 주세요" autoComplete="name" />
-          {apiEnabled && (
-            <>
-              {/* 연구 코드가 아이를 구분한다. 같은 코드로 다시 들어오면 진행도가 이어진다. */}
-              <label htmlFor="research-code">참여 번호</label>
-              <input id="research-code" value={researchCode} onChange={(event) => setResearchCode(normalizeResearchCode(event.target.value))} placeholder="선생님이 알려준 번호" autoComplete="off" />
-            </>
-          )}
-          <button className="primary-button" type="submit" disabled={submitting || !name.trim() || (apiEnabled && !researchCode.trim())}>{submitting ? "준비 중…" : "내 이름 알려주기"} <span className="button-arrow" /></button>
-          {submitError && <p className="onboarding-error" role="alert">{submitError}</p>}
-          {apiEnabled && <button type="button" className="onboarding-secondary" onClick={() => setPage("restore")}>전에 하던 게 있어요</button>}
+        <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); goToPasswordStep(); }}>
+          {steps}
+          <span>모르미 · 1/2</span>
+          <h1>너를 뭐라고 부를까?</h1>
+          <p>이름이랑 선생님이 준 참여 번호를 알려줘.</p>
+          <AuthInput
+            id="signup-name" label="이름" value={name} error={fieldErrors.name}
+            onChange={(event) => { setName(event.target.value.slice(0, 12)); clearFieldError("name"); }}
+            placeholder="이름을 적어 주세요" autoComplete="name"
+          />
+          <AuthInput
+            id="signup-code" label="참여 번호" hint="선생님이 알려줬어요" value={researchCode} error={fieldErrors.researchCode}
+            onChange={(event) => { setResearchCode(normalizeResearchCode(event.target.value)); clearFieldError("researchCode"); }}
+            placeholder="예: MORMI-A03" autoComplete="off" autoCapitalize="off" spellCheck={false}
+          />
+          {formError && <p className="onboarding-error" role="alert">{formError}</p>}
+          <button className="primary-button" type="submit">다음 <span className="button-arrow" /></button>
+          <button type="button" className="onboarding-back" onClick={() => goTo("hello")}>‹ 처음으로</button>
         </form>
       </section>
     );
@@ -901,8 +1050,8 @@ function Onboarding({ onStart, onRestore, submitting, submitError }: {
         <span>모르미</span>
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
-        <button className="primary-button" onClick={() => setPage("name")}>내 이름 알려주기 <span className="button-arrow" /></button>
-        {apiEnabled && <button type="button" className="onboarding-secondary" onClick={() => setPage("restore")}>전에 하던 게 있어요</button>}
+        <button className="primary-button" onClick={() => goTo("signup")}>처음 왔어요 <span className="button-arrow" /></button>
+        <button type="button" className="onboarding-secondary" onClick={() => goTo("login")}>전에 하던 게 있어요</button>
       </div>
     </section>
   );
@@ -998,8 +1147,6 @@ export function MoramiApp() {
     questionIndex: number;
     wrongChoiceIndexes: number[];
   } | null>(null);
-  const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
-  const [onboardingError, setOnboardingError] = useState("");
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
   const activeSession = useMemo(() => {
@@ -1212,6 +1359,22 @@ export function MoramiApp() {
       });
     } catch { /* device-local progress is optional */ }
   }, [restoreLearningSession, refreshThemes]);
+
+  /** 토큰이 만료·폐기됐을 때 돌아갈 자리. 화면에 남은 남의 진행도까지 함께 비운다. */
+  const returnToAuthScreen = useCallback(() => {
+    setLearner(defaultLearner);
+    setCompletedSessionIds([]);
+    setCoinBalance(6000);
+    setActiveCafeVisitId(null);
+    setStage("onboarding");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    // api-client 는 React 밖이라 화면을 직접 못 바꾼다. 되돌릴 경로를 여기서 등록한다.
+    setUnauthorizedHandler(returnToAuthScreen);
+    return () => setUnauthorizedHandler(null);
+  }, [returnToAuthScreen]);
 
   useEffect(() => {
     if (!["drill", "teach", "wrap", "homework"].includes(stage)) return;
@@ -1581,88 +1744,61 @@ export function MoramiApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function completeOnboarding(name: string, researchCode: string) {
-    if (!apiEnabled) {
-      // 서버가 없는 로컬 데모. 기존 동작 그대로 진행한다.
-      const profile = { id: 1, name };
-      setLearner(profile);
-      localStorage.setItem("mormey-learner", JSON.stringify(profile));
-      localStorage.setItem("morami-onboarding-complete", "true");
-      captureMormeyEvent("onboarding_completed", { tutorial_available: false });
-      setStage("home");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+  /**
+   * 가입·로그인 성공 뒤 공통 진입 경로.
+   *
+   * 진행도 조회는 화면 진입을 막지 않는다. 방금 받은 토큰으로 세션은 이미 유효하므로,
+   * 조회가 실패해도 홈은 기본값으로 열고 다음 새로고침에 다시 맞춘다. 여기서 예외를
+   * 올리면 계정은 만들어졌는데 가입 화면에 갇혀, 다시 누르면 아이디 중복이 뜬다.
+   */
+  async function enterApp(auth: AuthResponse) {
+    const profile = { id: auth.id, name: auth.display_name };
+    storeSession(auth.access_token, { ...profile, researchCode: auth.research_code, analyticsId: auth.analytics_id });
+    setLearner(profile);
+    identifyLearner(auth.analytics_id);
+    setStage("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
-    setOnboardingSubmitting(true);
-    setOnboardingError("");
-    try {
-      // 같은 참여 번호면 서버가 기존 학습자를 찾아 진행도를 이어 준다.
-      const created = await api.createLearner(name, researchCode);
-      const profile = { id: created.id, name: created.display_name };
-      storeSession(created.access_token, { ...profile, researchCode: created.research_code, analyticsId: created.analytics_id });
-      setLearner(profile);
-      identifyLearner(created.analytics_id);
+    const snapshot = await api.progress().catch((error: unknown) => {
+      console.warn("[mormi-api] 진행도 조회 실패", error);
+      return null;
+    });
+    if (!snapshot) return;
 
-      const snapshot = await api.progress();
-      setCompletedSessionIds(snapshot.completed_session_ids);
-      setCoinBalance(snapshot.wallet_balance);
-      setActiveCafeVisitId(snapshot.active_cafe_visit_id);
-      refreshThemes();
+    setCompletedSessionIds(snapshot.completed_session_ids);
+    setCoinBalance(snapshot.wallet_balance);
+    setActiveCafeVisitId(snapshot.active_cafe_visit_id);
+    refreshThemes();
 
-      captureMormeyEvent("onboarding_completed", { tutorial_available: false });
-      setStage("home");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      setOnboardingError(error instanceof ApiError
-        ? error.message
-        : "연결이 잘 되지 않았어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setOnboardingSubmitting(false);
+    // 다른 기기에서 풀던 세션이 남아 있으면 그 화면까지 되돌린다.
+    if (snapshot.active_learning_session_id) {
+      await restoreLearningSession(snapshot.active_learning_session_id)
+        .catch((error: unknown) => {
+          console.warn("[mormi-api] 학습 세션 복구 실패", error);
+          return false;
+        });
     }
   }
 
-  /**
-   * 기기를 바꾼 아이. 이름 없이 참여 번호만으로 토큰을 다시 받아 진행도를 이어 받는다.
-   *
-   * createLearner 와 달리 없는 번호면 만들지 않고 실패한다. 오타로 새 학습자가
-   * 생겨 연구 데이터가 둘로 갈라지는 걸 막아야 하므로, 이 경로에서는 그게 맞다.
-   */
-  async function restoreByResearchCode(researchCode: string) {
-    setOnboardingSubmitting(true);
-    setOnboardingError("");
+  async function handleSignup(name: string, researchCode: string, loginId: string, password: string) {
     try {
-      const restored = await api.restoreLearner(researchCode);
-      const profile = { id: restored.id, name: restored.display_name };
-      storeSession(restored.access_token, { ...profile, researchCode: restored.research_code, analyticsId: restored.analytics_id });
-      setLearner(profile);
-      identifyLearner(restored.analytics_id);
-
-      const snapshot = await api.progress();
-      setCompletedSessionIds(snapshot.completed_session_ids);
-      setCoinBalance(snapshot.wallet_balance);
-      setActiveCafeVisitId(snapshot.active_cafe_visit_id);
-      refreshThemes();
-      setStage("home");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-
-      // 기기를 바꾸기 전에 풀던 세션이 남아 있으면 그 화면까지 되돌린다.
-      if (snapshot.active_learning_session_id) {
-        await restoreLearningSession(snapshot.active_learning_session_id)
-          .catch((error: unknown) => {
-            console.warn("[mormi-api] 학습 세션 복구 실패", error);
-            return false;
-          });
-      }
-      captureMormeyEvent("learner_restored");
+      const created = await api.signup(name, researchCode, loginId, password);
+      await enterApp(created);
+      captureMormeyEvent("onboarding_completed", { tutorial_available: false });
+      return null;
     } catch (error) {
-      setOnboardingError(error instanceof ApiError && error.status === 404
-        ? "그 참여 번호로 저장된 기록을 찾지 못했어요. 번호를 다시 확인해 주세요."
-        : error instanceof ApiError
-          ? error.message
-          : "연결이 잘 되지 않았어요. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setOnboardingSubmitting(false);
+      return toAuthFailure(error, "signup");
+    }
+  }
+
+  async function handleLogin(loginId: string, password: string) {
+    try {
+      const restored = await api.login(loginId, password);
+      await enterApp(restored);
+      captureMormeyEvent("learner_restored");
+      return null;
+    } catch (error) {
+      return toAuthFailure(error, "login");
     }
   }
 
@@ -1708,12 +1844,7 @@ export function MoramiApp() {
         </div>
       </header>}
 
-      {stage === "onboarding" && <Onboarding
-        onStart={(name, code) => { void completeOnboarding(name, code); }}
-        onRestore={(code) => { void restoreByResearchCode(code); }}
-        submitting={onboardingSubmitting}
-        submitError={onboardingError}
-      />}
+      {stage === "onboarding" && <Onboarding onSignup={handleSignup} onLogin={handleLogin} />}
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
