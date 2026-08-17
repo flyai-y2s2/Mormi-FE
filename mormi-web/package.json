@@ -13,7 +13,7 @@
     "build:vercel": "next build --webpack",
     "start:vercel": "next start",
     "test:model": "node --experimental-strip-types --test tests/diagnostic-report-model.test.mts",
-    "test": "npm run test:model && npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run test:model && npm run build && node --experimental-transform-types --import ./tests/ts-resolver.mjs --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

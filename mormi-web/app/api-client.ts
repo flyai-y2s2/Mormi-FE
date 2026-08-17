@@ -27,6 +27,15 @@ export type LearnerProfile = {
   analyticsId?: string;
 };
 
+/** 가입·로그인 응답. 두 경로가 같은 본문을 주므로 storeSession 을 그대로 쓴다. */
+export type AuthResponse = {
+  id: number;
+  display_name: string;
+  research_code: string;
+  analytics_id: string;
+  access_token: string;
+};
+
 export type ProgressSnapshot = {
   learner_id: number;
   display_name: string;
@@ -38,8 +47,9 @@ export type ProgressSnapshot = {
   stars: number;
   cafe_unlocked: boolean;
   cafe_required_session_ids: string[];
-  active_learning_session_id: string | null;
-  active_cafe_visit_id: string | null;
+  // 값이 없으면 서버가 키를 아예 빼고 준다. null 이 아니라 undefined 가 들어온다.
+  active_learning_session_id?: string | null;
+  active_cafe_visit_id?: string | null;
 };
 
 export type AttemptResult = {
@@ -314,7 +324,17 @@ export type LearnerConsent = {
 };
 
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    /**
+     * validation_failed(422) 일 때 서버가 준 필드별 사유.
+     * 요청 본문은 snake_case 인데 여기 키는 camelCase 다(login_id → loginId).
+     * 값은 영어 검증 메시지이므로 화면에는 그대로 쓰지 않는다.
+     */
+    readonly fields?: Record<string, string>,
+  ) {
     super(message);
   }
 }
@@ -349,6 +369,25 @@ export function clearSession() {
   localStorage.removeItem(LEARNER_KEY);
 }
 
+/**
+ * 토큰이 만료(30일)되거나 다른 기기에서 전체 로그아웃을 당하면 아무 요청에서나 401 이 난다.
+ * 이 파일은 React 밖이라 화면을 직접 못 바꾸므로, 화면 되돌리기는 등록된 처리에 맡긴다.
+ */
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+/**
+ * 인증이 필요한 요청에서만 부른다. 로그인·가입 실패의 401 은 입력값을 유지한 채
+ * 그 화면에서 안내해야 하므로 여기로 오지 않는다(두 함수는 auth=false 로 호출한다).
+ */
+function handleUnauthorized() {
+  clearSession();
+  unauthorizedHandler?.();
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
@@ -360,7 +399,11 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (auth) {
     const token = readToken();
-    if (!token) throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    if (!token) {
+      // 저장된 토큰이 사라진 상태. 서버에 물어볼 것도 없이 로그인 화면으로 돌린다.
+      handleUnauthorized();
+      throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    }
     headers.authorization = `Bearer ${token}`;
   }
 
@@ -389,36 +432,66 @@ export async function apiRequest<T>(
   if (!response.ok) {
     let code = "http_error";
     let message = `요청이 실패했습니다 (${response.status})`;
+    let fields: Record<string, string> | undefined;
     try {
-      const body = await response.json() as { code?: string; message?: string };
+      const body = await response.json() as {
+        code?: string; message?: string; fields?: Record<string, string>;
+      };
       code = body.code || code;
       message = body.message || message;
+      fields = body.fields;
     } catch { /* 본문이 없을 수 있다 */ }
-    throw new ApiError(response.status, code, message);
+    // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
+    // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.
+    if (auth && response.status === 401) handleUnauthorized();
+    throw new ApiError(response.status, code, message, fields);
   }
   if (response.status === 204) return undefined as T;
   return await response.json() as T;
 }
 
 export const api = {
-  createLearner(displayName: string, researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners", {
+  /**
+   * 회원가입. research_code 는 연구 식별자로만 저장되고 인증에는 쓰이지 않는다.
+   * 아이디 중복은 409 login_id_taken, 연구 코드 중복은 409 research_code_taken 이다.
+   */
+  signup(displayName: string, researchCode: string, loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ display_name: displayName, research_code: researchCode }),
+      body: JSON.stringify({
+        display_name: displayName,
+        research_code: researchCode,
+        login_id: loginId,
+        password,
+      }),
     }, false);
   },
 
-  restoreLearner(researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners/auth", {
+  /**
+   * 로그인. 아이디가 없을 때와 비밀번호가 틀릴 때의 401 응답이 완전히 같다.
+   * 가입 여부를 떠볼 수 없게 서버가 일부러 구분하지 않으므로 화면도 한 문구로만 안내한다.
+   */
+  login(loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/login", {
       method: "POST",
-      body: JSON.stringify({ research_code: researchCode }),
+      body: JSON.stringify({ login_id: loginId, password }),
     }, false);
+  },
+
+  /**
+   * 이 기기의 토큰만 폐기한다. 다른 기기의 로그인은 그대로 살아 있다.
+   *
+   * 만료·폐기된 토큰으로 부르면 401 이 나는데, 호출부는 그걸 실패로 다루지 않고
+   * 로컬 세션을 지워야 한다. 사용자가 기대하는 건 이 기기에서 빠져나가는 것이지
+   * 서버 정리의 성공 여부가 아니다.
+   */
+  logout() {
+    return apiRequest<void>("/v1/auth/logout", { method: "POST" });
+  },
+
+  /** 해당 학습자의 모든 기기 토큰을 폐기한다. */
+  logoutAll() {
+    return apiRequest<void>("/v1/auth/logout-all", { method: "POST" });
   },
 
   progress() {
