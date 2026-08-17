@@ -729,7 +729,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .figma-cafe__bar>button{border:0;background:#fff7e9;box-shadow:0 4px 0 #ddc7aa;font-weight:900}
 .figma-cafe__place{display:flex;align-items:center;gap:7px;white-space:nowrap;color:#583929;font-size:17px;font-weight:950}
-.figma-cafe__place>span{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#f1ddc3}
+.figma-cafe__place-image{width:48px;height:48px;flex:0 0 48px;object-fit:contain;filter:drop-shadow(0 4px 5px rgba(89,56,34,.18))}
 .figma-cafe__bar .figma-cafe__steps{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .figma-cafe__steps span{display:flex;align-items:center;gap:5px;color:#948b82;font-size:11px;font-weight:900}
 .figma-cafe__steps span:not(:last-child)::after{content:"";width:18px;border-top:2px dashed #d2ba9e}
@@ -997,7 +997,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .player-hud>.player-wallet{background:linear-gradient(135deg,#fff7cc,#fffdf3);box-shadow:0 6px 0 #e8ce72}.player-wallet>img{width:58px;height:58px;flex:0 0 58px;object-fit:contain;filter:drop-shadow(0 7px 7px rgba(107,76,13,.18))}.player-hud .player-wallet strong{padding:0;color:#745313;background:transparent;font-size:clamp(20px,1.7vw,26px);white-space:nowrap;line-height:1.05}
 .daily-quest b,.cafe-required-lessons>div>strong,.outside-scene-head .eyebrow{display:flex;align-items:center;gap:7px}.home-main-actions button>span{display:grid;place-items:center}.home-main-actions button>span .ui-icon{--icon-size:50px;filter:none}
 .destination-card--soon>span{display:flex;align-items:center;gap:6px}.destination-card--soon>span .ui-icon{filter:none}.outside-scene-head{justify-content:flex-start}
-.cafe-place-icon{position:relative}.cafe-place-icon::before{content:"";width:18px;height:13px;border:2px solid #6d4633;border-radius:2px 2px 6px 6px;background:#fff5e3}.cafe-place-icon::after{content:"";width:8px;height:9px;margin-left:-4px;border:2px solid #6d4633;border-left:0;border-radius:0 7px 7px 0}.cafe-place-icon i{width:10px;height:7px;position:absolute;left:8px;top:5px;border-left:2px solid #78ad91;border-right:2px solid #78ad91;border-radius:50%}
 .destination-card:disabled{cursor:not-allowed}.destination-card:disabled img{filter:saturate(.6) brightness(.86)}
 .figma-cafe,.figma-cafe-panel,.figma-cafe-map,.figma-cafe-pay__layout{min-width:0;max-width:100%}
 

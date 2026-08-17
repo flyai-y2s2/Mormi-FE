@@ -369,7 +369,17 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     <section className={`figma-cafe figma-cafe--${step}${isTalk ? " is-talk" : ""}`}>
       <div className="figma-cafe__bar">
         <button onClick={step === "overview" ? onBack : returnToMap}>← {step === "overview" ? "외출 장소" : "돌아가기"}</button>
-        <strong className="figma-cafe__place"><span className="cafe-place-icon" aria-hidden="true"><i /></span> 모르미 카페</strong>
+        <strong className="figma-cafe__place">
+          <Image
+            className="figma-cafe__place-image"
+            src="/ui/mormi-cafe.png"
+            alt=""
+            width={56}
+            height={56}
+            aria-hidden="true"
+          />
+          모르미 카페
+        </strong>
         <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
         </div>
