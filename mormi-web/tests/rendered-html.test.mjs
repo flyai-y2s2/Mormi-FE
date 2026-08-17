@@ -385,6 +385,10 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(trendChart, /diagnostic-chart__recent--shared/);
   assert.match(trendChart, /diagnostic-chart__recent-ribbon--primary/);
   assert.match(trendChart, /diagnostic-chart__recent-ribbon--secondary/);
+  assert.doesNotMatch(trendChart, /<pattern|recent-(?:primary|secondary)-pattern/);
+  assert.doesNotMatch(css, /\.diagnostic-chart-legend \.is-recent\.is-per-series i\{[^}]*repeating-linear-gradient/);
+  assert.match(css, /\.diagnostic-chart__recent-ribbon--primary rect\{[^}]*fill:rgba\(92,166,131/);
+  assert.match(css, /\.diagnostic-chart__recent-ribbon--secondary rect\{[^}]*fill:rgba\(126,104,174/);
   assert.match(trendChart, /최근 구간/);
   assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
   assert.match(dashboard, /className="domain-detail-panel"/);

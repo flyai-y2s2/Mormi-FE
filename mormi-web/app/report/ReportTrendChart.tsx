@@ -76,15 +76,6 @@ export function ReportTrendChart({ label, series }: ReportTrendChartProps) {
         <desc id={descriptionId}>
           {series.map((item) => `${item.label}은 ${item.id === "home-teach" || item.id === "life-supported" ? "점선과 사각형" : "실선과 원"}`).join(", ")}으로 표시합니다. {recentWindowLayout.description}
         </desc>
-        <defs aria-hidden="true">
-          <pattern id={`${titleId}-recent-primary-pattern`} width="8" height="8" patternUnits="userSpaceOnUse">
-            <path className="diagnostic-chart__recent-pattern-primary" d="M -2 8 L 8 -2 M 4 10 L 10 4" />
-          </pattern>
-          <pattern id={`${titleId}-recent-secondary-pattern`} width="8" height="8" patternUnits="userSpaceOnUse">
-            <circle className="diagnostic-chart__recent-pattern-secondary" cx="2" cy="2" r="1.4" />
-            <circle className="diagnostic-chart__recent-pattern-secondary" cx="6" cy="6" r="1.4" />
-          </pattern>
-        </defs>
         {recentWindowLayout.kind === "shared" && (
           <rect
             className="diagnostic-chart__recent diagnostic-chart__recent--shared"
@@ -112,7 +103,6 @@ export function ReportTrendChart({ label, series }: ReportTrendChartProps) {
                 width={Math.max(4, endX - startX)}
                 height="13"
                 rx="4"
-                fill={`url(#${titleId}-recent-${secondary ? "secondary" : "primary"}-pattern)`}
               />
               <text x={startX + 4} y={PLOT_TOP + 18 + index * 21}>
                 {window.label} 최근 구간
