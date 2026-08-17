@@ -361,10 +361,12 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {
-  const [dashboard, interactions, trendChart, css] = await Promise.all([
+  const [dashboard, interactions, trendChart, domainDetail, example, css] = await Promise.all([
     readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/report/diagnostic-report-interactions.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/report/ReportTrendChart.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/DomainDetail.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/complete-report-example.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
@@ -381,6 +383,14 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(dashboard, /AbortController/);
   assert.match(dashboard, /isEmptyDiagnosticReport/);
   assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
+  assert.match(dashboard, /\["문제 풀기", report\.current_summary\.concept_performance\]/);
+  assert.match(dashboard, /\["혼자 설명하기", report\.current_summary\.explanation_change\]/);
+  assert.match(dashboard, /\["생활 속 문제 해결", report\.current_summary\.life_transfer\]/);
+  assert.match(domainDetail, /같은 문제를 어떻게 설명했는지/);
+  assert.doesNotMatch(`${dashboard}\n${domainDetail}\n${example}`, /독립 수행률|설명 독립성/);
+  assert.match(dashboard, /IMPROVING: "좋아지는 중"/);
+  assert.match(domainDetail, /INSUFFICIENT_HISTORY: "기록 더 필요"/);
+  assert.doesNotMatch(`${dashboard}\n${domainDetail}`, /장기 향상|최근 하락|장기 유지|최근 근거 추가/);
   assert.match(trendChart, /recentWindowLayout\.description/);
   assert.match(trendChart, /diagnostic-chart__recent--shared/);
   const chartSvg = trendChart.slice(trendChart.indexOf("<svg"), trendChart.indexOf("</svg>"));

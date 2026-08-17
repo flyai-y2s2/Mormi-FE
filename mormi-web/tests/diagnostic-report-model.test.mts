@@ -47,7 +47,7 @@ function trend(
 ) {
   return {
     evidence_id: overrides.evidence_id ?? `evidence:${occurred_at}`,
-    label: overrides.label ?? "수 세기 · 반복학습",
+    label: overrides.label ?? "수 세기 · 문제 정답률",
     occurred_at,
     independent_score,
     supported_score: overrides.supported_score ?? independent_score,
@@ -103,10 +103,10 @@ test("maps evidence refs to human-readable domain activities and navigation targ
     "observe:life:calculate",
     "improved:insufficient-history",
   ], groups), [
-    { ref: "drill:money-count", label: "돈 세기 · 반복학습 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
-    { ref: "teach:money-count", label: "돈 세기 · 모르미 가르치기 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
+    { ref: "drill:money-count", label: "돈 세기 · 문제 정답률 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
+    { ref: "teach:money-count", label: "돈 세기 · 혼자 설명하기 근거", target: { mode: "HOME", domain_id: "money-count", focus: "chart", expand_speech: false } },
     { ref: "speech:money-count", label: "돈 세기 · 발화 비교 근거", target: { mode: "HOME", domain_id: "money-count", focus: "domain", expand_speech: true } },
-    { ref: "observe:life:calculate", label: "메뉴 값 계산하기 · 실생활 수행 근거", target: { mode: "LIFE", domain_id: "calculate", focus: "chart", expand_speech: false } },
+    { ref: "observe:life:calculate", label: "메뉴 값 계산하기 · 생활 속 문제 해결 근거", target: { mode: "LIFE", domain_id: "calculate", focus: "chart", expand_speech: false } },
     { ref: "improved:insufficient-history", label: "장기 비교 근거 부족", target: null },
   ]);
 });
@@ -170,7 +170,7 @@ test("chartPoints orders ties deterministically and preserves point metadata for
 
   assert.deepEqual(points.map((point) => point.evidence_id), ["b", "a", "z"]);
   assert.deepEqual(points.map((point) => point.x), [0, 100, 200]);
-  assert.equal(points[0].label, "수 세기 · 반복학습");
+  assert.equal(points[0].label, "수 세기 · 문제 정답률");
   assert.equal(points[0].supported_score, 100);
 });
 
@@ -193,7 +193,7 @@ test("chartPoints gives non-finite server scores a deterministic safe fallback",
 
   assert.deepEqual(points.map((point) => point.y), [120, 120, 120]);
   for (const point of points) {
-    assert.match(point.accessible_label, /독립 수행 0%, 도움 후 완료 0%/);
+    assert.match(point.accessible_label, /혼자 해결하기 0%, 도움받아 해결하기 0%/);
     assert.doesNotMatch(point.accessible_label, /NaN|Infinity/);
   }
 });
@@ -279,10 +279,10 @@ function domainStatus(
 }
 
 test("groups duplicate HOME records into one domain and sources drill and teach independently", () => {
-  const drill = domainTrend("money-count", "돈 세기 · 반복학습", [
+  const drill = domainTrend("money-count", "돈 세기 · 문제 정답률", [
     trend("2026-08-01", 30, false, { evidence_id: "drill:1", supported_score: 99 }),
   ]);
-  const teach = domainTrend("money-count", "돈 세기 · 설명 독립성", [
+  const teach = domainTrend("money-count", "돈 세기 · 혼자 설명하기", [
     trend("2026-08-08", 70, true, { evidence_id: "teach:1", supported_score: 5 }),
   ]);
   const life = domainTrend("calculate", "메뉴 값 계산하기", [
@@ -298,8 +298,8 @@ test("groups duplicate HOME records into one domain and sources drill and teach 
     },
     modes: [{ mode: "HOME", domains: [drill, teach] }, { mode: "LIFE", domains: [life] }],
     domains: [
-      domainStatus("money-count", "돈 세기 · 반복학습", "DEVELOPING"),
-      domainStatus("money-count", "돈 세기 · 설명 독립성", "STABLE"),
+      domainStatus("money-count", "돈 세기 · 문제 정답률", "DEVELOPING"),
+      domainStatus("money-count", "돈 세기 · 혼자 설명하기", "STABLE"),
       domainStatus("calculate", "메뉴 값 계산하기", "OBSERVING"),
     ],
     improved_point: { text: "좋아진 근거", evidence_refs: ["teach:1"] },
@@ -337,7 +337,7 @@ test("selects the richest comparable history while preserving a valid current do
     domain_id: "money-budget",
     label: "예산 세우기",
     mode: "HOME" as const,
-    drill_trend: domainTrend("money-budget", "예산 세우기 · 반복학습", [
+    drill_trend: domainTrend("money-budget", "예산 세우기 · 문제 정답률", [
       trend("2026-08-01", 40, true, { evidence_id: "budget:1" }),
     ]),
     statuses: [],
@@ -346,10 +346,10 @@ test("selects the richest comparable history while preserving a valid current do
     domain_id: "money-count",
     label: "돈 세기",
     mode: "HOME" as const,
-    drill_trend: domainTrend("money-count", "돈 세기 · 반복학습", Array.from({ length: 5 }, (_, index) => (
+    drill_trend: domainTrend("money-count", "돈 세기 · 문제 정답률", Array.from({ length: 5 }, (_, index) => (
       trend(`2026-08-${String(index + 1).padStart(2, "0")}`, 40 + index, index >= 3, { evidence_id: `count:drill:${index}` })
     ))),
-    teach_trend: domainTrend("money-count", "돈 세기 · 설명 독립성", Array.from({ length: 4 }, (_, index) => (
+    teach_trend: domainTrend("money-count", "돈 세기 · 혼자 설명하기", Array.from({ length: 4 }, (_, index) => (
       trend(`2026-08-${String(index + 10).padStart(2, "0")}`, 50 + index, index >= 2, { evidence_id: `count:teach:${index}` })
     ))),
     statuses: [],
@@ -365,7 +365,7 @@ test("breaks equal-history selection ties by recent points and then domain id", 
     domain_id,
     label: domain_id,
     mode: "HOME" as const,
-    drill_trend: domainTrend(domain_id, `${domain_id} · 반복학습`, recent.map((isRecent, index) => (
+    drill_trend: domainTrend(domain_id, `${domain_id} · 문제 정답률`, recent.map((isRecent, index) => (
       trend(`2026-08-${String(index + 1).padStart(2, "0")}`, 50, isRecent, { evidence_id: `${domain_id}:${index}` })
     ))),
     statuses: [],
@@ -384,7 +384,7 @@ test("ignores misleading trend totals and ranks by actual comparable points", ()
     label: "보고 합계가 큰 영역",
     mode: "HOME" as const,
     drill_trend: {
-      ...domainTrend("money-reported", "보고 합계가 큰 영역 · 반복학습", [
+      ...domainTrend("money-reported", "보고 합계가 큰 영역 · 문제 정답률", [
         trend("2026-08-01", 50, true, { evidence_id: "reported:1" }),
       ]),
       total_count: 999,
@@ -396,7 +396,7 @@ test("ignores misleading trend totals and ranks by actual comparable points", ()
     domain_id: "money-actual",
     label: "실제 기록이 많은 영역",
     mode: "HOME" as const,
-    drill_trend: domainTrend("money-actual", "실제 기록이 많은 영역 · 반복학습", [
+    drill_trend: domainTrend("money-actual", "실제 기록이 많은 영역 · 문제 정답률", [
       trend("2026-08-01", 50, false, { evidence_id: "actual:1" }),
       trend("2026-08-02", 60, true, { evidence_id: "actual:2" }),
     ]),
@@ -427,7 +427,7 @@ test("keeps different HOME recent boundaries on their own series without mutatin
   const series = [
     {
       id: "home-drill" as const,
-      label: "반복학습",
+      label: "문제 정답률",
       points: [
         { evidence_id: "drill:1", label: "첫 연습", occurred_at: "2026-08-01", score: 30, recent: false },
         { evidence_id: "drill:2", label: "둘째 연습", occurred_at: "2026-08-08", score: 55, recent: true },
@@ -461,7 +461,7 @@ test("keeps different HOME recent boundaries on their own series without mutatin
     { series_id: "home-drill", start_at: "2026-08-08", end_at: "2026-08-22" },
     { series_id: "home-teach", start_at: "2026-08-15", end_at: "2026-08-29" },
   ]);
-  assert.match(layout.description, /반복학습은 2026-08-08부터 2026-08-22까지/);
+  assert.match(layout.description, /문제 정답률은 2026-08-08부터 2026-08-22까지/);
   assert.match(layout.description, /모르미 가르치기는 2026-08-15부터 2026-08-29까지/);
   assert.equal(JSON.stringify(series), before, "recent-window calculation must not mutate series evidence");
 });
@@ -470,7 +470,7 @@ test("keeps equal-start HOME windows separate when their series end at different
   const layout = recentWindowsForSeries([
     {
       id: "home-drill",
-      label: "반복학습",
+      label: "문제 정답률",
       points: [
         { evidence_id: "drill:1", label: "첫 연습", occurred_at: "2026-08-08", score: 55, recent: true },
         { evidence_id: "drill:2", label: "둘째 연습", occurred_at: "2026-08-22", score: 75, recent: true },
@@ -500,8 +500,8 @@ test("uses one shared recent band when all active LIFE series have the same boun
     { evidence_id: "life:2", label: "둘째 방문", occurred_at: "2026-08-15", score: 70, recent: true },
   ];
   const layout = recentWindowsForSeries([
-    { id: "life-independent", label: "독립 수행", points: sharedPoints, total_count: 2, recent_count: 1 },
-    { id: "life-supported", label: "도움 후 완료", points: sharedPoints, total_count: 2, recent_count: 1 },
+    { id: "life-independent", label: "혼자 해결하기", points: sharedPoints, total_count: 2, recent_count: 1 },
+    { id: "life-supported", label: "도움받아 해결하기", points: sharedPoints, total_count: 2, recent_count: 1 },
   ]);
 
   assert.equal(layout.kind, "shared");
@@ -530,6 +530,6 @@ test("empty diagnostic report requires zero completed counts and no trend points
   assert.equal(isEmptyDiagnosticReport({ ...empty, data_range: { total_home_sessions: 1, total_life_visits: 0 } }), false);
   assert.equal(isEmptyDiagnosticReport({
     ...empty,
-    modes: [{ mode: "HOME", domains: [domainTrend("money-count", "돈 세기 · 반복학습", [trend("2026-08-01", 50, true)])] }, { mode: "LIFE", domains: [] }],
+    modes: [{ mode: "HOME", domains: [domainTrend("money-count", "돈 세기 · 문제 정답률", [trend("2026-08-01", 50, true)])] }, { mode: "LIFE", domains: [] }],
   }), false);
 });

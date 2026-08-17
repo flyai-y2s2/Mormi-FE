@@ -48,7 +48,7 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
   },
   current_summary: {
     concept_performance: {
-      text: "돈 세기는 최근 독립 수행률이 88%로 올라 안정적으로 유지되고 있습니다.",
+      text: "돈 세기 문제 정답률이 최근 88%로 좋아져 안정적으로 유지되고 있습니다.",
       evidence_refs: ["drill:money-count"],
     },
     explanation_change: {
@@ -64,11 +64,11 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     {
       mode: "HOME",
       domains: [
-        trend("money-count", "돈 세기 · 반복학습", [42, 55, 61, 74, 82, 88], 1),
-        trend("money-count", "돈 세기 · 설명 독립성", [25, 40, 58, 72, 86], 2),
-        trend("price-add", "가격 합산 · 반복학습", [35, 52, 67, 79, 91], 3),
-        trend("price-add", "가격 합산 · 설명 독립성", [30, 48, 66, 84], 5),
-        trend("money-budget", "예산과 거스름돈 · 반복학습", [28, 44, 59, 70], 4),
+        trend("money-count", "돈 세기 · 문제 정답률", [42, 55, 61, 74, 82, 88], 1),
+        trend("money-count", "돈 세기 · 혼자 설명하기", [25, 40, 58, 72, 86], 2),
+        trend("price-add", "가격 합산 · 문제 정답률", [35, 52, 67, 79, 91], 3),
+        trend("price-add", "가격 합산 · 혼자 설명하기", [30, 48, 66, 84], 5),
+        trend("money-budget", "예산과 거스름돈 · 문제 정답률", [28, 44, 59, 70], 4),
       ],
     },
     {
@@ -81,17 +81,17 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     },
   ],
   domains: [
-    status("money-count", "돈 세기 · 반복학습", "STABLE", "IMPROVING", 6),
-    status("money-count", "돈 세기 · 설명 독립성", "STABLE", "IMPROVING", 5),
-    status("price-add", "가격 합산 · 반복학습", "STABLE", "IMPROVING", 5),
-    status("price-add", "가격 합산 · 설명 독립성", "DEVELOPING", "IMPROVING", 4),
-    status("money-budget", "예산과 거스름돈 · 반복학습", "DEVELOPING", "IMPROVING", 4),
+    status("money-count", "돈 세기 · 문제 정답률", "STABLE", "IMPROVING", 6),
+    status("money-count", "돈 세기 · 혼자 설명하기", "STABLE", "IMPROVING", 5),
+    status("price-add", "가격 합산 · 문제 정답률", "STABLE", "IMPROVING", 5),
+    status("price-add", "가격 합산 · 혼자 설명하기", "DEVELOPING", "IMPROVING", 4),
+    status("money-budget", "예산과 거스름돈 · 문제 정답률", "DEVELOPING", "IMPROVING", 4),
     status("menu-calculate", "메뉴 값 계산하기", "STABLE", "IMPROVING", 4),
     status("change-receive", "거스름돈 받기", "DEVELOPING", "IMPROVING", 4),
     status("queue", "줄 서기", "STABLE", "MAINTAINING", 3),
   ],
   improved_point: {
-    text: "돈 세기에서 단위를 짚어 설명하는 비율이 높아졌고, 메뉴 합산까지 독립적으로 적용했습니다.",
+    text: "돈 세기에서 단위를 짚어 설명하는 비율이 높아졌고, 메뉴 합산까지 혼자 해결했습니다.",
     evidence_refs: ["speech:money-count", "life:menu-calculate"],
   },
   observe_point: {

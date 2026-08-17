@@ -82,12 +82,12 @@ function clampScore(score: number): number {
 }
 
 function baseDomainLabel(label: string): string {
-  return label.replace(/ · (?:반복학습|설명 독립성)$/u, "");
+  return label.replace(/ · (?:문제 정답률|혼자 설명하기|반복학습|설명 독립성)$/u, "");
 }
 
 function homeKind(label: string): "drill" | "teach" | null {
-  if (label.endsWith(" · 반복학습")) return "drill";
-  if (label.endsWith(" · 설명 독립성")) return "teach";
+  if (label.endsWith(" · 문제 정답률") || label.endsWith(" · 반복학습")) return "drill";
+  if (label.endsWith(" · 혼자 설명하기") || label.endsWith(" · 설명 독립성")) return "teach";
   return null;
 }
 
@@ -181,14 +181,14 @@ function seriesFromTrend(
 export function diagnosticSeriesForDomain(group: DiagnosticDomainGroup): DiagnosticChartSeries[] {
   if (group.mode === "HOME") {
     const series: DiagnosticChartSeries[] = [];
-    if (group.drill_trend) series.push(seriesFromTrend("home-drill", "반복학습", group.drill_trend, "independent_score"));
-    if (group.teach_trend) series.push(seriesFromTrend("home-teach", "모르미 가르치기", group.teach_trend, "independent_score"));
+    if (group.drill_trend) series.push(seriesFromTrend("home-drill", "문제 정답률", group.drill_trend, "independent_score"));
+    if (group.teach_trend) series.push(seriesFromTrend("home-teach", "혼자 설명하기", group.teach_trend, "independent_score"));
     return series;
   }
   if (!group.life_trend) return [];
   return [
-    seriesFromTrend("life-independent", "독립 수행", group.life_trend, "independent_score"),
-    seriesFromTrend("life-supported", "도움 후 완료", group.life_trend, "supported_score"),
+    seriesFromTrend("life-independent", "혼자 해결하기", group.life_trend, "independent_score"),
+    seriesFromTrend("life-supported", "도움받아 해결하기", group.life_trend, "supported_score"),
   ];
 }
 
@@ -304,7 +304,7 @@ function chronologicalPoints(points: readonly DiagnosticTrendPointDto[]): Diagno
 }
 
 function accessibleLabel(point: DiagnosticTrendPointDto): string {
-  return `${point.label}, ${point.occurred_at}, 독립 수행 ${clampScore(point.independent_score)}%, 도움 후 완료 ${clampScore(point.supported_score)}%${point.recent ? ", 최근 기록" : ""}`;
+  return `${point.label}, ${point.occurred_at}, 혼자 해결하기 ${clampScore(point.independent_score)}%, 도움받아 해결하기 ${clampScore(point.supported_score)}%${point.recent ? ", 최근 기록" : ""}`;
 }
 
 /** Prepares server-owned trend records for an SVG without changing their educational meaning. */

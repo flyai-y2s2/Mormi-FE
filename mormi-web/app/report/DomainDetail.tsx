@@ -12,16 +12,16 @@ type DomainDetailProps = {
 };
 
 const directionLabels = {
-  IMPROVING: "장기 향상",
-  DECLINING: "최근 하락",
-  MAINTAINING: "장기 유지",
-  INSUFFICIENT_HISTORY: "최근 근거 추가",
+  IMPROVING: "좋아지는 중",
+  DECLINING: "최근 낮아짐",
+  MAINTAINING: "비슷하게 유지",
+  INSUFFICIENT_HISTORY: "기록 더 필요",
 } as const;
 
 const kindLabels: Record<DiagnosticEvidenceKind, string> = {
-  drill: "반복학습",
-  teach: "모르미 가르치기",
-  life: "실생활 수행",
+  drill: "문제 정답률",
+  teach: "혼자 설명하기",
+  life: "생활 속 문제 해결",
 };
 
 function EvidenceSample({ label, sample }: {
@@ -56,7 +56,7 @@ export function DomainDetail({ domain, speech }: DomainDetailProps) {
         ))}
       </div>
       <div className="domain-detail__evidence" aria-live="polite">
-        <h3>같은 영역의 설명 변화</h3>
+        <h3>같은 문제를 어떻게 설명했는지</h3>
         {!speech || speech.state === "loading" ? (
           <p className="domain-detail__message">발화 근거를 불러오는 중입니다.</p>
         ) : speech.state === "error" ? (

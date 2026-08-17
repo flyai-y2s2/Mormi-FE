@@ -29,9 +29,9 @@ export type DiagnosticSpeechState =
 const domainActivities = new Set<DiagnosticEvidenceActivity>(["drill", "teach", "life", "speech"]);
 const highlightKinds = new Set(["improved", "observe"]);
 const activityLabels: Record<DiagnosticEvidenceActivity, string> = {
-  drill: "반복학습 근거",
-  teach: "모르미 가르치기 근거",
-  life: "실생활 수행 근거",
+  drill: "문제 정답률 근거",
+  teach: "혼자 설명하기 근거",
+  life: "생활 속 문제 해결 근거",
   speech: "발화 비교 근거",
 };
 

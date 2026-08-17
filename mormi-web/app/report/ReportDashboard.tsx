@@ -37,15 +37,15 @@ type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
 const reportModes = ["HOME", "LIFE"] as const;
 const modeLabels: Record<DiagnosticMode, string> = { HOME: "집 · 개념", LIFE: "실생활 · 응용" };
 const directionLabels = {
-  IMPROVING: "장기 향상",
-  DECLINING: "최근 하락",
-  MAINTAINING: "장기 유지",
-  INSUFFICIENT_HISTORY: "최근 근거 추가",
+  IMPROVING: "좋아지는 중",
+  DECLINING: "최근 낮아짐",
+  MAINTAINING: "비슷하게 유지",
+  INSUFFICIENT_HISTORY: "기록 더 필요",
 } as const;
 const kindLabels: Record<DiagnosticEvidenceKind, string> = {
-  drill: "반복학습",
-  teach: "모르미 가르치기",
-  life: "실생활 수행",
+  drill: "문제 정답률",
+  teach: "혼자 설명하기",
+  life: "생활 속 문제 해결",
 };
 
 function formatDate(value?: string): string {
@@ -394,9 +394,9 @@ export function ReportDashboard() {
               <SectionHeading id="summary-title" title="현재 상태 요약" />
               <div className="summary-strips">
                 {([
-                  ["개념 수행", report.current_summary.concept_performance],
-                  ["설명 변화", report.current_summary.explanation_change],
-                  ["실생활 적용", report.current_summary.life_transfer],
+                  ["문제 풀기", report.current_summary.concept_performance],
+                  ["혼자 설명하기", report.current_summary.explanation_change],
+                  ["생활 속 문제 해결", report.current_summary.life_transfer],
                 ] as const).map(([label, summary]) => (
                   <article key={label}><strong>{label}</strong><p>{summary.text}</p><EvidenceLinks refs={summary.evidence_refs} groups={groupedDomains} onActivate={activateEvidenceLink} /></article>
                 ))}
