@@ -234,6 +234,25 @@ export function clearSession() {
   localStorage.removeItem(LEARNER_KEY);
 }
 
+/**
+ * 토큰이 만료(30일)되거나 다른 기기에서 전체 로그아웃을 당하면 아무 요청에서나 401 이 난다.
+ * 이 파일은 React 밖이라 화면을 직접 못 바꾸므로, 화면 되돌리기는 등록된 처리에 맡긴다.
+ */
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+/**
+ * 인증이 필요한 요청에서만 부른다. 로그인·가입 실패의 401 은 입력값을 유지한 채
+ * 그 화면에서 안내해야 하므로 여기로 오지 않는다(두 함수는 auth=false 로 호출한다).
+ */
+function handleUnauthorized() {
+  clearSession();
+  unauthorizedHandler?.();
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
@@ -245,7 +264,11 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (auth) {
     const token = readToken();
-    if (!token) throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    if (!token) {
+      // 저장된 토큰이 사라진 상태. 서버에 물어볼 것도 없이 로그인 화면으로 돌린다.
+      handleUnauthorized();
+      throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    }
     headers.authorization = `Bearer ${token}`;
   }
 
@@ -274,6 +297,9 @@ export async function apiRequest<T>(
       code = body.code || code;
       message = body.message || message;
     } catch { /* 본문이 없을 수 있다 */ }
+    // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
+    // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.
+    if (auth && response.status === 401) handleUnauthorized();
     throw new ApiError(response.status, code, message);
   }
   if (response.status === 204) return undefined as T;
