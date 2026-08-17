@@ -1381,3 +1381,67 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 탭이 차지하던 높이(52px + 여백 12px)만큼 위를 비워 카드 위치와 크기를 그대로 둔다.
    box-sizing:border-box 이므로 열 높이는 그대로고 카드만 원래 크기로 돌아온다. */
 .home-room-copy-column { padding-top:64px; }
+
+/* ── 카페 필수 개념 목록 ──────────────────────────────────────────
+   구분을 선이 아니라 면과 그림자로 만든다. 원래는 컨테이너 배경이 거의 흰색이라
+   흰 항목과 밝기 차가 없었고, 그래서 4px·3px 짜리 진한 초록 테두리로만 경계를
+   만들고 있었다. 다섯 줄이면 초록 선이 열두 개라 화면이 시끄럽다.
+   민트 면 위에 흰 카드가 떠 있는 구조로 바꾸면 선을 거의 지워도 더 잘 갈린다. */
+.cafe-required-lessons {
+  padding:13px; gap:8px; border:0; border-radius:24px;
+  background:linear-gradient(180deg,#e9f7ef,#e2f3e9);
+  box-shadow:inset 0 0 0 1px rgba(62,159,114,.16), 0 10px 30px rgba(39,105,76,.10);
+}
+.cafe-required-lessons > div:first-child { padding:1px 6px 8px; }
+.cafe-required-lessons > div:first-child strong { font-size:18px; }
+
+.cafe-required-lessons > button {
+  min-height:80px; padding:12px 14px; gap:13px;
+  border:1px solid rgba(62,159,114,.16); border-radius:18px;
+  box-shadow:0 1px 0 rgba(39,105,76,.05), 0 4px 12px rgba(39,105,76,.06);
+  transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+.cafe-required-lessons > button:hover {
+  transform:translateY(-2px);
+  border-color:rgba(62,159,114,.34);
+  box-shadow:0 2px 0 rgba(39,105,76,.06), 0 10px 22px rgba(39,105,76,.13);
+}
+.cafe-required-lessons > button:active { transform:translateY(0); }
+
+/* 설명이 10px 이라 읽히지 않았다. 아이가 읽는 글자다. */
+.cafe-required-lessons > button span b { font-size:17px; letter-spacing:-.4px; }
+.cafe-required-lessons > button span small { margin-top:2px; color:#798b82; font-size:12px; line-height:1.4; }
+
+/* 번호는 중립적으로, 완료는 초록으로 채워 끝난 것이 도드라지게 한다. */
+.cafe-required-lessons > button > i { width:38px; height:38px; border-radius:12px; color:#5b8271; background:#eff5f1; box-shadow:inset 0 0 0 1px rgba(62,159,114,.14); font-size:16px; }
+.cafe-required-lessons > button.is-complete > i { color:#fff; background:linear-gradient(160deg,#5cb98d,#33936a); box-shadow:0 3px 8px rgba(43,132,95,.28); }
+
+/* 오른쪽 글자만 있으면 누를 수 있는 것으로 안 보인다. 알약으로 바꾼다. */
+.cafe-required-lessons > button em { padding:7px 13px; border-radius:999px; color:#2c7a5b; background:#eef7f2; font-size:12.5px; }
+.cafe-required-lessons > button.is-complete em { color:#8fa79b; background:transparent; }
+
+/* 다음에 할 하나만 강조한다. 다섯 줄이 같은 무게면 어디를 눌러야 할지 알 수 없다. */
+.cafe-required-lessons > button.is-next {
+  border-color:rgba(62,159,114,.46);
+  box-shadow:0 2px 0 rgba(39,105,76,.07), 0 10px 24px rgba(39,105,76,.15);
+}
+.cafe-required-lessons > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
+.cafe-required-lessons > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
+
+/* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
+   묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
+.room-list-heading { margin-bottom:18px; padding:11px 26px; }
+.room-list-heading h1 { margin:0 0 2px; font-size:29px; }
+.cafe-required-lessons { margin-bottom:14px; }
+.cafe-required-lessons > div:first-child { padding:2px 6px 11px; }
+/* 남은 번호가 거의 안 보였다. 완료(초록)와는 구분하되 존재감은 준다. */
+.cafe-required-lessons > button > i { color:#4a7263; background:#e6efe9; box-shadow:inset 0 0 0 1px rgba(62,159,114,.2); }
+.curriculum-home--room { padding-bottom:14px; }
+
+/* 항목 폭이 918px 이라 제목(왼쪽 끝)과 버튼(오른쪽 끝) 사이가 600px 넘게 비었다.
+   시선이 좌우로 크게 튀어 목록이 읽히지 않는다. 폭을 줄여 한 줄이 한눈에 들어오게 한다. */
+.curriculum-home--room { max-width:880px; }
+
+/* 목록과 같은 시각 언어로 맞춘다. 회색 두께 그림자(0 6px 0)만 홀로 튀고 있었다. */
+.other-concepts-toggle { border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
+.other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
