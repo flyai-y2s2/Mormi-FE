@@ -383,12 +383,12 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
   assert.match(trendChart, /recentWindowLayout\.description/);
   assert.match(trendChart, /diagnostic-chart__recent--shared/);
-  assert.match(trendChart, /diagnostic-chart__recent-ribbon--primary/);
-  assert.match(trendChart, /diagnostic-chart__recent-ribbon--secondary/);
+  const chartSvg = trendChart.slice(trendChart.indexOf("<svg"), trendChart.indexOf("</svg>"));
+  assert.doesNotMatch(chartSvg, /diagnostic-chart__recent-ribbon/);
+  assert.doesNotMatch(chartSvg, /\{window\.label\} 최근 구간/);
   assert.doesNotMatch(trendChart, /<pattern|recent-(?:primary|secondary)-pattern/);
   assert.doesNotMatch(css, /\.diagnostic-chart-legend \.is-recent\.is-per-series i\{[^}]*repeating-linear-gradient/);
-  assert.match(css, /\.diagnostic-chart__recent-ribbon--primary rect\{[^}]*fill:rgba\(92,166,131/);
-  assert.match(css, /\.diagnostic-chart__recent-ribbon--secondary rect\{[^}]*fill:rgba\(126,104,174/);
+  assert.doesNotMatch(css, /\.diagnostic-chart__recent-ribbon/);
   assert.match(trendChart, /최근 구간/);
   assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
   assert.match(dashboard, /className="domain-detail-panel"/);
@@ -423,12 +423,7 @@ test("diagnostic report uses the approved interactive data contract", async () =
   assert.match(printStyles, /\.diagnostic-highlights p\{[^}]*font-size:12px/);
   assert.match(printStyles, /\.diagnostic-evidence-link\{[^}]*min-height:0[^}]*font-size:11px/);
   assert.match(printStyles, /\.diagnostic-evidence span\{[^}]*font-size:11px/);
-  const ribbonTextPrintRule = printStyles.match(/\.diagnostic-chart__recent-ribbon text\{([^}]*)\}/);
-  assert.ok(ribbonTextPrintRule, "print must override per-series recent-ribbon labels");
-  const ribbonPrintFontSize = Number(ribbonTextPrintRule[1].match(/font-size:([\d.]+)px/)?.[1]);
-  assert.ok(ribbonPrintFontSize >= 19, "recent-ribbon print labels must be at least 19 SVG units");
-  assert.match(printStyles, /\.diagnostic-chart__recent-ribbon rect\{[^}]*height:22px/);
-  assert.match(printStyles, /\.diagnostic-chart__recent-ribbon--secondary\{[^}]*transform:translateY\(7px\)/);
+  assert.doesNotMatch(printStyles, /\.diagnostic-chart__recent-ribbon/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {

@@ -87,29 +87,6 @@ export function ReportTrendChart({ label, series }: ReportTrendChartProps) {
             aria-hidden="true"
           />
         )}
-        {recentWindowLayout.kind === "per-series" && recentWindowLayout.windows.map((window, index) => {
-          const secondary = window.series_id === "home-teach" || window.series_id === "life-supported";
-          const startX = xForTime(window.start, timeRange);
-          const endX = xForTime(window.end, timeRange);
-          const ribbonClass = secondary
-            ? "diagnostic-chart__recent-ribbon diagnostic-chart__recent-ribbon--secondary"
-            : "diagnostic-chart__recent-ribbon diagnostic-chart__recent-ribbon--primary";
-          return (
-            <g key={window.series_id} className={ribbonClass}>
-              <title>{`${window.label} 최근 구간, ${window.start_at}부터 ${window.end_at}까지`}</title>
-              <rect
-                x={startX}
-                y={PLOT_TOP + 7 + index * 21}
-                width={Math.max(4, endX - startX)}
-                height="13"
-                rx="4"
-              />
-              <text x={startX + 4} y={PLOT_TOP + 18 + index * 21}>
-                {window.label} 최근 구간
-              </text>
-            </g>
-          );
-        })}
         {[0, 50, 100].map((score) => {
           const y = PLOT_TOP + PLOT_HEIGHT - (PLOT_HEIGHT * score) / 100;
           return (
