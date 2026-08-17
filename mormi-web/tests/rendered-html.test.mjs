@@ -336,9 +336,10 @@ test("server-renders the individual diagnostic report shell", async () => {
 });
 
 test("diagnostic report renders as one compact Korean A4 document", async () => {
-  const [response, css] = await Promise.all([
+  const [response, css, dashboard] = await Promise.all([
     render("/report"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
   ]);
   assert.equal(response.status, 200);
   const html = await response.text();
@@ -350,6 +351,8 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
   assert.doesNotMatch(html, /INDIVIDUAL LEARNING REPORT|AT A GLANCE|CHANGE OVER TIME|CURRENT EVIDENCE/);
   assert.match(css, /\.report-paper\{[\s\S]*?width:min\(794px,[\s\S]*?min-height:1123px/);
   assert.match(css, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /className="diagnostic-learner-name"[\s\S]*?report\.learner\.display_name/);
+  assert.match(dashboard, /<h1 id="report-title">개인 진단 리포트<\/h1>/);
 });
 
 test("diagnostic report uses the approved interactive data contract", async () => {

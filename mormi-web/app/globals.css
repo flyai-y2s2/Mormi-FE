@@ -1249,6 +1249,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   border-color:rgba(50,87,71,.07);border-radius:28px;background:#fffdf8;box-shadow:0 18px 50px rgba(58,91,75,.11);
 }
 .diagnostic-hero{padding:0 0 15px;grid-template-columns:minmax(0,1fr) 270px;gap:24px;border-bottom-color:#dfe8e2}
+.diagnostic-learner-name{margin:0 0 5px;display:flex;align-items:baseline;gap:9px}.diagnostic-learner-name span{color:#54806d;font-size:10px;font-weight:900}.diagnostic-learner-name strong{color:#203a30;font-size:18px;letter-spacing:-.45px}
 .diagnostic-hero h1{font-size:25px;line-height:1.2;letter-spacing:-1.1px}
 .diagnostic-hero>div>p:last-child{display:none}
 .diagnostic-range-actions{gap:7px}.diagnostic-range{gap:3px}.diagnostic-range>div{grid-template-columns:70px 1fr;gap:8px;font-size:10px}
@@ -1291,7 +1292,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   html,body,.report-page,.report-paper,.diagnostic-chart-panel,.diagnostic-chart-wrap,.domain-list,.domain-row{overflow:visible!important}
   html,body{width:auto;min-height:0;background:#fff}.report-page{min-height:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .report-header{display:none}.report-paper{width:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#fff;font-size:12px}
-  .diagnostic-hero{padding:0 0 8px;grid-template-columns:minmax(0,1fr) 250px;gap:24px;align-items:end}.diagnostic-kicker{margin-bottom:3px;font-size:9px}.diagnostic-hero h1{font-size:25px;line-height:1.08;letter-spacing:-1px}.diagnostic-hero>div>p:last-child{display:none}.diagnostic-range{gap:2px}.diagnostic-range>div{grid-template-columns:72px 1fr;gap:8px;font-size:11px}.diagnostic-range-actions{gap:0}
+  .diagnostic-hero{padding:0 0 8px;grid-template-columns:minmax(0,1fr) 250px;gap:24px;align-items:end}.diagnostic-kicker{margin-bottom:3px;font-size:9px}.diagnostic-learner-name{margin-bottom:3px;gap:7px}.diagnostic-learner-name span{font-size:10px}.diagnostic-learner-name strong{font-size:16px}.diagnostic-hero h1{font-size:25px;line-height:1.08;letter-spacing:-1px}.diagnostic-hero>div>p:last-child{display:none}.diagnostic-range{gap:2px}.diagnostic-range>div{grid-template-columns:72px 1fr;gap:8px;font-size:11px}.diagnostic-range-actions{gap:0}
   .diagnostic-refresh,.diagnostic-tabs,.diagnostic-domain-selector{display:none!important}.diagnostic-section-heading>p,.diagnostic-fallback,.diagnostic-ready-notice{display:none!important}
   .diagnostic-section{padding-top:8px}.diagnostic-section-heading{margin-bottom:5px;align-items:end;flex-direction:row;gap:8px}.diagnostic-section-heading span{margin-bottom:1px;font-size:9px}.diagnostic-section-heading h2{font-size:17px;letter-spacing:-.3px}
   .summary-strips{gap:3px}.summary-strips article{min-height:0;padding:5px 8px;grid-template-columns:82px minmax(0,1fr) 180px;gap:8px;border-radius:8px}.summary-strips strong{font-size:12px}.summary-strips p{font-size:12px;line-height:1.25}.diagnostic-evidence-links{gap:2px}.diagnostic-evidence-link{min-height:0;padding:2px 5px;border-radius:5px;font-size:11px;line-height:1.2}.diagnostic-evidence-empty{font-size:11px}

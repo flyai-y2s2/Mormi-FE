@@ -319,7 +319,10 @@ export function ReportDashboard() {
       <article className="report-paper" data-report-format="a4">
         <section className="diagnostic-hero" aria-labelledby="report-title">
           <div>
-            <h1 id="report-title">{report ? `${report.learner.display_name}의 개인 진단 리포트` : "개인 진단 리포트"}</h1>
+            {report && (
+              <p className="diagnostic-learner-name"><span>학습자</span><strong>{report.learner.display_name}</strong></p>
+            )}
+            <h1 id="report-title">개인 진단 리포트</h1>
             <p>전체 학습 기록에서 현재 상태와 변화의 근거를 함께 확인합니다.</p>
           </div>
           <div className="diagnostic-range-actions">
