@@ -27,6 +27,15 @@ export type LearnerProfile = {
   analyticsId?: string;
 };
 
+/** 가입·로그인 응답. 두 경로가 같은 본문을 주므로 storeSession 을 그대로 쓴다. */
+export type AuthResponse = {
+  id: number;
+  display_name: string;
+  research_code: string;
+  analytics_id: string;
+  access_token: string;
+};
+
 export type ProgressSnapshot = {
   learner_id: number;
   display_name: string;
@@ -272,21 +281,60 @@ export async function apiRequest<T>(
 }
 
 export const api = {
+  /**
+   * 회원가입. research_code 는 연구 식별자로만 저장되고 인증에는 쓰이지 않는다.
+   * 아이디 중복은 409 login_id_taken, 연구 코드 중복은 409 research_code_taken 이다.
+   */
+  signup(displayName: string, researchCode: string, loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        display_name: displayName,
+        research_code: researchCode,
+        login_id: loginId,
+        password,
+      }),
+    }, false);
+  },
+
+  /**
+   * 로그인. 아이디가 없을 때와 비밀번호가 틀릴 때의 401 응답이 완전히 같다.
+   * 가입 여부를 떠볼 수 없게 서버가 일부러 구분하지 않으므로 화면도 한 문구로만 안내한다.
+   */
+  login(loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ login_id: loginId, password }),
+    }, false);
+  },
+
+  /**
+   * 이 기기의 토큰만 폐기한다. 다른 기기의 로그인은 그대로 살아 있다.
+   *
+   * 만료·폐기된 토큰으로 부르면 401 이 나는데, 호출부는 그걸 실패로 다루지 않고
+   * 로컬 세션을 지워야 한다. 사용자가 기대하는 건 이 기기에서 빠져나가는 것이지
+   * 서버 정리의 성공 여부가 아니다.
+   */
+  logout() {
+    return apiRequest<void>("/v1/auth/logout", { method: "POST" });
+  },
+
+  /** 해당 학습자의 모든 기기 토큰을 폐기한다. */
+  logoutAll() {
+    return apiRequest<void>("/v1/auth/logout-all", { method: "POST" });
+  },
+
+  /** @deprecated 연구 코드 온보딩. `signup` 을 쓴다. 화면 전환이 끝나면 제거한다. */
   createLearner(displayName: string, researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners", {
+    return apiRequest<AuthResponse>("/v1/learners", {
       method: "POST",
       body: JSON.stringify({ display_name: displayName, research_code: researchCode }),
     }, false);
   },
 
+  /** @deprecated 연구 코드 복구. `login` 을 쓴다. 화면 전환이 끝나면 제거한다. */
   restoreLearner(researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners/auth", {
+    return apiRequest<AuthResponse>("/v1/learners/auth", {
       method: "POST",
       body: JSON.stringify({ research_code: researchCode }),
     }, false);
