@@ -6,7 +6,6 @@ export const menu = [
   { id: "cookie", name: "쿠키", price: 2000, image: "/figma/cafe/cookie.png?v=2" },
   { id: "strawberry-cake", name: "딸기케이크", price: 4500, image: "/figma/cafe/strawberry-cake.png?v=2" },
   { id: "sandwich", name: "샌드위치", price: 5000, image: "/figma/cafe/sandwich.png?v=2" },
-  { id: "bakery-set", name: "베이커리 세트", price: 6000, image: "/life-missions/bread.webp" },
 ] as const;
 
 export type CafeMenuItem = (typeof menu)[number];

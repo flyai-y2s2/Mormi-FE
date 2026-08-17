@@ -233,12 +233,11 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       const picked = cafeTalks.current.menu?.turn.completion?.verified_facts?.child_menu_id;
       const childMenu = menu.find((item) => item.id === picked);
       const mormeyPick = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
-      const total = mormeyPick.price + (childMenu?.price ?? 0);
       captureMormeyEvent("cafe_menu_selected", {
         menu_ids: [mormeyPick.id, childMenu?.id ?? ""].join(","),
-        total,
+        total: mormeyPick.price + (childMenu?.price ?? 0),
         budget: menuBudget,
-        over_budget: total > menuBudget,
+        over_budget: false,
       });
       setMenuScene("thanks");
     } else if (stage === "calculate") {
@@ -436,8 +435,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-queue-story" data-figma-node="74:4">
           {queueScene === "note" && (
             <section className="queue-note-scene">
-              <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>궁금해 사전</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2></article>
+              <Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={310} height={340} unoptimized />
+              <article><span>별노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2></article>
             </section>
           )}
           {queueScene === "clear" && (
@@ -447,10 +446,10 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
             </section>
           )}
 
-          {/* 노트 장면은 그림 대신 공부노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
+          {/* 노트 장면은 그림 대신 별노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
           {queueScene === "note" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
+            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다!`}</p>
             <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>
           </section>}
         </main>

@@ -112,7 +112,7 @@ function InputPanel({ conversation, busy, onSubmit }: { conversation: MormiConve
   const [text, setText] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
 
-  if (input.kind === "none") return <p className="ai-test-complete">대화 완료 · 위 결과와 궁금해 사전 내용을 확인해 주세요.</p>;
+  if (input.kind === "none") return <p className="ai-test-complete">대화 완료 · 위 결과와 별노트 내용을 확인해 주세요.</p>;
   if (input.kind === "choices" || input.kind === "fill") {
     return <div className="ai-test-choices">{input.choices.map((choice) => <button key={choice.id} disabled={busy || Boolean(choice.disabled)} onClick={() => onSubmit({ turn_id: conversation.turn.turn_id, type: input.kind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}>{choice.label}{choice.disabled ? " · 모르미 선택" : ""}</button>)}</div>;
   }

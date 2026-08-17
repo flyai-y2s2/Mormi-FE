@@ -1289,7 +1289,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
 }
 
-/* 줄 서기의 공부노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
+/* 줄 서기의 별노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
 .figma-cafe--queue{padding:0 24px 28px;background:linear-gradient(rgba(255,252,244,.5),rgba(255,252,244,.5)),url('/scenes/cafe-bakery-cute-v4.png') center/cover fixed}
 .figma-cafe--queue>.figma-cafe__bar{display:none}
 .figma-cafe--queue .figma-cafe-queue-story{width:min(1135px,100%);min-height:100svh;margin:0 auto;padding:40px 28px 18px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
@@ -1447,9 +1447,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
 
 /* ── 2026-08-17 통합 UI 정리 ───────────────────────────────────── */
-/* 서버가 보낸 문제를 먼저 보고, 그 아래에서 모르미와 대화한다. */
-.teaching-stage > .teaching-playground { order:1; }
-.teaching-stage > .teaching-talk { order:2; }
 .teaching-playground > .learned-card--reveal {
   width:min(720px,92%); margin:clamp(28px,7vh,76px) auto 0; padding:clamp(30px,5vw,54px);
   animation:learnedCardReveal .55s cubic-bezier(.2,.8,.2,1) both;
@@ -1462,24 +1459,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .home-main-actions b,.home-main-actions small { line-height:1.25; }
 .home-room-copy-column { padding-top:20px; }
 
-/* 별 카드는 버튼이지만 기존 HUD의 모양을 그대로 유지한다. */
-.player-hud button.player-stat { width:100%; padding:0; border:0; font:inherit; text-align:left; cursor:pointer; }
-.player-hud button.player-stat:focus-visible { outline:4px solid #6d55c7; outline-offset:3px; }
-.player-hud button.player-stat:hover { transform:translateY(-2px); }
-
-.concepts-backdrop { padding:20px; }
-.completed-concepts-card { width:min(680px,100%); max-height:min(760px,90svh); padding:28px; overflow:auto; border:4px solid #d9c9f8; border-radius:30px; background:#fffdf8; box-shadow:0 28px 90px rgba(52,42,74,.24); }
-.completed-concepts-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
-.completed-concepts-card header span { display:flex; align-items:center; gap:7px; color:#7357b9; font-weight:900; }
-.completed-concepts-card header h2 { margin:7px 0 20px; color:#203f34; font-size:clamp(27px,5vw,40px); }
-.completed-concepts-card header button { width:44px; height:44px; border:0; border-radius:50%; color:#66567e; background:#f0eaff; cursor:pointer; font-size:28px; }
-.completed-concepts-card ul { margin:0; padding:0; display:grid; gap:10px; list-style:none; }
-.completed-concepts-card li { min-height:82px; padding:14px 16px; display:grid; grid-template-columns:42px 1fr; align-items:center; gap:13px; border:2px solid #dceee5; border-radius:20px; background:#fff; }
-.completed-concepts-card li i { width:38px; height:38px; display:grid; place-items:center; border-radius:13px; color:#fff; background:#4cad80; font-style:normal; font-weight:900; }
-.completed-concepts-card li b { color:#29463b; font-size:18px; }
-.completed-concepts-card li p,.completed-concepts-empty { margin:4px 0 0; color:#6c7b74; line-height:1.45; }
-
-/* 궁금해 사전은 모르미가 적는 기록이다. 짧고 왼쪽 정렬된 제목으로 읽힌다. */
+/* 별노트는 모르미가 적는 기록이다. 짧고 왼쪽 정렬된 제목으로 읽힌다. */
 .note-ring { padding:8px; line-height:1.3; text-align:center; }
 .note-content { text-align:left; }
 .note-content p { justify-content:flex-start; }
@@ -1499,8 +1479,5 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .figma-cafe-done__actions { grid-template-columns:1fr; }
 }
 @media (max-width:560px) {
-  .completed-concepts-card { padding:20px 14px; border-radius:24px; }
-  .completed-concepts-card li { grid-template-columns:34px 1fr; padding:12px; }
-  .completed-concepts-card li i { width:32px; height:32px; }
   .cafe-talk-menu__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
