@@ -335,7 +335,24 @@ function rotateAnswers(answers: string[], seed: number) {
   return [...answers.slice(offset), ...answers.slice(0, offset)];
 }
 
+function numericChoiceValue(choice: string) {
+  const match = choice.trim().match(/^(-?\d[\d,]*)\s*(?:원|개(?:씩)?|명(?:씩)?|묶음)?$/);
+  if (!match) return null;
+  const value = Number(match[1].replaceAll(",", ""));
+  return Number.isFinite(value) ? value : null;
+}
+
+function orderNumericChoices(choices: string[]) {
+  const numberedChoices = choices.map((choice, index) => ({ choice, index, value: numericChoiceValue(choice) }));
+  if (numberedChoices.some(({ value }) => value === null)) return null;
+  return numberedChoices
+    .toSorted((left, right) => left.value! - right.value! || left.index - right.index)
+    .map(({ choice }) => choice);
+}
+
 function shuffleWords(words: string[], seed: number) {
+  const orderedNumbers = orderNumericChoices(words);
+  if (orderedNumbers) return orderedNumbers;
   const shuffled = [...words];
   let state = Math.abs(seed) + 1;
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
@@ -576,7 +593,10 @@ function shuffleProblemAnswers(problem: Problem, seed: number): Problem {
   if (comparisonChoices.includes(problem.correct) && problem.answers.some((answer) => comparisonChoices.includes(answer))) {
     return { ...problem, answers: comparisonChoices };
   }
-  const otherAnswers = ensureFourAnswers(problem).filter((answer) => answer !== problem.correct);
+  const ensuredAnswers = ensureFourAnswers(problem);
+  const orderedNumbers = orderNumericChoices(ensuredAnswers);
+  if (orderedNumbers) return { ...problem, answers: orderedNumbers };
+  const otherAnswers = ensuredAnswers.filter((answer) => answer !== problem.correct);
   const answers = shuffleWords(otherAnswers, seed + 101);
   const correctPosition = Math.abs(seed) % (answers.length + 1);
   answers.splice(correctPosition, 0, problem.correct);
