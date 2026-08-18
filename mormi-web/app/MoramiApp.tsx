@@ -1615,6 +1615,11 @@ export function MoramiApp() {
     }
   }
 
+  function beginTeachingWithDictionary() {
+    setDictionaryOpen(true);
+    void beginTeaching();
+  }
+
   function completionValues(turn: MormiTurn): Record<string, string | number | boolean | string[]> {
     const raw = turn.input.config.completion_values;
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -1998,8 +2003,7 @@ export function MoramiApp() {
                 <h2>5번 반복학습 끝!</h2>
                 <div className="mastery-coin-total"><Image src="/cafe-money/100.png" alt="세션에서 얻은 돈" width={74} height={74} unoptimized /><span>반복학습 보상</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원</strong></div>
                 <p>이제 모르미가 처음 찾아올 거야.<br />방금 익힌 걸 모르미에게 가르쳐 줘.</p>
-                <button className="primary-button" onClick={beginTeaching}>모르미 가르치기 <span className="button-arrow" /></button>
-                <button className="dictionary-link" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 먼저 사전 보기</button>
+                <button className="primary-button" onClick={beginTeachingWithDictionary}>모르미 가르치기 <span className="button-arrow" /></button>
               </div>
             ) : (
               <div className="practice-card">
