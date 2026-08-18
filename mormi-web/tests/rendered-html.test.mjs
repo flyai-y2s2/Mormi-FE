@@ -24,8 +24,9 @@ test("server-renders the Morami onboarding", async () => {
   assert.match(html, /나 모르미야!/);
   // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
   // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
+  // 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이므로 기본 버튼은 로그인이 쓴다.
+  assert.match(html, /로그인하기/);
   assert.match(html, /처음 왔어요/);
-  assert.match(html, /전에 하던 게 있어요/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
