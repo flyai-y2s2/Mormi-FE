@@ -27,6 +27,15 @@ export type LearnerProfile = {
   analyticsId?: string;
 };
 
+/** 가입·로그인 응답. 두 경로가 같은 본문을 주므로 storeSession 을 그대로 쓴다. */
+export type AuthResponse = {
+  id: number;
+  display_name: string;
+  research_code: string;
+  analytics_id: string;
+  access_token: string;
+};
+
 export type ProgressSnapshot = {
   learner_id: number;
   display_name: string;
@@ -38,8 +47,9 @@ export type ProgressSnapshot = {
   stars: number;
   cafe_unlocked: boolean;
   cafe_required_session_ids: string[];
-  active_learning_session_id: string | null;
-  active_cafe_visit_id: string | null;
+  // 값이 없으면 서버가 키를 아예 빼고 준다. null 이 아니라 undefined 가 들어온다.
+  active_learning_session_id?: string | null;
+  active_cafe_visit_id?: string | null;
 };
 
 export type AttemptResult = {
@@ -114,6 +124,130 @@ export type ReportSummaryDto = {
   wrong_attempt_count: number;
   first_try_correct_count: number;
 };
+
+export type DiagnosticMode = "HOME" | "LIFE";
+export type DiagnosticStatus = "STABLE" | "DEVELOPING" | "SUPPORT_NEEDED" | "OBSERVING";
+export type DiagnosticDirection = "IMPROVING" | "DECLINING" | "MAINTAINING" | "INSUFFICIENT_HISTORY";
+
+export type DiagnosticLearnerDto = {
+  learner_id: number;
+  display_name: string;
+};
+
+export type DiagnosticDataRangeDto = {
+  first_at?: string;
+  last_at?: string;
+  total_home_sessions: number;
+  total_life_visits: number;
+};
+
+export type DiagnosticEvidenceTextDto = {
+  text: string;
+  evidence_refs: string[];
+};
+
+export type DiagnosticCurrentSummaryDto = {
+  concept_performance: DiagnosticEvidenceTextDto;
+  explanation_change: DiagnosticEvidenceTextDto;
+  life_transfer: DiagnosticEvidenceTextDto;
+};
+
+export type DiagnosticHighlightDto = DiagnosticEvidenceTextDto;
+
+export type DiagnosticEvidenceCountsDto = {
+  home_sessions: number;
+  drill_attempts: number;
+  teach_conversations: number;
+  life_visits: number;
+  speech_samples: number;
+};
+
+export type DiagnosticTrendPointDto = {
+  evidence_id: string;
+  label: string;
+  occurred_at: string;
+  independent_score: number;
+  supported_score: number;
+  recent: boolean;
+};
+
+export type DiagnosticDomainTrendDto = {
+  domain_id: string;
+  label: string;
+  points: DiagnosticTrendPointDto[];
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticHomeModeReportDto = {
+  mode: "HOME";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticLifeModeReportDto = {
+  mode: "LIFE";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticModeReportDto = DiagnosticHomeModeReportDto | DiagnosticLifeModeReportDto;
+
+type DiagnosticDomainStatusBase = {
+  domain_id: string;
+  label: string;
+  direction: DiagnosticDirection;
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticDomainStatusDto =
+  | (DiagnosticDomainStatusBase & { status: "STABLE" })
+  | (DiagnosticDomainStatusBase & { status: "DEVELOPING" })
+  | (DiagnosticDomainStatusBase & { status: "SUPPORT_NEEDED" })
+  | (DiagnosticDomainStatusBase & { status: "OBSERVING" });
+
+export type DiagnosticReportDto = {
+  learner: DiagnosticLearnerDto;
+  data_range: DiagnosticDataRangeDto;
+  current_summary: DiagnosticCurrentSummaryDto;
+  modes: DiagnosticModeReportDto[];
+  domains: DiagnosticDomainStatusDto[];
+  improved_point: DiagnosticHighlightDto;
+  observe_point: DiagnosticHighlightDto;
+  evidence_counts: DiagnosticEvidenceCountsDto;
+  narrative_fallback: boolean;
+};
+
+export type SpeechSampleDto = {
+  evidence_id: string;
+  utterance: string;
+  hint_level?: string;
+  expression_level?: string;
+  occurred_at: string;
+};
+
+type SpeechEvidenceBaseDto = {
+  domain_id: string;
+  verified_elements: string[];
+};
+
+export type AvailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: true;
+  /** Spring constructs null and omits this field through its NON_NULL policy. */
+  message?: never;
+  past: SpeechSampleDto;
+  recent: SpeechSampleDto;
+  change_summary: string;
+};
+
+export type UnavailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: false;
+  message: string;
+  past?: never;
+  recent?: never;
+  change_summary?: never;
+};
+
+export type SpeechEvidenceDto = AvailableSpeechEvidenceDto | UnavailableSpeechEvidenceDto;
 
 export type AttemptView = {
   attempt_id: number;
@@ -190,7 +324,17 @@ export type LearnerConsent = {
 };
 
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    /**
+     * validation_failed(422) 일 때 서버가 준 필드별 사유.
+     * 요청 본문은 snake_case 인데 여기 키는 camelCase 다(login_id → loginId).
+     * 값은 영어 검증 메시지이므로 화면에는 그대로 쓰지 않는다.
+     */
+    readonly fields?: Record<string, string>,
+  ) {
     super(message);
   }
 }
@@ -225,6 +369,25 @@ export function clearSession() {
   localStorage.removeItem(LEARNER_KEY);
 }
 
+/**
+ * 토큰이 만료(30일)되거나 다른 기기에서 전체 로그아웃을 당하면 아무 요청에서나 401 이 난다.
+ * 이 파일은 React 밖이라 화면을 직접 못 바꾸므로, 화면 되돌리기는 등록된 처리에 맡긴다.
+ */
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+/**
+ * 인증이 필요한 요청에서만 부른다. 로그인·가입 실패의 401 은 입력값을 유지한 채
+ * 그 화면에서 안내해야 하므로 여기로 오지 않는다(두 함수는 auth=false 로 호출한다).
+ */
+function handleUnauthorized() {
+  clearSession();
+  unauthorizedHandler?.();
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
@@ -236,60 +399,99 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (auth) {
     const token = readToken();
-    if (!token) throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    if (!token) {
+      // 저장된 토큰이 사라진 상태. 서버에 물어볼 것도 없이 로그인 화면으로 돌린다.
+      handleUnauthorized();
+      throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
+    }
     headers.authorization = `Bearer ${token}`;
   }
 
-  const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+  const requestController = new AbortController();
+  const abortFromCaller = () => requestController.abort(init.signal?.reason);
+  if (init.signal?.aborted) abortFromCaller();
+  else init.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeoutId = window.setTimeout(() => requestController.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
-      signal: init.signal ?? timeoutController.signal,
+      signal: requestController.signal,
     });
-  } catch {
-    if (timeoutController.signal.aborted) {
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+    if (requestController.signal.aborted) {
       throw new ApiError(504, "request_timeout", "모르미를 불러오는 데 시간이 걸리고 있어요. 다시 시도해 주세요.");
     }
     throw new ApiError(503, "network_error", "학습 서버에 연결하지 못했어요. 다시 시도해 주세요.");
   } finally {
     window.clearTimeout(timeoutId);
+    init.signal?.removeEventListener("abort", abortFromCaller);
   }
   if (!response.ok) {
     let code = "http_error";
     let message = `요청이 실패했습니다 (${response.status})`;
+    let fields: Record<string, string> | undefined;
     try {
-      const body = await response.json() as { code?: string; message?: string };
+      const body = await response.json() as {
+        code?: string; message?: string; fields?: Record<string, string>;
+      };
       code = body.code || code;
       message = body.message || message;
+      fields = body.fields;
     } catch { /* 본문이 없을 수 있다 */ }
-    throw new ApiError(response.status, code, message);
+    // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
+    // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.
+    if (auth && response.status === 401) handleUnauthorized();
+    throw new ApiError(response.status, code, message, fields);
   }
   if (response.status === 204) return undefined as T;
   return await response.json() as T;
 }
 
 export const api = {
-  createLearner(displayName: string, researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners", {
+  /**
+   * 회원가입. research_code 는 연구 식별자로만 저장되고 인증에는 쓰이지 않는다.
+   * 아이디 중복은 409 login_id_taken, 연구 코드 중복은 409 research_code_taken 이다.
+   */
+  signup(displayName: string, researchCode: string, loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ display_name: displayName, research_code: researchCode }),
+      body: JSON.stringify({
+        display_name: displayName,
+        research_code: researchCode,
+        login_id: loginId,
+        password,
+      }),
     }, false);
   },
 
-  restoreLearner(researchCode: string) {
-    return apiRequest<{
-      id: number; display_name: string; research_code: string;
-      analytics_id: string; access_token: string;
-    }>("/v1/learners/auth", {
+  /**
+   * 로그인. 아이디가 없을 때와 비밀번호가 틀릴 때의 401 응답이 완전히 같다.
+   * 가입 여부를 떠볼 수 없게 서버가 일부러 구분하지 않으므로 화면도 한 문구로만 안내한다.
+   */
+  login(loginId: string, password: string) {
+    return apiRequest<AuthResponse>("/v1/auth/login", {
       method: "POST",
-      body: JSON.stringify({ research_code: researchCode }),
+      body: JSON.stringify({ login_id: loginId, password }),
     }, false);
+  },
+
+  /**
+   * 이 기기의 토큰만 폐기한다. 다른 기기의 로그인은 그대로 살아 있다.
+   *
+   * 만료·폐기된 토큰으로 부르면 401 이 나는데, 호출부는 그걸 실패로 다루지 않고
+   * 로컬 세션을 지워야 한다. 사용자가 기대하는 건 이 기기에서 빠져나가는 것이지
+   * 서버 정리의 성공 여부가 아니다.
+   */
+  logout() {
+    return apiRequest<void>("/v1/auth/logout", { method: "POST" });
+  },
+
+  /** 해당 학습자의 모든 기기 토큰을 폐기한다. */
+  logoutAll() {
+    return apiRequest<void>("/v1/auth/logout-all", { method: "POST" });
   },
 
   progress() {
@@ -307,6 +509,17 @@ export const api = {
 
   reportHistory(limit = 8) {
     return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
+  },
+
+  diagnosticReport(signal?: AbortSignal) {
+    return apiRequest<DiagnosticReportDto>("/v1/reports/diagnostic", { signal });
+  },
+
+  diagnosticSpeechEvidence(domainId: string, signal?: AbortSignal) {
+    return apiRequest<SpeechEvidenceDto>(
+      `/v1/reports/diagnostic/speech-evidence?domain_id=${encodeURIComponent(domainId)}`,
+      { signal },
+    );
   },
 
   /** 새로고침 복구용. 시도 전체가 함께 온다. */

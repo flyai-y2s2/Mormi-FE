@@ -8,6 +8,7 @@ import { menu, menuItemsForAi } from "./cafe-menu";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
 import { cafeStations } from "./journey-config";
+import { dialogueErrorMessage } from "./dialogue-errors";
 import {
   startCafeDialogue,
   submitMormiResponseThroughBe,
@@ -183,7 +184,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         if (!id) throw new Error("카페 방문을 먼저 열어 주세요.");
         return applyCafeConversation(stage, await startCafeDialogue(id, { ...input, restart }));
       } catch (error: unknown) {
-        setDialogueError(error instanceof Error ? error.message : "모르미 대화를 시작하지 못했어요.");
+        setDialogueError(dialogueErrorMessage(error, "모르미 대화를 시작하지 못했어요."));
         return null;
       }
     })();
@@ -203,7 +204,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       });
       return applyCafeConversation(stage, next);
     } catch (error: unknown) {
-      setDialogueError(error instanceof Error ? error.message : "답을 보내지 못했어요.");
+      setDialogueError(dialogueErrorMessage(error, "답을 보내지 못했어요."));
       return null;
     } finally {
       dialogueRequestInFlight.current = false;

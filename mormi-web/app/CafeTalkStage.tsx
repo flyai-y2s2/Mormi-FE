@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import type { MormiConversation, MormiMood, MormiResponseType } from "./mormi-dialogue";
+import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 
 /**
  * 카페의 네 스테이지가 함께 쓰는 대화 화면.
@@ -123,7 +124,7 @@ export function CafeDialogueControls({
   };
 
   return <aside className="cafe-ai-followup" aria-live="polite">
-    {turn.help_card?.visible && <div className="cafe-help-card"><strong>{turn.help_card.title}</strong><p>{turn.help_card.body}</p></div>}
+    <MormiHelpCard card={turn.help_card} />
     {inputKind === "text" && <form onSubmit={(event) => {
       event.preventDefault();
       if (!inputText.trim() || sending) return;
@@ -135,7 +136,7 @@ export function CafeDialogueControls({
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
     </form>}
     {(inputKind === "choices" || inputKind === "fill") && <div className="cafe-ai-choices">
-      {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}>{choice.label}</button>)}
+      {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}><MormiChoiceContent choice={choice} /></button>)}
     </div>}
     {(inputKind === "count" || inputKind === "equation") && <form onSubmit={(event) => {
       event.preventDefault();

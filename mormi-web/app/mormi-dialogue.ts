@@ -87,6 +87,18 @@ export type MormiTurn = {
     visual_type?: string | null;
     visual_data: Record<string, unknown>;
   } | null;
+  /**
+   * AI가 고정한 궁금해 사전 카드의 신원. 카드 본문은 이 값에 포함되지 않는다.
+   * 현재 BE에는 스냅샷 조회 프록시가 없으므로 FE는 이 참조를 보존만 하고,
+   * 임의의 사전 본문을 만들어 서버 데이터를 덮어쓰지 않는다.
+   */
+  dictionary_ref: {
+    card_id: string;
+    curriculum_session_id: string;
+    schema_version: number;
+    content_version: number;
+    content_hash: string;
+  } | null;
   note_update: {
     note_id: string;
     skill_id: string;

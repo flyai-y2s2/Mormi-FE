@@ -1,0 +1,104 @@
+// apiRequest 의 401 처리. 인증 요청과 로그인 실패를 auth 인자 하나로 가르는 설계를 지킨다.
+import assert from "node:assert/strict";
+import test from "node:test";
+
+const store = new Map();
+globalThis.localStorage = {
+  getItem: (key) => (store.has(key) ? store.get(key) : null),
+  setItem: (key, value) => store.set(key, String(value)),
+  removeItem: (key) => store.delete(key),
+};
+globalThis.window = { setTimeout, clearTimeout };
+
+let nextResponse = null;
+globalThis.fetch = async () => nextResponse();
+
+const { apiRequest, setUnauthorizedHandler, storeSession, ApiError } =
+  await import("../app/api-client.ts");
+
+function respond(status, body) {
+  return () => new Response(body === undefined ? null : JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function withSession() {
+  store.clear();
+  storeSession("test-token", { id: 1, name: "검증" });
+}
+
+test("인증 요청이 401 이면 세션을 지우고 화면 되돌리기를 부른다", async () => {
+  withSession();
+  let called = 0;
+  setUnauthorizedHandler(() => { called += 1; });
+  nextResponse = respond(401, { code: "unauthorized", message: "학습자 토큰이 필요합니다." });
+
+  await assert.rejects(() => apiRequest("/v1/progress"), (error) => {
+    assert.ok(error instanceof ApiError);
+    assert.equal(error.status, 401);
+    return true;
+  });
+
+  assert.equal(called, 1);
+  assert.equal(localStorage.getItem("mormi-access-token"), null);
+  assert.equal(localStorage.getItem("mormi-learner"), null);
+});
+
+test("로그인 실패 401 은 세션도 입력값도 건드리지 않는다", async () => {
+  withSession();
+  let called = 0;
+  setUnauthorizedHandler(() => { called += 1; });
+  nextResponse = respond(401, { code: "unauthorized", message: "아이디 또는 비밀번호가 올바르지 않습니다." });
+
+  // login / signup 은 auth=false 로 부른다. 여기서 화면이 초기화되면 아이가
+  // 비밀번호를 한 번 틀렸을 때 적어 둔 아이디까지 사라진다.
+  await assert.rejects(() => apiRequest("/v1/auth/login", { method: "POST" }, false));
+
+  assert.equal(called, 0);
+  assert.equal(localStorage.getItem("mormi-access-token"), "test-token");
+});
+
+test("저장된 토큰이 없으면 서버를 부르지 않고 바로 되돌린다", async () => {
+  store.clear();
+  let called = 0;
+  setUnauthorizedHandler(() => { called += 1; });
+  nextResponse = () => { throw new Error("서버를 부르면 안 된다"); };
+
+  await assert.rejects(() => apiRequest("/v1/progress"));
+  assert.equal(called, 1);
+});
+
+test("401 이 아닌 실패는 세션을 유지한다", async () => {
+  withSession();
+  let called = 0;
+  setUnauthorizedHandler(() => { called += 1; });
+  nextResponse = respond(409, { code: "login_id_taken", message: "이미 사용 중인 아이디입니다." });
+
+  await assert.rejects(() => apiRequest("/v1/progress"));
+  assert.equal(called, 0);
+  assert.equal(localStorage.getItem("mormi-access-token"), "test-token");
+});
+
+test("422 의 fields 가 ApiError 에 실려 온다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  nextResponse = respond(422, {
+    code: "validation_failed",
+    message: "입력값을 확인해 주세요.",
+    fields: { loginId: "size must be between 4 and 20" },
+  });
+
+  await assert.rejects(() => apiRequest("/v1/auth/signup", { method: "POST" }, false), (error) => {
+    assert.equal(error.fields?.loginId, "size must be between 4 and 20");
+    return true;
+  });
+});
+
+test("204 는 본문 없이 통과한다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  nextResponse = respond(204);
+
+  assert.equal(await apiRequest("/v1/auth/logout", { method: "POST" }), undefined);
+});

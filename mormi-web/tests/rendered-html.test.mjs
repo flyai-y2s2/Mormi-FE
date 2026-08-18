@@ -22,12 +22,15 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
-  assert.match(html, /내 이름 알려주기/);
+  // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
+  // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
+  assert.match(html, /처음 왔어요/);
+  assert.match(html, /전에 하던 게 있어요/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -37,6 +40,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/cafe-menu.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
 
@@ -110,7 +114,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /turn\.help_card\?\.visible/);
+  assert.match(talkStage, /<MormiHelpCard card=\{turn\.help_card\}/);
+  assert.match(dialogueUi, /if \(!card\?\.visible\) return null/);
+  assert.match(dialogueUi, /card\.visual_type/);
+  assert.match(dialogueUi, /choice\.image_url/);
+  assert.match(dialogueContract, /dictionary_ref:/);
   assert.match(cafe, /STAGE 1 CLEAR!/);
   // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
   // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.
@@ -253,7 +261,20 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /drillFeedback \|\| "빈 자리"/);
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
-  assert.match(app, /너의 이름을 알려줄래/);
+  assert.match(app, /너를 뭐라고 부를까/);
+  // 장소 이동 탭은 앱 전체에 하나만, 상단 줄에 둔다. 화면마다 따로 그리면 장소를
+  // 옮길 때 탭이 함께 움직여 흐름이 끊긴다.
+  const navClasses = app.match(/className="journey-nav[^"]*"/g) || [];
+  assert.equal(navClasses.length, 1);
+  assert.match(navClasses[0], /journey-nav--top/);
+  // topbar 의 좌우 기준선이 화면마다 다르면 상단에 둔 탭이 옮겨져 보인다.
+  assert.match(css, /\.app-shell--outside \.topbar[^{]*\{[^}]*max-width:none/);
+  // 반복 중에는 프로필을 띄우지 않는다. 로그아웃이 눌리면 시도 기록이 끊긴 채 세션이 남는다.
+  assert.match(app, /learningStage \?[\s\S]{0,400}<ProfileMenu/);
+  // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
+  // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
+  assert.match(app, /function submitLogin\(\) \{\r?\n {4}\/\//);
+  assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
   assert.match(app, /teachingNote\.attribution_label/);
@@ -322,13 +343,130 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(calendarBlock, /correct: "8일"|highlight: 31/);
 });
 
-test("server-renders the adult mathematics report", async () => {
+test("server-renders the individual diagnostic report shell", async () => {
   const response = await render("/report");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /학습 리포트/);
-  assert.match(html, /반복 시도/);
-  assert.match(html, /전이 확인/);
+  assert.match(html, /현재 상태 요약/);
+  assert.match(html, /세션별 변화/);
+  assert.match(html, /현재 영역별 상태/);
+  assert.match(html, /집 · 개념/);
+  assert.match(html, /실생활 · 응용/);
+  assert.match(html, /마지막 학습 기록/);
+  assert.doesNotMatch(html, /지갑 잔액|이번 세션 보상|우선순위 높음/);
+});
+
+test("diagnostic report renders as one compact Korean A4 document", async () => {
+  const [response, css, dashboard, example] = await Promise.all([
+    render("/report"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/complete-report-example.ts", import.meta.url), "utf8"),
+  ]);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /<article[^>]+data-report-format="a4"/);
+  assert.match(html, /현재 상태 요약/);
+  assert.match(html, /세션별 변화/);
+  assert.match(html, /현재 영역별 상태/);
+  assert.doesNotMatch(html, /INDIVIDUAL LEARNING REPORT|AT A GLANCE|CHANGE OVER TIME|CURRENT EVIDENCE/);
+  assert.match(css, /\.report-paper\{[\s\S]*?width:min\(794px,[\s\S]*?min-height:1123px/);
+  assert.match(css, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /className="diagnostic-learner-name"[\s\S]*?report\.learner\.display_name/);
+  assert.match(dashboard, /<h1 id="report-title">개인 진단 리포트<\/h1>/);
+  assert.match(dashboard, /completeDiagnosticReportExample/);
+  assert.match(dashboard, /예시 데이터/);
+  assert.match(example, /display_name: "김민준"/);
+  assert.doesNotMatch(example, /"(?:메뉴 값 계산하기|거스름돈 받기|줄 서기) · 실생활 수행"/);
+});
+
+test("diagnostic report uses the approved interactive data contract", async () => {
+  const [dashboard, interactions, trendChart, domainDetail, example, css] = await Promise.all([
+    readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/diagnostic-report-interactions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/ReportTrendChart.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/DomainDetail.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/complete-report-example.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(dashboard, /api\.diagnosticReport\(controller\.signal\)/);
+  assert.match(dashboard, /role="tablist"/);
+  assert.match(dashboard, /role="tab"/);
+  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId, controller\.signal\)/);
+  assert.match(dashboard, /새로 계산/);
+  assert.match(dashboard, /마지막 학습 기록/);
+  assert.doesNotMatch(dashboard, /최근 갱신/);
+  assert.match(dashboard, /tabIndex=\{mode === item \? 0 : -1\}/);
+  assert.match(dashboard, /onKeyDown=\{handleTabKeyDown\}/);
+  assert.match(dashboard, /aria-labelledby=\{`diagnostic-tab-\$\{panelMode\.toLowerCase\(\)\}`\}/);
+  assert.match(dashboard, /AbortController/);
+  assert.match(dashboard, /isEmptyDiagnosticReport/);
+  assert.doesNotMatch(dashboard, /teacher-note|교사 메모|textarea/);
+  assert.match(dashboard, /\["문제 풀기", report\.current_summary\.concept_performance\]/);
+  assert.match(dashboard, /\["혼자 설명하기", report\.current_summary\.explanation_change\]/);
+  assert.match(dashboard, /\["생활 속 문제 해결", report\.current_summary\.life_transfer\]/);
+  assert.match(domainDetail, /같은 문제를 어떻게 설명했는지/);
+  assert.doesNotMatch(`${dashboard}\n${domainDetail}\n${example}`, /독립 수행률|설명 독립성/);
+  assert.match(dashboard, /IMPROVING: "좋아지는 중"/);
+  assert.match(domainDetail, /INSUFFICIENT_HISTORY: "기록 더 필요"/);
+  assert.doesNotMatch(`${dashboard}\n${domainDetail}`, /장기 향상|최근 하락|장기 유지|최근 근거 추가/);
+  assert.match(trendChart, /recentWindowLayout\.description/);
+  assert.match(trendChart, /diagnostic-chart__recent--shared/);
+  const chartSvg = trendChart.slice(trendChart.indexOf("<svg"), trendChart.indexOf("</svg>"));
+  assert.doesNotMatch(chartSvg, /diagnostic-chart__recent-ribbon/);
+  assert.doesNotMatch(chartSvg, /\{window\.label\} 최근 구간/);
+  assert.doesNotMatch(trendChart, /<pattern|recent-(?:primary|secondary)-pattern/);
+  assert.doesNotMatch(css, /\.diagnostic-chart-legend \.is-recent\.is-per-series i\{[^}]*repeating-linear-gradient/);
+  assert.doesNotMatch(css, /\.diagnostic-chart__recent-ribbon/);
+  assert.match(trendChart, /최근 구간/);
+  assert.match(dashboard, /chooseDiagnosticSelection\(groupedDomains, nextMode, selectedDomainId\)/);
+  assert.match(dashboard, /className="domain-category-bar"/);
+  assert.match(dashboard, /const categoryStatus = diagnosticCategoryStatus\(domain\)/);
+  assert.match(dashboard, /domain-category-button--\$\{categoryStatus\.toLowerCase\(\)\}/);
+  assert.match(dashboard, /<small>\{statusLabel\(categoryStatus\)\}<\/small>/);
+  assert.match(dashboard, /aria-pressed=\{expandedDomainId === domain\.domain_id\}/);
+  assert.match(dashboard, /className="domain-category-panel"/);
+  assert.match(dashboard, /<DomainDetail domain=\{expandedDomain\}/);
+  assert.match(dashboard, /className="domain-list domain-print-list"/);
+  assert.match(css, /\.domain-category-bar\{[^}]*display:flex[^}]*flex-wrap:nowrap[^}]*overflow-x:auto/);
+  assert.match(css, /\.domain-category-button--stable\{[^}]*background:#e7f4ed/);
+  assert.match(css, /\.domain-category-button--developing\{[^}]*background:#fff3cf/);
+  assert.match(css, /\.domain-category-button--support_needed\{[^}]*background:#fbe7e3/);
+  assert.match(css, /\.domain-category-button--observing\{[^}]*background:#edf1ef/);
+  assert.match(dashboard, /className="diagnostic-evidence-link"/);
+  assert.match(dashboard, /<p>\{summary\.text\}<\/p><EvidenceLinks refs=\{summary\.evidence_refs\}/);
+  assert.match(dashboard, /<p>\{report\.improved_point\.text\}<\/p><EvidenceLinks refs=\{report\.improved_point\.evidence_refs\}/);
+  assert.match(dashboard, /onClick=\{\(\) => onActivate\(link\)\}/);
+  assert.match(dashboard, /activateEvidenceLink/);
+  assert.match(dashboard, /scrollIntoView/);
+  assert.match(dashboard, /expand_speech/);
+  assert.match(dashboard, /speechLoadDecision/);
+  assert.match(dashboard, /reportRequestAccepted/);
+  assert.match(interactions, /export function evidenceLinksForRefs/);
+  assert.doesNotMatch(dashboard, /evidence_refs\.length\}건/);
+  assert.match(css, /\.diagnostic-evidence-link\{[^}]*min-height:44px/);
+
+  const printStyles = css.slice(css.indexOf("@media print"), css.indexOf("/* 툴바", css.indexOf("@media print")));
+  assert.match(printStyles, /@page\{size:A4 portrait;margin:8mm\}/);
+  assert.match(printStyles, /\.domain-print-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(printStyles, /\.diagnostic-chart\{height:150px;max-height:150px/);
+  assert.match(printStyles, /\.diagnostic-refresh,\.diagnostic-tabs,\.diagnostic-domain-selector\{display:none!important\}/);
+  assert.match(printStyles, /\.domain-category-bar,\.domain-category-panel\{display:none!important\}/);
+  assert.match(printStyles, /overflow:visible!important/);
+  assert.doesNotMatch(printStyles, /overflow:hidden|zoom\s*:/);
+  const readablePrintRules = [...printStyles.matchAll(/\.(?:summary-strips|domain-status|diagnostic-highlights|diagnostic-evidence)[^{]*\{[^}]*\}/g)]
+    .map(([rule]) => rule)
+    .join("\n");
+  assert.doesNotMatch(readablePrintRules, /font-size:[5-8]px/);
+  assert.match(printStyles, /\.report-paper\{[^}]*font-size:12px/);
+  assert.match(printStyles, /\.summary-strips p\{font-size:12px/);
+  assert.match(printStyles, /\.domain-status\{[^}]*font-size:11px/);
+  assert.match(printStyles, /\.diagnostic-highlights p\{[^}]*font-size:12px/);
+  assert.match(printStyles, /\.diagnostic-evidence-link\{[^}]*min-height:0[^}]*font-size:11px/);
+  assert.match(printStyles, /\.diagnostic-evidence span\{[^}]*font-size:11px/);
+  assert.doesNotMatch(printStyles, /\.diagnostic-chart__recent-ribbon/);
 });
 
 test("production dialogue flows through deployed Spring BE while the AI BFF stays development-only", async () => {
