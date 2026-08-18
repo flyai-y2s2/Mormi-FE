@@ -24,6 +24,12 @@ test("집과 카페 모두 동일한 서버 사전 API와 공통 모달을 사�
   assert.match(cafe, /<DictionaryModal/);
 });
 
+test("반복학습 완료 뒤 가르치기를 시작하면 사전이 자동으로 열린다", () => {
+  assert.match(app, /function beginTeachingWithDictionary\(\) \{\s*setDictionaryOpen\(true\);\s*void beginTeaching\(\);\s*\}/);
+  assert.match(app, /onClick=\{beginTeachingWithDictionary\}>모르미 가르치기/);
+  assert.doesNotMatch(app, /먼저 사전 보기/);
+});
+
 test("카드 ID와 콘텐츠 버전을 검증하고 로컬 대체 문구를 만들지 않는다", () => {
   assert.match(dictionary, /reference\?\.card_id === value\.card\.card_id/);
   assert.match(dictionary, /reference\?\.content_version === value\.card\.content_version/);
