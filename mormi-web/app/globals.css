@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Mormi Child Hope";
+  src: url("/fonts/nanum-child-hope.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 :root {
   --ink: #203c32;
   --muted: #52685e;
@@ -363,7 +371,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .star-note { width: 100%; min-height: 270px; display: grid; grid-template-columns: 64px 1fr; overflow: hidden; border-radius: 14px 30px 30px 14px; background: repeating-linear-gradient(#fffdf8 0 39px, #dceaf0 40px 41px); box-shadow: 0 20px 55px rgba(98,85,48,.16); transform: rotate(-1deg); }
 .note-ring { display: grid; place-items: center; color: #785eaf; background: #e7dcff; border-right: 5px dotted white; line-height: 1.55; font-weight: 900; }
 .note-content { padding: 28px 34px; }
-.note-content p { color: #9878ba; font-size: 14px; font-weight: 900; display:flex; align-items:center; gap:8px; }.note-content h2 { margin: 15px 0; font-size: 30px; line-height: 1.45; letter-spacing: -1px; }.note-content h2 em { color: #6256a8; font-family: "Gaegu", "Nanum Pen Script", "Gowun Dodum", "Apple SD Gothic Neo", sans-serif; font-size: 1.08em; font-style: normal; font-weight: 900; letter-spacing: .01em; text-shadow: .6px .6px 0 rgba(74, 67, 145, .18), -.5px .4px 0 rgba(74, 67, 145, .12); }.note-content span { padding: 7px 13px; border-radius: 20px; color: #347a60; background: #dcf8eb; font-size: 13px; font-weight: 900; }
+.note-content p { margin:0 0 10px -32px; color:#9878ba; font-family:"Mormi Child Hope", "Gaegu", "Nanum Pen Script", cursive; font-size:19px; font-weight:400; display:flex; align-items:center; gap:8px; }.note-content h2 { margin: 10px 0; font-family:"Mormi Child Hope", "Gaegu", "Nanum Pen Script", cursive; font-size: 30px; font-weight:400; line-height: 1.45; letter-spacing: -1px; }.note-content h2 em { color: #6256a8; font:inherit; font-size: 1.08em; font-style: normal; letter-spacing: .01em; text-shadow: .6px .6px 0 rgba(74, 67, 145, .18), -.5px .4px 0 rgba(74, 67, 145, .12); }.note-content span { padding: 7px 13px; border-radius: 20px; color: #347a60; background: #dcf8eb; font-size: 13px; font-weight: 900; }
 
 /* Homework */
 .scene--homework { display:block; max-width:980px; margin:0 auto; }
