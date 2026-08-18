@@ -52,3 +52,27 @@ Run the focused DOM test, all report tests, lint, TypeScript, and production bui
 - [x] **Step 5: Commit**
 
 Commit the tested report-only change on `codex/numeric-report-preview`.
+
+### Task 2: Connect the visual report to live diagnostic data
+
+**Files:**
+- Create: `mormi-web/app/report/numeric-report-live-model.ts`
+- Create: `mormi-web/tests/numeric-report-live-model.test.mts`
+- Modify: `mormi-web/app/report/NumericReportPreview.tsx`
+- Modify: `mormi-web/app/report/ReportDashboard.tsx`
+
+**Interfaces:**
+- Consumes: `DiagnosticReportDto` returned by `GET /v1/reports/diagnostic`.
+- Produces: `buildNumericLiveReport(report)` and the same visual report used by the complete example.
+
+- [x] **Step 1: Write a failing model test for real averages, missing metrics, and recommendations**
+
+- [x] **Step 2: Run the focused model test and verify the live mapper is missing**
+
+- [x] **Step 3: Implement the mapper and allow `NumericReportPreview` to receive a report**
+
+- [x] **Step 4: Render the visual preview after the authenticated report finishes loading**
+
+- [x] **Step 5: Run focused tests, full tests, lint, TypeScript, build, and browser verification**
+
+- [x] **Step 6: Commit the live-data connection**

@@ -13,6 +13,7 @@ async function loadPreview() {
   const moduleCode = code
     .replace('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve("react/jsx-runtime")).href))
     .replace('"react"', JSON.stringify(pathToFileURL(require.resolve("react")).href))
+    .replace('"./numeric-report-live-model"', JSON.stringify(new URL("../app/report/numeric-report-live-model.ts", import.meta.url).href))
     .replace('import Link from "next/link";', 'const Link = ({ children, ...props }) => _jsx("a", { ...props, children });');
   return import(`data:text/javascript;base64,${Buffer.from(moduleCode).toString("base64")}`);
 }

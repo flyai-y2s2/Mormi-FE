@@ -361,7 +361,7 @@ test("renders the complete example as a numeric diagnostic preview without a cha
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /학습자 김민준/);
+  assert.match(html, /학습자<\/span><strong>김민준/);
   assert.match(html, /개인 진단 리포트/);
   assert.match(html, /정답률/);
   assert.match(html, /86%/);
@@ -369,13 +369,11 @@ test("renders the complete example as a numeric diagnostic preview without a cha
   assert.match(html, /2\.4회/);
   assert.match(html, /1\.3회/);
   assert.match(html, /혼자 말하기/);
-  assert.match(html, /20\/35\/25\/15\/5%/);
-  assert.match(html, /60\/20\/20\/0\/0%/);
-  assert.match(html, /발화 단계 사용 비율/);
-  assert.match(html, /계산·발화 근거 보기/);
-  assert.match(html, /변화 이유/);
-  assert.match(html, /생각의 변화/);
-  assert.match(html, /다음 확인/);
+  assert.match(html, /L4부터 L0까지 60%, 20%, 20%, 0%, 0%/);
+  assert.match(html, /현재 영역별 상태/);
+  assert.match(html, /AI가 본 변화/);
+  assert.match(html, /과거·최근 발화 보기/);
+  assert.match(html, /AI 다음 학습 제안/);
   assert.doesNotMatch(html, /<svg\b/);
   assert.doesNotMatch(html, /diagnostic-chart/);
 });

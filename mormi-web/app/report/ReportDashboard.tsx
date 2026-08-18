@@ -309,6 +309,10 @@ function ConnectedReportDashboard() {
     });
   };
 
+  if (loadState === "ready" && report) {
+    return <NumericReportPreview key={`${report.learner.learner_id}:${report.data_range.last_at ?? "current"}`} report={report} />;
+  }
+
   const stateTitle = loadState === "loading"
     ? "리포트 데이터를 불러오는 중입니다"
     : loadState === "auth"
