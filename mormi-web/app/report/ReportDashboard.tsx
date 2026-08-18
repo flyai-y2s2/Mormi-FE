@@ -10,8 +10,8 @@ import {
   type DiagnosticReportDto,
 } from "../api-client";
 import { DomainDetail } from "./DomainDetail";
+import { NumericReportPreview } from "./NumericReportPreview";
 import { ReportTrendChart } from "./ReportTrendChart";
-import { completeDiagnosticReportExample, completeSpeechEvidenceByDomain } from "./complete-report-example";
 import {
   chooseDiagnosticSelection,
   diagnosticCategoryStatus,
@@ -24,7 +24,6 @@ import {
 } from "./diagnostic-report-model";
 import {
   evidenceLinksForRefs,
-  isCompleteReportExample,
   modeForTabKey,
   reportRequestAccepted,
   selectionAfterRefresh,
@@ -106,12 +105,16 @@ function EvidenceLinks({
   );
 }
 
-export function ReportDashboard() {
+export function ReportDashboard({ completeExample = false }: { completeExample?: boolean }) {
+  if (completeExample) return <NumericReportPreview />;
+  return <ConnectedReportDashboard />;
+}
+
+function ConnectedReportDashboard() {
   const [report, setReport] = useState<DiagnosticReportDto | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [notice, setNotice] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [exampleMode, setExampleMode] = useState(false);
   const [mode, setMode] = useState<DiagnosticMode>("HOME");
   const [selectedDomainId, setSelectedDomainId] = useState("");
   const [expandedDomainId, setExpandedDomainId] = useState<string | null>(null);
@@ -207,22 +210,6 @@ export function ReportDashboard() {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      if (isCompleteReportExample(window.location.search)) {
-        const exampleGroups = groupDiagnosticDomains(completeDiagnosticReportExample);
-        const exampleSelection = chooseDiagnosticSelection(exampleGroups, "HOME", "money-count");
-        const exampleSpeech = Object.fromEntries(Object.entries(completeSpeechEvidenceByDomain).map(
-          ([domainId, evidence]) => [domainId, { state: "ready" as const, evidence }],
-        ));
-        setExampleMode(true);
-        reportRef.current = completeDiagnosticReportExample;
-        setReport(completeDiagnosticReportExample);
-        setMode("HOME");
-        setSelectedDomainId(exampleSelection?.domain_id ?? "money-count");
-        setExpandedDomainId("money-count");
-        setSpeechByDomain(exampleSpeech);
-        setLoadState("ready");
-        return;
-      }
       if (!readStoredLearner()) {
         setLoadState("auth");
         setNotice("학습 화면에서 학습자로 로그인한 뒤 다시 열어 주세요.");
@@ -266,16 +253,6 @@ export function ReportDashboard() {
 
   const loadSpeechEvidence = (domain: DiagnosticDomainGroup) => {
     const domainId = domain.domain_id;
-    if (exampleMode) {
-      const evidence = completeSpeechEvidenceByDomain[domainId];
-      setSpeechByDomain((current) => ({
-        ...current,
-        [domainId]: evidence
-          ? { state: "ready", evidence }
-          : { state: "ready", evidence: { available: false, domain_id: domainId, verified_elements: [], message: "이 예시 영역에는 발화 비교가 없습니다." } },
-      }));
-      return;
-    }
     const cached = speechByDomain[domainId];
     if (speechLoadDecision(cached) === "reuse") return;
     speechControllersRef.current.get(domainId)?.abort();
@@ -347,7 +324,7 @@ export function ReportDashboard() {
         <section className="diagnostic-hero" aria-labelledby="report-title">
           <div>
             {report && (
-              <p className="diagnostic-learner-name"><span>학습자</span><strong>{report.learner.display_name}</strong>{exampleMode && <em>예시 데이터</em>}</p>
+              <p className="diagnostic-learner-name"><span>학습자</span><strong>{report.learner.display_name}</strong></p>
             )}
             <h1 id="report-title">개인 진단 리포트</h1>
             <p>전체 학습 기록에서 현재 상태와 변화의 근거를 함께 확인합니다.</p>
@@ -358,7 +335,7 @@ export function ReportDashboard() {
               <div><dt>누적 완료</dt><dd>{report ? `${totalCompleted}회` : "—"}</dd></div>
               <div><dt>마지막 학습 기록</dt><dd>{report ? formatDate(report.data_range.last_at) : "—"}</dd></div>
             </dl>
-            {loadState === "ready" && report && !exampleMode && (
+            {loadState === "ready" && report && (
               <button className="diagnostic-refresh" type="button" onClick={() => void loadReport()} disabled={refreshing}>
                 {refreshing ? "새로 계산 중…" : "새로 계산"}
               </button>

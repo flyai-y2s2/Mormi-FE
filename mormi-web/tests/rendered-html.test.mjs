@@ -356,6 +356,30 @@ test("server-renders the individual diagnostic report shell", async () => {
   assert.doesNotMatch(html, /지갑 잔액|이번 세션 보상|우선순위 높음/);
 });
 
+test("renders the complete example as a numeric diagnostic preview without a chart", async () => {
+  const response = await render("/report?example=complete");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /학습자 김민준/);
+  assert.match(html, /개인 진단 리포트/);
+  assert.match(html, /정답률/);
+  assert.match(html, /86%/);
+  assert.match(html, /정답까지 평균/);
+  assert.match(html, /2\.4회/);
+  assert.match(html, /1\.3회/);
+  assert.match(html, /혼자 말하기/);
+  assert.match(html, /20\/35\/25\/15\/5%/);
+  assert.match(html, /60\/20\/20\/0\/0%/);
+  assert.match(html, /발화 단계 사용 비율/);
+  assert.match(html, /계산·발화 근거 보기/);
+  assert.match(html, /변화 이유/);
+  assert.match(html, /생각의 변화/);
+  assert.match(html, /다음 확인/);
+  assert.doesNotMatch(html, /<svg\b/);
+  assert.doesNotMatch(html, /diagnostic-chart/);
+});
+
 test("diagnostic report renders as one compact Korean A4 document", async () => {
   const [response, css, dashboard, example] = await Promise.all([
     render("/report"),
@@ -375,8 +399,8 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
   assert.match(css, /\.domain-list\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /className="diagnostic-learner-name"[\s\S]*?report\.learner\.display_name/);
   assert.match(dashboard, /<h1 id="report-title">개인 진단 리포트<\/h1>/);
-  assert.match(dashboard, /completeDiagnosticReportExample/);
-  assert.match(dashboard, /예시 데이터/);
+  assert.match(dashboard, /NumericReportPreview/);
+  assert.match(dashboard, /completeExample/);
   assert.match(example, /display_name: "김민준"/);
   assert.doesNotMatch(example, /"(?:메뉴 값 계산하기|거스름돈 받기|줄 서기) · 실생활 수행"/);
 });
