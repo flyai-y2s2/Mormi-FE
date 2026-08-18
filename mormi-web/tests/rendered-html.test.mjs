@@ -253,7 +253,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
   assert.match(css, /\.today-badges > span \{/);
-  assert.match(css, /\.note-content h2 em \{ color: #6256a8/);
+  assert.match(css, /\.note-content h2 em \{ color:#4f438f;[^}]*font-weight:700/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
   // 도움 카드와 입력 문구는 AI 계약을 그대로 사용하며 FE가 별도 질문을 만들지 않는다.
   assert.doesNotMatch(app, /생각과 이유를 직접 알려줘|보기에서 하나를 골라 알려줘|도움 카드와 같이 해보자/);
