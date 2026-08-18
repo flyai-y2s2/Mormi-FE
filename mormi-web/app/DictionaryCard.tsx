@@ -26,6 +26,8 @@ function numericEntries(data: Record<string, unknown>) {
 const visualLabels: Record<string, string> = {
   left: "왼쪽",
   right: "오른쪽",
+  left_count: "왼쪽",
+  right_count: "오른쪽",
   total: "모두",
   count: "개수",
   filled: "채운 수",
