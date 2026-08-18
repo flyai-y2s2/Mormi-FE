@@ -54,8 +54,6 @@ export type Session = {
   oneWordCorrect: string;
   oneWordOptions: string[];
   hint: string;
-  dictionaryLines: string[];
-  dictionaryProblem: Problem;
   pointPrompt: string;
   pointOptions: string[];
   pointCorrect: string;
@@ -99,7 +97,6 @@ export const sessions: Session[] = [
     sentenceWords: ["더하기는", "두", "무리를", "합치는", "거야", "빼는"], targetSentence: ["더하기는", "두", "무리를", "합치는", "거야"],
     fillBefore: "더하기는 두 무리를", fillAfter: "거야", fillCorrect: "합치는", fillOptions: ["합치는", "빼는", "나누는"],
     oneWordPrompt: "더하기는 무엇을 할까?", oneWordCorrect: "합치기", oneWordOptions: ["합치기", "덜기", "가리기"], hint: "두 상자를 한 상자에 담아 봐.",
-    dictionaryLines: ["더하기는 두 무리를 한데 모으는 일이야.", "모두 세면 답을 찾을 수 있어."], dictionaryProblem: mathProblem(3,2,"+",[5,4,6]),
     pointPrompt: "2개와 3개를 모은 수를 가리켜 줘", pointOptions: ["4", "5", "6"], pointCorrect: "5",
     homework: [moneyProblem([300,200],[500,400,600],undefined,["연필","지우개"]), mathProblem(4,3,"+",[7,6,8])], misconception: "두 무리 중 한쪽만 세거나 마지막 수를 빠뜨림",
   },
@@ -112,7 +109,6 @@ export const sessions: Session[] = [
     sentenceWords: ["같은", "자리끼리", "더해야", "해", "다른", "빼야"], targetSentence: ["같은", "자리끼리", "더해야", "해"],
     fillBefore: "덧셈은 같은", fillAfter: "더해", fillCorrect: "자리끼리", fillOptions: ["자리끼리", "색끼리", "마음대로"],
     oneWordPrompt: "무엇끼리 더할까?", oneWordCorrect: "같은 자리", oneWordOptions: ["같은 자리", "다른 자리", "큰 수만"], hint: "일은 일 아래, 십은 십 아래에 놓아 봐.",
-    dictionaryLines: ["일의 자리는 일의 자리끼리 더해.", "십의 자리는 십의 자리끼리 더해."], dictionaryProblem: mathProblem(21,6,"+",[27,26,28]),
     pointPrompt: "12 + 5의 답을 가리켜 줘", pointOptions: ["16", "17", "18"], pointCorrect: "17",
     homework: [moneyProblem([1200,500],[1700,1600,1800],undefined,["공책","연필"]), mathProblem(32,6,"+",[38,37,39])], misconception: "서로 다른 자릿수를 더하거나 수를 이어 붙임",
   },
@@ -125,7 +121,6 @@ export const sessions: Session[] = [
     sentenceWords: ["10을", "먼저", "만들고", "남은", "수를", "더해", "빼"], targetSentence: ["10을", "먼저", "만들고", "남은", "수를", "더해"],
     fillBefore: "10을 먼저 만들고", fillAfter: "수를 더해", fillCorrect: "남은", fillOptions: ["남은", "처음", "큰"],
     oneWordPrompt: "무엇을 먼저 만들까?", oneWordCorrect: "10", oneWordOptions: ["10", "5", "20"], hint: "8에게 2를 주면 10, 5에서 2를 주고 3이 남아.",
-    dictionaryLines: ["10이 되도록 필요한 수를 먼저 옮겨.", "10에 남은 수를 더하면 돼."], dictionaryProblem: mathProblem(8,4,"+",[12,11,13]),
     pointPrompt: "8 + 5의 답을 가리켜 줘", pointOptions: ["12", "13", "14"], pointCorrect: "13",
     homework: [moneyProblem([800,500],[1300,1200,1400],undefined,["빵","우유"]), mathProblem(19,4,"+",[23,22,24])], misconception: "10을 만든 뒤 옮겨 쓴 수를 다시 더함",
   },
@@ -138,7 +133,6 @@ export const sessions: Session[] = [
     sentenceWords: ["뺄셈은", "덜어", "내고", "남은", "수를", "찾아", "모아"], targetSentence: ["뺄셈은", "덜어", "내고", "남은", "수를", "찾아"],
     fillBefore: "뺄셈은 덜어 내고", fillAfter: "수를 찾아", fillCorrect: "남은", fillOptions: ["남은", "모든", "처음"],
     oneWordPrompt: "덜어 낸 뒤 무엇을 셀까?", oneWordCorrect: "남은 것", oneWordOptions: ["남은 것", "가져간 것만", "처음 것"], hint: "손가락으로 덜어 낼 만큼 가려 봐.",
-    dictionaryLines: ["뺄셈은 있던 것에서 일부를 덜어 내는 일이야.", "가리지 않은 남은 것을 세어."], dictionaryProblem: mathProblem(6,2,"-",[4,3,5]),
     pointPrompt: "5 - 2의 답을 가리켜 줘", pointOptions: ["2", "3", "4"], pointCorrect: "3",
     homework: [moneyProblem([700],[400,300,500],1000,["간식"]), mathProblem(8,3,"-",[5,4,6])], misconception: "빼야 할 수와 남은 수를 혼동함",
   },
@@ -151,7 +145,6 @@ export const sessions: Session[] = [
     sentenceWords: ["뺄셈도", "같은", "자리끼리", "계산해", "다른", "더해"], targetSentence: ["뺄셈도", "같은", "자리끼리", "계산해"],
     fillBefore: "뺄셈도 같은", fillAfter: "계산해", fillCorrect: "자리끼리", fillOptions: ["자리끼리", "색끼리", "큰 수만"],
     oneWordPrompt: "무엇끼리 뺄까?", oneWordCorrect: "같은 자리", oneWordOptions: ["같은 자리", "다른 자리", "작은 수만"], hint: "일의 자리부터 같은 줄에 놓아 봐.",
-    dictionaryLines: ["일의 자리끼리 먼저 빼.", "그다음 십의 자리끼리 빼."], dictionaryProblem: mathProblem(37,5,"-",[32,31,33]),
     pointPrompt: "17 - 5의 답을 가리켜 줘", pointOptions: ["11", "12", "13"], pointCorrect: "12",
     homework: [moneyProblem([2300],[2700,2600,2800],5000,["장난감"]), mathProblem(48,16,"-",[32,31,33])], misconception: "큰 자리에서 작은 수 전체를 빼려고 함",
   },
@@ -164,7 +157,6 @@ export const sessions: Session[] = [
     sentenceWords: ["일이", "모자라면", "십", "하나를", "10개로", "바꿔", "더해"], targetSentence: ["일이", "모자라면", "십", "하나를", "10개로", "바꿔"],
     fillBefore: "일이 모자라면 십 하나를", fillAfter: "바꿔", fillCorrect: "10개로", fillOptions: ["10개로", "1개로", "없게"],
     oneWordPrompt: "십 하나는 낱개 몇 개?", oneWordCorrect: "10개", oneWordOptions: ["10개", "1개", "5개"], hint: "십 막대 하나를 낱개 열 개로 풀어 봐.",
-    dictionaryLines: ["일의 자리에서 바로 뺄 수 없으면 십 하나를 가져와.", "십 하나는 낱개 10개와 같아."], dictionaryProblem: mathProblem(12,4,"-",[8,7,9]),
     pointPrompt: "12 - 5의 답을 가리켜 줘", pointOptions: ["6", "7", "8"], pointCorrect: "7",
     homework: [moneyProblem([3800],[1200,1100,1300],5000,["색연필"]), mathProblem(31,7,"-",[24,23,25])], misconception: "받아내림 때 작은 수에서 큰 수를 거꾸로 뺌",
   },
@@ -177,7 +169,6 @@ export const sessions: Session[] = [
     sentenceWords: ["돈은", "적힌", "값을", "모두", "더해서", "세어", "개수만"], targetSentence: ["돈은", "적힌", "값을", "모두", "더해서", "세어"],
     fillBefore: "돈은 적힌 값을 모두", fillAfter: "세어", fillCorrect: "더해서", fillOptions: ["더해서", "빼서", "가려서"],
     oneWordPrompt: "돈의 무엇을 볼까?", oneWordCorrect: "값", oneWordOptions: ["값", "색", "크기"], hint: "큰 값부터 말하며 다음 돈을 이어 더해 봐.",
-    dictionaryLines: ["동전과 지폐의 개수가 아니라 적힌 값을 봐.", "큰 값부터 차례로 더하면 쉬워."], dictionaryProblem: moneyProblem([1000,500],[1500,1400,1600]),
     pointPrompt: "1,000원과 500원을 합친 돈을 가리켜 줘", pointOptions: ["1,050원", "1,500원", "5,000원"], pointCorrect: "1,500원",
     homework: [moneyProblem([1000,500,100],[1600,1500,1700]), moneyProblem([5000,1000,500],[6500,6000,7000])], misconception: "돈의 개수나 0의 개수만 보고 금액을 판단함",
   },
@@ -190,7 +181,6 @@ export const sessions: Session[] = [
     sentenceWords: ["두", "물건을", "사면", "두", "값을", "더해", "빼"], targetSentence: ["두", "물건을", "사면", "두", "값을", "더해"],
     fillBefore: "두 물건을 사면 두 값을", fillAfter: "", fillCorrect: "더해", fillOptions: ["더해", "빼", "그대로 둬"],
     oneWordPrompt: "두 물건값은 어떻게 할까?", oneWordCorrect: "더하기", oneWordOptions: ["더하기", "빼기", "세지 않기"], hint: "첫 물건값에 둘째 물건값을 이어 더해 봐.",
-    dictionaryLines: ["여러 물건을 함께 사면 물건값을 모두 더해.", "원을 빠뜨리지 않고 같은 자리끼리 계산해."], dictionaryProblem: moneyProblem([800,600],[1400,1300,1500],undefined,["빵","우유"]),
     pointPrompt: "700원과 500원을 더한 값을 가리켜 줘", pointOptions: ["200원", "1,200원", "7,500원"], pointCorrect: "1,200원",
     homework: [moneyProblem([1800,1200],[3000,2900,3100],undefined,["주스","빵"]), moneyProblem([2500,1500],[4000,3900,4100],undefined,["커피","주스"] )], misconception: "두 가격 중 큰 값만 답하거나 0을 빠뜨림",
   },
@@ -203,7 +193,6 @@ export const sessions: Session[] = [
     sentenceWords: ["남는", "돈은", "낸", "돈에서", "물건값을", "빼", "더해"], targetSentence: ["남는", "돈은", "낸", "돈에서", "물건값을", "빼"],
     fillBefore: "남는 돈은 낸 돈에서 물건값을", fillAfter: "", fillCorrect: "빼", fillOptions: ["빼", "더해", "두 번 세어"],
     oneWordPrompt: "남는 돈은 어떤 계산?", oneWordCorrect: "빼기", oneWordOptions: ["빼기", "더하기", "곱하기"], hint: "낸 돈에서 물건값만큼 덜어 낸다고 생각해 봐.",
-    dictionaryLines: ["가진 돈이 물건값보다 크거나 같아야 살 수 있어.", "거스름돈은 낸 돈에서 물건값을 빼."], dictionaryProblem: moneyProblem([3500],[1500,1400,1600],5000,["책"]),
     pointPrompt: "5,000원에서 3,200원을 뺀 돈을 가리켜 줘", pointOptions: ["1,800원", "2,200원", "8,200원"], pointCorrect: "1,800원",
     homework: [moneyProblem([4600],[400,300,500],5000,["커피 세트"]), moneyProblem([7300],[2700,2600,2800],10000,["카페 선물세트"] )], misconception: "거스름돈에서 물건값과 낸 돈의 순서를 바꿈",
   },
@@ -216,7 +205,6 @@ export const sessions: Session[] = [
     sentenceWords: ["물건값을", "먼저", "더하고", "낸", "돈에서", "빼", "두 번"], targetSentence: ["물건값을", "먼저", "더하고", "낸", "돈에서", "빼"],
     fillBefore: "물건값을 먼저", fillAfter: "낸 돈에서 빼", fillCorrect: "더하고", fillOptions: ["더하고", "가리고", "두 번 빼고"],
     oneWordPrompt: "물건값은 먼저 어떤 계산?", oneWordCorrect: "더하기", oneWordOptions: ["더하기", "빼기", "세지 않기"], hint: "1단계: 물건값 모두 더하기. 2단계: 낸 돈에서 빼기.",
-    dictionaryLines: ["여러 물건값을 먼저 모두 더해.", "그 합계를 낸 돈에서 한 번 빼면 남는 돈이야."], dictionaryProblem: moneyProblem([1200,800],[3000,2900,3100],5000,["우유","빵"]),
     pointPrompt: "1,200원과 800원을 사고 5,000원을 내면?", pointOptions: ["2,000원", "3,000원", "7,000원"], pointCorrect: "3,000원",
     homework: [moneyProblem([1800,1200],[2000,1900,2100],5000,["주스","빵"]), moneyProblem([3500,1500],[5000,4900,5100],10000,["커피","빵"] )], misconception: "여러 물건값을 합치지 않고 하나의 가격만 뺌",
   },
@@ -229,7 +217,6 @@ export const sessions: Session[] = [
     sentenceWords: ["긴", "바늘이", "6이면", "30분", "이야", "6분"], targetSentence: ["긴", "바늘이", "6이면", "30분", "이야"],
     fillBefore: "긴 바늘이 6이면", fillAfter: "", fillCorrect: "30분", fillOptions: ["30분", "6분", "정각"],
     oneWordPrompt: "긴 바늘이 6이면?", oneWordCorrect: "30분", oneWordOptions: ["30분", "6분", "정각"], hint: "긴 바늘은 숫자 한 칸마다 5분씩 가.",
-    dictionaryLines: ["짧은 바늘은 몇 시인지 알려 줘.", "긴 바늘이 12면 정각, 6이면 30분이야."], dictionaryProblem: clockProblem(7,30,["7시 30분","7시 6분","6시 7분"]),
     pointPrompt: "긴 바늘이 30분일 때 어디를 가리킬까?", pointOptions: ["12", "3", "6"], pointCorrect: "6", pointClockMarker: 6,
     homework: [clockProblem(4,30,["4시 30분","4시 6분","6시 20분"]), clockProblem(8,0,["8시","8시 12분","12시 8분"])], misconception: "긴 바늘 숫자를 그대로 분으로 읽음",
   },
@@ -242,7 +229,6 @@ export const sessions: Session[] = [
     sentenceWords: ["긴", "바늘이", "3이면", "15분", "이야", "3분"], targetSentence: ["긴", "바늘이", "3이면", "15분", "이야"],
     fillBefore: "긴 바늘이 3이면", fillAfter: "", fillCorrect: "15분", fillOptions: ["15분", "3분", "30분"],
     oneWordPrompt: "긴 바늘이 3이면?", oneWordCorrect: "15분", oneWordOptions: ["15분", "3분", "45분"], hint: "5, 10, 15처럼 숫자 칸마다 5분씩 세어 봐.",
-    dictionaryLines: ["긴 바늘은 한 칸마다 5분씩 가.", "3은 15분, 9는 45분이야."], dictionaryProblem: clockProblem(2,15,["2시 15분","2시 3분","3시 10분"]),
     pointPrompt: "긴 바늘이 15분일 때 어디를 가리킬까?", pointOptions: ["12", "3", "6"], pointCorrect: "3", pointClockMarker: 3,
     homework: [clockProblem(5,15,["5시 15분","5시 3분","3시 25분"]), clockProblem(7,45,["7시 45분","7시 9분","9시 35분"])], misconception: "긴 바늘 숫자 3과 9를 그대로 분으로 읽음",
   },
