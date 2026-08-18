@@ -1073,8 +1073,9 @@ function Onboarding({ onSignup, onLogin }: {
         <span>모르미</span>
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
-        <button className="primary-button" onClick={() => goTo("signup")}>처음 왔어요 <span className="button-arrow" /></button>
-        <button type="button" className="onboarding-secondary" onClick={() => goTo("login")}>전에 하던 게 있어요</button>
+        {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}
+        <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>
+        <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 왔어요</button>
       </div>
     </section>
   );
