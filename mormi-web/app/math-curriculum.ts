@@ -64,8 +64,6 @@ function lesson(spec: LessonSpec): Session {
     oneWordCorrect: spec.key,
     oneWordOptions: spec.keyOptions,
     hint: spec.hint,
-    dictionaryLines: [learnedLine, spec.hint],
-    dictionaryProblem: spec.drills[0],
     pointPrompt: spec.drills[0].prompt,
     pointOptions: spec.drills[0].answers,
     pointCorrect: spec.drills[0].correct,

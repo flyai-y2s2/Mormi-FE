@@ -16,6 +16,7 @@ import {
 } from "./api-client";
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
 import { CafeJourney } from "./CafeJourney";
+import { DictionaryModal } from "./DictionaryCard";
 import { dialogueErrorMessage } from "./dialogue-errors";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
@@ -842,23 +843,6 @@ function SpeechBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="speech-bubble">
       <div>{children}</div>
-    </div>
-  );
-}
-
-function Dictionary({ onClose, session }: { onClose: () => void; session: Session }) {
-  return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="궁금해 사전">
-      <div className="dictionary-card">
-        <div className="dictionary-tab"><UiIcon name="book" size="small" /> 궁금해 사전</div>
-        <div className="dictionary-visual">
-          <ProblemCard problem={session.dictionaryProblem} small />
-          <div className="dictionary-lines">
-            {session.dictionaryLines.map((line, index) => <p key={line}><i>{index + 1}</i>{line}</p>)}
-          </div>
-        </div>
-        <button className="primary-button primary-button--purple" onClick={onClose}>다 읽었어!</button>
-      </div>
     </div>
   );
 }
@@ -2171,7 +2155,12 @@ export function MoramiApp() {
         </section>
       )}
 
-      {dictionaryOpen && <Dictionary session={activeSession} onClose={() => setDictionaryOpen(false)} />}
+      {dictionaryOpen && <DictionaryModal
+        conversationId={stage === "teach" || stage === "teachReward" || stage === "wrap" ? mormiConversation?.conversation_id : null}
+        learningSessionId={learningSessionId.current}
+        expectedContentVersion={mormiConversation?.turn.dictionary_ref?.content_version}
+        onClose={() => setDictionaryOpen(false)}
+      />}
     </main>
   );
 }

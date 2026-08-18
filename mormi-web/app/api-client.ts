@@ -187,6 +187,50 @@ export type ThemeView = {
   remaining_session_ids: string[];
 };
 
+export type DictionaryEquation = {
+  operator: "add" | "subtract" | "multiply" | "divide";
+  operands: [number, number];
+  result: number;
+  expression: string;
+  operand_fact_refs: [string, string];
+  result_fact_ref: string;
+};
+
+export type DictionaryCardPayload = {
+  card_id: string;
+  curriculum_session_id: string;
+  schema_version: number;
+  content_version: number;
+  locale: "ko-KR";
+  title: string;
+  learning_goal: string;
+  concept: { lines: string[] };
+  example: {
+    lines: string[];
+    facts: Record<string, unknown>;
+    equation: DictionaryEquation | null;
+  };
+  visual: {
+    type: string;
+    data: Record<string, unknown>;
+    fact_refs: string[];
+    alt_text: string;
+  };
+};
+
+/** AI가 고정한 카드 스냅샷. reference와 card 버전이 같을 때만 화면에 표시한다. */
+export type DictionaryCardEnvelope = {
+  catalog_version: number;
+  reference: {
+    card_id: string;
+    curriculum_session_id: string;
+    schema_version: number;
+    content_version: number;
+    content_hash: string;
+  };
+  card: DictionaryCardPayload;
+};
+
 export type RetentionPolicy = "no_raw" | "30_days" | "90_days" | "permanent";
 
 export type LearnerConsent = {
@@ -385,6 +429,17 @@ export const api = {
   /** 새로고침 복구용. 시도 전체가 함께 온다. */
   getSession(sessionId: string) {
     return apiRequest<SessionView>(`/v1/learning-sessions/${sessionId}`);
+  },
+
+  dictionaryForLearningSession(sessionId: string, expectedContentVersion?: number) {
+    const query = expectedContentVersion === undefined
+      ? ""
+      : `?expected_content_version=${encodeURIComponent(String(expectedContentVersion))}`;
+    return apiRequest<DictionaryCardEnvelope>(`/v1/learning-sessions/${sessionId}/dictionary-card${query}`);
+  },
+
+  dictionaryForConversation(conversationId: string) {
+    return apiRequest<DictionaryCardEnvelope>(`/v1/dialogue/conversations/${conversationId}/dictionary-card`);
   },
 
   getCafeVisit(visitId: string) {

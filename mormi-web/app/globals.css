@@ -1175,7 +1175,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .cafe-talk-back:hover{background:#effaf4;transform:translateY(-1px)}
 .cafe-talk-note{
   padding:clamp(7px,1vh,10px) 15px;display:flex;align-items:center;gap:7px;
-  border-radius:999px;color:#62509d;background:#f0eaff;
+  border:0;border-radius:999px;color:#62509d;background:#f0eaff;cursor:pointer;
   box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);
   font-size:clamp(12px,1.5vh,14px);font-weight:950
 }
@@ -1476,4 +1476,85 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 @media (max-width:560px) {
   .cafe-talk-menu__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* ── 궁금해 사전: BE/AI 스냅샷 전용 공통 UI ───────────────────────
+   집과 카페가 같은 카드 계약과 같은 화면을 쓴다. 서버 응답을 기다리거나
+   불러오지 못한 경우에도 이전 세션의 내용을 남겨 보여 주지 않는다. */
+.dictionary-api-backdrop{
+  z-index:120;display:grid;place-items:center;padding:clamp(12px,3vw,32px);
+  background:rgba(35,48,42,.4);backdrop-filter:blur(7px)
+}
+.dictionary-api-modal{
+  position:relative;width:min(760px,100%);max-height:min(90svh,840px);overflow:auto;
+  padding:clamp(26px,4vw,48px);border:5px solid #cfbff5;border-radius:clamp(24px,4vw,38px);
+  background:#fffdf7;box-shadow:0 12px 0 #bca7ec,0 28px 70px rgba(42,36,67,.24)
+}
+.dictionary-api-close{
+  position:absolute;z-index:2;top:14px;right:16px;width:44px;height:44px;border:0;border-radius:50%;
+  color:#6755a5;background:#f0eaff;cursor:pointer;font-size:30px;font-weight:900;line-height:1
+}
+.dictionary-api-close:hover{background:#e6dcff;transform:translateY(-1px)}
+.dictionary-api-card{display:flex;flex-direction:column;align-items:center;text-align:center}
+.dictionary-api-kicker{
+  margin:0 0 10px;padding:8px 16px;border-radius:999px;color:#6a55aa;background:#eee7ff;
+  font-size:clamp(14px,2vw,18px);font-weight:950
+}
+.dictionary-api-card h2{
+  max-width:620px;margin:0 48px 22px;color:#193d31;font-size:clamp(28px,4.5vw,48px);
+  line-height:1.18;word-break:keep-all
+}
+.dictionary-api-dots{
+  width:min(430px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,2vw,15px);
+  margin:4px auto 26px;padding:clamp(16px,3vw,25px);border:6px solid #587f70;border-radius:28px;background:#fff
+}
+.dictionary-api-dots i{
+  aspect-ratio:1;border:4px solid #d8e5df;border-radius:50%;background:#fbfdfc
+}
+.dictionary-api-dots i.is-filled{
+  border-color:#53bc8d;background:radial-gradient(circle at 35% 30%,#b4f0d2,#51bf8c 67%,#279766)
+}
+.dictionary-api-equation{
+  margin:4px auto 26px;padding:18px 28px;border:4px solid #7acfa7;border-radius:22px;
+  color:#215443;background:#effbf5;font-size:clamp(30px,6vw,56px);font-weight:950
+}
+.dictionary-api-values{
+  width:min(560px,100%);display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;
+  margin:4px auto 26px
+}
+.dictionary-api-values span{
+  min-height:112px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:4px solid #d2e9dd;border-radius:22px;background:#fff;box-shadow:0 6px 0 #c7ded2
+}
+.dictionary-api-values small{color:#6b7e75;font-size:15px;font-weight:800}
+.dictionary-api-values strong{margin-top:5px;color:#215443;font-size:clamp(24px,4vw,34px)}
+.dictionary-api-alt{margin:0 auto 22px;color:#51675d;font-size:18px;font-weight:750}
+.dictionary-api-copy{width:100%;display:grid;gap:10px}
+.dictionary-api-copy p{
+  margin:0;padding:15px 20px;border-radius:17px;color:#244a3c;background:#eaf9f1;
+  font-size:clamp(17px,2.4vw,22px);font-weight:850;line-height:1.45;word-break:keep-all
+}
+.dictionary-api-copy p.is-example{color:#5d4d8f;background:#f3efff}
+.dictionary-api-state{
+  min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center
+}
+.dictionary-api-state h2{margin:18px 0 7px;color:#244a3c;font-size:clamp(23px,4vw,34px);word-break:keep-all}
+.dictionary-api-state p{margin:0;color:#74857d;font-size:17px;font-weight:700}
+.dictionary-api-state button{
+  margin-top:22px;padding:13px 22px;border:0;border-radius:15px;color:#fff;background:#43ad7e;
+  cursor:pointer;font-size:17px;font-weight:900;box-shadow:0 5px 0 #2b8d64
+}
+.dictionary-api-spinner{
+  width:50px;height:50px;border:7px solid #e6defa;border-top-color:#7b63c5;border-radius:50%;
+  animation:dictionaryApiSpin .8s linear infinite
+}
+@keyframes dictionaryApiSpin{to{transform:rotate(360deg)}}
+.dictionary-api-done{display:block;width:min(320px,100%);margin:24px auto 0}
+
+@media (max-width:600px){
+  .dictionary-api-backdrop{align-items:end;padding:8px}
+  .dictionary-api-modal{max-height:92svh;padding:24px 17px 28px;border-radius:27px}
+  .dictionary-api-card h2{margin-left:32px;margin-right:32px}
+  .dictionary-api-values{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dictionary-api-values span{min-height:94px}
 }

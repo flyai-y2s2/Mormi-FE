@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiMood, MormiResponseType } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 
@@ -54,11 +55,12 @@ export function CafeTalkStage({
   children: ReactNode;
 }) {
   const mood = conversation?.turn.mormi.mood;
+  const [dictionaryOpen, setDictionaryOpen] = useState(false);
   return (
     <main className="figma-cafe-panel cafe-talk">
       <div className="cafe-talk-toolbar">
         <button className="cafe-talk-back" onClick={onBack}><span aria-hidden="true">←</span> 이전으로</button>
-        <span className="cafe-talk-note" aria-label="궁금해 사전"><span aria-hidden="true">▤</span> 궁금해 사전</span>
+        {conversation?.conversation_id && <button type="button" className="cafe-talk-note" aria-label="궁금해 사전 열기" onClick={() => setDictionaryOpen(true)}><span aria-hidden="true">▤</span> 궁금해 사전</button>}
       </div>
 
       <section className="cafe-talk-flow">
@@ -81,6 +83,7 @@ export function CafeTalkStage({
           />
         </aside>
       </section>
+      {dictionaryOpen && conversation?.conversation_id && <DictionaryModal conversationId={conversation.conversation_id} onClose={() => setDictionaryOpen(false)} />}
     </main>
   );
 }
