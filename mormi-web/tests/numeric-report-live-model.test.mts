@@ -56,6 +56,50 @@ test("maps live evidence without inventing attempts or speech metrics", () => {
   assert.match(money.thinkingChange, /발화 근거가 부족/);
 });
 
+test("recognizes the BE 반복학습 and 모르미 가르치기 labels without dropping teaching evidence", () => {
+  const actualLabels: DiagnosticReportDto = {
+    ...report,
+    modes: [
+      {
+        mode: "HOME",
+        domains: [
+          { ...report.modes[0]!.domains[0]!, label: "돈 세기 · 반복학습" },
+          {
+            ...report.modes[0]!.domains[0]!,
+            label: "돈 세기 · 모르미 가르치기",
+            total_count: 2,
+            recent_count: 2,
+            points: [40, 80].map((score, index) => ({
+              evidence_id: `teach-${index}`,
+              label: "모르미 가르치기",
+              occurred_at: `2026-08-18T18:0${index}:00Z`,
+              independent_score: score,
+              supported_score: score,
+              recent: true,
+            })),
+          },
+        ],
+      },
+      { mode: "LIFE", domains: [] },
+    ],
+  };
+
+  const model = buildNumericLiveReport(actualLabels);
+  const money = model.domains.HOME[0]!;
+  assert.deepEqual(money.metrics, [
+    ["정답률", "84%", "72%"],
+    ["정답까지 평균", "—", "—"],
+    ["모르미 가르치기", "60%", "60%"],
+  ]);
+  assert.equal(money.ladderStart, "L2");
+  assert.deepEqual(model.weeklySummary, {
+    completedUnits: 13,
+    drillAttempts: 46,
+    teachConversations: 0,
+    lifeVisits: 1,
+  });
+});
+
 test("keeps one-record life evidence in collecting state", () => {
   const model = buildNumericLiveReport(report);
   const life = model.domains.LIFE[0];
@@ -63,7 +107,7 @@ test("keeps one-record life evidence in collecting state", () => {
   assert.equal(life.metrics[0][2], "100%");
   assert.equal(life.status, "collecting");
   assert.equal(life.repeatCount, 2);
-  assert.equal(life.changeReason, "최근 정답률은 100%예요. 비교할 기록이 더 필요해요.");
+  assert.equal(life.changeReason, "비교할 기록이 더 필요해요.");
 });
 
 test("keeps completed HOME-only evidence in HOME without inventing LIFE domains", () => {
@@ -103,4 +147,7 @@ test("complete example evidence stays inside its displayed selected week", () =>
       }
     }
   }
+  const homeLabels = completeDiagnosticReportExample.modes.find((mode) => mode.mode === "HOME")!.domains.map((domain) => domain.label);
+  assert.ok(homeLabels.some((label) => label.endsWith(" · 반복학습")));
+  assert.ok(homeLabels.some((label) => label.endsWith(" · 모르미 가르치기")));
 });

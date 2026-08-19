@@ -102,6 +102,19 @@ export function NumericReportPreview({
   }
 
   const recentMetrics = Object.fromEntries(selectedDomain.metrics.map(([label, , recent]) => [label, recent]));
+  const summaryValues = liveModel
+    ? [
+      ["완료 단원", liveModel.weeklySummary.completedUnits, "이번 주 완료"],
+      ["반복학습", liveModel.weeklySummary.drillAttempts, "기록"],
+      ["모르미 가르치기", liveModel.weeklySummary.teachConversations, "기록"],
+      ["실생활 수행", liveModel.weeklySummary.lifeVisits, "방문"],
+    ]
+    : [
+      ["정답률", recentMetrics["정답률"], "최근 기록"],
+      ["정답까지", recentMetrics["정답까지 평균"], "평균 시도"],
+      ["모르미 가르치기", recentMetrics["모르미 가르치기"] ?? recentMetrics["혼자 말하기"], "단독 발화"],
+      ["주로 사용", selectedDomain.dominantStage, "발화 단계"],
+    ];
   const rawLadder = selectedDomain.sessionRows.at(-1)?.[2] ?? "—";
   const ladderValues = rawLadder === "—" ? [] : rawLadder.split("/").map((value) => value.endsWith("%") ? value : `${value}%`);
   const ladderPlanLabel = selectedDomain.ladderStart === "기록 필요" ? "발화 기록 먼저" : `${selectedDomain.ladderStart}부터 시작`;
@@ -115,11 +128,11 @@ export function NumericReportPreview({
     <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
     <article className="report-paper numeric-preview" data-report-format="a4">
       <header className="numeric-preview__header"><div><span>학습자</span><strong>{liveModel?.learnerName ?? "김민준"}</strong></div><p className="numeric-preview__document-title">개인 진단 리포트</p><a href="#numeric-next-plan">다음 학습 제안 <span aria-hidden="true">↓</span></a></header>
-      <section className="numeric-preview__section numeric-current" aria-labelledby="numeric-summary-title"><div className="numeric-section-heading"><span>01</span><h2 id="numeric-summary-title">현재 상태</h2></div><div className="numeric-current-story"><div className="numeric-current-story__mark" aria-hidden="true">↗</div><div><span>{selectedDomain.label} · {statusLabels[selectedDomain.status]}</span><strong>{selectedDomain.headline}</strong><p>{selectedDomain.changeReason}</p></div></div><div className="numeric-summary-values"><article><span>정답률</span><strong>{recentMetrics["정답률"]}</strong><small>최근 기록</small></article><article><span>정답까지</span><strong>{recentMetrics["정답까지 평균"]}</strong><small>평균 시도</small></article><article><span>모르미 가르치기</span><strong>{recentMetrics["모르미 가르치기"] ?? recentMetrics["혼자 말하기"]}</strong><small>단독 발화</small></article><article><span>주로 사용</span><strong>{selectedDomain.dominantStage}</strong><small>발화 단계</small></article></div></section>
+      <section className="numeric-preview__section numeric-current" aria-labelledby="numeric-summary-title"><div className="numeric-section-heading"><span>01</span><h2 id="numeric-summary-title">현재 상태</h2></div><div className="numeric-current-story"><div className="numeric-current-story__mark" aria-hidden="true">↗</div><div><span>{selectedDomain.label} · {statusLabels[selectedDomain.status]}</span><strong>{selectedDomain.headline}</strong><p>{selectedDomain.changeReason}</p></div></div><div className="numeric-summary-values">{summaryValues.map(([label, value, detail]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>)}</div></section>
       <section className="numeric-preview__section" aria-labelledby="numeric-trend-title">
         <div className="numeric-section-heading"><span>02</span><h2 id="numeric-trend-title">단원별 결과</h2><div className="numeric-preview-tabs" role="tablist" aria-label="학습 환경 선택">{(Object.keys(modeLabels) as PreviewMode[]).filter((item) => previewDomains[item].length > 0).map((item) => <button key={item} type="button" role="tab" aria-label={modeLabels[item]} aria-selected={activeMode === item} className={activeMode === item ? "is-active" : ""} onClick={() => selectMode(item)}>{modeLabels[item]}</button>)}</div></div>
         {previewDomains.HOME.length === 0 && previewDomains.LIFE.length > 0 && <p className="numeric-home-empty">집 학습에서 이번 주에 완료한 단원이 없습니다.</p>}
-        <div className="numeric-session-comparison" aria-label={`${modeLabels[activeMode]} · ${selectedDomain.label} 과거 전체와 최근 비교`}>{selectedDomain.sessionRows.slice(0, 3).map(([label, past, recent]) => <article key={label}><span>{label.replace("반복학습 ", "").replace("실생활 ", "").replace("혼자 말하기", "모르미 가르치기")}</span><div><small>{past}</small><i aria-hidden="true">→</i><strong>{recent}</strong></div></article>)}</div>
+        <div className="numeric-session-comparison" aria-label={`${modeLabels[activeMode]} · ${selectedDomain.label} 이번 주 전체와 최근 비교`}>{selectedDomain.sessionRows.slice(0, 3).map(([label, past, recent]) => <article key={label}><span>{label.replace("반복학습 ", "").replace("실생활 ", "").replace("혼자 말하기", "모르미 가르치기")}</span><div><small>{past}</small><i aria-hidden="true">→</i><strong>{recent}</strong></div></article>)}</div>
         <div className="numeric-ladder-summary"><div><span>발화 사다리</span><strong>최근 사용 비율</strong></div>{ladderValues.length > 0 ? <div className="numeric-ladder-bars" aria-label={`L4부터 L0까지 ${ladderValues.join(", ")}`}>{ladderValues.map((value, index) => <span key={`${value}-${index}`} style={{ "--share": Number.parseInt(value) || 0 } as CSSProperties}><i>L{4 - index}</i><b>{value}</b></span>)}</div> : <p className="numeric-ladder-empty">발화 단계 기록이 아직 없어요</p>}</div>
         <details className="numeric-level-guide"><summary>발화 단계 L0–L4 보기</summary><ul><li><b>L4</b> 자기 말로 답과 이유 설명</li><li><b>L3</b> 답과 이유를 짧게 나누어 말함</li><li><b>L2</b> 선택지에서 골라 표현</li><li><b>L1</b> 빈칸·수 세기·조작 도움으로 완성</li><li><b>L0</b> 도움 카드와 함께 수행</li></ul><p>표시 비율은 과제마다 마지막으로 성공한 발화 단계입니다.</p></details>
       </section>
@@ -133,9 +146,9 @@ export function NumericReportPreview({
           if (lastAutoRequestedDomainRef.current === selectedDomain.id) return;
           lastAutoRequestedDomainRef.current = selectedDomain.id;
           onRequestSpeech?.(selectedDomain.id);
-        }}><summary>과거·최근 발화 보기</summary><div>{speech?.state === "loading" ? <p>발화 근거를 불러오는 중이에요.</p> : speech?.state === "ready" && speech.evidence.available ? <><p><b>과거</b>{speech.evidence.past.utterance}</p><p><b>최근</b>{speech.evidence.recent.utterance}</p><small>{speech.evidence.change_summary}</small></> : speech?.state === "ready" ? <p>{speech.evidence.message}</p> : speech?.state === "error" ? <p>{speech.message}</p> : <><p><b>과거</b>{selectedDomain.pastUtterance}</p><p><b>최근</b>{selectedDomain.recentUtterance}</p><small>과거 전체 {selectedDomain.historyCount}회 · 최근 {selectedDomain.recentCount}회 기록을 함께 봤어요.</small></>}</div></details></div>
+        }}><summary>과거·최근 발화 보기</summary><div>{speech?.state === "loading" ? <p>발화 근거를 불러오는 중이에요.</p> : speech?.state === "ready" && speech.evidence.available ? <><p><b>과거</b>{speech.evidence.past.utterance}</p><p><b>최근</b>{speech.evidence.recent.utterance}</p><small>{speech.evidence.change_summary}</small></> : speech?.state === "ready" ? <p>{speech.evidence.message}</p> : speech?.state === "error" ? <p>{speech.message}</p> : <><p><b>과거</b>{selectedDomain.pastUtterance}</p><p><b>최근</b>{selectedDomain.recentUtterance}</p><small>이번 주 전체 {selectedDomain.historyCount}회 · 최근 {selectedDomain.recentCount}회 기록을 함께 봤어요.</small></>}</div></details></div>
       </section>
-      <section id="numeric-next-plan" className="numeric-preview__section numeric-next-plan" aria-labelledby="numeric-next-title"><div className="numeric-next-plan__eyebrow"><span aria-hidden="true">✦</span> AI 다음 학습 제안</div><div className="numeric-next-plan__body"><div><h2 id="numeric-next-title">다음은 {selectedDomain.label} 연습이에요</h2><p>{selectedDomain.nextCheck}</p></div><div className="numeric-next-plan__quick"><span><small>반복학습</small><strong>{selectedDomain.label} {selectedDomain.repeatCount}문제</strong></span><span><small>발화 사다리</small><strong>{ladderPlanLabel}</strong></span></div></div><details><summary>다음 세션 계획 확인</summary><div><p><b>시작 단계</b>{ladderPlanDetail}</p><p><b>단계 조절</b>{selectedDomain.ladderRule}</p><p><b>관찰할 점</b>{selectedDomain.nextCheck}</p></div></details></section>
+      <section id="numeric-next-plan" className="numeric-preview__section numeric-next-plan" aria-labelledby="numeric-next-title"><div className="numeric-next-plan__eyebrow"><span aria-hidden="true">✦</span> AI 다음 학습 제안</div><div className="numeric-next-plan__body"><div><h2 id="numeric-next-title">다음은 {selectedDomain.label} 연습이에요</h2><p>{selectedDomain.nextCheck}</p></div><div className="numeric-next-plan__quick"><span><small>반복학습</small><strong>{selectedDomain.label} {selectedDomain.repeatCount}문제</strong></span><span><small>발화 사다리</small><strong>{ladderPlanLabel}</strong></span></div></div><details><summary>다음 단원 계획 확인</summary><div><p><b>시작 단계</b>{ladderPlanDetail}</p><p><b>단계 조절</b>{selectedDomain.ladderRule}</p><p><b>관찰할 점</b>{selectedDomain.nextCheck}</p></div></details></section>
     </article>
   </main>;
 }

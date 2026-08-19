@@ -56,8 +56,8 @@ test("hydrates LIFE values and binds the comparison to the selected category", a
     assert.equal(button("실생활 · 응용").getAttribute("aria-selected"), "true");
     assert.equal(categoryButton("거스름돈 받기").getAttribute("aria-pressed"), "true");
     assert.equal(dom.container.querySelector(".numeric-domain-detail").getAttribute("aria-label"), "거스름돈 받기 상세");
-    assert.match(dom.container.querySelector(".numeric-evidence").textContent, /과거 전체 8회 · 최근 3회/);
-    assert.equal(dom.container.querySelector(".numeric-session-comparison").getAttribute("aria-label"), "실생활 · 응용 · 거스름돈 받기 과거 전체와 최근 비교");
+    assert.match(dom.container.querySelector(".numeric-evidence").textContent, /이번 주 전체 8회 · 최근 3회/);
+    assert.equal(dom.container.querySelector(".numeric-session-comparison").getAttribute("aria-label"), "실생활 · 응용 · 거스름돈 받기 이번 주 전체와 최근 비교");
     const comparison = dom.container.querySelector(".numeric-session-comparison").textContent;
     for (const value of ["45%", "68%", "3.0회", "2.0회", "10%", "30%"])
       assert.match(comparison, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -101,6 +101,26 @@ test("leads with the current state and turns the selected domain into one next-l
     assert.doesNotMatch(dom.container.querySelector(".numeric-next-plan").textContent, /돈 세기 3문제/);
 
     await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("uses the existing four summary cards for the selected week's server counts", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report: completeDiagnosticReportExample }));
+  const dom = setDom(html);
+  try {
+    const cards = [...dom.container.querySelectorAll(".numeric-summary-values article")].map((card) => card.textContent.replace(/\s+/g, " ").trim());
+    assert.deepEqual(cards, [
+      "완료 단원18이번 주 완료",
+      "반복학습92기록",
+      "모르미 가르치기14기록",
+      "실생활 수행6방문",
+    ]);
+    assert.match(dom.container.textContent, /다음 단원 계획 확인/);
   } finally {
     dom.cleanup();
   }

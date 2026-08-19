@@ -25,6 +25,12 @@ export type NumericPreviewDomain = {
 export type NumericLiveReport = {
   learnerName: string;
   domains: Record<DiagnosticMode, readonly NumericPreviewDomain[]>;
+  weeklySummary: {
+    completedUnits: number;
+    drillAttempts: number;
+    teachConversations: number;
+    lifeVisits: number;
+  };
 };
 
 const statusPriority: Record<DiagnosticDomainStatusDto["status"], number> = {
@@ -46,6 +52,11 @@ function average(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean
 
 function plainLabel(label: string): string {
   return label.split(" · ")[0]?.trim() || label;
+}
+
+function hasHomeMetricLabel(label: string, labels: readonly string[]): boolean {
+  const metricLabel = label.split(" · ").at(-1)?.trim() || label;
+  return labels.includes(metricLabel);
 }
 
 function statusFor(records: readonly DiagnosticDomainStatusDto[]): DiagnosticDomainStatusDto | undefined {
@@ -72,12 +83,11 @@ function headline(label: string, status: NumericPreviewStatus): string {
 }
 
 function changeReason(recent: string, totalCount: number, direction?: DiagnosticDirection): string {
-  if (recent === "—") return "비교 가능한 정답 기록을 더 모으고 있어요.";
-  if (totalCount < 2) return `최근 정답률은 ${recent}예요. 비교할 기록이 더 필요해요.`;
+  if (recent === "—" || totalCount < 2 || direction === "INSUFFICIENT_HISTORY") return "비교할 기록이 더 필요해요.";
   if (direction === "DECLINING") return `최근 정답률은 ${recent}로, 이전보다 낮아져 다시 확인이 필요해요.`;
   if (direction === "IMPROVING") return `최근 정답률은 ${recent}로, 이전보다 좋아지고 있어요.`;
   if (direction === "MAINTAINING") return `최근 정답률은 ${recent}로 비슷하게 유지되고 있어요.`;
-  return `최근 정답률은 ${recent}이며, 비교할 기록을 더 모으고 있어요.`;
+  return "비교할 기록이 더 필요해요.";
 }
 
 function recommendation(status: NumericPreviewStatus, label: string, hasSpeech: boolean) {
@@ -104,8 +114,10 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
   return [...byDomain.entries()].map(([domainId, trends]) => {
     const accuracy = mode === "LIFE"
       ? trends[0]
-      : trends.find((trend) => trend.label.includes("문제 정답률")) ?? trends[0];
-    const speech = mode === "HOME" ? trends.find((trend) => trend.label.includes("혼자 설명")) : undefined;
+      : trends.find((trend) => hasHomeMetricLabel(trend.label, ["반복학습", "문제 정답률"])) ?? trends[0];
+    const speech = mode === "HOME"
+      ? trends.find((trend) => hasHomeMetricLabel(trend.label, ["모르미 가르치기", "혼자 설명하기", "혼자 설명"]))
+      : undefined;
     const statuses = report.domains.filter((item) => item.domain_id === domainId);
     const selectedStatus = statusFor(statuses);
     const status = previewStatus(selectedStatus?.status);
@@ -145,6 +157,12 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
 export function buildNumericLiveReport(report: DiagnosticReportDto): NumericLiveReport {
   return {
     learnerName: report.learner.display_name,
+    weeklySummary: {
+      completedUnits: report.evidence_counts.home_sessions,
+      drillAttempts: report.evidence_counts.drill_attempts,
+      teachConversations: report.evidence_counts.teach_conversations,
+      lifeVisits: report.evidence_counts.life_visits,
+    },
     domains: {
       HOME: buildMode(report, "HOME"),
       LIFE: buildMode(report, "LIFE"),

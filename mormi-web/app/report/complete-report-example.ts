@@ -70,11 +70,11 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     {
       mode: "HOME",
       domains: [
-        trend("money-count", "돈 세기 · 문제 정답률", [42, 55, 61, 74, 82, 88]),
-        trend("money-count", "돈 세기 · 혼자 설명하기", [25, 40, 58, 72, 86]),
-        trend("price-add", "가격 합산 · 문제 정답률", [35, 52, 67, 79, 91]),
-        trend("price-add", "가격 합산 · 혼자 설명하기", [30, 48, 66, 84]),
-        trend("money-budget", "예산과 거스름돈 · 문제 정답률", [28, 44, 59, 70]),
+        trend("money-count", "돈 세기 · 반복학습", [42, 55, 61, 74, 82, 88]),
+        trend("money-count", "돈 세기 · 모르미 가르치기", [25, 40, 58, 72, 86]),
+        trend("price-add", "가격 합산 · 반복학습", [35, 52, 67, 79, 91]),
+        trend("price-add", "가격 합산 · 모르미 가르치기", [30, 48, 66, 84]),
+        trend("money-budget", "예산과 거스름돈 · 반복학습", [28, 44, 59, 70]),
       ],
     },
     {
@@ -87,11 +87,11 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     },
   ],
   domains: [
-    status("money-count", "돈 세기 · 문제 정답률", "STABLE", "IMPROVING", 6),
-    status("money-count", "돈 세기 · 혼자 설명하기", "STABLE", "IMPROVING", 5),
-    status("price-add", "가격 합산 · 문제 정답률", "STABLE", "IMPROVING", 5),
-    status("price-add", "가격 합산 · 혼자 설명하기", "DEVELOPING", "IMPROVING", 4),
-    status("money-budget", "예산과 거스름돈 · 문제 정답률", "DEVELOPING", "IMPROVING", 4),
+    status("money-count", "돈 세기 · 반복학습", "STABLE", "IMPROVING", 6),
+    status("money-count", "돈 세기 · 모르미 가르치기", "STABLE", "IMPROVING", 5),
+    status("price-add", "가격 합산 · 반복학습", "STABLE", "IMPROVING", 5),
+    status("price-add", "가격 합산 · 모르미 가르치기", "DEVELOPING", "IMPROVING", 4),
+    status("money-budget", "예산과 거스름돈 · 반복학습", "DEVELOPING", "IMPROVING", 4),
     status("menu-calculate", "메뉴 값 계산하기", "STABLE", "IMPROVING", 4),
     status("change-receive", "거스름돈 받기", "DEVELOPING", "IMPROVING", 4),
     status("queue", "줄 서기", "STABLE", "MAINTAINING", 3),
