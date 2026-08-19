@@ -172,8 +172,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
   // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
-  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-row:2[^}]*\}[\s\S]*?\.home-room-character-column\{display:contents\}[\s\S]*?\.player-hud\{[^}]*grid-row:1/);
-  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-morami\{grid-row:3;/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-main\{[^}]*grid-template-columns:minmax\(0,440px\) minmax\(150px,180px\)[^}]*\}/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-column:1;grid-row:2[^}]*\}[\s\S]*?\.home-room-character-column\{display:contents\}[\s\S]*?\.player-hud\{[^}]*grid-column:1\/3;grid-row:1/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-morami\{grid-column:2;grid-row:2;/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-morami\{grid-column:1;grid-row:3\}/);
   assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:1\/3/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
