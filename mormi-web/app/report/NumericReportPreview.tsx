@@ -138,7 +138,7 @@ export function NumericReportPreview({
         <div className="numeric-session-comparison" aria-label={`${modeLabels[activeMode]} · ${selectedDomain.label} 이번 주 전체와 최근 비교`}>{selectedDomain.sessionRows.slice(0, 3).map(([label, past, recent]) => <article key={label}><span>{label.replace("반복학습 ", "").replace("실생활 ", "").replace("혼자 말하기", "모르미 가르치기")}</span><div><small>{past}</small><i aria-hidden="true">→</i><strong>{recent}</strong></div></article>)}</div>
         <div className="numeric-ladder-summary"><div><span>발화 사다리</span><strong>최근 사용 비율</strong></div>{ladderValues.length > 0 ? <div className="numeric-ladder-bars" aria-label={`L4부터 L0까지 ${ladderValues.join(", ")}`}>{ladderValues.map((value, index) => {
           const share = Number.parseInt(value) || 0;
-          return <span key={`${value}-${index}`} style={{ "--bar-height": `${7 + Math.round(share * .27)}px`, flexGrow: 1, flexShrink: 1, flexBasis: 0 } as CSSProperties}><i>L{4 - index}</i><b>{value}</b></span>;
+          return <span className={share === 0 ? "is-empty" : undefined} key={`${value}-${index}`} style={{ "--bar-height": `${Math.round(share * .34)}px`, flexGrow: 1, flexShrink: 1, flexBasis: 0 } as CSSProperties}><i>L{4 - index}</i><b>{value}</b></span>;
         })}</div> : <p className="numeric-ladder-empty">발화 단계 기록이 아직 없어요</p>}</div>
         <details className="numeric-level-guide"><summary>발화 단계 L0–L4 보기</summary><ul><li><b>L4</b> 자기 말로 답과 이유 설명</li><li><b>L3</b> 답과 이유를 짧게 나누어 말함</li><li><b>L2</b> 선택지에서 골라 표현</li><li><b>L1</b> 빈칸·수 세기·조작 도움으로 완성</li><li><b>L0</b> 도움 카드와 함께 수행</li></ul><p>표시 비율은 과제마다 마지막으로 성공한 발화 단계입니다.</p></details>
       </section>

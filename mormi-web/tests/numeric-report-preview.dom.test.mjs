@@ -135,6 +135,28 @@ test("gives all ladder levels equal width while encoding share only as height", 
   }
 });
 
+test("renders a single visible ladder bar when one level owns 100 percent", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const report = structuredClone(completeDiagnosticReportExample);
+  for (const mode of report.modes) {
+    for (const domain of mode.domains) {
+      for (const point of domain.points) point.expression_level = "L0";
+    }
+  }
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, { report })));
+  try {
+    const bars = [...dom.container.querySelectorAll(".numeric-ladder-bars > span")];
+    assert.equal(bars.length, 5, "단계명 자리는 L4부터 L0까지 유지해야 한다");
+    assert.equal(bars.filter((bar) => !bar.classList.contains("is-empty")).length, 1);
+    assert.equal(bars.filter((bar) => bar.classList.contains("is-empty")).length, 4);
+    assert.equal(bars.find((bar) => !bar.classList.contains("is-empty"))?.querySelector("i")?.textContent, "L0");
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("uses the existing four summary cards for the selected week's server counts", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
