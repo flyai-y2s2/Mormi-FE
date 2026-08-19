@@ -9,7 +9,8 @@ export function localReportAdminConfig(
   if (!key) return null;
   try {
     const origin = new URL(env.LOCAL_REPORT_ADMIN_ORIGIN ?? "");
-    if (origin.protocol !== "http:" || !["localhost", "127.0.0.1"].includes(origin.hostname)) return null;
+    if (origin.protocol !== "http:" || origin.username || origin.password
+      || !["localhost", "127.0.0.1"].includes(origin.hostname)) return null;
     return { origin: origin.toString().replace(/\/$/, ""), key };
   } catch {
     return null;

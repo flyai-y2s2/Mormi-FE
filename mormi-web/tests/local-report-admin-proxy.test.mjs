@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import test from "node:test";
 
 import { GET } from "../app/api/local-report-admin/[...path]/route.ts";
@@ -21,6 +22,16 @@ async function withEnv(values, action) {
       else process.env[name] = value;
     }
   }
+}
+
+async function startServer(handler) {
+  const server = createServer(handler);
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  return {
+    origin: `http://127.0.0.1:${address.port}`,
+    close: () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())),
+  };
 }
 
 test("returns not found when the local admin proxy is disabled", async () => {
@@ -65,5 +76,35 @@ test("forwards GET requests with only the server-side local admin key", async ()
     assert.match(forwardedRequest.url, /\/v1\/local-report-admin\/learners\?query=/);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("does not follow an upstream redirect or send the local admin key to its destination", async () => {
+  let redirectedRequests = 0;
+  let redirectedKey;
+  const redirected = await startServer((request, response) => {
+    redirectedRequests += 1;
+    redirectedKey = request.headers["x-mormi-local-admin-key"];
+    response.end();
+  });
+  const upstream = await startServer((_request, response) => {
+    response.writeHead(302, { location: `${redirected.origin}/redirected-host` });
+    response.end();
+  });
+
+  try {
+    await withEnv({
+      ENABLE_LOCAL_REPORT_ADMIN: "true",
+      LOCAL_REPORT_ADMIN_ORIGIN: upstream.origin,
+      LOCAL_REPORT_ADMIN_KEY: "secret",
+      NODE_ENV: "development",
+    }, () => assert.rejects(() => GET(new Request("http://mormi.test/api/local-report-admin/learners"), {
+      params: Promise.resolve({ path: ["learners"] }),
+    })));
+
+    assert.equal(redirectedRequests, 0);
+    assert.equal(redirectedKey, undefined);
+  } finally {
+    await Promise.all([upstream.close(), redirected.close()]);
   }
 });

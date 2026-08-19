@@ -20,3 +20,16 @@ test("enables only a non-production loopback origin with a key", () => {
     LOCAL_REPORT_ADMIN_KEY: "secret",
   }, "production"), null);
 });
+
+test("rejects loopback origins that embed credentials", () => {
+  assert.equal(localReportAdminConfig({
+    ENABLE_LOCAL_REPORT_ADMIN: "true",
+    LOCAL_REPORT_ADMIN_ORIGIN: "http://admin:password@127.0.0.1:8080",
+    LOCAL_REPORT_ADMIN_KEY: "secret",
+  }, "development"), null);
+  assert.equal(localReportAdminConfig({
+    ENABLE_LOCAL_REPORT_ADMIN: "true",
+    LOCAL_REPORT_ADMIN_ORIGIN: "http://admin@localhost:8080",
+    LOCAL_REPORT_ADMIN_KEY: "secret",
+  }, "development"), null);
+});

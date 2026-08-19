@@ -15,6 +15,7 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
     method: "GET",
     headers: { accept: "application/json", "X-Mormi-Local-Admin-Key": config.key },
     cache: "no-store",
+    redirect: "error",
     signal: AbortSignal.timeout(20_000),
   });
   return new Response(upstream.body, {
