@@ -204,7 +204,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /\.answer-grid button\.is-wrong/);
   assert.doesNotMatch(css, /× 다시 생각/);
   assert.match(css, /grid-template-columns: repeat\(4, 1fr\)/);
-  assert.match(app, /correctPosition = Math\.abs\(seed\) % \(answers\.length \+ 1\)/);
+  assert.match(app, /orderedNumericChoicesWithSeededCorrect\(ensuredAnswers, problem\.correct, seed\)/);
   assert.match(app, /shuffledCountingValues\(variantSeed \+ sessionIndex \* 59\)/);
   assert.match(app, /const variationSeed = countingValues \? countingValues\[index\] - 1 : seed/);
   assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), seed\)/);
