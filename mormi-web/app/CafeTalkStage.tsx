@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { choiceIdForTypedAnswer } from "./cafe-choice-input";
 import { DictionaryModal } from "./DictionaryCard";
-import type { MormiConversation, MormiMood, MormiResponseType } from "./mormi-dialogue";
+import type { MormiConversation, MormiResponseType } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 
 /**
@@ -22,16 +22,8 @@ export type CafeDialogueResponse = {
   values?: Record<string, string | number | boolean | string[]>;
 };
 
-const moodImages: Record<MormiMood, string> = {
-  curious: "/morami/bright-cutout.png",
-  listening: "/morami/calm-cutout.png",
-  thinking: "/morami/confused-cutout.png",
-  relieved: "/morami/happy-cutout.png",
-  celebrating: "/morami/celebrate-cutout.png",
-};
-
-/** 대화가 아직 오지 않았을 때의 표정. 첫 질문을 기다리는 얼굴이다. */
-const waitingImage = "/morami/confused-cutout.png";
+/** 아이에게 답을 묻는 대화 중에는 궁금해하는 표정을 한결같이 보여 준다. */
+const chatImage = "/morami/confused-cutout.png";
 
 export function CafeTalkStage({
   conversation,
@@ -65,7 +57,6 @@ export function CafeTalkStage({
   /** 스테이지별 문제 그림. 남는 세로 공간을 전부 가져간다. */
   children: ReactNode;
 }) {
-  const mood = conversation?.turn.mormi.mood;
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   return (
     <main className="figma-cafe-panel cafe-talk">
@@ -76,7 +67,7 @@ export function CafeTalkStage({
 
       <section className="cafe-talk-flow">
         <section className="cafe-talk-bubble">
-          <Image className="cafe-talk-morami" src={mood ? moodImages[mood] : waitingImage} alt="모르미" width={300} height={360} unoptimized />
+          <Image className="cafe-talk-morami" src={chatImage} alt="궁금해하는 모르미" width={300} height={360} unoptimized />
           <div className="cafe-talk-bubble__text">
             <b>모르미</b>
             <p>{line || fallbackLine}</p>

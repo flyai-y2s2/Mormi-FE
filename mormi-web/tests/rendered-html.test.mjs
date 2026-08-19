@@ -171,9 +171,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(stageVisual, /conversation\.turn\.visual/);
   assert.match(stageVisual, /type === "cafe_menu"/);
   assert.match(stageVisual, /type === "cafe_calculation" \|\| type === "money_calculation"/);
-  // 모르미 표정은 대화의 mood 를 따라간다. 한 표정으로 굳혀 두지 않는다.
-  assert.match(talkStage, /conversation\?\.turn\.mormi\.mood/);
-  assert.match(talkStage, /celebrating: "\/morami\/celebrate-cutout\.png"/);
+  // 아이와 채팅하는 동안에는 집과 카페 모두 같은 confused PNG를 쓴다.
+  // 완료·보상 화면의 축하 표정은 각 화면에 별도로 남아 있다.
+  assert.match(talkStage, /const chatImage = "\/morami\/confused-cutout\.png"/);
+  assert.match(talkStage, /className="cafe-talk-morami" src=\{chatImage\}/);
+  assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면

@@ -2034,7 +2034,7 @@ export function MoramiApp() {
             {/* 아이는 모르미의 질문을 먼저 읽고 그 다음에 문제를 본다: 말풍선이 위, 문제와 답이 아래. */}
             {hasServerMessagePanel && !teachingComplete && (
               <div className="teaching-talk">
-                <div className="teaching-morami"><Morami expression={expression} /></div>
+                <div className="teaching-morami"><Morami expression="confused" /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
                   {teachHelpLoading && <p className="teaching-help-loading" role="status">모르미가 도움 카드를 찾고 있어요…</p>}
