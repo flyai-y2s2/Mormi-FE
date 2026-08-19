@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
-import { menu, menuItemsForAi } from "./cafe-menu";
+import { menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
+import { CafeStageComplete, type CafeStageResult } from "./CafeStageComplete";
+import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
 import { cafeStations } from "./journey-config";
@@ -14,6 +16,7 @@ import {
   submitMormiResponseThroughBe,
   type MormiConversation,
 } from "./mormi-dialogue";
+import { StarNote } from "./StarNote";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
@@ -39,9 +42,11 @@ const cafeScenarioByStation = ["cafe_queue", "cafe_budget_menu", "cafe_menu_tota
 /** 스테이션 번호 → 서버 스테이지 이름. */
 const stageByStation = ["queue", "menu", "calculate", "change"] as const satisfies readonly CafeStage[];
 
-type QueueScene = "dialogue" | "note" | "clear";
-type MenuScene = "dialogue" | "thanks";
-const budgets = [8000, 9000, 10000] as const;
+type QueueScene = "dialogue" | "note" | "thanks" | "clear";
+type MenuScene = "dialogue" | "thanks" | "clear";
+type CalculationScene = "dialogue" | "thanks" | "clear";
+type ChangeScene = "dialogue" | "thanks" | "clear";
+const budgets = [7000, 8000] as const;
 
 /** 모르미 대화가 아직 첫 줄을 보내기 전에 쓰는 기본 문구. */
 const fallbackLines: Record<CafeStage, string> = {
@@ -62,13 +67,20 @@ function randomQueueCounts() {
   return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
 }
 
-export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
+function conversationInputKey(conversation: MormiConversation | undefined) {
+  if (!conversation) return "";
+  return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
+}
+
+export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [menuScene, setMenuScene] = useState<MenuScene>("dialogue");
-  const [menuBudget, setMenuBudget] = useState<number>(10000);
+  const [calculationScene, setCalculationScene] = useState<CalculationScene>("dialogue");
+  const [changeScene, setChangeScene] = useState<ChangeScene>("dialogue");
+  const [menuBudget, setMenuBudget] = useState<number>(8000);
   const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
   // 메뉴 고르기에서 아이가 고른 메뉴. 대화가 검증한 사실에서만 받아 축하 장면에 쓴다.
   const [menuChildMenuId, setMenuChildMenuId] = useState<string>("");
@@ -78,6 +90,11 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
+  const [helpVisibleStages, setHelpVisibleStages] = useState<Partial<Record<CafeStage, boolean>>>({});
+  const [helpLoadingStage, setHelpLoadingStage] = useState<CafeStage | null>(null);
+  const [queueChoiceFallbackKey, setQueueChoiceFallbackKey] = useState<string | null>(null);
+  const [changeChoiceFallbackKey, setChangeChoiceFallbackKey] = useState<string | null>(null);
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const dialogueRequestInFlight = useRef(false);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
@@ -174,6 +191,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     setCafeConversations((current) => ({ ...current, [stage]: undefined }));
     setDialogueError("");
     setDialogueInputs((current) => ({ ...current, [stage]: "" }));
+    setHelpVisibleStages((current) => ({ ...current, [stage]: false }));
+    setHelpLoadingStage(null);
+    if (stage === "queue") setQueueChoiceFallbackKey(null);
+    if (stage === "calculate") setCalculationScene("dialogue");
+    if (stage === "change") {
+      setChangeScene("dialogue");
+      setChangeChoiceFallbackKey(null);
+    }
     delete cafeTalks.current[stage];
     validatedStages.current[stage] = false;
     finalizedStages.current[stage] = false;
@@ -227,7 +252,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         setQueueScene("note");
       } else {
         if (!replaying) setJourneyProgress((progress) => Math.max(progress, 1));
-        setQueueScene("clear");
+        setQueueScene("thanks");
       }
     } else if (stage === "menu") {
       const picked = cafeTalks.current.menu?.turn.completion?.verified_facts?.child_menu_id;
@@ -242,19 +267,13 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       setMenuScene("thanks");
     } else if (stage === "calculate") {
       if (!replaying) setJourneyProgress((progress) => Math.max(progress, 3));
-      window.setTimeout(returnToMap, 500);
+      setCalculationScene("thanks");
     } else {
-      if (replaying) {
-        window.setTimeout(returnToMap, 500);
-      } else {
-        setJourneyProgress(4);
-        window.setTimeout(() => setStep("done"), 500);
-      }
+      if (!replaying) setJourneyProgress(4);
+      setChangeScene("thanks");
     }
   }
 
-  const mormeyMenu = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
-  const menuChildMenu = menu.find((item) => item.id === menuChildMenuId);
   const changeMenu = menu.find((item) => item.id === changeMenuId) ?? menu[0];
   const changeTarget = 10000 - changeMenu.price;
   const stationIndex = step === "overview" ? Math.min(journeyProgress, 3) : step === "queue" ? 0 : step === "menu" ? 1 : step === "sum" ? 2 : 3;
@@ -263,8 +282,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   // 대화 화면인지. 축하·노트 장면은 입력이 없어 100svh 세로 배분을 쓰지 않는다.
   const isTalk = (step === "queue" && queueScene === "dialogue")
     || (step === "menu" && menuScene === "dialogue")
-    || step === "sum"
-    || step === "change";
+    || (step === "sum" && calculationScene === "dialogue")
+    || (step === "change" && changeScene === "dialogue");
 
   function returnToMap() {
     setStep("overview");
@@ -332,7 +351,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
 
   function finishQueueStory() {
     if (!replayStages.current.queue) setJourneyProgress((progress) => Math.max(progress, 1));
-    setQueueScene("clear");
+    setQueueScene("thanks");
+  }
+
+  function showStageSummary(stage: CafeStage) {
+    if (stage === "queue") setQueueScene("clear");
+    if (stage === "menu") setMenuScene("clear");
+    if (stage === "calculate") setCalculationScene("clear");
+    if (stage === "change") setChangeScene("clear");
   }
 
   function finishMenuStory() {
@@ -356,20 +382,135 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     captureMormeyEvent("cafe_station_started", { station_index: 3, station: cafeStations[2] });
   }
 
+  function finishCalculationStory() {
+    returnToMap();
+  }
+
+  function finishChangeStory() {
+    if (replayStages.current.change) {
+      returnToMap();
+      return;
+    }
+    setStep("done");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function setDialogueInput(stage: CafeStage, value: string) {
     setDialogueInputs((current) => ({ ...current, [stage]: value }));
   }
 
   /** 답을 보내고 입력칸을 비운다. 네 스테이지가 모두 이 경로 하나만 쓴다. */
-  function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
-    void sendCafeResponse(stage, response).then(() => setDialogueInput(stage, ""));
+  async function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
+    const requestsHelp = response.type === "no_response";
+    if (requestsHelp) setHelpLoadingStage(stage);
+    const previous = cafeTalks.current[stage];
+    const next = await sendCafeResponse(stage, response);
+    if (stage === "queue" || stage === "change") {
+      const previousKey = conversationInputKey(previous);
+      const nextKey = conversationInputKey(next ?? undefined);
+      const shouldRevealChoices = Boolean(
+        next
+        && next.turn.input.kind === "choices"
+        && (requestsHelp || (response.type === "choice" && previousKey === nextKey)),
+      );
+      if (stage === "queue") setQueueChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
+      else setChangeChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
+    }
+    if (requestsHelp) {
+      if (next) setHelpVisibleStages((current) => ({ ...current, [stage]: true }));
+      setHelpLoadingStage((current) => current === stage ? null : current);
+    }
+    setDialogueInput(stage, "");
+  }
+
+  function completionResults(stage: CafeStage): CafeStageResult[] {
+    const conversation = cafeConversations[stage];
+    const facts = conversation?.turn.completion?.verified_facts ?? {};
+    const context = conversation?.scenario_context;
+    const menuName = (id: unknown) => menu.find((item) => item.id === id)?.name ?? "확인 완료";
+    const won = (value: unknown) => typeof value === "number" ? `${value.toLocaleString("ko-KR")}원` : "확인 완료";
+
+    if (stage === "queue") {
+      const left = typeof facts.left_count === "number" ? facts.left_count : queueCounts.left;
+      const right = typeof facts.right_count === "number" ? facts.right_count : queueCounts.right;
+      return [
+        { label: "왼쪽 줄", value: `${left}명` },
+        { label: "오른쪽 줄", value: `${right}명` },
+        { label: "더 짧은 줄", value: left < right ? "왼쪽" : "오른쪽" },
+      ];
+    }
+    if (stage === "menu") {
+      const firstId = context?.cafe_context?.mormi_menu_id ?? mormeyMenuId;
+      const childId = facts.child_menu_id ?? menuChildMenuId;
+      const total = typeof firstId === "string" && typeof childId === "string" ? menuPairTotal(firstId, childId) : null;
+      return [
+        { label: "모르미 메뉴", value: menuName(firstId) },
+        { label: "내 메뉴", value: menuName(childId) },
+        { label: "합계", value: won(total) },
+      ];
+    }
+    if (stage === "calculate") {
+      return [
+        { label: "첫 번째 메뉴", value: menuName(context?.cafe_context?.mormi_menu_id) },
+        { label: "두 번째 메뉴", value: menuName(facts.child_menu_id) },
+        { label: "계산한 합계", value: won(facts.result) },
+      ];
+    }
+    return [
+      { label: "주문한 메뉴", value: menuName(context?.cafe_context?.mormi_menu_id) },
+      { label: "낸 돈", value: "10,000원" },
+      { label: "거스름돈", value: won(facts.result) },
+    ];
+  }
+
+  /** 중앙 사진 카드의 메뉴 ID를 현재 서버 선택지 ID와 직접 연결한다. */
+  function answerMenuChoice(stage: "menu" | "calculate", menuId: string) {
+    const conversation = cafeTalks.current[stage];
+    const choice = conversation && menuChoiceById(menuId, conversation.turn.input.choices);
+    if (!choice) {
+      setDialogueError("지금 선택할 수 있는 메뉴가 아니에요. 다시 골라 주세요.");
+      return;
+    }
+
+    if (stage === "menu") {
+      const context = conversation.scenario_context?.cafe_context;
+      const mormiMenuId = context?.mormi_menu_id ?? mormeyMenuId;
+      const budget = context?.budget ?? menuBudget;
+      const total = menuPairTotal(mormiMenuId, choice.id);
+      if (total === null) {
+        setDialogueError("메뉴 가격을 확인하지 못했어요. 다른 메뉴를 골라 주세요.");
+        return;
+      }
+      if (total > budget) {
+        captureMormeyEvent("cafe_menu_selected", {
+          menu_ids: [mormiMenuId, choice.id].join(","),
+          total,
+          budget,
+          over_budget: true,
+        });
+        setBudgetModalOpen(true);
+        return;
+      }
+    }
+
+    void answerMormi(stage, { type: "choice", choice_ids: [choice.id] });
   }
 
   return (
     <section className={`figma-cafe figma-cafe--${step}${isTalk ? " is-talk" : ""}`}>
       <div className="figma-cafe__bar">
         <button onClick={step === "overview" ? onBack : returnToMap}>← {step === "overview" ? "외출 장소" : "돌아가기"}</button>
-        <strong className="figma-cafe__place"><span className="cafe-place-icon" aria-hidden="true"><i /></span> 모르미 카페</strong>
+        <strong className="figma-cafe__place">
+          <Image
+            className="figma-cafe__place-image"
+            src="/ui/mormi-cafe.png"
+            alt=""
+            width={56}
+            height={56}
+            aria-hidden="true"
+          />
+          모르미 카페
+        </strong>
         <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
         </div>
@@ -410,8 +551,13 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.queue}
           inputText={dialogueInputs.queue ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.queue)}
+          helpLoading={helpLoadingStage === "queue"}
+          deferChoices
+          choiceFallbackVisible={queueChoiceFallbackKey === conversationInputKey(cafeConversations.queue)}
           onInput={(value) => setDialogueInput("queue", value)}
-          onSubmit={(response) => answerMormi("queue", response)}
+          onSubmit={(response) => { void answerMormi("queue", response); }}
+          onChoiceFallback={() => setQueueChoiceFallbackKey(conversationInputKey(cafeConversations.queue))}
           onBack={returnToMap}
         >
           <CafeStageVisual
@@ -425,21 +571,32 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         <main className="figma-cafe-panel figma-cafe-queue-story" data-figma-node="74:4">
           {queueScene === "note" && (
             <section className="queue-note-scene">
-              <Image src="/morami/bright-cutout.png" alt="공부 노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>모르미의 공부노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2><small>{cafeConversations.queue?.turn.note_update?.attribution_label}</small></article>
+              <Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={310} height={340} unoptimized />
+              <StarNote text={cafeConversations.queue?.turn.note_update?.text} />
             </section>
+          )}
+          {queueScene === "thanks" && (
+            <CafeStageThanks
+              learnerName={learnerName}
+              title="줄 서기 완료!"
+              onNext={() => showStageSummary("queue")}
+            />
           )}
           {queueScene === "clear" && (
-            <section className="queue-clear-scene">
-              <Image src="/morami/celebrate-cutout.png" alt="별을 들고 기뻐하는 모르미" width={370} height={410} unoptimized />
-              <div><span>STAGE 1 CLEAR!</span><h1>얏호~! 덕분에 빠른 줄에<br />서는 방법을 알았어!</h1><button onClick={returnToMap}>나가기</button></div>
-            </section>
+            <CafeStageComplete
+              stageNumber={1}
+              title="줄을 비교하는 방법을"
+              highlight="알게 됐어요!"
+              results={completionResults("queue")}
+              actionLabel="지도에서 확인하기"
+              onAction={returnToMap}
+            />
           )}
 
-          {/* 노트 장면은 그림 대신 공부노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
+          {/* 노트 장면은 그림 대신 별노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
           {queueScene === "note" && <section className="queue-story-dialogue">
             <b>모르미</b>
-            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다!`}</p>
+            <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다!`}</p>
             <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>
           </section>}
         </main>
@@ -452,65 +609,134 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.menu}
           inputText={dialogueInputs.menu ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.menu)}
+          helpLoading={helpLoadingStage === "menu"}
           onInput={(value) => setDialogueInput("menu", value)}
-          onSubmit={(response) => answerMormi("menu", response)}
+          onSubmit={(response) => { void answerMormi("menu", response); }}
           onBack={returnToMap}
         >
-          <CafeStageVisual conversation={cafeConversations.menu} />
+          <CafeStageVisual
+            conversation={cafeConversations.menu}
+            sending={dialogueSending}
+            onMenuChoice={(choiceId) => answerMenuChoice("menu", choiceId)}
+          />
         </CafeTalkStage>
       )}
 
       {step === "menu" && menuScene === "thanks" && (
-        <main className="figma-cafe-panel figma-cafe-menu" data-figma-node="74:6">
-          <section className="cafe-menu-thanks">
-            <Image src="/morami/celebrate-cutout.png" alt="메뉴를 골라 줘서 기뻐하는 모르미" width={350} height={390} unoptimized />
-            <div><span>주문 준비 완료!</span><h1>내 메뉴 골라 줘서 고마워!</h1>
-              <p>{[mormeyMenu.name, menuChildMenu?.name].filter(Boolean).join(" + ")}<br />
-                <strong>합계 {(mormeyMenu.price + (menuChildMenu?.price ?? 0)).toLocaleString("ko-KR")}원</strong></p>
-              <button onClick={finishMenuStory}>완료!</button></div>
-          </section>
-        </main>
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="메뉴 고르기 완료!"
+          onNext={() => showStageSummary("menu")}
+        />
       )}
 
-      {step === "sum" && (
+      {step === "menu" && menuScene === "clear" && (
+        <CafeStageComplete
+          stageNumber={2}
+          title="예산 안에서 메뉴를"
+          highlight="잘 골랐어요!"
+          results={completionResults("menu")}
+          actionLabel="다음으로"
+          onAction={finishMenuStory}
+        />
+      )}
+
+      {step === "sum" && calculationScene === "dialogue" && (
         <CafeTalkStage
           conversation={cafeConversations.calculate}
           line={mormiLines.calculate}
           fallbackLine={fallbackLines.calculate}
           inputText={dialogueInputs.calculate ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.calculate)}
+          helpLoading={helpLoadingStage === "calculate"}
           onInput={(value) => setDialogueInput("calculate", value)}
-          onSubmit={(response) => answerMormi("calculate", response)}
+          onSubmit={(response) => { void answerMormi("calculate", response); }}
           onBack={returnToMap}
         >
-          <CafeStageVisual conversation={cafeConversations.calculate} />
+          <CafeStageVisual
+            conversation={cafeConversations.calculate}
+            sending={dialogueSending}
+            onMenuChoice={(choiceId) => answerMenuChoice("calculate", choiceId)}
+          />
         </CafeTalkStage>
       )}
 
-      {step === "change" && (
+      {step === "sum" && calculationScene === "clear" && (
+        <CafeStageComplete
+          stageNumber={3}
+          title="두 메뉴의 값을"
+          highlight="정확히 더했어요!"
+          results={completionResults("calculate")}
+          actionLabel="지도에서 확인하기"
+          onAction={finishCalculationStory}
+        />
+      )}
+
+      {step === "sum" && calculationScene === "thanks" && (
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="메뉴 값 계산 완료!"
+          onNext={() => showStageSummary("calculate")}
+        />
+      )}
+
+      {step === "change" && changeScene === "dialogue" && (
         <CafeTalkStage
           conversation={cafeConversations.change}
           line={mormiLines.change}
           fallbackLine={fallbackLines.change}
           inputText={dialogueInputs.change ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.change)}
+          helpLoading={helpLoadingStage === "change"}
+          deferChoices
+          choiceFallbackVisible={changeChoiceFallbackKey === conversationInputKey(cafeConversations.change)}
           onInput={(value) => setDialogueInput("change", value)}
-          onSubmit={(response) => answerMormi("change", response)}
+          onSubmit={(response) => { void answerMormi("change", response); }}
+          onChoiceFallback={() => setChangeChoiceFallbackKey(conversationInputKey(cafeConversations.change))}
           onBack={returnToMap}
         >
           <CafeStageVisual conversation={cafeConversations.change} />
         </CafeTalkStage>
       )}
 
+      {step === "change" && changeScene === "clear" && (
+        <CafeStageComplete
+          stageNumber={4}
+          title="거스름돈까지"
+          highlight="바르게 계산했어요!"
+          results={completionResults("change")}
+          actionLabel="완료하기"
+          onAction={finishChangeStory}
+        />
+      )}
+
+      {step === "change" && changeScene === "thanks" && (
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="거스름돈 계산 완료!"
+          onNext={() => showStageSummary("change")}
+        />
+      )}
+
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
           <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p>
-            <button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
-            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div>
+            <div className="figma-cafe-done__actions"><button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
+            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div></div>
         </main>
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
+      {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
+        <div className="cafe-budget-modal">
+          <Image src="/morami/confused-cutout.png" alt="다시 골라 달라고 부탁하는 모르미" width={150} height={150} unoptimized />
+          <h2>예산을 넘었어요. 다른 메뉴를 골라 봐!</h2>
+          <button type="button" onClick={() => setBudgetModalOpen(false)}>확인</button>
+        </div>
+      </div>}
     </section>
   );
 }

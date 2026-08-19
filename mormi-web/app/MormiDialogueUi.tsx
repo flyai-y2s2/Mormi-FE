@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { helpBodyIsRepeatedByVisual } from "./help-card";
 import type { MormiChoice, MormiTurn } from "./mormi-dialogue";
 
 type HelpCard = NonNullable<MormiTurn["help_card"]>;
@@ -91,10 +92,21 @@ export function MormiHelpCard({ card }: { card: MormiTurn["help_card"] }) {
   return <details className={`mormi-help-card mormi-help-card--${card.level}`} open={card.auto_open}>
     <summary><span aria-hidden="true">●</span><strong>{card.title}</strong></summary>
     <div className="mormi-help-card__body">
-      <p>{card.body}</p>
+      {!helpBodyIsRepeatedByVisual(card) && <p>{card.body}</p>}
       <HelpVisual card={card} />
     </div>
   </details>;
+}
+
+export function MormiTaskAnchor({ anchor }: { anchor: MormiTurn["task_anchor"] }) {
+  if (!anchor) return null;
+  return <section className="mormi-task-anchor" aria-label={anchor.title}>
+    <strong>{anchor.title}</strong>
+    <p>{anchor.prompt}</p>
+    {anchor.completed_items.length > 0 && <ul aria-label="이미 알려준 내용">
+      {anchor.completed_items.map((item) => <li key={item.slot_id}><span aria-hidden="true">✓</span>{item.display_text}</li>)}
+    </ul>}
+  </section>;
 }
 
 export function MormiChoiceContent({ choice }: { choice: MormiChoice }) {

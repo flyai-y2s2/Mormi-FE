@@ -15,7 +15,9 @@ import {
   type ThemeView,
 } from "./api-client";
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
+import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices } from "./answer-choices";
 import { CafeJourney } from "./CafeJourney";
+import { DictionaryModal } from "./DictionaryCard";
 import { dialogueErrorMessage } from "./dialogue-errors";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
@@ -27,6 +29,7 @@ import {
   type MormiTurn,
 } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { StarNote } from "./StarNote";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -336,6 +339,8 @@ function rotateAnswers(answers: string[], seed: number) {
 }
 
 function shuffleWords(words: string[], seed: number) {
+  const orderedNumbers = orderNumericChoices(words);
+  if (orderedNumbers) return orderedNumbers;
   const shuffled = [...words];
   let state = Math.abs(seed) + 1;
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
@@ -576,7 +581,10 @@ function shuffleProblemAnswers(problem: Problem, seed: number): Problem {
   if (comparisonChoices.includes(problem.correct) && problem.answers.some((answer) => comparisonChoices.includes(answer))) {
     return { ...problem, answers: comparisonChoices };
   }
-  const otherAnswers = ensureFourAnswers(problem).filter((answer) => answer !== problem.correct);
+  const ensuredAnswers = ensureFourAnswers(problem);
+  const orderedNumbers = orderedNumericChoicesWithSeededCorrect(ensuredAnswers, problem.correct, seed);
+  if (orderedNumbers) return { ...problem, answers: orderedNumbers };
+  const otherAnswers = ensuredAnswers.filter((answer) => answer !== problem.correct);
   const answers = shuffleWords(otherAnswers, seed + 101);
   const correctPosition = Math.abs(seed) % (answers.length + 1);
   answers.splice(correctPosition, 0, problem.correct);
@@ -826,23 +834,6 @@ function SpeechBubble({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Dictionary({ onClose, session }: { onClose: () => void; session: Session }) {
-  return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="궁금해 사전">
-      <div className="dictionary-card">
-        <div className="dictionary-tab"><UiIcon name="book" size="small" /> 궁금해 사전</div>
-        <div className="dictionary-visual">
-          <ProblemCard problem={session.dictionaryProblem} small />
-          <div className="dictionary-lines">
-            {session.dictionaryLines.map((line, index) => <p key={line}><i>{index + 1}</i>{line}</p>)}
-          </div>
-        </div>
-        <button className="primary-button primary-button--purple" onClick={onClose}>다 읽었어!</button>
-      </div>
-    </div>
-  );
-}
-
 /** 참여 번호 입력 규칙. 연구 담당자가 배정한 값과 형식을 맞춰 두어야 그 아이로 저장된다. */
 const normalizeResearchCode = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40);
@@ -1053,8 +1044,9 @@ function Onboarding({ onSignup, onLogin }: {
         <span>모르미</span>
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
-        <button className="primary-button" onClick={() => goTo("signup")}>처음 왔어요 <span className="button-arrow" /></button>
-        <button type="button" className="onboarding-secondary" onClick={() => goTo("login")}>전에 하던 게 있어요</button>
+        {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}
+        <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>
+        <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 왔어요</button>
       </div>
     </section>
   );
@@ -1255,6 +1247,7 @@ export function MoramiApp() {
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
   const [teachHelpLoading, setTeachHelpLoading] = useState(false);
+  const [teachHelpVisible, setTeachHelpVisible] = useState(false);
   const teachRequestInFlight = useRef(false);
   const [teachError, setTeachError] = useState("");
   const [teachRewardAmount, setTeachRewardAmount] = useState(0);
@@ -1298,7 +1291,7 @@ export function MoramiApp() {
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
   const serverMormiText = teachingTurn?.mormi.text?.trim() ?? "";
-  const hasServerMessagePanel = Boolean(serverMormiText) || Boolean(teachingTurn?.help_card?.visible) || Boolean(teachError);
+  const hasServerMessagePanel = Boolean(serverMormiText) || Boolean(teachHelpVisible && teachingTurn?.help_card?.visible) || Boolean(teachError);
 
   const showMoramiFallback = useCallback((fallbackDialogue: string, fallbackExpression: Expression) => {
     setDialogue(fallbackDialogue);
@@ -1585,6 +1578,7 @@ export function MoramiApp() {
     setTeachSending(true);
     setMormiConversation(null);
     setTeachingNote(null);
+    setTeachHelpVisible(false);
     try {
       const sessionId = await learningSessionPromise.current;
       await attemptWriteQueue.current;
@@ -1608,6 +1602,11 @@ export function MoramiApp() {
     } finally {
       setTeachSending(false);
     }
+  }
+
+  function beginTeachingWithDictionary() {
+    setDictionaryOpen(true);
+    void beginTeaching();
   }
 
   function completionValues(turn: MormiTurn): Record<string, string | number | boolean | string[]> {
@@ -1639,6 +1638,7 @@ export function MoramiApp() {
         latency_ms: Math.min(nowMs() - startedAt.current, 600000),
         ...payload,
       });
+      if (type === "no_response") setTeachHelpVisible(true);
       applyTeachingConversation(nextConversation);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -1993,8 +1993,7 @@ export function MoramiApp() {
                 <h2>5번 반복학습 끝!</h2>
                 <div className="mastery-coin-total"><Image src="/cafe-money/100.png" alt="세션에서 얻은 돈" width={74} height={74} unoptimized /><span>반복학습 보상</span><strong>+{sessionCoins.toLocaleString("ko-KR")}원</strong></div>
                 <p>이제 모르미가 처음 찾아올 거야.<br />방금 익힌 걸 모르미에게 가르쳐 줘.</p>
-                <button className="primary-button" onClick={beginTeaching}>모르미 가르치기 <span className="button-arrow" /></button>
-                <button className="dictionary-link" onClick={() => setDictionaryOpen(true)}><UiIcon name="book" size="small" /> 먼저 사전 보기</button>
+                <button className="primary-button" onClick={beginTeachingWithDictionary}>모르미 가르치기 <span className="button-arrow" /></button>
               </div>
             ) : (
               <div className="practice-card">
@@ -2035,12 +2034,13 @@ export function MoramiApp() {
             {/* 아이는 모르미의 질문을 먼저 읽고 그 다음에 문제를 본다: 말풍선이 위, 문제와 답이 아래. */}
             {hasServerMessagePanel && !teachingComplete && (
               <div className="teaching-talk">
-                <div className="teaching-morami"><Morami expression={expression} /></div>
+                <div className="teaching-morami"><Morami expression="confused" /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
-                  <MormiHelpCard card={teachingTurn?.help_card ?? null} />
+                  {teachHelpLoading && <p className="teaching-help-loading" role="status">모르미가 도움 카드를 찾고 있어요…</p>}
+                  <MormiHelpCard card={teachHelpVisible ? teachingTurn?.help_card ?? null : null} />
                   {teachError && <p role="alert">{teachError}</p>}
-                  {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
+                  {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 찾는 중…" : "잘 모르겠어"}</button>}
                 </div>
               </div>
             )}
@@ -2078,13 +2078,16 @@ export function MoramiApp() {
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
                   {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
-                    {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
+                    {typeof teachingTurn.input.config.text === "string" && <div className="model-teaching__reading">
+                      <span>같이 읽어 볼 문장</span>
+                      <p>{teachingTurn.input.config.text}</p>
+                    </div>}
                     <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "다음"}</button>
                   </div>}
                 </div>
               )}
               {teachingComplete && (
-                <div className="learned-card">
+                <div className="learned-card learned-card--reveal">
                   <UiIcon name={brightExit ? "sun" : "star"} size="large" />
                   <h2>{brightExit ? "오늘의 배움을 챙겼어!" : "모르미가 이해했어!"}</h2>
                   <p>{teachingTurn.mormi.text}</p>
@@ -2113,14 +2116,7 @@ export function MoramiApp() {
           <div className="character-column"><Morami expression={expression} /></div>
           <div className="content-column">
             <SpeechBubble><p>{dialogue}</p></SpeechBubble>
-            {hasTeachingNote && teachingNote && <article className="star-note">
-              <div className="note-ring">별<br />노<br />트</div>
-              <div className="note-content">
-                <p><UiIcon name="star" size="small" /> 오늘 모르미가 적은 말</p>
-                <h2>“<em>{teachingNote.text}</em>”</h2>
-                <span>{teachingNote.attribution_label}</span>
-              </div>
-            </article>}
+            {hasTeachingNote && teachingNote && <StarNote text={teachingNote.text} />}
             {teachError && <p role="alert">{teachError}</p>}
             <button className="primary-button" onClick={beginHomework} disabled={teachSending}>집에서 오늘 학습 마치기 <span className="button-arrow" /></button>
           </div>
@@ -2146,12 +2142,17 @@ export function MoramiApp() {
               <span><UiIcon name="star" size="small" /><strong>{hasTeachingNote ? 1 : 0}개</strong><small>별노트</small></span>
               <span><UiIcon name="bag" size="small" /><strong>{cafeReadyCountAfterLesson}/{cafeRequiredSessionIds.length}</strong><small>카페 준비</small></span>
             </div>
-            <button className="primary-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
+            <button className="primary-button complete-exit-button" onClick={cafeUnlockedAfterLesson ? showOutside : showHome}>나가기 <span className="button-arrow" /></button>
           </div>
         </section>
       )}
 
-      {dictionaryOpen && <Dictionary session={activeSession} onClose={() => setDictionaryOpen(false)} />}
+      {dictionaryOpen && <DictionaryModal
+        conversationId={stage === "teach" || stage === "teachReward" || stage === "wrap" ? mormiConversation?.conversation_id : null}
+        learningSessionId={learningSessionId.current}
+        expectedContentVersion={mormiConversation?.turn.dictionary_ref?.content_version}
+        onClose={() => setDictionaryOpen(false)}
+      />}
     </main>
   );
 }

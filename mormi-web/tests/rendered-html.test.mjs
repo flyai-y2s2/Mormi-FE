@@ -24,13 +24,14 @@ test("server-renders the Morami onboarding", async () => {
   assert.match(html, /나 모르미야!/);
   // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
   // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
+  // 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이므로 기본 버튼은 로그인이 쓴다.
+  assert.match(html, /로그인하기/);
   assert.match(html, /처음 왔어요/);
-  assert.match(html, /전에 하던 게 있어요/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -41,8 +42,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/StarNote.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
+  const aiTest = await readFile(new URL("../app/ai-test/AiDialogueTest.tsx", import.meta.url), "utf8");
 
   assert.equal((curriculum.match(/\blesson\(\{/g) || []).length, 24);
   assert.equal((original.match(/^ {4}id: "/gm) || []).length, 12);
@@ -83,13 +86,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /도전하기/);
   assert.doesNotMatch(cafe, /스테이지 시작/);
   assert.match(cafe, /data-figma-node="74:4"/);
-  assert.match(cafe, /data-figma-node="74:6"/);
+  assert.match(cafe, /<CafeStageComplete/);
   assert.match(cafeMenu, /id: "milk", name: "우유"[^\n]+milk\.png\?v=2/);
   assert.match(cafeMenu, /id: "strawberry-juice", name: "딸기주스"[^\n]+strawberry-juice\.png\?v=2/);
   assert.match(cafeMenu, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
   assert.doesNotMatch(cafe, /천 원짜리/);
-  assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "clear"/);
+  assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "thanks" \| "clear"/);
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
   assert.match(stageVisual, /className=\{left < right \? "is-mirrored" : ""\}\s*\n\s*src="\/cafe-stages\/queue-v2\.png"/);
   assert.match(stageVisual, /카페 대기줄: 왼쪽 줄 \$\{left\}명, 오른쪽 줄 \$\{right\}명/);
@@ -100,26 +103,56 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
-  assert.match(cafe, /모르미의 공부노트/);
-  assert.match(cafe, /가르쳐 준 내용은 잊지 않게 노트에 적어 둬야겠다/);
+  assert.match(talkStage, /궁금해 사전/);
+  // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
+  assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);
+  assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);
+  assert.match(starNote, /className=\{`star-note \$\{className\}`\.trim\(\)\}/);
+  assert.match(starNote, /note-ring[^>]*>별<br \/>노<br \/>트/);
+  assert.doesNotMatch(cafe, /모르미의 공부노트/);
+  assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
   assert.match(cafe, /learnerName/);
-  assert.match(cafe, /budgets = \[8000, 9000, 10000\]/);
+  assert.match(cafe, /budgets = \[7000, 8000\]/);
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
-  assert.match(cafe, /내 메뉴 골라 줘서 고마워/);
+  assert.match(cafe, /예산 안에서 메뉴를/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
-  assert.match(cafe, />완료!</);
+  assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 4);
+  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 4);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /<MormiHelpCard card=\{turn\.help_card\}/);
+  assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
+  assert.match(app, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
+  // 같이 읽기 문장과 다음 버튼은 문제 카드 밖으로 흩어지지 않고 하나의
+  // 모델링 카드 안에서 읽힌다. 태블릿에서도 CTA가 화면 전체 폭으로 늘어나지 않는다.
+  assert.match(app, /className="model-teaching__reading"/);
+  assert.match(css, /\.model-teaching \{[^}]*border:4px solid #e4f1ea[^}]*background:rgba\(255,255,255,\.95\)/);
+  assert.match(css, /\.model-teaching \.send-teach-button \{[^}]*width:min\(240px,100%\)/);
+  // task_anchor 는 계약과 테스트 도구에는 남기되 실제 학습 화면에서는 질문을
+  // 그대로 반복하므로 렌더링하지 않는다. 도움 카드는 no_response 이후에만 연다.
+  assert.doesNotMatch(talkStage, /<MormiTaskAnchor/);
+  assert.doesNotMatch(app, /<MormiTaskAnchor/);
+  assert.match(dialogueUi, /anchor\.completed_items\.map/);
+  assert.match(dialogueContract, /task_anchor\?:/);
+  assert.match(css, /\.mormi-task-anchor/);
   assert.match(dialogueUi, /if \(!card\?\.visible\) return null/);
+  assert.match(dialogueUi, /!helpBodyIsRepeatedByVisual\(card\) && <p>\{card\.body\}<\/p>/);
   assert.match(dialogueUi, /card\.visual_type/);
   assert.match(dialogueUi, /choice\.image_url/);
   assert.match(dialogueContract, /dictionary_ref:/);
-  assert.match(cafe, /STAGE 1 CLEAR!/);
+  // 로컬 계약 테스트도 현재 AI가 받는 공식 시나리오와 필수 화면 맥락을 보낸다.
+  assert.match(aiTest, /id: "home_teach"/);
+  assert.doesNotMatch(aiTest, /home_addition_teach/);
+  assert.match(aiTest, /curriculum_session_id: "money-price"/);
+  assert.match(aiTest, /queue_context: \{ left_count: 3, right_count: 5 \}/);
+  assert.match(cafe, /stageNumber=\{1\}/);
+  assert.match(cafe, /setCalculationScene\("thanks"\)/);
+  assert.match(cafe, /setChangeScene\("thanks"\)/);
+  assert.match(cafe, /showStageSummary[\s\S]*setCalculationScene\("clear"\)[\s\S]*setChangeScene\("clear"\)/);
+  assert.doesNotMatch(cafe, /setTimeout\(returnToMap, 500\)/);
   // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
   // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.
   assert.equal((cafe.match(/<CafeTalkStage\b/g) || []).length, 4);
@@ -138,13 +171,24 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(stageVisual, /conversation\.turn\.visual/);
   assert.match(stageVisual, /type === "cafe_menu"/);
   assert.match(stageVisual, /type === "cafe_calculation" \|\| type === "money_calculation"/);
-  // 모르미 표정은 대화의 mood 를 따라간다. 한 표정으로 굳혀 두지 않는다.
-  assert.match(talkStage, /conversation\?\.turn\.mormi\.mood/);
-  assert.match(talkStage, /celebrating: "\/morami\/celebrate-cutout\.png"/);
+  // 아이와 채팅하는 동안에는 집과 카페 모두 같은 confused PNG를 쓴다.
+  // 완료·보상 화면의 축하 표정은 각 화면에 별도로 남아 있다.
+  assert.match(talkStage, /const chatImage = "\/morami\/confused-cutout\.png"/);
+  assert.match(talkStage, /className="cafe-talk-morami" src=\{chatImage\}/);
+  assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
+  // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
+  // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-main\{[^}]*grid-template-columns:minmax\(0,440px\) minmax\(150px,180px\)[^}]*\}/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-column:1;grid-row:2[^}]*\}[\s\S]*?\.home-room-character-column\{display:contents\}[\s\S]*?\.player-hud\{[^}]*grid-column:1\/3;grid-row:1/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-morami\{grid-column:2;grid-row:2;/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-morami\{grid-column:1;grid-row:3\}/);
+  assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:1\/3/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
+  assert.match(stageVisual, /10000: "\/cafe-money\/10000\.png"/);
   assert.doesNotMatch(cafe, /연습용/);
   assert.match(app, /현장 미션/);
   assert.match(app, /LifeMissionGame/);
@@ -185,7 +229,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /\.answer-grid button\.is-wrong/);
   assert.doesNotMatch(css, /× 다시 생각/);
   assert.match(css, /grid-template-columns: repeat\(4, 1fr\)/);
-  assert.match(app, /correctPosition = Math\.abs\(seed\) % \(answers\.length \+ 1\)/);
+  assert.match(app, /orderedNumericChoicesWithSeededCorrect\(ensuredAnswers, problem\.correct, seed\)/);
   assert.match(app, /shuffledCountingValues\(variantSeed \+ sessionIndex \* 59\)/);
   assert.match(app, /const variationSeed = countingValues \? countingValues\[index\] - 1 : seed/);
   assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), seed\)/);
@@ -205,7 +249,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
-  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
+  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachHelpVisible && teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
   assert.match(app, /\{hasServerMessagePanel && !teachingComplete && \(/);
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
@@ -232,7 +276,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teaching-playground--\$\{teachingTurn\?\.input\.kind \?\? "loading"\}/);
   assert.match(app, /teaching-answer--\$\{teachingTurn\.input\.kind\}/);
   assert.match(app, /className=\{`teaching-dont-know \$\{teachHelpLoading \? "is-loading" : ""\}`\}/);
-  assert.match(app, /teachHelpLoading \? "도움 준비 중…" : "잘 모르겠어"/);
+  assert.match(app, /teachHelpLoading \? "도움 찾는 중…" : "잘 모르겠어"/);
   assert.match(app, /teachingProblem\?\.visual\.type !== "money"/);
   assert.match(app, /className="teaching-back"/);
   assert.match(app, /aria-label="이전 반복학습 화면으로 돌아가기"/);
@@ -249,8 +293,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /teaching-answer--button \{[^}]*width:min\(600px,100%\)[^}]*transform:none/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
+  assert.match(css, /\.figma-cafe--queue \.queue-story-next\{min-width:144px;min-height:52px/);
+  assert.match(css, /\.figma-cafe--queue \.queue-story-dialogue \.queue-story-next::after\{[^}]*border-left-color:#fff/);
   assert.match(css, /\.today-badges > span \{/);
-  assert.match(css, /\.note-content h2 em \{ color: #6256a8/);
+  assert.match(css, /\.note-content h2 em \{ color:#4f438f;[^}]*font-weight:700/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
   // 도움 카드와 입력 문구는 AI 계약을 그대로 사용하며 FE가 별도 질문을 만들지 않는다.
   assert.doesNotMatch(app, /생각과 이유를 직접 알려줘|보기에서 하나를 골라 알려줘|도움 카드와 같이 해보자/);
@@ -277,8 +323,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /api\.createLearner|api\.restoreLearner/);
   assert.doesNotMatch(app, /page.*"tutorial"/);
   assert.doesNotMatch(app, /이 영역에서 배운 길/);
-  assert.match(app, /teachingNote\.attribution_label/);
+  assert.doesNotMatch(app, /<span>\{teachingNote\.attribution_label\}<\/span>/);
   assert.doesNotMatch(app, />별노트에 적기/);
+  assert.match(starNote, /note-ring[^>]*>별<br \/>노<br \/>트/);
+  assert.match(app, /<small>별노트<\/small>/);
   assert.match(app, /result\.teach_reward/);
   assert.match(cafe, /figma-cafe-map/);
   assert.match(app, /네 설명이 맞아요/);
