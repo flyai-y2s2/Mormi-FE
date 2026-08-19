@@ -226,6 +226,36 @@ test("requests speech evidence for a newly selected domain while evidence detail
   }
 });
 
+test("keeps failed automatic speech evidence in error until selection or disclosure action changes", async () => {
+  const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
+  const requested = [];
+  const renderProps = (speechByDomain = {}) => ({ speechByDomain, onRequestSpeech: (domainId) => requested.push(domainId) });
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, renderProps())));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, renderProps())); });
+    const details = dom.container.querySelector(".numeric-evidence");
+    await act(async () => { details.open = true; details.dispatchEvent(new dom.container.ownerDocument.defaultView.Event("toggle", { bubbles: true })); });
+    await act(async () => { root.render(React.createElement(NumericReportPreview, renderProps({ "money-count": { state: "error", message: "불러오지 못했습니다." } }))); });
+    assert.deepEqual(requested, ["money-count"]);
+    assert.match(details.textContent, /불러오지 못했습니다/);
+
+    const priceButton = [...dom.container.querySelectorAll(".numeric-status-selector button")].find((button) => button.querySelector("span")?.textContent === "가격 더하기");
+    await act(async () => { priceButton.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    assert.equal(requested.filter((domainId) => domainId === "price-add").length, 1);
+
+    await act(async () => { details.open = false; details.dispatchEvent(new dom.container.ownerDocument.defaultView.Event("toggle", { bubbles: true })); });
+    await act(async () => { details.open = true; details.dispatchEvent(new dom.container.ownerDocument.defaultView.Event("toggle", { bubbles: true })); });
+    assert.equal(requested.filter((domainId) => domainId === "price-add").length, 2);
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("renders retained empty-week feedback once beside the selector", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
