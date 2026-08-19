@@ -409,7 +409,7 @@ test("renders the complete example as a numeric diagnostic preview without a cha
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /학습자<\/span><strong>김민준/);
+  assert.match(html, /학습자<\/span><strong>예시 학습자/);
   assert.match(html, /개인 진단 리포트/);
   assert.match(html, /완료 단원/);
   assert.match(html, /이번 주 완료/);
@@ -419,7 +419,7 @@ test("renders the complete example as a numeric diagnostic preview without a cha
   assert.match(html, /14/);
   assert.match(html, /실생활 수행/);
   assert.match(html, /8월 2주차/);
-  assert.match(html, /현재 영역별 상태/);
+  assert.match(html, /단원별 결과/);
   assert.match(html, /AI가 본 변화/);
   assert.match(html, /과거·최근 발화 보기/);
   assert.match(html, /AI 다음 학습 제안/);
