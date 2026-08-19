@@ -125,6 +125,142 @@ export type ReportSummaryDto = {
   first_try_correct_count: number;
 };
 
+export type DiagnosticMode = "HOME" | "LIFE";
+export type DiagnosticStatus = "STABLE" | "DEVELOPING" | "SUPPORT_NEEDED" | "OBSERVING";
+export type DiagnosticDirection = "IMPROVING" | "DECLINING" | "MAINTAINING" | "INSUFFICIENT_HISTORY";
+
+export type DiagnosticLearnerDto = {
+  learner_id: number;
+  display_name: string;
+};
+
+export type DiagnosticDataRangeDto = {
+  first_at?: string;
+  last_at?: string;
+  total_home_sessions: number;
+  total_life_visits: number;
+};
+
+export type DiagnosticEvidenceTextDto = {
+  text: string;
+  evidence_refs: string[];
+};
+
+export type DiagnosticCurrentSummaryDto = {
+  concept_performance: DiagnosticEvidenceTextDto;
+  explanation_change: DiagnosticEvidenceTextDto;
+  life_transfer: DiagnosticEvidenceTextDto;
+};
+
+export type DiagnosticHighlightDto = DiagnosticEvidenceTextDto;
+
+export type DiagnosticEvidenceCountsDto = {
+  home_sessions: number;
+  drill_attempts: number;
+  teach_conversations: number;
+  life_visits: number;
+  speech_samples: number;
+};
+
+export type DiagnosticTrendPointDto = {
+  evidence_id: string;
+  label: string;
+  occurred_at: string;
+  independent_score: number;
+  supported_score: number;
+  attempt_count?: number;
+  question_count?: number;
+  expression_level?: "L4" | "L3" | "L2" | "L1" | "L0" | string;
+  recent: boolean;
+};
+
+export type DiagnosticDomainTrendDto = {
+  domain_id: string;
+  label: string;
+  points: DiagnosticTrendPointDto[];
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticHomeModeReportDto = {
+  mode: "HOME";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticLifeModeReportDto = {
+  mode: "LIFE";
+  domains: DiagnosticDomainTrendDto[];
+};
+
+export type DiagnosticModeReportDto = DiagnosticHomeModeReportDto | DiagnosticLifeModeReportDto;
+
+type DiagnosticDomainStatusBase = {
+  domain_id: string;
+  label: string;
+  direction: DiagnosticDirection;
+  total_count: number;
+  recent_count: number;
+};
+
+export type DiagnosticDomainStatusDto =
+  | (DiagnosticDomainStatusBase & { status: "STABLE" })
+  | (DiagnosticDomainStatusBase & { status: "DEVELOPING" })
+  | (DiagnosticDomainStatusBase & { status: "SUPPORT_NEEDED" })
+  | (DiagnosticDomainStatusBase & { status: "OBSERVING" });
+
+export type DiagnosticReportPeriodDto = {
+  week_start: string;
+  week_end: string;
+  timezone: "Asia/Seoul";
+  earliest_week_start: string;
+  latest_week_start: string;
+};
+
+export type DiagnosticReportDto = {
+  learner: DiagnosticLearnerDto;
+  period: DiagnosticReportPeriodDto;
+  data_range: DiagnosticDataRangeDto;
+  current_summary: DiagnosticCurrentSummaryDto;
+  modes: DiagnosticModeReportDto[];
+  domains: DiagnosticDomainStatusDto[];
+  improved_point: DiagnosticHighlightDto;
+  observe_point: DiagnosticHighlightDto;
+  evidence_counts: DiagnosticEvidenceCountsDto;
+  narrative_fallback: boolean;
+};
+
+export type SpeechSampleDto = {
+  evidence_id: string;
+  utterance: string;
+  hint_level?: string;
+  expression_level?: string;
+  occurred_at: string;
+};
+
+type SpeechEvidenceBaseDto = {
+  domain_id: string;
+  verified_elements: string[];
+};
+
+export type AvailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: true;
+  /** Spring constructs null and omits this field through its NON_NULL policy. */
+  message?: never;
+  past: SpeechSampleDto;
+  recent: SpeechSampleDto;
+  change_summary: string;
+};
+
+export type UnavailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
+  available: false;
+  message: string;
+  past?: never;
+  recent?: never;
+  change_summary?: never;
+};
+
+export type SpeechEvidenceDto = AvailableSpeechEvidenceDto | UnavailableSpeechEvidenceDto;
+
 export type AttemptView = {
   attempt_id: number;
   activity: string;
@@ -327,22 +463,27 @@ export async function apiRequest<T>(
     headers.authorization = `Bearer ${token}`;
   }
 
-  const timeoutController = new AbortController();
-  const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+  const requestController = new AbortController();
+  const abortFromCaller = () => requestController.abort(init.signal?.reason);
+  if (init.signal?.aborted) abortFromCaller();
+  else init.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeoutId = window.setTimeout(() => requestController.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers,
-      signal: init.signal ?? timeoutController.signal,
+      signal: requestController.signal,
     });
-  } catch {
-    if (timeoutController.signal.aborted) {
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
+    if (requestController.signal.aborted) {
       throw new ApiError(504, "request_timeout", "모르미를 불러오는 데 시간이 걸리고 있어요. 다시 시도해 주세요.");
     }
     throw new ApiError(503, "network_error", "학습 서버에 연결하지 못했어요. 다시 시도해 주세요.");
   } finally {
     window.clearTimeout(timeoutId);
+    init.signal?.removeEventListener("abort", abortFromCaller);
   }
   if (!response.ok) {
     let code = "http_error";
@@ -424,6 +565,19 @@ export const api = {
 
   reportHistory(limit = 8) {
     return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
+  },
+
+  diagnosticReport(options: { weekStart?: string; signal?: AbortSignal } = {}) {
+    const query = options.weekStart ? `?week_start=${encodeURIComponent(options.weekStart)}` : "";
+    return apiRequest<DiagnosticReportDto>(`/v1/reports/diagnostic${query}`, { signal: options.signal });
+  },
+
+  diagnosticSpeechEvidence(domainId: string, options: { weekStart: string; signal?: AbortSignal }) {
+    const params = new URLSearchParams({ domain_id: domainId, week_start: options.weekStart });
+    return apiRequest<SpeechEvidenceDto>(
+      `/v1/reports/diagnostic/speech-evidence?${params.toString()}`,
+      { signal: options.signal },
+    );
   },
 
   /** 새로고침 복구용. 시도 전체가 함께 온다. */

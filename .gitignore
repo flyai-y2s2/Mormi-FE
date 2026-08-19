@@ -12,3 +12,4 @@
 # 로컬 통합 실행용 외부 서비스와 런타임(각 저장소는 별도 Git 이력 유지)
 /local-services/
 /.local-runtime/
+/.worktrees/

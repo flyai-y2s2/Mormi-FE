@@ -8,6 +8,9 @@
 import { register } from "node:module";
 
 export async function resolve(specifier, context, nextResolve) {
+  if (specifier === "server-only") {
+    return { url: "data:text/javascript,export%20%7B%7D", shortCircuit: true };
+  }
   try {
     return await nextResolve(specifier, context);
   } catch (error) {
