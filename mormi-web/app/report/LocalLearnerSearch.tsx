@@ -6,7 +6,6 @@ import { ApiError } from "../api-client";
 import type { LocalAdminLearner } from "../local-report-admin-client";
 
 type LocalLearnerSearchProps = {
-  currentLearner: LocalAdminLearner;
   searchLearners: (query: string, signal?: AbortSignal) => Promise<readonly LocalAdminLearner[]>;
   onSelect: (learner: LocalAdminLearner) => void;
   onUnavailable: () => void;
@@ -16,7 +15,6 @@ type LocalLearnerSearchProps = {
 const RESULTS_ID = "local-learner-results";
 
 export function LocalLearnerSearch({
-  currentLearner,
   searchLearners,
   onSelect,
   onUnavailable,
@@ -127,7 +125,6 @@ export function LocalLearnerSearch({
   return (
     <div className="local-learner-search" ref={containerRef}>
       <label htmlFor="local-learner-query">학습자 검색</label>
-      <span className="local-learner-search__current">현재: {currentLearner.display_name}</span>
       <input
         id="local-learner-query"
         role="combobox"

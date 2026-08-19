@@ -107,7 +107,8 @@ test("learner search waits for two trimmed characters, displays identities, and 
     const input = dom.container.querySelector("#local-learner-query");
     assert.equal(input.getAttribute("role"), "combobox");
     assert.equal(input.getAttribute("aria-autocomplete"), "list");
-    assert.match(dom.container.textContent, /현재: 현재 학습자/);
+    assert.match(dom.container.textContent, /학습자 검색/);
+    assert.doesNotMatch(dom.container.textContent, /현재:/);
 
     await act(async () => { await type(input, "이"); });
     await act(flushDebounce);

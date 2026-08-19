@@ -406,7 +406,6 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
 
   const adminSearch = localAdminAvailable ? (
     <LocalLearnerSearch
-      currentLearner={selectedLearner ?? report?.learner ?? { learner_id: 0, display_name: "선택 전" }}
       searchLearners={localReportAdminApi.search}
       onSelect={selectLearner}
       onUnavailable={() => setLocalAdminAvailable(false)}

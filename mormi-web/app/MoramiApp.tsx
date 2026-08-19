@@ -30,6 +30,7 @@ import {
 } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 import { StarNote } from "./StarNote";
+import { TeacherReportEntry } from "./TeacherReportEntry";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -974,6 +975,7 @@ function Onboarding({ onSignup, onLogin }: {
           {formError && <p className="onboarding-error" role="alert">{formError}</p>}
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
           <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 시작하는 거예요</button>
+          <TeacherReportEntry />
         </form>
       </section>
     );
