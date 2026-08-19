@@ -5,7 +5,7 @@ import { diagnosticReportFromHistory } from "../app/report/diagnostic-history-fa
 
 function summary(overrides: Partial<ReportSummaryDto>): ReportSummaryDto {
   return {
-    date: "2026-08-12T10:00:00+09:00",
+    date: "8월 12일",
     learning_session_id: "learning-current",
     session_id: "money-count",
     mastery_target: 2,
@@ -30,7 +30,7 @@ function summary(overrides: Partial<ReportSummaryDto>): ReportSummaryDto {
 test("builds the selected weekly report from deployed completed-session history", () => {
   const report = diagnosticReportFromHistory([
     summary({
-      date: "2026-08-05T10:00:00+09:00",
+      date: "8월 5일",
       learning_session_id: "learning-past",
       repetitions: 3,
       ladder: 4,
@@ -38,7 +38,7 @@ test("builds the selected weekly report from deployed completed-session history"
     }),
     summary({}),
     summary({
-      date: "2026-08-05T11:00:00+09:00",
+      date: "8월 5일",
       learning_session_id: "old-other-unit",
       session_id: "clock-basic",
     }),

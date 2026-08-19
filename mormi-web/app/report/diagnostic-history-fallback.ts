@@ -11,9 +11,20 @@ import type {
 
 const sessionById = new Map(sessions.map((session) => [session.id, session]));
 
-function isoDay(value: string | null): string | null {
+function isoDay(value: string | null, referenceDay: string): string | null {
   const day = value?.slice(0, 10);
-  return day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+  const match = value?.match(/^(\d{1,2})월\s*(\d{1,2})일$/);
+  if (!match) return null;
+  const [, referenceMonth] = referenceDay.split("-").map(Number);
+  const month = Number(match[1]);
+  const date = Number(match[2]);
+  let year = Number(referenceDay.slice(0, 4));
+  if (month - referenceMonth > 6) year -= 1;
+  if (referenceMonth - month > 6) year += 1;
+  const parsed = new Date(Date.UTC(year, month - 1, date));
+  if (parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== date) return null;
+  return parsed.toISOString().slice(0, 10);
 }
 
 function mondayFor(day: string): string {
@@ -60,8 +71,10 @@ export function diagnosticReportFromHistory(
   learner: LearnerProfile,
   requestedWeekStart?: string,
 ): DiagnosticReportDto {
+  const todayInKorea = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const referenceDay = requestedWeekStart ?? todayInKorea;
   const dated = history
-    .map((summary) => ({ summary, day: isoDay(summary.date) }))
+    .map((summary) => ({ summary, day: isoDay(summary.date, referenceDay) }))
     .filter((item): item is { summary: ReportSummaryDto; day: string } => Boolean(item.day))
     .sort((left, right) => left.day.localeCompare(right.day));
   const availableWeeks = dated.map((item) => mondayFor(item.day));
@@ -88,7 +101,7 @@ export function diagnosticReportFromHistory(
       points: rows.map(({ summary, day }) => ({
         evidence_id: summary.learning_session_id,
         label,
-        occurred_at: summary.date ?? `${day}T00:00:00+09:00`,
+        occurred_at: summary.date?.startsWith(day) ? summary.date : `${day}T00:00:00+09:00`,
         independent_score: score(summary),
         supported_score: score(summary),
         attempt_count: Math.max(0, summary.repetitions),
@@ -124,8 +137,8 @@ export function diagnosticReportFromHistory(
       latest_week_start: latestWeekStart,
     },
     data_range: {
-      first_at: relevantRows[0]?.summary.date ?? undefined,
-      last_at: relevantRows.at(-1)?.summary.date ?? undefined,
+      first_at: relevantRows[0] ? `${relevantRows[0].day}T00:00:00+09:00` : undefined,
+      last_at: relevantRows.at(-1) ? `${relevantRows.at(-1)!.day}T00:00:00+09:00` : undefined,
       total_home_sessions: relevantRows.length,
       total_life_visits: 0,
     },
