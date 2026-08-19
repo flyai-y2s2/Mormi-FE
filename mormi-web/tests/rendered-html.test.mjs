@@ -128,6 +128,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(dialogueContract, /task_anchor\?:/);
   assert.match(css, /\.mormi-task-anchor/);
   assert.match(dialogueUi, /if \(!card\?\.visible\) return null/);
+  assert.match(dialogueUi, /!helpBodyIsRepeatedByVisual\(card\) && <p>\{card\.body\}<\/p>/);
   assert.match(dialogueUi, /card\.visual_type/);
   assert.match(dialogueUi, /choice\.image_url/);
   assert.match(dialogueContract, /dictionary_ref:/);

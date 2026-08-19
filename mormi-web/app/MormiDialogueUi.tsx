@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { helpBodyIsRepeatedByVisual } from "./help-card";
 import type { MormiChoice, MormiTurn } from "./mormi-dialogue";
 
 type HelpCard = NonNullable<MormiTurn["help_card"]>;
@@ -91,7 +92,7 @@ export function MormiHelpCard({ card }: { card: MormiTurn["help_card"] }) {
   return <details className={`mormi-help-card mormi-help-card--${card.level}`} open={card.auto_open}>
     <summary><span aria-hidden="true">●</span><strong>{card.title}</strong></summary>
     <div className="mormi-help-card__body">
-      <p>{card.body}</p>
+      {!helpBodyIsRepeatedByVisual(card) && <p>{card.body}</p>}
       <HelpVisual card={card} />
     </div>
   </details>;
