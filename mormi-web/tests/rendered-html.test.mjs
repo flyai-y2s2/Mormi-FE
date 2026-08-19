@@ -108,7 +108,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
   assert.match(cafe, /learnerName/);
-  assert.match(cafe, /budgets = \[8000, 9000, 10000\]/);
+  assert.match(cafe, /budgets = \[7000, 8000\]/);
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
@@ -118,9 +118,12 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /<MormiHelpCard card=\{turn\.help_card\}/);
-  assert.match(talkStage, /<MormiTaskAnchor anchor=\{turn\.task_anchor\}/);
-  assert.match(app, /<MormiTaskAnchor anchor=\{teachingTurn\?\.task_anchor \?\? null\}/);
+  assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
+  assert.match(app, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
+  // task_anchor 는 계약과 테스트 도구에는 남기되 실제 학습 화면에서는 질문을
+  // 그대로 반복하므로 렌더링하지 않는다. 도움 카드는 no_response 이후에만 연다.
+  assert.doesNotMatch(talkStage, /<MormiTaskAnchor/);
+  assert.doesNotMatch(app, /<MormiTaskAnchor/);
   assert.match(dialogueUi, /anchor\.completed_items\.map/);
   assert.match(dialogueContract, /task_anchor\?:/);
   assert.match(css, /\.mormi-task-anchor/);
@@ -159,6 +162,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /카페에 필요한 개념부터 배워요/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
+  assert.match(stageVisual, /10000: "\/cafe-money\/10000\.png"/);
   assert.doesNotMatch(cafe, /연습용/);
   assert.match(app, /현장 미션/);
   assert.match(app, /LifeMissionGame/);
@@ -219,7 +223,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
-  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
+  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachHelpVisible && teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
   assert.match(app, /\{hasServerMessagePanel && !teachingComplete && \(/);
   assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
@@ -246,7 +250,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teaching-playground--\$\{teachingTurn\?\.input\.kind \?\? "loading"\}/);
   assert.match(app, /teaching-answer--\$\{teachingTurn\.input\.kind\}/);
   assert.match(app, /className=\{`teaching-dont-know \$\{teachHelpLoading \? "is-loading" : ""\}`\}/);
-  assert.match(app, /teachHelpLoading \? "도움 준비 중…" : "잘 모르겠어"/);
+  assert.match(app, /teachHelpLoading \? "도움 찾는 중…" : "잘 모르겠어"/);
   assert.match(app, /teachingProblem\?\.visual\.type !== "money"/);
   assert.match(app, /className="teaching-back"/);
   assert.match(app, /aria-label="이전 반복학습 화면으로 돌아가기"/);

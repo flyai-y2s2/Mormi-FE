@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiMood, MormiResponseType } from "./mormi-dialogue";
-import { MormiChoiceContent, MormiHelpCard, MormiTaskAnchor } from "./MormiDialogueUi";
+import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 
 /**
  * 카페의 네 스테이지가 함께 쓰는 대화 화면.
@@ -38,6 +38,8 @@ export function CafeTalkStage({
   fallbackLine,
   inputText,
   sending,
+  helpVisible,
+  helpLoading,
   onInput,
   onSubmit,
   onBack,
@@ -48,6 +50,8 @@ export function CafeTalkStage({
   fallbackLine: string;
   inputText: string;
   sending: boolean;
+  helpVisible: boolean;
+  helpLoading: boolean;
   onInput: (value: string) => void;
   onSubmit: (response: CafeDialogueResponse) => void;
   onBack: () => void;
@@ -78,8 +82,11 @@ export function CafeTalkStage({
             conversation={conversation}
             inputText={inputText}
             sending={sending}
+            helpVisible={helpVisible}
+            helpLoading={helpLoading}
             onInput={onInput}
             onSubmit={onSubmit}
+            onHelpRequest={() => onSubmit({ type: "no_response" })}
           />
         </aside>
       </section>
@@ -92,18 +99,25 @@ export function CafeDialogueControls({
   conversation,
   inputText,
   sending,
+  helpVisible,
+  helpLoading,
   onInput,
   onSubmit,
+  onHelpRequest,
 }: {
   conversation: MormiConversation | undefined;
   inputText: string;
   sending: boolean;
+  helpVisible: boolean;
+  helpLoading: boolean;
   onInput: (value: string) => void;
   onSubmit: (response: CafeDialogueResponse) => void;
+  onHelpRequest: () => void;
 }) {
   if (!conversation || conversation.turn.state_version === 0 || conversation.turn.status === "completed") return null;
   const { turn } = conversation;
   const inputKind = turn.input.kind;
+  const centralMenuPicker = inputKind === "choices" && turn.input.config.component === "cafe_menu_picker";
   const completionValues = turn.input.config.completion_values;
   const actionValues = completionValues && typeof completionValues === "object" && !Array.isArray(completionValues)
     ? completionValues as Record<string, string | number | boolean | string[]>
@@ -127,8 +141,8 @@ export function CafeDialogueControls({
   };
 
   return <aside className="cafe-ai-followup" aria-live="polite">
-    <MormiTaskAnchor anchor={turn.task_anchor} />
-    <MormiHelpCard card={turn.help_card} />
+    {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>모르미가 도움 카드를 찾고 있어요…</span></div>}
+    <MormiHelpCard card={helpVisible ? turn.help_card : null} />
     {inputKind === "text" && <form onSubmit={(event) => {
       event.preventDefault();
       if (!inputText.trim() || sending) return;
@@ -139,7 +153,7 @@ export function CafeDialogueControls({
       </label>
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
     </form>}
-    {(inputKind === "choices" || inputKind === "fill") && <div className="cafe-ai-choices">
+    {(inputKind === "choices" || inputKind === "fill") && !centralMenuPicker && <div className="cafe-ai-choices">
       {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}><MormiChoiceContent choice={choice} /></button>)}
     </div>}
     {(inputKind === "count" || inputKind === "equation") && <form onSubmit={(event) => {
@@ -154,6 +168,6 @@ export function CafeDialogueControls({
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
     </form>}
     {(inputKind === "joint" || inputKind === "button") && <button className="figma-cafe-action" disabled={sending} onClick={() => onSubmit({ type: "action", values: actionValues })}>{turn.input.submit_label || "도움 카드와 같이 해보기"}</button>}
-    {inputKind !== "none" && inputKind !== "joint" && inputKind !== "button" && <button className="cafe-ai-dont-know" disabled={sending} onClick={() => onSubmit({ type: "no_response" })}>잘 모르겠어</button>}
+    {inputKind !== "none" && inputKind !== "joint" && inputKind !== "button" && <button className="cafe-ai-dont-know" disabled={sending || helpLoading} onClick={onHelpRequest}>{helpLoading ? "도움 찾는 중…" : "잘 모르겠어"}</button>}
   </aside>;
 }

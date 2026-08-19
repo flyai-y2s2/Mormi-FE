@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
-import { menu, menuItemsForAi } from "./cafe-menu";
+import { menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
 import { cafeStations } from "./journey-config";
@@ -41,7 +41,7 @@ const stageByStation = ["queue", "menu", "calculate", "change"] as const satisfi
 
 type QueueScene = "dialogue" | "note" | "clear";
 type MenuScene = "dialogue" | "thanks";
-const budgets = [8000, 9000, 10000] as const;
+const budgets = [7000, 8000] as const;
 
 /** 모르미 대화가 아직 첫 줄을 보내기 전에 쓰는 기본 문구. */
 const fallbackLines: Record<CafeStage, string> = {
@@ -68,7 +68,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [menuScene, setMenuScene] = useState<MenuScene>("dialogue");
-  const [menuBudget, setMenuBudget] = useState<number>(10000);
+  const [menuBudget, setMenuBudget] = useState<number>(8000);
   const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
   // 메뉴 고르기에서 아이가 고른 메뉴. 대화가 검증한 사실에서만 받아 축하 장면에 쓴다.
   const [menuChildMenuId, setMenuChildMenuId] = useState<string>("");
@@ -78,6 +78,9 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
+  const [helpVisibleStages, setHelpVisibleStages] = useState<Partial<Record<CafeStage, boolean>>>({});
+  const [helpLoadingStage, setHelpLoadingStage] = useState<CafeStage | null>(null);
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const dialogueRequestInFlight = useRef(false);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
@@ -174,6 +177,8 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
     setCafeConversations((current) => ({ ...current, [stage]: undefined }));
     setDialogueError("");
     setDialogueInputs((current) => ({ ...current, [stage]: "" }));
+    setHelpVisibleStages((current) => ({ ...current, [stage]: false }));
+    setHelpLoadingStage(null);
     delete cafeTalks.current[stage];
     validatedStages.current[stage] = false;
     finalizedStages.current[stage] = false;
@@ -361,8 +366,44 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
   }
 
   /** 답을 보내고 입력칸을 비운다. 네 스테이지가 모두 이 경로 하나만 쓴다. */
-  function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
-    void sendCafeResponse(stage, response).then(() => setDialogueInput(stage, ""));
+  async function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
+    const requestsHelp = response.type === "no_response";
+    if (requestsHelp) setHelpLoadingStage(stage);
+    const next = await sendCafeResponse(stage, response);
+    if (requestsHelp) {
+      if (next) setHelpVisibleStages((current) => ({ ...current, [stage]: true }));
+      setHelpLoadingStage((current) => current === stage ? null : current);
+    }
+    setDialogueInput(stage, "");
+  }
+
+  /** 중앙 사진 카드의 메뉴 ID를 현재 서버 선택지 ID와 직접 연결한다. */
+  function answerMenuChoice(stage: "menu" | "calculate", menuId: string) {
+    const conversation = cafeTalks.current[stage];
+    const choice = conversation && menuChoiceById(menuId, conversation.turn.input.choices);
+    if (!choice) {
+      setDialogueError("지금 선택할 수 있는 메뉴가 아니에요. 다시 골라 주세요.");
+      return;
+    }
+
+    if (stage === "menu") {
+      const context = conversation.scenario_context?.cafe_context;
+      const mormiMenuId = context?.mormi_menu_id ?? mormeyMenuId;
+      const budget = context?.budget ?? menuBudget;
+      const total = menuPairTotal(mormiMenuId, choice.id);
+      if (total !== null && total > budget) {
+        captureMormeyEvent("cafe_menu_selected", {
+          menu_ids: [mormiMenuId, choice.id].join(","),
+          total,
+          budget,
+          over_budget: true,
+        });
+        setBudgetModalOpen(true);
+        return;
+      }
+    }
+
+    void answerMormi(stage, { type: "choice", choice_ids: [choice.id] });
   }
 
   return (
@@ -420,8 +461,10 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.queue}
           inputText={dialogueInputs.queue ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.queue)}
+          helpLoading={helpLoadingStage === "queue"}
           onInput={(value) => setDialogueInput("queue", value)}
-          onSubmit={(response) => answerMormi("queue", response)}
+          onSubmit={(response) => { void answerMormi("queue", response); }}
           onBack={returnToMap}
         >
           <CafeStageVisual
@@ -462,11 +505,17 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.menu}
           inputText={dialogueInputs.menu ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.menu)}
+          helpLoading={helpLoadingStage === "menu"}
           onInput={(value) => setDialogueInput("menu", value)}
-          onSubmit={(response) => answerMormi("menu", response)}
+          onSubmit={(response) => { void answerMormi("menu", response); }}
           onBack={returnToMap}
         >
-          <CafeStageVisual conversation={cafeConversations.menu} />
+          <CafeStageVisual
+            conversation={cafeConversations.menu}
+            sending={dialogueSending}
+            onMenuChoice={(choiceId) => answerMenuChoice("menu", choiceId)}
+          />
         </CafeTalkStage>
       )}
 
@@ -489,11 +538,17 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.calculate}
           inputText={dialogueInputs.calculate ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.calculate)}
+          helpLoading={helpLoadingStage === "calculate"}
           onInput={(value) => setDialogueInput("calculate", value)}
-          onSubmit={(response) => answerMormi("calculate", response)}
+          onSubmit={(response) => { void answerMormi("calculate", response); }}
           onBack={returnToMap}
         >
-          <CafeStageVisual conversation={cafeConversations.calculate} />
+          <CafeStageVisual
+            conversation={cafeConversations.calculate}
+            sending={dialogueSending}
+            onMenuChoice={(choiceId) => answerMenuChoice("calculate", choiceId)}
+          />
         </CafeTalkStage>
       )}
 
@@ -504,8 +559,10 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           fallbackLine={fallbackLines.change}
           inputText={dialogueInputs.change ?? ""}
           sending={dialogueSending}
+          helpVisible={Boolean(helpVisibleStages.change)}
+          helpLoading={helpLoadingStage === "change"}
           onInput={(value) => setDialogueInput("change", value)}
-          onSubmit={(response) => answerMormi("change", response)}
+          onSubmit={(response) => { void answerMormi("change", response); }}
           onBack={returnToMap}
         >
           <CafeStageVisual conversation={cafeConversations.change} />
@@ -521,6 +578,13 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         </main>
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
+      {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
+        <div className="cafe-budget-modal">
+          <Image src="/morami/confused-cutout.png" alt="다시 골라 달라고 부탁하는 모르미" width={150} height={150} unoptimized />
+          <h2>예산을 넘었어요. 다른 메뉴를 골라 봐!</h2>
+          <button type="button" onClick={() => setBudgetModalOpen(false)}>확인</button>
+        </div>
+      </div>}
     </section>
   );
 }

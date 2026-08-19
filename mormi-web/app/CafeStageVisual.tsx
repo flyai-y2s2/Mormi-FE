@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { menuImage } from "./cafe-menu";
+import { menuChoiceById, menuDisplayName, menuImage } from "./cafe-menu";
 import type { MormiConversation } from "./mormi-dialogue";
 
 /**
@@ -25,11 +25,24 @@ function won(value: unknown) {
   return Number(value ?? 0).toLocaleString("ko-KR");
 }
 
+const moneyImageByValue: Record<number, string> = {
+  100: "/cafe-money/100.png",
+  500: "/cafe-money/500.png",
+  1000: "/cafe-money/1000.png",
+  5000: "/cafe-money/5000.png",
+  10000: "/cafe-money/10000.png",
+};
+
+function moneyImage(value: unknown) {
+  return moneyImageByValue[Number(value)] ?? "/cafe-money/1000.png";
+}
+
 function MenuCard({ item, badge }: { item: MenuLike; badge?: string }) {
+  const displayName = menuDisplayName(item.id, item.name);
   return (
     <article className="cafe-talk-card">
-      <Image src={menuImage(item.id, item.image_url)} alt={item.name ?? "메뉴"} width={190} height={120} unoptimized />
-      <b>{item.name}</b>
+      <Image src={menuImage(item.id, item.image_url)} alt={displayName} width={190} height={120} unoptimized />
+      <b>{displayName}</b>
       <strong>{won(item.price)}원</strong>
       {badge && <small>{badge}</small>}
     </article>
@@ -39,10 +52,15 @@ function MenuCard({ item, badge }: { item: MenuLike; badge?: string }) {
 export function CafeStageVisual({
   conversation,
   fallback,
+  onMenuChoice,
+  sending = false,
 }: {
   conversation: MormiConversation | undefined;
   /** 첫 턴이 오기 전에 보여 줄 그림. 화면이 이미 뽑아 둔 문제를 그린다. */
   fallback?: ReactNode;
+  /** 서버가 내려준 choice.id를 그대로 돌려준다. 메뉴 배열 위치로 추정하지 않는다. */
+  onMenuChoice?: (choiceId: string) => void;
+  sending?: boolean;
 }) {
   if (!conversation || conversation.turn.state_version === 0) return <>{fallback ?? null}</>;
   const { type, data } = conversation.turn.visual;
@@ -62,18 +80,27 @@ export function CafeStageVisual({
       <div className="cafe-talk-menu">
         {budget !== null && <p className="cafe-talk-menu__budget">오늘 쓸 수 있는 돈 <b>{won(budget)}원</b></p>}
         <div className="cafe-talk-menu__grid">
-          {items.map((item) => (
-            <article
-              key={item.id}
-              className={["cafe-talk-card", item.id === mormiPick?.id ? "is-mormi" : "", item.id === childPick?.id ? "is-child" : ""].filter(Boolean).join(" ")}
+          {items.map((item) => {
+            const choice = menuChoiceById(item.id, conversation.turn.input.choices);
+            const mormiSelected = item.id === mormiPick?.id;
+            const childSelected = item.id === childPick?.id;
+            const displayName = menuDisplayName(item.id, item.name);
+            return <button
+              type="button"
+              key={String(item.id)}
+              data-choice-id={choice?.id}
+              className={["cafe-talk-card", "is-menu-choice", mormiSelected ? "is-mormi" : "", childSelected ? "is-child" : ""].filter(Boolean).join(" ")}
+              disabled={!choice || sending}
+              onClick={() => { if (choice) onMenuChoice?.(choice.id); }}
+              aria-label={mormiSelected ? `${displayName}, 모르미가 고른 메뉴` : `${displayName} ${won(item.price)}원 선택`}
             >
-              <Image src={menuImage(item.id, item.image_url)} alt={item.name ?? "메뉴"} width={170} height={105} unoptimized />
-              <b>{item.name}</b>
+              <Image src={menuImage(item.id, item.image_url)} alt="" width={170} height={105} unoptimized />
+              <b>{displayName}</b>
               <strong>{won(item.price)}원</strong>
-              {item.id === mormiPick?.id && <small>모르미가 골랐어요</small>}
-              {item.id === childPick?.id && <small>내가 골랐어요</small>}
-            </article>
-          ))}
+              {mormiSelected && <small>모르미가 골랐어요</small>}
+              {childSelected && <small>내가 골랐어요</small>}
+            </button>;
+          })}
         </div>
       </div>
     );
@@ -87,7 +114,7 @@ export function CafeStageVisual({
       <div className="cafe-talk-equation">
         {subtraction
           ? <article className="cafe-talk-card is-money">
-              <Image src="/cafe-money/1000.png" alt="낸 돈" width={190} height={120} unoptimized />
+              <Image src={moneyImage(data.left)} alt={`${won(data.left)}원 지폐`} width={190} height={120} unoptimized />
               <b>낸 돈</b>
               <strong>{won(data.left)}원</strong>
             </article>

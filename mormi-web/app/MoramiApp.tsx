@@ -27,7 +27,7 @@ import {
   type MormiResponseType,
   type MormiTurn,
 } from "./mormi-dialogue";
-import { MormiChoiceContent, MormiHelpCard, MormiTaskAnchor } from "./MormiDialogueUi";
+import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -1260,6 +1260,7 @@ export function MoramiApp() {
   const [teachingNote, setTeachingNote] = useState<MormiTurn["note_update"] | null>(null);
   const [teachSending, setTeachSending] = useState(false);
   const [teachHelpLoading, setTeachHelpLoading] = useState(false);
+  const [teachHelpVisible, setTeachHelpVisible] = useState(false);
   const teachRequestInFlight = useRef(false);
   const [teachError, setTeachError] = useState("");
   const [teachRewardAmount, setTeachRewardAmount] = useState(0);
@@ -1303,7 +1304,7 @@ export function MoramiApp() {
   const brightExit = teachingTurn?.completion?.outcome === "bright_exit";
   const hasTeachingNote = Boolean(teachingNote) && !brightExit;
   const serverMormiText = teachingTurn?.mormi.text?.trim() ?? "";
-  const hasServerMessagePanel = Boolean(serverMormiText) || Boolean(teachingTurn?.help_card?.visible) || Boolean(teachError);
+  const hasServerMessagePanel = Boolean(serverMormiText) || Boolean(teachHelpVisible && teachingTurn?.help_card?.visible) || Boolean(teachError);
 
   const showMoramiFallback = useCallback((fallbackDialogue: string, fallbackExpression: Expression) => {
     setDialogue(fallbackDialogue);
@@ -1590,6 +1591,7 @@ export function MoramiApp() {
     setTeachSending(true);
     setMormiConversation(null);
     setTeachingNote(null);
+    setTeachHelpVisible(false);
     try {
       const sessionId = await learningSessionPromise.current;
       await attemptWriteQueue.current;
@@ -1649,6 +1651,7 @@ export function MoramiApp() {
         latency_ms: Math.min(nowMs() - startedAt.current, 600000),
         ...payload,
       });
+      if (type === "no_response") setTeachHelpVisible(true);
       applyTeachingConversation(nextConversation);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -2047,10 +2050,10 @@ export function MoramiApp() {
                 <div className="teaching-morami"><Morami expression={expression} /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
-                  <MormiTaskAnchor anchor={teachingTurn?.task_anchor ?? null} />
-                  <MormiHelpCard card={teachingTurn?.help_card ?? null} />
+                  {teachHelpLoading && <p className="teaching-help-loading" role="status">모르미가 도움 카드를 찾고 있어요…</p>}
+                  <MormiHelpCard card={teachHelpVisible ? teachingTurn?.help_card ?? null : null} />
                   {teachError && <p role="alert">{teachError}</p>}
-                  {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
+                  {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 찾는 중…" : "잘 모르겠어"}</button>}
                 </div>
               </div>
             )}

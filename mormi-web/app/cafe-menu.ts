@@ -10,6 +10,11 @@ export const menu = [
 
 export type CafeMenuItem = (typeof menu)[number];
 
+export type CafeMenuChoice = {
+  id: string;
+  disabled?: boolean | null;
+};
+
 export const menuItemsForAi = menu.map(({ id, name, price, image }) => ({
   id,
   name,
@@ -22,4 +27,22 @@ export function menuImage(id: unknown, imageUrl?: unknown) {
   if (typeof imageUrl === "string" && imageUrl) return imageUrl;
   const item = menu.find((candidate) => candidate.id === id);
   return item ? item.image : "/figma/cafe/cookie.png?v=2";
+}
+
+/** 화면 이름만 다듬고 서버가 발급한 선택지 ID는 절대 바꾸지 않는다. */
+export function menuDisplayName(id: unknown, name: unknown) {
+  if (id === "americano" || name === "아메리카노") return "커피";
+  return typeof name === "string" && name.trim() ? name : "메뉴";
+}
+
+/** 중앙 메뉴 카드와 서버 선택지를 ID로만 연결한다. 배열 순서는 사용하지 않는다. */
+export function menuChoiceById<T extends CafeMenuChoice>(menuId: unknown, choices: readonly T[]) {
+  if (typeof menuId !== "string") return undefined;
+  return choices.find((choice) => choice.id === menuId && !choice.disabled);
+}
+
+export function menuPairTotal(mormiMenuId: string, childMenuId: string) {
+  const mormiMenu = menu.find((item) => item.id === mormiMenuId);
+  const childMenu = menu.find((item) => item.id === childMenuId);
+  return mormiMenu && childMenu ? mormiMenu.price + childMenu.price : null;
 }
