@@ -29,6 +29,7 @@ import {
   type MormiTurn,
 } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { StarNote } from "./StarNote";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -2112,13 +2113,7 @@ export function MoramiApp() {
           <div className="character-column"><Morami expression={expression} /></div>
           <div className="content-column">
             <SpeechBubble><p>{dialogue}</p></SpeechBubble>
-            {hasTeachingNote && teachingNote && <article className="star-note">
-              <div className="note-ring">별<br />노<br />트</div>
-              <div className="note-content">
-                <p><UiIcon name="star" size="small" /> 오늘 모르미가 적은 말</p>
-                <h2>“<em>{teachingNote.text}</em>”</h2>
-              </div>
-            </article>}
+            {hasTeachingNote && teachingNote && <StarNote text={teachingNote.text} />}
             {teachError && <p role="alert">{teachError}</p>}
             <button className="primary-button" onClick={beginHomework} disabled={teachSending}>집에서 오늘 학습 마치기 <span className="button-arrow" /></button>
           </div>

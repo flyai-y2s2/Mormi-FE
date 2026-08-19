@@ -14,6 +14,7 @@ import {
   submitMormiResponseThroughBe,
   type MormiConversation,
 } from "./mormi-dialogue";
+import { StarNote } from "./StarNote";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
@@ -479,7 +480,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           {queueScene === "note" && (
             <section className="queue-note-scene">
               <Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={310} height={340} unoptimized />
-              <article><span>별노트</span><h2>{cafeConversations.queue?.turn.note_update?.text}</h2></article>
+              <StarNote text={cafeConversations.queue?.turn.note_update?.text} />
             </section>
           )}
           {queueScene === "clear" && (
