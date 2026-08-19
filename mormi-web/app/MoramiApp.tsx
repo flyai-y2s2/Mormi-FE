@@ -2078,7 +2078,10 @@ export function MoramiApp() {
                     <button className="send-teach-button" disabled={Object.keys(teachFillValues).length === 0 || teachSending} onClick={() => void submitTeachingResponse("fill", { choice_ids: teachChoiceIds, values: teachFillValues })}>{teachingTurn.input.submit_label ?? "완료"}</button>
                   </div>}
                   {(teachingTurn.input.kind === "joint" || teachingTurn.input.kind === "button") && <div className="model-teaching">
-                    {typeof teachingTurn.input.config.text === "string" && <p>{teachingTurn.input.config.text}</p>}
+                    {typeof teachingTurn.input.config.text === "string" && <div className="model-teaching__reading">
+                      <span>같이 읽어 볼 문장</span>
+                      <p>{teachingTurn.input.config.text}</p>
+                    </div>}
                     <button className="send-teach-button" disabled={teachSending} onClick={() => void submitTeachingResponse("action", { values: completionValues(teachingTurn) })}>{teachingTurn.input.submit_label ?? "다음"}</button>
                   </div>}
                 </div>

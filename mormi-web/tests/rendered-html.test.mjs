@@ -126,6 +126,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
   assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
   assert.match(app, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
+  // 같이 읽기 문장과 다음 버튼은 문제 카드 밖으로 흩어지지 않고 하나의
+  // 모델링 카드 안에서 읽힌다. 태블릿에서도 CTA가 화면 전체 폭으로 늘어나지 않는다.
+  assert.match(app, /className="model-teaching__reading"/);
+  assert.match(css, /\.model-teaching \{[^}]*border:4px solid #e4f1ea[^}]*background:rgba\(255,255,255,\.95\)/);
+  assert.match(css, /\.model-teaching \.send-teach-button \{[^}]*width:min\(240px,100%\)/);
   // task_anchor 는 계약과 테스트 도구에는 남기되 실제 학습 화면에서는 질문을
   // 그대로 반복하므로 렌더링하지 않는다. 도움 카드는 no_response 이후에만 연다.
   assert.doesNotMatch(talkStage, /<MormiTaskAnchor/);
