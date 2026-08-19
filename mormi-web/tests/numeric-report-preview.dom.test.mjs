@@ -106,6 +106,35 @@ test("leads with the current state and turns the selected domain into one next-l
   }
 });
 
+test("places the unit selector under unit results and keeps AI change focused on evidence", async () => {
+  const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview)));
+  try {
+    const resultsSection = dom.container.querySelector('[aria-labelledby="numeric-trend-title"]');
+    const changeSection = dom.container.querySelector('[aria-labelledby="numeric-domain-title"]');
+    assert.ok(resultsSection.querySelector(".numeric-status-selector"), "단원 선택은 단원별 결과 바로 아래에 있어야 한다");
+    assert.equal(changeSection.querySelector("h2").textContent, "AI가 본 변화");
+    assert.equal(changeSection.querySelector(".numeric-status-selector"), null, "AI 변화 영역에 선택 바를 중복하지 않는다");
+    assert.ok(changeSection.querySelector(".numeric-domain-detail .numeric-evidence"), "과거·최근 발화 근거는 유지한다");
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("gives all ladder levels equal width while encoding share only as height", async () => {
+  const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview)));
+  try {
+    const bars = [...dom.container.querySelectorAll(".numeric-ladder-bars > span")];
+    assert.equal(bars.length, 5);
+    assert.deepEqual(bars.map((bar) => bar.style.flexGrow), ["1", "1", "1", "1", "1"]);
+    assert.deepEqual(bars.map((bar) => bar.style.flexBasis), ["0px", "0px", "0px", "0px", "0px"]);
+    assert.ok(bars.every((bar) => bar.style.getPropertyValue("--bar-height")), "각 비율은 막대 높이로 표현해야 한다");
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("uses the existing four summary cards for the selected week's server counts", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
