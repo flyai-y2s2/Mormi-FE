@@ -29,6 +29,27 @@ import {
   speechLoadDecision,
   speechStateAfterResult,
 } from "../app/report/diagnostic-report-interactions.ts";
+import {
+  canMoveToNextWeek,
+  canMoveToPreviousWeek,
+  formatKoreanWeekLabel,
+  shiftIsoWeek,
+} from "../app/report/weekly-report-period.ts";
+
+test("weekly report helpers shift Mondays without local timezone drift", () => {
+  assert.equal(shiftIsoWeek("2026-08-17", -1), "2026-08-10");
+  assert.equal(shiftIsoWeek("2026-08-17", 1), "2026-08-24");
+  assert.equal(formatKoreanWeekLabel("2026-08-17"), "8월 3주차");
+});
+
+test("weekly report navigation respects server bounds", () => {
+  const period = {
+    week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul" as const,
+    earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17",
+  };
+  assert.equal(canMoveToPreviousWeek(period), true);
+  assert.equal(canMoveToNextWeek(period), false);
+});
 
 test("complete example mode only activates for the explicit query flag", () => {
   assert.equal(isCompleteReportExample("?example=complete"), true);
@@ -202,6 +223,7 @@ test("chartPoints gives non-finite server scores a deterministic safe fallback",
 test("diagnostic fixtures mirror Spring's empty and speech-evidence JSON shapes", () => {
   const emptyReport: DiagnosticReportDto = {
     learner: { learner_id: 7, display_name: "학습자" },
+    period: { week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul", earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17" },
     data_range: { total_home_sessions: 0, total_life_visits: 0 },
     current_summary: {
       concept_performance: { text: "집 학습 근거가 없습니다.", evidence_refs: [] },
@@ -314,6 +336,7 @@ test("groups duplicate HOME records into one domain and sources drill and teach 
   ]);
   const report: DiagnosticReportDto = {
     learner: { learner_id: 7, display_name: "학습자" },
+    period: { week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul", earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17" },
     data_range: { total_home_sessions: 2, total_life_visits: 1 },
     current_summary: {
       concept_performance: { text: "개념 근거", evidence_refs: ["drill:1"] },
@@ -536,6 +559,7 @@ test("uses one shared recent band when all active LIFE series have the same boun
 test("empty diagnostic report requires zero completed counts and no trend points", () => {
   const empty: DiagnosticReportDto = {
     learner: { learner_id: 7, display_name: "학습자" },
+    period: { week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul", earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17" },
     data_range: { total_home_sessions: 0, total_life_visits: 0 },
     current_summary: {
       concept_performance: { text: "근거 없음", evidence_refs: [] },

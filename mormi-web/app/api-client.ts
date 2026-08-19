@@ -205,8 +205,17 @@ export type DiagnosticDomainStatusDto =
   | (DiagnosticDomainStatusBase & { status: "SUPPORT_NEEDED" })
   | (DiagnosticDomainStatusBase & { status: "OBSERVING" });
 
+export type DiagnosticReportPeriodDto = {
+  week_start: string;
+  week_end: string;
+  timezone: "Asia/Seoul";
+  earliest_week_start: string;
+  latest_week_start: string;
+};
+
 export type DiagnosticReportDto = {
   learner: DiagnosticLearnerDto;
+  period: DiagnosticReportPeriodDto;
   data_range: DiagnosticDataRangeDto;
   current_summary: DiagnosticCurrentSummaryDto;
   modes: DiagnosticModeReportDto[];
@@ -511,14 +520,16 @@ export const api = {
     return apiRequest<ReportSummaryDto[]>(`/v1/reports/history?limit=${limit}`);
   },
 
-  diagnosticReport(signal?: AbortSignal) {
-    return apiRequest<DiagnosticReportDto>("/v1/reports/diagnostic", { signal });
+  diagnosticReport(options: { weekStart?: string; signal?: AbortSignal } = {}) {
+    const query = options.weekStart ? `?week_start=${encodeURIComponent(options.weekStart)}` : "";
+    return apiRequest<DiagnosticReportDto>(`/v1/reports/diagnostic${query}`, { signal: options.signal });
   },
 
-  diagnosticSpeechEvidence(domainId: string, signal?: AbortSignal) {
+  diagnosticSpeechEvidence(domainId: string, options: { weekStart: string; signal?: AbortSignal }) {
+    const params = new URLSearchParams({ domain_id: domainId, week_start: options.weekStart });
     return apiRequest<SpeechEvidenceDto>(
-      `/v1/reports/diagnostic/speech-evidence?domain_id=${encodeURIComponent(domainId)}`,
-      { signal },
+      `/v1/reports/diagnostic/speech-evidence?${params.toString()}`,
+      { signal: options.signal },
     );
   },
 

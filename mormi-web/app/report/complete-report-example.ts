@@ -40,6 +40,13 @@ function status(
 
 export const completeDiagnosticReportExample: DiagnosticReportDto = {
   learner: { learner_id: 999, display_name: "김민준" },
+  period: {
+    week_start: "2026-08-10",
+    week_end: "2026-08-16",
+    timezone: "Asia/Seoul",
+    earliest_week_start: "2026-07-13",
+    latest_week_start: "2026-08-10",
+  },
   data_range: {
     first_at: "2026-07-15T09:00:00+09:00",
     last_at: "2026-08-16T15:30:00+09:00",
