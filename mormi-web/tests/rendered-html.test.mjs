@@ -92,7 +92,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafeMenu, /id: "sandwich", name: "샌드위치"[^\n]+sandwich\.png\?v=2/);
   assert.match(cafe, /figma-cafe__place/);
   assert.doesNotMatch(cafe, /천 원짜리/);
-  assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "clear"/);
+  assert.match(cafe, /type QueueScene = "dialogue" \| "note" \| "thanks" \| "clear"/);
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
   assert.match(stageVisual, /className=\{left < right \? "is-mirrored" : ""\}\s*\n\s*src="\/cafe-stages\/queue-v2\.png"/);
   assert.match(stageVisual, /카페 대기줄: 왼쪽 줄 \$\{left\}명, 오른쪽 줄 \$\{right\}명/);
@@ -120,6 +120,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /예산 안에서 메뉴를/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
   assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 4);
+  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 4);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
@@ -143,8 +144,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(aiTest, /curriculum_session_id: "money-price"/);
   assert.match(aiTest, /queue_context: \{ left_count: 3, right_count: 5 \}/);
   assert.match(cafe, /stageNumber=\{1\}/);
-  assert.match(cafe, /setCalculationScene\("clear"\)/);
-  assert.match(cafe, /setChangeScene\("clear"\)/);
+  assert.match(cafe, /setCalculationScene\("thanks"\)/);
+  assert.match(cafe, /setChangeScene\("thanks"\)/);
+  assert.match(cafe, /showStageSummary[\s\S]*setCalculationScene\("clear"\)[\s\S]*setChangeScene\("clear"\)/);
   assert.doesNotMatch(cafe, /setTimeout\(returnToMap, 500\)/);
   // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
   // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.

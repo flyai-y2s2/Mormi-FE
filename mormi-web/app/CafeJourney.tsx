@@ -6,6 +6,7 @@ import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
 import { menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
 import { CafeStageComplete, type CafeStageResult } from "./CafeStageComplete";
+import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
 import { cafeStations } from "./journey-config";
@@ -41,10 +42,10 @@ const cafeScenarioByStation = ["cafe_queue", "cafe_budget_menu", "cafe_menu_tota
 /** 스테이션 번호 → 서버 스테이지 이름. */
 const stageByStation = ["queue", "menu", "calculate", "change"] as const satisfies readonly CafeStage[];
 
-type QueueScene = "dialogue" | "note" | "clear";
-type MenuScene = "dialogue" | "thanks";
-type CalculationScene = "dialogue" | "clear";
-type ChangeScene = "dialogue" | "clear";
+type QueueScene = "dialogue" | "note" | "thanks" | "clear";
+type MenuScene = "dialogue" | "thanks" | "clear";
+type CalculationScene = "dialogue" | "thanks" | "clear";
+type ChangeScene = "dialogue" | "thanks" | "clear";
 const budgets = [7000, 8000] as const;
 
 /** 모르미 대화가 아직 첫 줄을 보내기 전에 쓰는 기본 문구. */
@@ -71,7 +72,7 @@ function conversationInputKey(conversation: MormiConversation | undefined) {
   return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
 }
 
-export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
+export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
@@ -251,7 +252,7 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         setQueueScene("note");
       } else {
         if (!replaying) setJourneyProgress((progress) => Math.max(progress, 1));
-        setQueueScene("clear");
+        setQueueScene("thanks");
       }
     } else if (stage === "menu") {
       const picked = cafeTalks.current.menu?.turn.completion?.verified_facts?.child_menu_id;
@@ -266,10 +267,10 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       setMenuScene("thanks");
     } else if (stage === "calculate") {
       if (!replaying) setJourneyProgress((progress) => Math.max(progress, 3));
-      setCalculationScene("clear");
+      setCalculationScene("thanks");
     } else {
       if (!replaying) setJourneyProgress(4);
-      setChangeScene("clear");
+      setChangeScene("thanks");
     }
   }
 
@@ -350,7 +351,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
 
   function finishQueueStory() {
     if (!replayStages.current.queue) setJourneyProgress((progress) => Math.max(progress, 1));
-    setQueueScene("clear");
+    setQueueScene("thanks");
+  }
+
+  function showStageSummary(stage: CafeStage) {
+    if (stage === "queue") setQueueScene("clear");
+    if (stage === "menu") setMenuScene("clear");
+    if (stage === "calculate") setCalculationScene("clear");
+    if (stage === "change") setChangeScene("clear");
   }
 
   function finishMenuStory() {
@@ -567,6 +575,13 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
               <StarNote text={cafeConversations.queue?.turn.note_update?.text} />
             </section>
           )}
+          {queueScene === "thanks" && (
+            <CafeStageThanks
+              learnerName={learnerName}
+              title="줄 서기 완료!"
+              onNext={() => showStageSummary("queue")}
+            />
+          )}
           {queueScene === "clear" && (
             <CafeStageComplete
               stageNumber={1}
@@ -609,6 +624,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
       )}
 
       {step === "menu" && menuScene === "thanks" && (
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="메뉴 고르기 완료!"
+          onNext={() => showStageSummary("menu")}
+        />
+      )}
+
+      {step === "menu" && menuScene === "clear" && (
         <CafeStageComplete
           stageNumber={2}
           title="예산 안에서 메뉴를"
@@ -651,6 +674,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
         />
       )}
 
+      {step === "sum" && calculationScene === "thanks" && (
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="메뉴 값 계산 완료!"
+          onNext={() => showStageSummary("calculate")}
+        />
+      )}
+
       {step === "change" && changeScene === "dialogue" && (
         <CafeTalkStage
           conversation={cafeConversations.change}
@@ -679,6 +710,14 @@ export function CafeJourney({ activeVisitId, onBack, onComplete }: Props) {
           results={completionResults("change")}
           actionLabel="완료하기"
           onAction={finishChangeStory}
+        />
+      )}
+
+      {step === "change" && changeScene === "thanks" && (
+        <CafeStageThanks
+          learnerName={learnerName}
+          title="거스름돈 계산 완료!"
+          onNext={() => showStageSummary("change")}
         />
       )}
 
