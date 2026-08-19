@@ -155,10 +155,13 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
 }
 
 export function buildNumericLiveReport(report: DiagnosticReportDto): NumericLiveReport {
+  const completedUnits = new Set(
+    (report.modes.find((mode) => mode.mode === "HOME")?.domains ?? []).map((domain) => domain.domain_id),
+  ).size;
   return {
     learnerName: report.learner.display_name,
     weeklySummary: {
-      completedUnits: report.evidence_counts.home_sessions,
+      completedUnits,
       drillAttempts: report.evidence_counts.drill_attempts,
       teachConversations: report.evidence_counts.teach_conversations,
       lifeVisits: report.evidence_counts.life_visits,

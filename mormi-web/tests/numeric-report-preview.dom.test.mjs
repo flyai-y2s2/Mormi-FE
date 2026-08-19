@@ -115,7 +115,7 @@ test("uses the existing four summary cards for the selected week's server counts
   try {
     const cards = [...dom.container.querySelectorAll(".numeric-summary-values article")].map((card) => card.textContent.replace(/\s+/g, " ").trim());
     assert.deepEqual(cards, [
-      "완료 단원18이번 주 완료",
+      "완료 단원3이번 주 완료",
       "반복학습92기록",
       "모르미 가르치기14기록",
       "실생활 수행6방문",
@@ -211,6 +211,24 @@ test("shows retained-week retry feedback and requests selected-week speech evide
   } finally {
     dom.cleanup();
   }
+});
+
+test("server-renders the canonical comparison message for unavailable speech evidence", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const html = server.renderToString(React.createElement(NumericReportPreview, {
+    report: completeDiagnosticReportExample,
+    speechByDomain: {
+      "money-count": {
+        state: "ready",
+        evidence: { available: false, domain_id: "money-count", verified_elements: [], message: "서버가 반환한 다른 안내" },
+      },
+    },
+  }));
+
+  assert.match(html, /비교할 기록이 더 필요해요/);
+  assert.doesNotMatch(html, /서버가 반환한 다른 안내/);
 });
 
 test("renders LIFE-only content with the compact HOME empty message", async () => {

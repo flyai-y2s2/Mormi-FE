@@ -92,12 +92,32 @@ test("recognizes the BE 반복학습 and 모르미 가르치기 labels without d
     ["모르미 가르치기", "60%", "60%"],
   ]);
   assert.equal(money.ladderStart, "L2");
-  assert.deepEqual(model.weeklySummary, {
-    completedUnits: 13,
-    drillAttempts: 46,
-    teachConversations: 0,
-    lifeVisits: 1,
-  });
+});
+
+test("counts three HOME completions for the same unit as one completed unit", () => {
+  const repeatedUnit: DiagnosticReportDto = {
+    ...report,
+    modes: [
+      {
+        mode: "HOME",
+        domains: [{
+          ...report.modes[0]!.domains[0]!,
+          label: "돈 세기 · 반복학습",
+          total_count: 3,
+          recent_count: 3,
+          points: report.modes[0]!.domains[0]!.points.slice(0, 3),
+        }],
+      },
+      { mode: "LIFE", domains: [] },
+    ],
+    evidence_counts: { ...report.evidence_counts, home_sessions: 3 },
+  };
+
+  const summary = buildNumericLiveReport(repeatedUnit).weeklySummary;
+  assert.equal(summary.completedUnits, 1);
+  assert.equal(summary.drillAttempts, 46);
+  assert.equal(summary.teachConversations, 0);
+  assert.equal(summary.lifeVisits, 1);
 });
 
 test("keeps one-record life evidence in collecting state", () => {
