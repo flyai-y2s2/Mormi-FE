@@ -391,6 +391,27 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 /* Complete */
 .complete-scene { min-height: calc(100vh - 90px); max-width: 1100px; margin: 0 auto; padding: 24px 42px 70px; display: grid; grid-template-columns: .9fr 1.1fr; gap:30px; align-items: center; position: relative; }
 .complete-scene > :not(.confetti) { position:relative; z-index:1; }.complete-copy { width:100%; padding:32px; border:2px solid rgba(255,255,255,.72); border-radius:34px; background:rgba(255,255,255,.56); box-shadow:0 22px 60px rgba(59,93,76,.12); backdrop-filter:blur(8px); }.complete-copy h1 { margin: 6px 0 24px; font-size: clamp(38px, 4.8vw, 58px); line-height: 1.12; letter-spacing: -3px; }.complete-copy h1 em { color: var(--mint-dark); font-style: normal; }.today-badges { margin-bottom:22px; display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }.today-badges > span { min-width:0; min-height:100px; padding:12px 8px; border-radius:20px; background:rgba(255,255,255,.84); box-shadow:0 7px 20px rgba(70,94,82,.08); display:grid; grid-template-columns:34px 1fr; grid-template-rows:auto auto; align-content:center; align-items:center; column-gap:9px; text-align:left; }.today-badges > span > .ui-icon { width:34px; height:34px; grid-row:1 / 3; color:#4ba77f; }.today-badges > span:nth-child(2) > .ui-icon { color:#e4b43f; }.today-badges > span:nth-child(3) > .ui-icon { color:#7a67cf; }.today-badges strong { font-size:19px; line-height:1.1; }.today-badges small { min-width:0; color:#62736b; font-size:11px; line-height:1.35; font-weight:800; }
+.cafe-stage-complete-wrap{width:min(1133px,100%);min-height:calc(100svh - 84px);margin:auto}
+.cafe-stage-complete{min-height:calc(100svh - 84px);padding-top:18px;padding-bottom:38px}
+.cafe-stage-complete__morami{width:100%;height:min(55vh,500px);object-fit:contain;filter:drop-shadow(0 18px 18px rgba(80,56,31,.14))}
+.cafe-stage-complete .complete-copy{background:rgba(255,255,255,.9)}
+.cafe-stage-complete .eyebrow{display:inline-block;margin:0;padding:7px 13px;border-radius:999px;color:#fff;background:#62a97a;font-size:12px;font-weight:950;letter-spacing:.02em}
+.cafe-stage-complete__results{margin:0 0 22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.cafe-stage-complete__results>span{min-width:0;min-height:94px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:20px;background:rgba(255,255,255,.9);box-shadow:0 7px 20px rgba(70,94,82,.08);text-align:center}
+.cafe-stage-complete__results strong{color:#2f775c;font-size:clamp(17px,2.2vw,23px);line-height:1.15;word-break:keep-all}
+.cafe-stage-complete__results small{color:#62736b;font-size:12px;font-weight:850}
+.cafe-stage-complete .complete-exit-button{width:100%;min-height:64px;font-size:18px}
+@media(max-width:760px){
+  .cafe-stage-complete-wrap,.cafe-stage-complete{min-height:calc(100svh - 62px)}
+  .cafe-stage-complete{padding:22px 12px 34px;display:block}
+  .cafe-stage-complete__morami{width:128px;height:145px;position:absolute;right:18px;top:22px}
+  .cafe-stage-complete .complete-copy{padding:24px 16px 16px}
+  .cafe-stage-complete .complete-copy h1{max-width:72%;margin:7px 0 22px;font-size:32px;line-height:1.14;letter-spacing:-2px}
+  .cafe-stage-complete__results{gap:6px;margin-bottom:18px}
+  .cafe-stage-complete__results>span{min-height:84px;padding:9px 5px}
+  .cafe-stage-complete__results strong{font-size:16px}
+  .cafe-stage-complete__results small{font-size:10px}
+}
 .session-coin-earned { margin:16px 0; padding:12px 18px; display:grid; grid-template-columns:82px 1fr; align-items:center; gap:12px; border:4px solid #edc85a; border-radius:24px; background:linear-gradient(120deg,#fff7cf,#fff); box-shadow:0 9px 0 #e5cf87,0 16px 30px rgba(92,70,25,.12); }.session-coin-earned img { width:78px; height:78px; object-fit:contain; }.session-coin-earned span,.session-coin-earned strong,.session-coin-earned small { display:block; }.session-coin-earned span { color:#846f31; font-size:11px; font-weight:900; }.session-coin-earned strong { color:#74520d; font-size:24px; }.session-coin-earned small { color:#6d7d75; }
 .complete-path { margin-bottom:22px; }.complete-path > p { margin:0 0 8px; color:#537166; font-size:12px; font-weight:900; }.session-roadmap { width:100%; padding:10px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; border-radius:20px; background:rgba(255,255,255,.62); }
 .session-roadmap span { min-width:0; min-height:52px; padding:8px; display:flex; align-items:center; justify-content:flex-start; gap:8px; color:#6d7e76; font-size:12px; font-weight:900; line-height:1.3; text-align:left; }.session-roadmap b { font:inherit; }

@@ -49,7 +49,7 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(visual, /menuChoiceById\(item\.id, conversation\.turn\.input\.choices\)/);
   assert.match(visual, /onMenuChoice\?\.\(choice\.id\)/);
   assert.match(journey, /choice_ids: \[choice\.id\]/);
-  assert.match(journey, /if \(total !== null && total > budget\)[\s\S]{0,500}setBudgetModalOpen\(true\)[\s\S]{0,100}return;/);
+  assert.match(journey, /if \(total === null\)[\s\S]{0,250}return;[\s\S]{0,100}if \(total > budget\)[\s\S]{0,500}setBudgetModalOpen\(true\)[\s\S]{0,100}return;/);
   assert.match(journey, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(journey, /const budgets = \[7000, 8000\] as const/);
 
@@ -58,6 +58,7 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(talk, /choiceIdForTypedAnswer\(inputText, turn\.input\.choices\)/);
   assert.match(talk, /\(!delayedChoices \|\| choiceFallbackVisible\)/);
   assert.match(journey, /deferChoices[\s\S]{0,300}choiceFallbackVisible=\{queueChoiceFallbackKey === conversationInputKey\(cafeConversations\.queue\)\}/);
+  assert.match(journey, /conversation=\{cafeConversations\.change\}[\s\S]{0,350}deferChoices[\s\S]{0,200}changeChoiceFallbackKey/);
   assert.match(talk, /onHelpRequest=\{\(\) => onSubmit\(\{ type: "no_response" \}\)\}/);
   assert.match(talk, /helpLoading && <div className="cafe-help-loading"/);
   assert.match(talk, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
