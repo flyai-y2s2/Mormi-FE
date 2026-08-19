@@ -348,7 +348,7 @@ test("server-renders the individual diagnostic report shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /현재 상태 요약/);
-  assert.match(html, /세션별 변화/);
+  assert.match(html, /단원별 결과/);
   assert.match(html, /현재 영역별 상태/);
   assert.match(html, /집 · 개념/);
   assert.match(html, /실생활 · 응용/);
@@ -386,6 +386,17 @@ test("numeric weekly preview keeps its compact control outside the report paper"
   assert.doesNotMatch(preview, />세션별 변화</);
 });
 
+test("ready numeric report wires selected-week speech evidence into its existing detail panel", async () => {
+  const [dashboard, preview] = await Promise.all([
+    readFile(new URL("../app/report/ReportDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/report/NumericReportPreview.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(dashboard, /speechByDomain=\{speechByDomain\}/);
+  assert.match(dashboard, /onRequestSpeech=\{\(domainId\) =>/);
+  assert.match(preview, /onRequestSpeech\?\.\(selectedDomain\.id\)/);
+  assert.match(preview, /speech\.evidence\.recent\.utterance/);
+});
+
 test("diagnostic report renders as one compact Korean A4 document", async () => {
   const [response, css, dashboard, example] = await Promise.all([
     render("/report"),
@@ -398,7 +409,7 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
 
   assert.match(html, /<article[^>]+data-report-format="a4"/);
   assert.match(html, /현재 상태 요약/);
-  assert.match(html, /세션별 변화/);
+  assert.match(html, /단원별 결과/);
   assert.match(html, /현재 영역별 상태/);
   assert.doesNotMatch(html, /INDIVIDUAL LEARNING REPORT|AT A GLANCE|CHANGE OVER TIME|CURRENT EVIDENCE/);
   assert.match(css, /\.report-paper\{[\s\S]*?width:min\(794px,[\s\S]*?min-height:1123px/);

@@ -9,7 +9,6 @@ function trend(
   domainId: string,
   label: string,
   values: readonly number[],
-  startDay: number,
   evidenceKind?: "drill" | "teach" | "life",
 ): DiagnosticDomainTrendDto {
   return {
@@ -20,7 +19,7 @@ function trend(
     points: values.map((score, index) => ({
       evidence_id: `${evidenceKind ?? (label.includes("설명") ? "teach" : "drill")}:${domainId}:${index + 1}`,
       label,
-      occurred_at: `2026-08-${String(startDay + index * 2).padStart(2, "0")}T09:00:00+09:00`,
+      occurred_at: `2026-08-${String(10 + index).padStart(2, "0")}T09:00:00+09:00`,
       independent_score: score,
       supported_score: Math.min(100, score + 15),
       recent: index >= values.length - 3,
@@ -48,7 +47,7 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     latest_week_start: "2026-08-10",
   },
   data_range: {
-    first_at: "2026-07-15T09:00:00+09:00",
+    first_at: "2026-08-10T09:00:00+09:00",
     last_at: "2026-08-16T15:30:00+09:00",
     total_home_sessions: 18,
     total_life_visits: 6,
@@ -71,19 +70,19 @@ export const completeDiagnosticReportExample: DiagnosticReportDto = {
     {
       mode: "HOME",
       domains: [
-        trend("money-count", "돈 세기 · 문제 정답률", [42, 55, 61, 74, 82, 88], 1),
-        trend("money-count", "돈 세기 · 혼자 설명하기", [25, 40, 58, 72, 86], 2),
-        trend("price-add", "가격 합산 · 문제 정답률", [35, 52, 67, 79, 91], 3),
-        trend("price-add", "가격 합산 · 혼자 설명하기", [30, 48, 66, 84], 5),
-        trend("money-budget", "예산과 거스름돈 · 문제 정답률", [28, 44, 59, 70], 4),
+        trend("money-count", "돈 세기 · 문제 정답률", [42, 55, 61, 74, 82, 88]),
+        trend("money-count", "돈 세기 · 혼자 설명하기", [25, 40, 58, 72, 86]),
+        trend("price-add", "가격 합산 · 문제 정답률", [35, 52, 67, 79, 91]),
+        trend("price-add", "가격 합산 · 혼자 설명하기", [30, 48, 66, 84]),
+        trend("money-budget", "예산과 거스름돈 · 문제 정답률", [28, 44, 59, 70]),
       ],
     },
     {
       mode: "LIFE",
       domains: [
-        trend("menu-calculate", "메뉴 값 계산하기", [45, 62, 80, 95], 4, "life"),
-        trend("change-receive", "거스름돈 받기", [35, 58, 76, 90], 6, "life"),
-        trend("queue", "줄 서기", [70, 85, 100], 8, "life"),
+        trend("menu-calculate", "메뉴 값 계산하기", [45, 62, 80, 95], "life"),
+        trend("change-receive", "거스름돈 받기", [35, 58, 76, 90], "life"),
+        trend("queue", "줄 서기", [70, 85, 100], "life"),
       ],
     },
   ],

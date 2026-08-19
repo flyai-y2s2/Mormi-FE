@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { DiagnosticReportDto } from "../api-client";
 import { buildNumericLiveReport, type NumericPreviewDomain, type NumericPreviewStatus } from "./numeric-report-live-model";
+import type { DiagnosticSpeechState } from "./diagnostic-report-interactions";
 import { canMoveToNextWeek, canMoveToPreviousWeek, formatKoreanWeekLabel } from "./weekly-report-period";
 
 type PreviewMode = "HOME" | "LIFE";
@@ -33,14 +34,18 @@ type NumericReportPreviewProps = {
   onPreviousWeek?: () => void;
   onNextWeek?: () => void;
   onRetry?: () => void;
+  speechByDomain?: Record<string, DiagnosticSpeechState>;
+  onRequestSpeech?: (domainId: string) => void;
 };
 
 function WeeklyReportNav({
   report,
   refreshing = false,
+  notice,
+  onRetry,
   onPreviousWeek,
   onNextWeek,
-}: Pick<NumericReportPreviewProps, "report" | "refreshing" | "onPreviousWeek" | "onNextWeek">) {
+}: Pick<NumericReportPreviewProps, "report" | "refreshing" | "notice" | "onRetry" | "onPreviousWeek" | "onNextWeek">) {
   if (!report) return null;
   return (
     <nav className="weekly-report-nav" aria-label="리포트 주차 선택">
@@ -50,6 +55,8 @@ function WeeklyReportNav({
       </span>
       <button type="button" aria-label="다음 주 리포트" disabled={!canMoveToNextWeek(report.period) || refreshing} onClick={onNextWeek}>›</button>
       {refreshing && <small aria-live="polite">새로 불러오는 중…</small>}
+      {notice && <small className="weekly-report-nav__notice" role="alert">{notice}</small>}
+      {notice && onRetry && <button className="weekly-report-nav__retry" type="button" onClick={onRetry}>다시 불러오기</button>}
     </nav>
   );
 }
@@ -61,6 +68,8 @@ export function NumericReportPreview({
   onPreviousWeek,
   onNextWeek,
   onRetry,
+  speechByDomain,
+  onRequestSpeech,
 }: NumericReportPreviewProps) {
   const liveModel = report ? buildNumericLiveReport(report) : null;
   const previewDomains = liveModel?.domains ?? exampleDomains;
@@ -70,13 +79,6 @@ export function NumericReportPreview({
   const [selectedDomainId, setSelectedDomainId] = useState(previewDomains[initialMode][0]?.id ?? "money-count");
   const domains = previewDomains[activeMode];
   const selectedDomain = domains.find((domain) => domain.id === selectedDomainId) ?? domains[0];
-  const recentMetrics = Object.fromEntries(selectedDomain.metrics.map(([label, , recent]) => [label, recent]));
-  const rawLadder = selectedDomain.sessionRows.at(-1)?.[2] ?? "—";
-  const ladderValues = rawLadder === "—" ? [] : rawLadder.split("/").map((value) => value.endsWith("%") ? value : `${value}%`);
-  const ladderPlanLabel = selectedDomain.ladderStart === "기록 필요" ? "발화 기록 먼저" : `${selectedDomain.ladderStart}부터 시작`;
-  const ladderPlanDetail = selectedDomain.ladderStart === "기록 필요"
-    ? "아이의 답을 한 번 기록한 뒤 알맞은 시작 단계를 정합니다."
-    : `${selectedDomain.ladderStart}에서 아이가 자신의 말로 답해보도록 기다립니다.`;
   const selectMode = (nextMode: PreviewMode) => {
     if (previewDomains[nextMode].length === 0) return;
     setMode(nextMode);
@@ -86,14 +88,23 @@ export function NumericReportPreview({
   if (!selectedDomain) {
     return <main className="report-page numeric-preview-page">
       <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
-      <WeeklyReportNav report={report} refreshing={refreshing} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
+      <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
       <article className="report-paper numeric-preview" data-report-format="a4"><section className="numeric-preview__section numeric-empty-report" role="status"><h2>이번 주에 완료한 단원이 없습니다</h2>{notice && <p>{notice}</p>}{onRetry && <button type="button" onClick={onRetry}>다시 불러오기</button>}</section></article>
     </main>;
   }
 
+  const recentMetrics = Object.fromEntries(selectedDomain.metrics.map(([label, , recent]) => [label, recent]));
+  const rawLadder = selectedDomain.sessionRows.at(-1)?.[2] ?? "—";
+  const ladderValues = rawLadder === "—" ? [] : rawLadder.split("/").map((value) => value.endsWith("%") ? value : `${value}%`);
+  const ladderPlanLabel = selectedDomain.ladderStart === "기록 필요" ? "발화 기록 먼저" : `${selectedDomain.ladderStart}부터 시작`;
+  const ladderPlanDetail = selectedDomain.ladderStart === "기록 필요"
+    ? "아이의 답을 한 번 기록한 뒤 알맞은 시작 단계를 정합니다."
+    : `${selectedDomain.ladderStart}에서 아이가 자신의 말로 답해보도록 기다립니다.`;
+  const speech = speechByDomain?.[selectedDomain.id];
+
   return <main className="report-page numeric-preview-page">
     <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
-    <WeeklyReportNav report={report} refreshing={refreshing} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
+    <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
     <article className="report-paper numeric-preview" data-report-format="a4">
       <header className="numeric-preview__header"><div><span>학습자</span><strong>{liveModel?.learnerName ?? "김민준"}</strong></div><p className="numeric-preview__document-title">개인 진단 리포트</p><a href="#numeric-next-plan">다음 학습 제안 <span aria-hidden="true">↓</span></a></header>
       <section className="numeric-preview__section numeric-current" aria-labelledby="numeric-summary-title"><div className="numeric-section-heading"><span>01</span><h2 id="numeric-summary-title">현재 상태</h2></div><div className="numeric-current-story"><div className="numeric-current-story__mark" aria-hidden="true">↗</div><div><span>{selectedDomain.label} · {statusLabels[selectedDomain.status]}</span><strong>{selectedDomain.headline}</strong><p>{selectedDomain.changeReason}</p></div></div><div className="numeric-summary-values"><article><span>정답률</span><strong>{recentMetrics["정답률"]}</strong><small>최근 기록</small></article><article><span>정답까지</span><strong>{recentMetrics["정답까지 평균"]}</strong><small>평균 시도</small></article><article><span>모르미 가르치기</span><strong>{recentMetrics["모르미 가르치기"] ?? recentMetrics["혼자 말하기"]}</strong><small>단독 발화</small></article><article><span>주로 사용</span><strong>{selectedDomain.dominantStage}</strong><small>발화 단계</small></article></div></section>
@@ -106,7 +117,7 @@ export function NumericReportPreview({
       </section>
       <section className="numeric-preview__section" aria-labelledby="numeric-domain-title">
         <div className="numeric-section-heading"><span>03</span><h2 id="numeric-domain-title">현재 영역별 상태</h2></div><div className="numeric-status-selector" aria-label="상태를 볼 영역 선택">{domains.map((domain) => <button key={domain.id} type="button" className={`numeric-status--${domain.status} ${selectedDomain.id === domain.id ? "is-active" : ""}`} aria-pressed={selectedDomain.id === domain.id} onClick={() => setSelectedDomainId(domain.id)}><span>{domain.label}</span><small>{statusLabels[domain.status]}</small></button>)}</div>
-        <div className="numeric-domain-detail" aria-label={`${selectedDomain.label} 상세`}><div className="numeric-domain-insight"><span>AI가 본 변화</span><strong>{selectedDomain.thinkingChange}</strong></div><details className="numeric-evidence"><summary>과거·최근 발화 보기</summary><div><p><b>과거</b>{selectedDomain.pastUtterance}</p><p><b>최근</b>{selectedDomain.recentUtterance}</p><small>과거 전체 {selectedDomain.historyCount}회 · 최근 {selectedDomain.recentCount}회 기록을 함께 봤어요.</small></div></details></div>
+        <div className="numeric-domain-detail" aria-label={`${selectedDomain.label} 상세`}><div className="numeric-domain-insight"><span>AI가 본 변화</span><strong>{selectedDomain.thinkingChange}</strong></div><details className="numeric-evidence" onToggle={(event) => { if (event.currentTarget.open) onRequestSpeech?.(selectedDomain.id); }}><summary>과거·최근 발화 보기</summary><div>{speech?.state === "loading" ? <p>발화 근거를 불러오는 중이에요.</p> : speech?.state === "ready" && speech.evidence.available ? <><p><b>과거</b>{speech.evidence.past.utterance}</p><p><b>최근</b>{speech.evidence.recent.utterance}</p><small>{speech.evidence.change_summary}</small></> : speech?.state === "ready" ? <p>{speech.evidence.message}</p> : speech?.state === "error" ? <p>{speech.message}</p> : <><p><b>과거</b>{selectedDomain.pastUtterance}</p><p><b>최근</b>{selectedDomain.recentUtterance}</p><small>과거 전체 {selectedDomain.historyCount}회 · 최근 {selectedDomain.recentCount}회 기록을 함께 봤어요.</small></>}</div></details></div>
       </section>
       <section id="numeric-next-plan" className="numeric-preview__section numeric-next-plan" aria-labelledby="numeric-next-title"><div className="numeric-next-plan__eyebrow"><span aria-hidden="true">✦</span> AI 다음 학습 제안</div><div className="numeric-next-plan__body"><div><h2 id="numeric-next-title">다음은 {selectedDomain.label} 연습이에요</h2><p>{selectedDomain.nextCheck}</p></div><div className="numeric-next-plan__quick"><span><small>반복학습</small><strong>{selectedDomain.label} {selectedDomain.repeatCount}문제</strong></span><span><small>발화 사다리</small><strong>{ladderPlanLabel}</strong></span></div></div><details><summary>다음 세션 계획 확인</summary><div><p><b>시작 단계</b>{ladderPlanDetail}</p><p><b>단계 조절</b>{selectedDomain.ladderRule}</p><p><b>관찰할 점</b>{selectedDomain.nextCheck}</p></div></details></section>
     </article>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { DiagnosticReportDto } from "../app/api-client.ts";
 import { buildNumericLiveReport } from "../app/report/numeric-report-live-model.ts";
+import { completeDiagnosticReportExample } from "../app/report/complete-report-example.ts";
 
 const report: DiagnosticReportDto = {
   learner: { learner_id: 3, display_name: "리포트 검증 아동" },
@@ -75,4 +76,31 @@ test("keeps completed HOME-only evidence in HOME without inventing LIFE domains"
   const model = buildNumericLiveReport(homeOnly);
   assert.equal(model.domains.HOME.length, 1);
   assert.equal(model.domains.LIFE.length, 0);
+});
+
+test("uses LIFE transfer narrative for LIFE-only weekly evidence", () => {
+  const lifeOnly: DiagnosticReportDto = {
+    ...report,
+    modes: [{ mode: "HOME", domains: [] }, report.modes[1]!],
+    domains: [report.domains[1]!],
+    current_summary: {
+      ...report.current_summary,
+      explanation_change: { text: "집 발화 기록입니다.", evidence_refs: [] },
+      life_transfer: { text: "카페에서 계산 순서를 적용했습니다.", evidence_refs: ["life:calculate"] },
+    },
+  };
+
+  assert.equal(buildNumericLiveReport(lifeOnly).domains.LIFE[0]?.thinkingChange, "카페에서 계산 순서를 적용했습니다.");
+});
+
+test("complete example evidence stays inside its displayed selected week", () => {
+  const { week_start, week_end } = completeDiagnosticReportExample.period;
+  for (const mode of completeDiagnosticReportExample.modes) {
+    for (const domain of mode.domains) {
+      for (const point of domain.points) {
+        const day = point.occurred_at.slice(0, 10);
+        assert.ok(day >= week_start && day <= week_end, `${point.evidence_id} must be in the selected week`);
+      }
+    }
+  }
 });

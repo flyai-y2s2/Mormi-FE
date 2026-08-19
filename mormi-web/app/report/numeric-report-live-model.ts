@@ -131,7 +131,7 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
       headline: headline(label, status),
       dominantStage: "—",
       changeReason: changeReason(recentAccuracy, accuracy?.points.length ?? 0, selectedStatus?.direction),
-      thinkingChange: report.current_summary.explanation_change.text,
+      thinkingChange: (mode === "LIFE" ? report.current_summary.life_transfer : report.current_summary.explanation_change).text,
       nextCheck: advice.nextCheck,
       pastUtterance: "비교 가능한 과거 발화 기록이 없습니다.",
       recentUtterance: "비교 가능한 최근 발화 기록이 없습니다.",

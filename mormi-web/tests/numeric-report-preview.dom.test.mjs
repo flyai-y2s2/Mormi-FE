@@ -138,3 +138,68 @@ test("offers bounded week navigation and omits an empty LIFE tab", async () => {
     dom.cleanup();
   }
 });
+
+test("renders a valid empty week without dereferencing a missing domain", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const empty = { ...completeDiagnosticReportExample, modes: [{ mode: "HOME", domains: [] }, { mode: "LIFE", domains: [] }] };
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report: empty }));
+  assert.match(html, /이번 주에 완료한 단원이 없습니다/);
+  assert.equal(html.includes("numeric-session-comparison"), false);
+});
+
+test("shows retained-week retry feedback and requests selected-week speech evidence", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  let retries = 0;
+  let requestedDomain = "";
+  const props = {
+    report: completeDiagnosticReportExample,
+    notice: "이전 결과를 계속 표시합니다.",
+    onRetry: () => { retries += 1; },
+    onRequestSpeech: (domainId) => { requestedDomain = domainId; },
+    speechByDomain: {
+      "money-count": {
+        state: "ready",
+        evidence: {
+          available: true, domain_id: "money-count", verified_elements: ["계산 순서"],
+          past: { evidence_id: "past", utterance: "과거 설명", occurred_at: "2026-08-11T09:00:00+09:00" },
+          recent: { evidence_id: "recent", utterance: "이번 주 설명", occurred_at: "2026-08-15T09:00:00+09:00" },
+          change_summary: "이번 주 발화 변화",
+        },
+      },
+    },
+  };
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, props)));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, props)); });
+    assert.match(dom.container.querySelector(".weekly-report-nav").textContent, /이전 결과를 계속 표시합니다/);
+    const retry = [...dom.container.querySelectorAll("button")].find((button) => button.textContent === "다시 불러오기");
+    await act(async () => { retry.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    const details = dom.container.querySelector(".numeric-evidence");
+    await act(async () => { details.open = true; details.dispatchEvent(new dom.container.ownerDocument.defaultView.Event("toggle", { bubbles: true })); });
+    assert.equal(retries, 1);
+    assert.equal(requestedDomain, "money-count");
+    assert.match(details.textContent, /이번 주 설명/);
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("renders LIFE-only content with the compact HOME empty message", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const lifeOnly = { ...completeDiagnosticReportExample, modes: [{ mode: "HOME", domains: [] }, completeDiagnosticReportExample.modes[1]] };
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report: lifeOnly }));
+  assert.match(html, /집 학습에서 이번 주에 완료한 단원이 없습니다/);
+  assert.match(html, /메뉴 값 계산하기/);
+  assert.doesNotMatch(html, /role="tab"[^>]*>집 · 개념/);
+});

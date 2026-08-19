@@ -325,6 +325,11 @@ function ConnectedReportDashboard() {
       onPreviousWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, -1))}
       onNextWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, 1))}
       onRetry={() => void loadReport(requestedWeekRef.current)}
+      speechByDomain={speechByDomain}
+      onRequestSpeech={(domainId) => {
+        const domain = groupedDomains.find((item) => item.domain_id === domainId);
+        if (domain) loadSpeechEvidence(domain);
+      }}
     />;
   }
 
@@ -372,7 +377,7 @@ function ConnectedReportDashboard() {
             <div className="diagnostic-outline">
               <section className="diagnostic-section" aria-labelledby="summary-title"><SectionHeading id="summary-title" title="현재 상태 요약" /></section>
               <section className="diagnostic-section" aria-labelledby="trend-title">
-                <SectionHeading id="trend-title" title="세션별 변화" />
+                <SectionHeading id="trend-title" title="단원별 결과" />
                 <div className="diagnostic-tabs" role="tablist" aria-label="학습 환경 선택">
                   <button id="diagnostic-tab-home" type="button" role="tab" aria-selected="true" disabled>집 · 개념</button>
                   <button id="diagnostic-tab-life" type="button" role="tab" aria-selected="false" disabled>실생활 · 응용</button>
