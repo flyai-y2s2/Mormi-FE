@@ -169,6 +169,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(talkStage, /celebrating: "\/morami\/celebrate-cutout\.png"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
+  // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
+  // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
+  assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:1\/3/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
   assert.match(stageVisual, /10000: "\/cafe-money\/10000\.png"/);

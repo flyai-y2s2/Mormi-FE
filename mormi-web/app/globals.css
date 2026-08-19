@@ -1052,6 +1052,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .home-room-copy-column{gap:9px}
   .home-room-character-column{padding-top:0;grid-template-rows:auto auto;gap:18px}
   .player-hud{width:100%;margin:0;grid-template-columns:minmax(104px,.9fr) minmax(116px,1fr) minmax(210px,1.7fr);gap:6px;padding:7px;border-radius:21px}
+  .player-hud>.player-wallet{grid-column:auto;justify-content:center}
   .player-hud>.player-stat,.player-hud>.player-wallet{min-height:64px;padding:6px 8px;gap:6px;border-radius:16px}.player-hud .ui-icon--large{--icon-size:34px}.player-wallet>img{width:50px;height:50px;flex-basis:50px}.player-hud b{font-size:17px}.player-hud .player-wallet strong{font-size:19px}
   .home-room-copy-column .home-room-copy{height:auto;margin-top:0}.home-room-morami{transform:none}.home-room-morami .morami-frame{width:230px;height:270px}.home-main-actions button>span .ui-icon{--icon-size:43px}
 }
