@@ -37,7 +37,7 @@ import {
 } from "./diagnostic-report-interactions";
 import { localReportAdminApi, type LocalAdminLearner } from "../local-report-admin-client";
 import { LocalLearnerSearch } from "./LocalLearnerSearch";
-import { reportRequestFor } from "./local-admin-report-flow";
+import { reportLandingFor, reportRequestFor } from "./local-admin-report-flow";
 import { shiftIsoWeek } from "./weekly-report-period";
 
 type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
@@ -287,9 +287,18 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      if (!readStoredLearner()) {
+      const landing = reportLandingFor({
+        localAdminEnabled: initiallyLocalAdminEnabled,
+        hasStoredLearner: Boolean(readStoredLearner()),
+      });
+      if (landing === "auth") {
         setLoadState("auth");
         setNotice("학습 화면에서 학습자로 로그인한 뒤 다시 열어 주세요.");
+        return;
+      }
+      if (landing === "local-admin-search") {
+        setLoadState("auth");
+        setNotice("위 검색창에서 학습자를 선택해 주세요.");
         return;
       }
       void loadReport();
@@ -300,7 +309,7 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
       reportControllerRef.current?.abort();
       cancelSpeechRequests();
     };
-  }, [cancelSpeechRequests, loadReport]);
+  }, [cancelSpeechRequests, initiallyLocalAdminEnabled, loadReport]);
 
   const groupedDomains = report ? groupDiagnosticDomains(report) : [];
   const modeDomains = groupedDomains.filter((domain) => domain.mode === mode);
@@ -395,6 +404,15 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
     });
   };
 
+  const adminSearch = localAdminAvailable ? (
+    <LocalLearnerSearch
+      currentLearner={selectedLearner ?? report?.learner ?? { learner_id: 0, display_name: "선택 전" }}
+      searchLearners={localReportAdminApi.search}
+      onSelect={selectLearner}
+      onUnavailable={() => setLocalAdminAvailable(false)}
+    />
+  ) : undefined;
+
   if (loadState === "ready" && report) {
     return <NumericReportPreview
       key={`${report.learner.learner_id}:${report.period.week_start}`}
@@ -406,14 +424,7 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
       onNextWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, 1))}
       onRetry={() => void loadReport(requestedWeekRef.current)}
       speechByDomain={speechByDomain}
-      topAccessory={localAdminAvailable ? (
-        <LocalLearnerSearch
-          currentLearner={selectedLearner ?? report.learner}
-          searchLearners={localReportAdminApi.search}
-          onSelect={selectLearner}
-          onUnavailable={() => setLocalAdminAvailable(false)}
-        />
-      ) : undefined}
+      topAccessory={adminSearch}
       onRequestSpeech={(domainId) => {
         const domain = groupedDomains.find((item) => item.domain_id === domainId);
         if (domain) loadSpeechEvidence(domain);
@@ -421,7 +432,9 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
     />;
   }
 
-  const stateTitle = loadState === "loading"
+  const stateTitle = localAdminAvailable && !selectedLearner
+    ? "학습자를 검색해 주세요"
+    : loadState === "loading"
     ? "리포트 데이터를 불러오는 중입니다"
     : loadState === "auth"
       ? "학습자 로그인이 필요합니다"
@@ -432,6 +445,7 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
   return (
     <main className="report-page">
       <ReportShellHeader />
+      {adminSearch && <div className="local-report-admin-bar">{adminSearch}</div>}
       <article className="report-paper" data-report-format="a4">
         <section className="diagnostic-hero" aria-labelledby="report-title">
           <div>
