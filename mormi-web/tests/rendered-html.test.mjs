@@ -377,13 +377,17 @@ test("renders the complete example as a numeric diagnostic preview without a cha
 });
 
 test("numeric weekly preview keeps its compact control outside the report paper", async () => {
-  const preview = await readFile(new URL("../app/report/NumericReportPreview.tsx", import.meta.url), "utf8");
+  const [preview, css] = await Promise.all([
+    readFile(new URL("../app/report/NumericReportPreview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
   assert.match(preview, /className="weekly-report-nav"/);
   assert.match(preview, /aria-label="이전 주 리포트"/);
   assert.match(preview, /aria-label="다음 주 리포트"/);
   assert.match(preview, /반복학습/);
   assert.match(preview, /모르미 가르치기/);
   assert.doesNotMatch(preview, />세션별 변화</);
+  assert.match(css, /\.weekly-report-nav \.weekly-report-nav__retry\{[^}]*min-width:44px[^}]*height:44px/);
 });
 
 test("ready numeric report wires selected-week speech evidence into its existing detail panel", async () => {

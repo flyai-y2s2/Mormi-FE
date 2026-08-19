@@ -203,3 +203,35 @@ test("renders LIFE-only content with the compact HOME empty message", async () =
   assert.match(html, /메뉴 값 계산하기/);
   assert.doesNotMatch(html, /role="tab"[^>]*>집 · 개념/);
 });
+
+test("requests speech evidence for a newly selected domain while evidence details stay open", async () => {
+  const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
+  const requested = [];
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, { onRequestSpeech: (domainId) => requested.push(domainId) })));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, { onRequestSpeech: (domainId) => requested.push(domainId) })); });
+    const details = dom.container.querySelector(".numeric-evidence");
+    await act(async () => { details.open = true; details.dispatchEvent(new dom.container.ownerDocument.defaultView.Event("toggle", { bubbles: true })); });
+    const priceButton = [...dom.container.querySelectorAll(".numeric-status-selector button")].find((button) => button.querySelector("span")?.textContent === "가격 더하기");
+    await act(async () => { priceButton.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    assert.equal(requested[0], "money-count");
+    assert.equal(requested.at(-1), "price-add");
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("renders retained empty-week feedback once beside the selector", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const empty = { ...completeDiagnosticReportExample, modes: [{ mode: "HOME", domains: [] }, { mode: "LIFE", domains: [] }] };
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report: empty, notice: "이전 결과를 계속 표시합니다.", onRetry: () => {} }));
+  assert.equal((html.match(/이전 결과를 계속 표시합니다/g) ?? []).length, 1);
+  assert.equal((html.match(/다시 불러오기/g) ?? []).length, 1);
+});
