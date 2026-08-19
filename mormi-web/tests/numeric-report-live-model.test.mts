@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { DiagnosticReportDto } from "../app/api-client.ts";
+import type { DiagnosticReportDto, ReportSummaryDto } from "../app/api-client.ts";
 import { buildNumericLiveReport } from "../app/report/numeric-report-live-model.ts";
 import { completeDiagnosticReportExample } from "../app/report/complete-report-example.ts";
 
@@ -155,6 +155,39 @@ test("keeps rounded ladder shares at exactly one hundred percent", () => {
   assert.deepEqual(buildNumericLiveReport(equalLevels).domains.HOME[0]!.sessionRows.at(-1), [
     "발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "34/33/33/0/0%", "34/33/33/0/0%",
   ]);
+});
+
+test("falls back to deployed session history when diagnostic points lack new metrics", () => {
+  const legacyReport: DiagnosticReportDto = {
+    ...report,
+    modes: [{
+      mode: "HOME",
+      domains: [{
+        ...report.modes[0]!.domains[0]!,
+        label: "돈 세기 단원 · 반복학습",
+        points: [
+          { ...report.modes[0]!.domains[0]!.points[0]!, evidence_id: "session-past", recent: false },
+          { ...report.modes[0]!.domains[0]!.points[1]!, evidence_id: "session-recent", recent: true },
+        ],
+      }],
+    }, { mode: "LIFE", domains: [] }],
+  };
+  const history = [
+    { learning_session_id: "session-past", session_id: "money-count", mastery_target: 2, repetitions: 3, ladder: 4 },
+    { learning_session_id: "session-recent", session_id: "money-count", mastery_target: 2, repetitions: 4, ladder: 2 },
+  ].map((item) => ({
+    date: null, synchronized: false, transfer: false, timed_out: false,
+    learner_id: 7, learner_name: "이재용", earned_coins: 0, drill_coins: 0, teach_coins: 0,
+    wallet_balance: 0, wrong_attempt_count: 0, first_try_correct_count: 0, mastery_seconds: 0,
+    ...item,
+  })) satisfies ReportSummaryDto[];
+
+  const money = buildNumericLiveReport(legacyReport, history).domains.HOME[0]!;
+  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
+  assert.deepEqual(money.sessionRows.at(-1), [
+    "발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "50/0/50/0/0%", "0/0/100/0/0%",
+  ]);
+  assert.equal(money.dominantStage, "L2");
 });
 
 test("labels static example data as an example learner", () => {

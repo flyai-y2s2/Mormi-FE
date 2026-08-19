@@ -1,4 +1,12 @@
-import type { DiagnosticDirection, DiagnosticDomainStatusDto, DiagnosticDomainTrendDto, DiagnosticMode, DiagnosticReportDto } from "../api-client";
+import type {
+  DiagnosticDirection,
+  DiagnosticDomainStatusDto,
+  DiagnosticDomainTrendDto,
+  DiagnosticMode,
+  DiagnosticReportDto,
+  DiagnosticTrendPointDto,
+  ReportSummaryDto,
+} from "../api-client";
 
 export type NumericPreviewStatus = "good" | "growing" | "review" | "collecting";
 export type NumericComparisonRow = readonly [label: string, history: string, recent: string];
@@ -76,6 +84,25 @@ function ladderShares(points: DiagnosticDomainTrendDto["points"], recentOnly: bo
   return [`${shares.join("/")}%`, levels[shares.indexOf(Math.max(...shares))]];
 }
 
+function pointsWithHistory(
+  points: DiagnosticDomainTrendDto["points"],
+  historyBySession: ReadonlyMap<string, ReportSummaryDto>,
+): DiagnosticTrendPointDto[] {
+  return points.map((point) => {
+    const history = historyBySession.get(point.evidence_id);
+    if (!history) return point;
+    const ladder = Number.isInteger(history.ladder) && history.ladder >= 0 && history.ladder <= 4
+      ? `L${history.ladder}`
+      : undefined;
+    return {
+      ...point,
+      attempt_count: point.attempt_count ?? (history.repetitions >= 0 ? history.repetitions : undefined),
+      question_count: point.question_count ?? (history.mastery_target > 0 ? history.mastery_target : undefined),
+      expression_level: point.expression_level ?? ladder,
+    };
+  });
+}
+
 function plainLabel(label: string): string {
   return label.split(" · ")[0]?.trim() || label;
 }
@@ -128,7 +155,11 @@ function recommendation(status: NumericPreviewStatus, label: string, hasSpeech: 
   };
 }
 
-function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPreviewDomain[] {
+function buildMode(
+  report: DiagnosticReportDto,
+  mode: DiagnosticMode,
+  historyBySession: ReadonlyMap<string, ReportSummaryDto>,
+): NumericPreviewDomain[] {
   const modeReport = report.modes.find((item) => item.mode === mode);
   const byDomain = new Map<string, DiagnosticDomainTrendDto[]>();
   for (const trend of modeReport?.domains ?? []) {
@@ -146,15 +177,19 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
     const selectedStatus = statusFor(statuses);
     const status = previewStatus(selectedStatus?.status);
     const label = plainLabel(accuracy?.label ?? trends[0]?.label ?? domainId);
-    const historyAccuracy = accuracy ? average(accuracy.points, false) : "—";
-    const recentAccuracy = accuracy ? average(accuracy.points, true) : "—";
+    const accuracyPoints = accuracy ? pointsWithHistory(accuracy.points, historyBySession) : [];
+    const speechPoints = speech?.points ?? [];
+    const historyLadderPoints = pointsWithHistory(accuracy?.points ?? [], historyBySession);
+    const ladderPoints = speechPoints.some((point) => point.expression_level) ? speechPoints : historyLadderPoints;
+    const historyAccuracy = accuracy ? average(accuracyPoints, false) : "—";
+    const recentAccuracy = accuracy ? average(accuracyPoints, true) : "—";
     const historySpeech = speech ? average(speech.points, false) : "—";
     const recentSpeech = speech ? average(speech.points, true) : "—";
-    const historyAttempts = accuracy ? attemptsToCorrect(accuracy.points, false) : "—";
-    const recentAttempts = accuracy ? attemptsToCorrect(accuracy.points, true) : "—";
-    const [historyLadder] = speech ? ladderShares(speech.points, false) : ["—", "—"];
-    const [recentLadder, dominantStage] = speech ? ladderShares(speech.points, true) : ["—", "—"];
-    const advice = recommendation(status, label, Boolean(speech));
+    const historyAttempts = accuracy ? attemptsToCorrect(accuracyPoints, false) : "—";
+    const recentAttempts = accuracy ? attemptsToCorrect(accuracyPoints, true) : "—";
+    const [historyLadder] = ladderShares(ladderPoints, false);
+    const [recentLadder, dominantStage] = ladderShares(ladderPoints, true);
+    const advice = recommendation(status, label, Boolean(speech) || dominantStage !== "—");
     const metrics: readonly NumericComparisonRow[] = [
       ["정답률", historyAccuracy, recentAccuracy],
       ["정답까지 평균", historyAttempts, recentAttempts],
@@ -182,7 +217,11 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
   }).sort((left, right) => right.historyCount - left.historyCount || left.id.localeCompare(right.id));
 }
 
-export function buildNumericLiveReport(report: DiagnosticReportDto): NumericLiveReport {
+export function buildNumericLiveReport(
+  report: DiagnosticReportDto,
+  history: readonly ReportSummaryDto[] = [],
+): NumericLiveReport {
+  const historyBySession = new Map(history.map((summary) => [summary.learning_session_id, summary]));
   const completedUnits = new Set(
     (report.modes.find((mode) => mode.mode === "HOME")?.domains ?? []).map((domain) => domain.domain_id),
   ).size;
@@ -195,8 +234,8 @@ export function buildNumericLiveReport(report: DiagnosticReportDto): NumericLive
       lifeVisits: report.evidence_counts.life_visits,
     },
     domains: {
-      HOME: buildMode(report, "HOME"),
-      LIFE: buildMode(report, "LIFE"),
+      HOME: buildMode(report, "HOME", historyBySession),
+      LIFE: buildMode(report, "LIFE", historyBySession),
     },
   };
 }

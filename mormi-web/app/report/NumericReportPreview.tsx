@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { DiagnosticReportDto } from "../api-client";
+import type { DiagnosticReportDto, ReportSummaryDto } from "../api-client";
 import { buildNumericLiveReport, type NumericPreviewDomain, type NumericPreviewStatus } from "./numeric-report-live-model";
 import type { DiagnosticSpeechState } from "./diagnostic-report-interactions";
 import { canMoveToNextWeek, canMoveToPreviousWeek, formatKoreanWeekLabel } from "./weekly-report-period";
@@ -29,6 +29,7 @@ const exampleDomains: Record<PreviewMode, readonly PreviewDomain[]> = {
 
 type NumericReportPreviewProps = {
   report?: DiagnosticReportDto;
+  history?: readonly ReportSummaryDto[];
   refreshing?: boolean;
   notice?: string;
   onPreviousWeek?: () => void;
@@ -63,6 +64,7 @@ function WeeklyReportNav({
 
 export function NumericReportPreview({
   report,
+  history,
   refreshing,
   notice,
   onPreviousWeek,
@@ -71,7 +73,7 @@ export function NumericReportPreview({
   speechByDomain,
   onRequestSpeech,
 }: NumericReportPreviewProps) {
-  const liveModel = report ? buildNumericLiveReport(report) : null;
+  const liveModel = report ? buildNumericLiveReport(report, history) : null;
   const previewDomains = liveModel?.domains ?? exampleDomains;
   const initialMode: PreviewMode = previewDomains.HOME.length > 0 ? "HOME" : "LIFE";
   const [mode, setMode] = useState<PreviewMode>(initialMode);

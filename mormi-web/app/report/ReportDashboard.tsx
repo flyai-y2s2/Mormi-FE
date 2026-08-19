@@ -8,6 +8,7 @@ import {
   readStoredLearner,
   type DiagnosticMode,
   type DiagnosticReportDto,
+  type ReportSummaryDto,
 } from "../api-client";
 import { DomainDetail } from "./DomainDetail";
 import { NumericReportPreview } from "./NumericReportPreview";
@@ -114,6 +115,7 @@ export function ReportDashboard({ completeExample = false }: { completeExample?:
 
 function ConnectedReportDashboard() {
   const [report, setReport] = useState<DiagnosticReportDto | null>(null);
+  const [history, setHistory] = useState<ReportSummaryDto[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [notice, setNotice] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -154,8 +156,12 @@ function ConnectedReportDashboard() {
     setNotice("");
 
     try {
-      const data = await api.diagnosticReport({ weekStart, signal: controller.signal });
+      const [data, historyData] = await Promise.all([
+        api.diagnosticReport({ weekStart, signal: controller.signal }),
+        api.reportHistory(50).catch(() => [] as ReportSummaryDto[]),
+      ]);
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
+      setHistory(historyData);
       if (isEmptyDiagnosticReport(data)) {
         cancelSpeechRequests();
         setSpeechByDomain({});
@@ -320,6 +326,7 @@ function ConnectedReportDashboard() {
     return <NumericReportPreview
       key={`${report.learner.learner_id}:${report.period.week_start}`}
       report={report}
+      history={history}
       refreshing={refreshing}
       notice={notice}
       onPreviousWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, -1))}
