@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { menuChoiceById, menuDisplayName, menuPairTotal } from "../app/cafe-menu.ts";
+import { choiceIdForTypedAnswer } from "../app/cafe-choice-input.ts";
 
 test("connects the clicked menu to the server choice by exact id", () => {
   const choices = [
@@ -24,6 +25,18 @@ test("renames americano only on screen and keeps budget math canonical", () => {
   assert.equal(menuPairTotal("strawberry-juice", "sandwich"), 9000);
 });
 
+test("lets queue learners answer before revealing server choices", () => {
+  const choices = [
+    { id: "left", label: "왼쪽" },
+    { id: "right", label: "오른쪽" },
+    { id: "3", label: "3명" },
+  ];
+
+  assert.equal(choiceIdForTypedAnswer("왼쪽 줄", choices), "left");
+  assert.equal(choiceIdForTypedAnswer("3", choices), "3");
+  assert.equal(choiceIdForTypedAnswer("잘 모르겠어", choices), null);
+});
+
 test("keeps help gated and central menu cards as the only menu choice UI", async () => {
   const [journey, visual, talk, home, css] = await Promise.all([
     readFile(new URL("../app/CafeJourney.tsx", import.meta.url), "utf8"),
@@ -41,7 +54,10 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(journey, /const budgets = \[7000, 8000\] as const/);
 
   assert.match(talk, /const centralMenuPicker = inputKind === "choices" && turn\.input\.config\.component === "cafe_menu_picker"/);
-  assert.match(talk, /\(inputKind === "choices" \|\| inputKind === "fill"\) && !centralMenuPicker/);
+  assert.match(talk, /const delayedChoices = deferChoices && inputKind === "choices" && !centralMenuPicker/);
+  assert.match(talk, /choiceIdForTypedAnswer\(inputText, turn\.input\.choices\)/);
+  assert.match(talk, /\(!delayedChoices \|\| choiceFallbackVisible\)/);
+  assert.match(journey, /deferChoices[\s\S]{0,300}choiceFallbackVisible=\{queueChoiceFallbackKey === conversationInputKey\(cafeConversations\.queue\)\}/);
   assert.match(talk, /onHelpRequest=\{\(\) => onSubmit\(\{ type: "no_response" \}\)\}/);
   assert.match(talk, /helpLoading && <div className="cafe-help-loading"/);
   assert.match(talk, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
