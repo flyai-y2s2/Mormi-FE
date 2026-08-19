@@ -44,6 +44,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
+  const aiTest = await readFile(new URL("../app/ai-test/AiDialogueTest.tsx", import.meta.url), "utf8");
 
   assert.equal((curriculum.match(/\blesson\(\{/g) || []).length, 24);
   assert.equal((original.match(/^ {4}id: "/gm) || []).length, 12);
@@ -118,10 +119,20 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
   assert.match(talkStage, /<MormiHelpCard card=\{turn\.help_card\}/);
+  assert.match(talkStage, /<MormiTaskAnchor anchor=\{turn\.task_anchor\}/);
+  assert.match(app, /<MormiTaskAnchor anchor=\{teachingTurn\?\.task_anchor \?\? null\}/);
+  assert.match(dialogueUi, /anchor\.completed_items\.map/);
+  assert.match(dialogueContract, /task_anchor\?:/);
+  assert.match(css, /\.mormi-task-anchor/);
   assert.match(dialogueUi, /if \(!card\?\.visible\) return null/);
   assert.match(dialogueUi, /card\.visual_type/);
   assert.match(dialogueUi, /choice\.image_url/);
   assert.match(dialogueContract, /dictionary_ref:/);
+  // 로컬 계약 테스트도 현재 AI가 받는 공식 시나리오와 필수 화면 맥락을 보낸다.
+  assert.match(aiTest, /id: "home_teach"/);
+  assert.doesNotMatch(aiTest, /home_addition_teach/);
+  assert.match(aiTest, /curriculum_session_id: "money-price"/);
+  assert.match(aiTest, /queue_context: \{ left_count: 3, right_count: 5 \}/);
   assert.match(cafe, /STAGE 1 CLEAR!/);
   // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
   // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.

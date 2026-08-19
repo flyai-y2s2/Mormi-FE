@@ -885,6 +885,8 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* Stemless chevrons keep the help-card toggle visual without + / - symbols. */
 .mormi-help-card summary::after{width:11px;height:11px;margin-left:auto;margin-right:4px;content:"";flex:0 0 11px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(45deg);transition:transform .18s ease}
 .mormi-help-card[open] summary::after{content:"";transform:rotate(-135deg)}
+.mormi-task-anchor{width:100%;padding:11px 14px;border:2px solid #b9dfcd;border-radius:15px;color:#354c41;background:#f2faf6}.mormi-task-anchor>strong{display:block;color:#3f8061;font-size:13px}.mormi-task-anchor>p{margin:4px 0 0;overflow-wrap:anywhere;font-size:15px;line-height:1.45;font-weight:850;white-space:pre-line}.mormi-task-anchor ul{margin:8px 0 0;padding:0;display:flex;gap:6px;flex-wrap:wrap;list-style:none}.mormi-task-anchor li{padding:5px 8px;display:flex;align-items:center;gap:5px;border-radius:10px;color:#456453;background:#fff;font-size:12px;font-weight:800}.mormi-task-anchor li>span{color:#3ba473;font-weight:950}
+.cafe-talk-answer .mormi-task-anchor{margin-bottom:8px;padding:8px 11px}.cafe-talk-answer .mormi-task-anchor>p{font-size:clamp(13px,1.7vh,15px)}
 
 /* Teaching help note: it belongs below the dialogue, not in a squeezed side column. */
 .teaching-dialogue{display:flex;flex-direction:column;align-items:stretch}

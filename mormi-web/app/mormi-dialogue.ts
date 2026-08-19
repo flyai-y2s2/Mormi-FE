@@ -31,8 +31,6 @@ export type MormiCafeContext = {
   menu_items: MormiMenuItem[];
   mormi_menu_id: string;
   budget?: number;
-  child_menu_id?: string;
-  paid_amount?: number;
 };
 
 export type StartMormiConversation = {
@@ -119,6 +117,22 @@ export type MormiTurn = {
     subgoal_id: string;
     verified_slots: Record<string, string | number | boolean>;
     bottleneck?: string | null;
+  } | null;
+  /**
+   * AI가 현재 턴에서 계속 보여 주도록 고정한 답변 목표.
+   * 오래 저장된 대화에는 없을 수 있어 선택 필드로 호환한다.
+   */
+  task_anchor?: {
+    anchor_id: string;
+    title: string;
+    prompt: string;
+    completed_items: Array<{
+      slot_id: string;
+      label: string;
+      value: string | number | boolean;
+      display_text: string;
+    }>;
+    target_slots: string[];
   } | null;
 };
 

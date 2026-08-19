@@ -97,6 +97,17 @@ export function MormiHelpCard({ card }: { card: MormiTurn["help_card"] }) {
   </details>;
 }
 
+export function MormiTaskAnchor({ anchor }: { anchor: MormiTurn["task_anchor"] }) {
+  if (!anchor) return null;
+  return <section className="mormi-task-anchor" aria-label={anchor.title}>
+    <strong>{anchor.title}</strong>
+    <p>{anchor.prompt}</p>
+    {anchor.completed_items.length > 0 && <ul aria-label="이미 알려준 내용">
+      {anchor.completed_items.map((item) => <li key={item.slot_id}><span aria-hidden="true">✓</span>{item.display_text}</li>)}
+    </ul>}
+  </section>;
+}
+
 export function MormiChoiceContent({ choice }: { choice: MormiChoice }) {
   return <>
     {choice.image_url && <Image className="mormi-choice-image" src={choice.image_url} alt="" width={88} height={88} unoptimized />}

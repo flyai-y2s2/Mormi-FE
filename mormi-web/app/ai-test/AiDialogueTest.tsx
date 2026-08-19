@@ -12,6 +12,7 @@ import {
   type StartMormiConversation,
   type SubmitMormiResponse,
 } from "../mormi-dialogue";
+import { MormiTaskAnchor } from "../MormiDialogueUi";
 
 const menu = [
   { id: "americano", name: "커피", price: 3000, image_url: "/figma/cafe/americano.png?v=2" },
@@ -23,11 +24,11 @@ const menu = [
 ] as const;
 
 const scenarios = [
-  { id: "home_addition_teach", scene: "home_teach", label: "집 · 덧셈 가르치기", note: "현재 AI가 지원하는 집 시나리오" },
+  { id: "home_teach", scene: "home_teach", label: "집 · 덧셈 가르치기", note: "가격 더하기 반복 결과로 가르치기 시작" },
   { id: "cafe_queue", scene: "cafe", label: "카페 · 줄 서기", note: "1~5명 두 줄을 AI가 생성" },
   { id: "cafe_budget_menu", scene: "cafe", label: "카페 · 예산 메뉴", note: "모르미 메뉴 + 아이 메뉴" },
   { id: "cafe_menu_total", scene: "cafe", label: "카페 · 메뉴 합계", note: "선택 후 두 가격 덧셈" },
-  { id: "cafe_change", scene: "cafe", label: "카페 · 거스름돈", note: "현재 AI 정의: 두 메뉴 합계 기준" },
+  { id: "cafe_change", scene: "cafe", label: "카페 · 거스름돈", note: "10,000원에서 모르미 메뉴 가격 빼기" },
 ] as const;
 
 type Scenario = (typeof scenarios)[number];
@@ -56,7 +57,8 @@ function startPayload(scenario: Scenario): StartMormiConversation {
       learning_session_id: `local-${Date.now()}`,
       practice_result_id: `practice-local-${Date.now()}`,
       practice_summary: {
-        skill_id: "basic_addition",
+        curriculum_session_id: "money-price",
+        skill_id: "money-price",
         question_count: 5,
         first_try_correct_count: 4,
         wrong_attempt_count: 1,
@@ -66,13 +68,12 @@ function startPayload(scenario: Scenario): StartMormiConversation {
     };
   }
   if (scenario.id === "cafe_queue") {
-    return { ...common, scene: "cafe" };
+    return { ...common, scene: "cafe", queue_context: { left_count: 3, right_count: 5 } };
   }
   const cafe_context = {
     menu_items: [...menu],
     mormi_menu_id: "strawberry-juice",
     ...(scenario.id === "cafe_budget_menu" ? { budget: 9000 } : {}),
-    ...(scenario.id === "cafe_change" ? { child_menu_id: "sandwich", paid_amount: 10000 } : {}),
   };
   return { ...common, scene: "cafe", cafe_context };
 }
@@ -133,7 +134,7 @@ function InputPanel({ conversation, busy, onSubmit }: { conversation: MormiConve
 }
 
 export function AiDialogueTest() {
-  const [scenarioId, setScenarioId] = useState<Scenario["id"]>("home_addition_teach");
+  const [scenarioId, setScenarioId] = useState<Scenario["id"]>("home_teach");
   const [health, setHealth] = useState<"checking" | "ready" | "no-llm" | "offline">("checking");
   const [conversation, setConversation] = useState<MormiConversation | null>(null);
   const [messages, setMessages] = useState<TestMessage[]>([]);
@@ -187,7 +188,7 @@ export function AiDialogueTest() {
     {error && <p className="ai-test-error" role="alert">{error}</p>}
     {!conversation && <section className="ai-test-empty"><Image src="/morami/bright-cutout.png" alt="대화를 기다리는 모르미" width={300} height={330} unoptimized /><div><h2>시나리오를 고르고 시작해 봐!</h2><p>AI가 내려주는 질문과 입력 방식이 이 화면에 바로 나타나요.</p></div></section>}
     {conversation && <section className="ai-test-workspace">
-      <div className="ai-test-scene"><div className="ai-test-mormi"><Image src={moodImage[conversation.turn.mormi.mood]} alt={`${conversation.turn.mormi.mood} 표정의 모르미`} width={260} height={300} unoptimized /><div><b>모르미</b><p>{conversation.turn.mormi.text}</p></div></div><Visual conversation={conversation} />{conversation.turn.help_card && <aside className="ai-test-help"><b>{conversation.turn.help_card.title}</b><p>{conversation.turn.help_card.body}</p></aside>}<InputPanel key={conversation.turn.turn_id} conversation={conversation} busy={busy} onSubmit={answer} />{conversation.turn.status === "active" && <button className="ai-test-help-button" disabled={busy} onClick={() => answer({ turn_id: conversation.turn.turn_id, type: "no_response" })}>잘 모르겠어 · 도움받기</button>}</div>
+      <div className="ai-test-scene"><div className="ai-test-mormi"><Image src={moodImage[conversation.turn.mormi.mood]} alt={`${conversation.turn.mormi.mood} 표정의 모르미`} width={260} height={300} unoptimized /><div><b>모르미</b><p>{conversation.turn.mormi.text}</p></div></div><Visual conversation={conversation} /><MormiTaskAnchor anchor={conversation.turn.task_anchor} />{conversation.turn.help_card && <aside className="ai-test-help"><b>{conversation.turn.help_card.title}</b><p>{conversation.turn.help_card.body}</p></aside>}<InputPanel key={conversation.turn.turn_id} conversation={conversation} busy={busy} onSubmit={answer} />{conversation.turn.status === "active" && <button className="ai-test-help-button" disabled={busy} onClick={() => answer({ turn_id: conversation.turn.turn_id, type: "no_response" })}>잘 모르겠어 · 도움받기</button>}</div>
       <aside className="ai-test-log"><h2>대화 기록</h2>{messages.map((message, index) => <article className={`is-${message.role}`} key={`${message.role}-${index}`}><b>{message.role === "mormi" ? "모르미" : "아이"}</b><p>{message.text}</p></article>)}<details><summary>TurnContract 확인</summary><pre>{JSON.stringify(conversation, null, 2)}</pre></details></aside>
     </section>}
   </main>;

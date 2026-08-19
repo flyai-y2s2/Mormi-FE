@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiMood, MormiResponseType } from "./mormi-dialogue";
-import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { MormiChoiceContent, MormiHelpCard, MormiTaskAnchor } from "./MormiDialogueUi";
 
 /**
  * 카페의 네 스테이지가 함께 쓰는 대화 화면.
@@ -127,6 +127,7 @@ export function CafeDialogueControls({
   };
 
   return <aside className="cafe-ai-followup" aria-live="polite">
+    <MormiTaskAnchor anchor={turn.task_anchor} />
     <MormiHelpCard card={turn.help_card} />
     {inputKind === "text" && <form onSubmit={(event) => {
       event.preventDefault();

@@ -27,7 +27,7 @@ import {
   type MormiResponseType,
   type MormiTurn,
 } from "./mormi-dialogue";
-import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { MormiChoiceContent, MormiHelpCard, MormiTaskAnchor } from "./MormiDialogueUi";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
@@ -2047,6 +2047,7 @@ export function MoramiApp() {
                 <div className="teaching-morami"><Morami expression={expression} /></div>
                 <div className="teaching-dialogue" ref={teachThreadRef} role="log" aria-label={`모르미와 ${childName}의 대화`} aria-live="polite">
                   {serverMormiText && <div><b>모르미</b><p>{formatTeachingDisplayText(serverMormiText)}</p></div>}
+                  <MormiTaskAnchor anchor={teachingTurn?.task_anchor ?? null} />
                   <MormiHelpCard card={teachingTurn?.help_card ?? null} />
                   {teachError && <p role="alert">{teachError}</p>}
                   {teachingTurn && !teachingComplete && teachingTurn.input.kind !== "none" && <button type="button" className={`teaching-dont-know ${teachHelpLoading ? "is-loading" : ""}`} disabled={teachSending} aria-busy={teachHelpLoading} onClick={() => void submitTeachingResponse("no_response")}>{teachHelpLoading ? "도움 준비 중…" : "잘 모르겠어"}</button>}
