@@ -426,7 +426,6 @@ test("diagnostic report renders as one compact Korean A4 document", async () => 
   assert.match(dashboard, /<h1 id="report-title">개인 진단 리포트<\/h1>/);
   assert.match(dashboard, /NumericReportPreview/);
   assert.match(dashboard, /completeExample/);
-  assert.match(example, /display_name: "김민준"/);
   assert.doesNotMatch(example, /"(?:메뉴 값 계산하기|거스름돈 받기|줄 서기) · 실생활 수행"/);
 });
 

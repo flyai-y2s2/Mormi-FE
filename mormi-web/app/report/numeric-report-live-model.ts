@@ -50,6 +50,32 @@ function average(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean
   return `${Math.round(Math.max(0, Math.min(100, result)))}%`;
 }
 
+function attemptsToCorrect(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): string {
+  const selected = points.filter((point) => !recentOnly || point.recent);
+  const attemptCount = selected.reduce((sum, point) => sum + (point.attempt_count ?? 0), 0);
+  const questionCount = selected.reduce((sum, point) => sum + (point.question_count ?? 0), 0);
+  return questionCount > 0 ? `${(attemptCount / questionCount).toFixed(1)}회` : "—";
+}
+
+function ladderShares(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): readonly [string, string] {
+  const levels = ["L4", "L3", "L2", "L1", "L0"] as const;
+  const selected = points
+    .filter((point) => !recentOnly || point.recent)
+    .map((point) => point.expression_level?.toUpperCase())
+    .filter((level): level is typeof levels[number] => levels.includes(level as typeof levels[number]));
+  if (selected.length === 0) return ["—", "—"];
+  const exact = levels.map((level) => selected.filter((item) => item === level).length * 100 / selected.length);
+  const shares = exact.map(Math.floor);
+  const remainderOrder = exact
+    .map((value, index) => ({ index, fraction: value - shares[index] }))
+    .sort((left, right) => right.fraction - left.fraction || left.index - right.index);
+  const remainder = 100 - shares.reduce((sum, value) => sum + value, 0);
+  for (let index = 0; index < remainder; index++) {
+    shares[remainderOrder[index]!.index] += 1;
+  }
+  return [`${shares.join("/")}%`, levels[shares.indexOf(Math.max(...shares))]];
+}
+
 function plainLabel(label: string): string {
   return label.split(" · ")[0]?.trim() || label;
 }
@@ -113,11 +139,9 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
 
   return [...byDomain.entries()].map(([domainId, trends]) => {
     const accuracy = mode === "LIFE"
-      ? trends[0]
+      ? trends.find((trend) => !hasHomeMetricLabel(trend.label, ["모르미 가르치기", "혼자 설명하기", "혼자 설명"])) ?? trends[0]
       : trends.find((trend) => hasHomeMetricLabel(trend.label, ["반복학습", "문제 정답률"])) ?? trends[0];
-    const speech = mode === "HOME"
-      ? trends.find((trend) => hasHomeMetricLabel(trend.label, ["모르미 가르치기", "혼자 설명하기", "혼자 설명"]))
-      : undefined;
+    const speech = trends.find((trend) => hasHomeMetricLabel(trend.label, ["모르미 가르치기", "혼자 설명하기", "혼자 설명"]));
     const statuses = report.domains.filter((item) => item.domain_id === domainId);
     const selectedStatus = statusFor(statuses);
     const status = previewStatus(selectedStatus?.status);
@@ -126,10 +150,14 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
     const recentAccuracy = accuracy ? average(accuracy.points, true) : "—";
     const historySpeech = speech ? average(speech.points, false) : "—";
     const recentSpeech = speech ? average(speech.points, true) : "—";
+    const historyAttempts = accuracy ? attemptsToCorrect(accuracy.points, false) : "—";
+    const recentAttempts = accuracy ? attemptsToCorrect(accuracy.points, true) : "—";
+    const [historyLadder] = speech ? ladderShares(speech.points, false) : ["—", "—"];
+    const [recentLadder, dominantStage] = speech ? ladderShares(speech.points, true) : ["—", "—"];
     const advice = recommendation(status, label, Boolean(speech));
     const metrics: readonly NumericComparisonRow[] = [
       ["정답률", historyAccuracy, recentAccuracy],
-      ["정답까지 평균", "—", "—"],
+      ["정답까지 평균", historyAttempts, recentAttempts],
       ["모르미 가르치기", historySpeech, recentSpeech],
     ];
     return {
@@ -137,11 +165,11 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
       label,
       status,
       metrics,
-      sessionRows: [...metrics, ["발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "—", "—"]],
+      sessionRows: [...metrics, ["발화 단계 사용 비율 (L4/L3/L2/L1/L0)", historyLadder, recentLadder]],
       historyCount: accuracy?.total_count ?? 0,
       recentCount: accuracy?.recent_count ?? 0,
       headline: headline(label, status),
-      dominantStage: "—",
+      dominantStage,
       changeReason: changeReason(recentAccuracy, accuracy?.points.length ?? 0, selectedStatus?.direction),
       thinkingChange: (mode === "LIFE" ? report.current_summary.life_transfer : report.current_summary.explanation_change).text,
       nextCheck: advice.nextCheck,

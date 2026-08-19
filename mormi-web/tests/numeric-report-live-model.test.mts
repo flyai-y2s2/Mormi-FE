@@ -94,6 +94,73 @@ test("recognizes the BE 반복학습 and 모르미 가르치기 labels without d
   assert.equal(money.ladderStart, "L2");
 });
 
+test("calculates attempts-to-correct and recent L4-L0 shares from backend evidence", () => {
+  const evidenceReport: DiagnosticReportDto = {
+    ...report,
+    learner: { learner_id: 7, display_name: "이재용" },
+    modes: [
+      {
+        mode: "HOME",
+        domains: [
+          {
+            ...report.modes[0]!.domains[0]!,
+            label: "돈 세기 단원 · 반복학습",
+            points: [
+              { ...report.modes[0]!.domains[0]!.points[0]!, recent: false, attempt_count: 3, question_count: 2 },
+              { ...report.modes[0]!.domains[0]!.points[1]!, recent: true, attempt_count: 4, question_count: 2 },
+            ],
+          },
+          {
+            ...report.modes[0]!.domains[0]!,
+            label: "돈 세기 단원 · 모르미 가르치기",
+            points: [
+              { ...report.modes[0]!.domains[0]!.points[0]!, recent: true, expression_level: "L4" },
+              { ...report.modes[0]!.domains[0]!.points[1]!, recent: true, expression_level: "L4" },
+              { ...report.modes[0]!.domains[0]!.points[2]!, recent: true, expression_level: "L2" },
+            ],
+          },
+        ],
+      },
+      { mode: "LIFE", domains: [] },
+    ],
+  };
+
+  const model = buildNumericLiveReport(evidenceReport);
+  const money = model.domains.HOME[0]!;
+
+  assert.equal(model.learnerName, "이재용");
+  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
+  assert.deepEqual(money.sessionRows.at(-1), ["발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "67/0/33/0/0%", "67/0/33/0/0%"]);
+  assert.equal(money.dominantStage, "L4");
+});
+
+test("keeps rounded ladder shares at exactly one hundred percent", () => {
+  const equalLevels: DiagnosticReportDto = {
+    ...report,
+    modes: [{
+      mode: "HOME",
+      domains: [
+        { ...report.modes[0]!.domains[0]!, label: "돈 세기 단원 · 반복학습" },
+        {
+          ...report.modes[0]!.domains[0]!,
+          label: "돈 세기 단원 · 모르미 가르치기",
+          points: ["L4", "L3", "L2"].map((expression_level, index) => ({
+            ...report.modes[0]!.domains[0]!.points[index]!, recent: true, expression_level,
+          })),
+        },
+      ],
+    }, { mode: "LIFE", domains: [] }],
+  };
+
+  assert.deepEqual(buildNumericLiveReport(equalLevels).domains.HOME[0]!.sessionRows.at(-1), [
+    "발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "34/33/33/0/0%", "34/33/33/0/0%",
+  ]);
+});
+
+test("labels static example data as an example learner", () => {
+  assert.equal(completeDiagnosticReportExample.learner.display_name, "예시 학습자");
+});
+
 test("counts three HOME completions for the same unit as one completed unit", () => {
   const repeatedUnit: DiagnosticReportDto = {
     ...report,

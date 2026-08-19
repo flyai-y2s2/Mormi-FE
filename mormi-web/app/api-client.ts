@@ -168,6 +168,9 @@ export type DiagnosticTrendPointDto = {
   occurred_at: string;
   independent_score: number;
   supported_score: number;
+  attempt_count?: number;
+  question_count?: number;
+  expression_level?: "L4" | "L3" | "L2" | "L1" | "L0" | string;
   recent: boolean;
 };
 

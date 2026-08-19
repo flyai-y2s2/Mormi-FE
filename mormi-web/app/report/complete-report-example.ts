@@ -11,17 +11,21 @@ function trend(
   values: readonly number[],
   evidenceKind?: "drill" | "teach" | "life",
 ): DiagnosticDomainTrendDto {
+  const kind = evidenceKind ?? (label.includes("모르미 가르치기") ? "teach" : "drill");
   return {
     domain_id: domainId,
     label,
     total_count: values.length,
     recent_count: Math.min(3, values.length),
     points: values.map((score, index) => ({
-      evidence_id: `${evidenceKind ?? (label.includes("설명") ? "teach" : "drill")}:${domainId}:${index + 1}`,
+      evidence_id: `${kind}:${domainId}:${index + 1}`,
       label,
       occurred_at: `2026-08-${String(10 + index).padStart(2, "0")}T09:00:00+09:00`,
       independent_score: score,
       supported_score: Math.min(100, score + 15),
+      ...(kind === "teach"
+        ? { expression_level: (["L2", "L3", "L4", "L4", "L3"] as const)[index % 5] }
+        : { attempt_count: index < values.length - 3 ? 2 : 1, question_count: 1 }),
       recent: index >= values.length - 3,
     })),
   };
@@ -38,7 +42,7 @@ function status(
 }
 
 export const completeDiagnosticReportExample: DiagnosticReportDto = {
-  learner: { learner_id: 999, display_name: "김민준" },
+  learner: { learner_id: 999, display_name: "예시 학습자" },
   period: {
     week_start: "2026-08-10",
     week_end: "2026-08-16",
