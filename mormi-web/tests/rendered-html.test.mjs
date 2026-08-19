@@ -273,6 +273,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /teaching-answer--button \{[^}]*width:min\(600px,100%\)[^}]*transform:none/);
   assert.match(css, /@media\(max-width:980px\)/);
   assert.match(css, /\.teaching-dialogue>\.star-note\{width:100%;min-width:0;min-height:0/);
+  assert.match(css, /\.figma-cafe--queue \.queue-story-next\{min-width:144px;min-height:52px/);
+  assert.match(css, /\.figma-cafe--queue \.queue-story-dialogue \.queue-story-next::after\{[^}]*border-left-color:#fff/);
   assert.match(css, /\.today-badges > span \{/);
   assert.match(css, /\.note-content h2 em \{ color:#4f438f;[^}]*font-weight:700/);
   assert.match(app, /teachingTurn\?\.help_card\?\.visible/);

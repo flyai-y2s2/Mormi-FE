@@ -1318,12 +1318,17 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe--queue .queue-story-dialogue{min-height:176px;margin:20px 0 0;padding:28px 48px 30px;position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;border:7px solid #78cda6;border-radius:20px;background:#fff;box-shadow:none}
 .figma-cafe--queue .queue-story-dialogue b{margin:0;font-size:22px}
 .figma-cafe--queue .queue-story-dialogue p{margin:0;padding-right:0;color:#202924;font-size:20px;line-height:1.5;font-weight:700}
+.figma-cafe--queue .queue-story-next{min-width:144px;min-height:52px;margin-top:8px;padding:0 22px;position:static;align-self:flex-end;border:0;border-radius:16px;color:#fff;background:#63bd91;box-shadow:0 5px 0 #3f8f68;cursor:pointer;font-size:17px;font-weight:950;transition:transform .15s,box-shadow .15s}
+.figma-cafe--queue .queue-story-next:hover{transform:translateY(-1px);box-shadow:0 6px 0 #3f8f68}
+.figma-cafe--queue .queue-story-next:active{transform:translateY(3px);box-shadow:0 2px 0 #3f8f68}
+.figma-cafe--queue .queue-story-dialogue .queue-story-next::after{margin-left:10px;border-left-color:#fff;border-top-width:7px;border-bottom-width:7px}
 @media(max-width:760px){
   .figma-cafe--queue{padding:0 12px 24px;background-attachment:scroll}
   .figma-cafe--queue .figma-cafe-queue-story{min-height:100svh;padding:24px 10px 14px}
   .figma-cafe--queue .queue-story-dialogue{min-height:158px;margin-top:12px;padding:21px 18px 24px;border-width:5px}
   .figma-cafe--queue .queue-story-dialogue b{font-size:19px}
   .figma-cafe--queue .queue-story-dialogue p{font-size:16px}
+  .figma-cafe--queue .queue-story-next{width:100%;min-height:52px;margin-top:8px;align-self:stretch;font-size:17px}
 }
 
 /* 장소 이동 탭이 화면 내용 안으로 들어간 자리. 좁은 화면에서 .journey-nav 를
