@@ -157,6 +157,30 @@ test("renders a single visible ladder bar when one level owns 100 percent", asyn
   }
 });
 
+test("places an optional local learner search above weekly navigation and the report paper", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const search = React.createElement("div", { className: "local-learner-search" }, "학습자 검색");
+  const withSearch = setDom(server.renderToString(React.createElement(NumericReportPreview, {
+    report: completeDiagnosticReportExample,
+    topAccessory: search,
+  })));
+  const withoutSearch = setDom(server.renderToString(React.createElement(NumericReportPreview, {
+    report: completeDiagnosticReportExample,
+  })));
+  try {
+    const searchNode = withSearch.container.querySelector(".local-learner-search");
+    assert.ok(searchNode);
+    assert.ok(searchNode.compareDocumentPosition(withSearch.container.querySelector(".weekly-report-nav")) & 4);
+    assert.ok(searchNode.compareDocumentPosition(withSearch.container.querySelector(".report-paper")) & 4);
+    assert.equal(withoutSearch.container.querySelector(".local-learner-search"), null);
+  } finally {
+    withSearch.cleanup();
+    withoutSearch.cleanup();
+  }
+});
+
 test("uses the existing four summary cards for the selected week's server counts", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),

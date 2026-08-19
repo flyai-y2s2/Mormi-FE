@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import type { DiagnosticReportDto, ReportSummaryDto } from "../api-client";
 import { buildNumericLiveReport, type NumericPreviewDomain, type NumericPreviewStatus } from "./numeric-report-live-model";
@@ -37,6 +37,7 @@ type NumericReportPreviewProps = {
   onRetry?: () => void;
   speechByDomain?: Record<string, DiagnosticSpeechState>;
   onRequestSpeech?: (domainId: string) => void;
+  topAccessory?: ReactNode;
 };
 
 function WeeklyReportNav({
@@ -72,6 +73,7 @@ export function NumericReportPreview({
   onRetry,
   speechByDomain,
   onRequestSpeech,
+  topAccessory,
 }: NumericReportPreviewProps) {
   const liveModel = report ? buildNumericLiveReport(report, history) : null;
   const previewDomains = liveModel?.domains ?? exampleDomains;
@@ -98,6 +100,7 @@ export function NumericReportPreview({
   if (!selectedDomain) {
     return <main className="report-page numeric-preview-page">
       <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
+      {topAccessory && <div className="local-report-admin-bar">{topAccessory}</div>}
       <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
       <article className="report-paper numeric-preview" data-report-format="a4"><section className="numeric-preview__section numeric-empty-report" role="status"><h2>이번 주에 완료한 단원이 없습니다</h2></section></article>
     </main>;
@@ -127,6 +130,7 @@ export function NumericReportPreview({
 
   return <main className="report-page numeric-preview-page">
     <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
+    {topAccessory && <div className="local-report-admin-bar">{topAccessory}</div>}
     <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
     <article className="report-paper numeric-preview" data-report-format="a4">
       <header className="numeric-preview__header"><div><span>학습자</span><strong>{liveModel?.learnerName ?? "예시 학습자"}</strong></div><p className="numeric-preview__document-title">개인 진단 리포트</p><a href="#numeric-next-plan">다음 학습 제안 <span aria-hidden="true">↓</span></a></header>

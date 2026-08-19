@@ -35,6 +35,9 @@ import {
   type DiagnosticEvidenceLink,
   type DiagnosticSpeechState,
 } from "./diagnostic-report-interactions";
+import { localReportAdminApi, type LocalAdminLearner } from "../local-report-admin-client";
+import { LocalLearnerSearch } from "./LocalLearnerSearch";
+import { reportRequestFor } from "./local-admin-report-flow";
 import { shiftIsoWeek } from "./weekly-report-period";
 
 type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
@@ -109,12 +112,36 @@ function EvidenceLinks({
   );
 }
 
-export function ReportDashboard({ completeExample = false }: { completeExample?: boolean }) {
-  if (completeExample) return <NumericReportPreview report={completeDiagnosticReportExample} />;
-  return <ConnectedReportDashboard />;
+type ReportDashboardProps = {
+  completeExample?: boolean;
+  localAdminEnabled?: boolean;
+};
+
+async function loadAuthenticatedReportWithHistoryFallback(weekStart: string | undefined, controller: AbortController) {
+  const [diagnosticResult, history] = await Promise.all([
+    api.diagnosticReport({ weekStart, signal: controller.signal }).then(
+      (data) => ({ ok: true as const, data }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
+    api.reportHistory(50).catch(() => [] as ReportSummaryDto[]),
+  ]);
+  if (diagnosticResult.ok) return { data: diagnosticResult.data, history, usedHistoryFallback: false };
+  if (!(diagnosticResult.error instanceof ApiError) || diagnosticResult.error.status < 500) throw diagnosticResult.error;
+  const learner = readStoredLearner();
+  if (!learner) throw diagnosticResult.error;
+  return {
+    data: diagnosticReportFromHistory(history, learner, weekStart),
+    history,
+    usedHistoryFallback: true,
+  };
 }
 
-function ConnectedReportDashboard() {
+export function ReportDashboard({ completeExample = false, localAdminEnabled = false }: ReportDashboardProps) {
+  if (completeExample) return <NumericReportPreview report={completeDiagnosticReportExample} />;
+  return <ConnectedReportDashboard localAdminEnabled={localAdminEnabled} />;
+}
+
+function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnabled }: { localAdminEnabled: boolean }) {
   const [report, setReport] = useState<DiagnosticReportDto | null>(null);
   const [history, setHistory] = useState<ReportSummaryDto[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -124,12 +151,15 @@ function ConnectedReportDashboard() {
   const [selectedDomainId, setSelectedDomainId] = useState("");
   const [expandedDomainId, setExpandedDomainId] = useState<string | null>(null);
   const [speechByDomain, setSpeechByDomain] = useState<Record<string, DiagnosticSpeechState>>({});
+  const [selectedLearner, setSelectedLearner] = useState<LocalAdminLearner | null>(null);
+  const [localAdminAvailable, setLocalAdminAvailable] = useState(initiallyLocalAdminEnabled);
   const reportRef = useRef<DiagnosticReportDto | null>(null);
   const modeRef = useRef<DiagnosticMode>("HOME");
   const selectedDomainRef = useRef("");
   const reportControllerRef = useRef<AbortController | null>(null);
   const reportSequenceRef = useRef(0);
   const requestedWeekRef = useRef<string | undefined>(undefined);
+  const selectedLearnerRef = useRef<LocalAdminLearner | null>(null);
   const speechControllersRef = useRef(new Map<string, AbortController>());
   const tabRefs = useRef<Partial<Record<DiagnosticMode, HTMLButtonElement>>>({});
   const chartSectionRef = useRef<HTMLElement | null>(null);
@@ -141,10 +171,14 @@ function ConnectedReportDashboard() {
     speechControllersRef.current.clear();
   }, []);
 
-  const loadReport = useCallback(async (weekStart?: string) => {
+  const loadReport = useCallback(async (
+    weekStart?: string,
+    learnerOverride = selectedLearnerRef.current,
+  ) => {
     const previousReport = reportRef.current;
     const previousMode = modeRef.current;
     const previousDomainId = selectedDomainRef.current;
+    const request = reportRequestFor({ selectedLearnerId: learnerOverride?.learner_id ?? null, weekStart });
     const sequence = reportSequenceRef.current + 1;
     reportSequenceRef.current = sequence;
     requestedWeekRef.current = weekStart;
@@ -157,26 +191,15 @@ function ConnectedReportDashboard() {
     setNotice("");
 
     try {
-      const [diagnosticResult, historyData] = await Promise.all([
-        api.diagnosticReport({ weekStart, signal: controller.signal }).then(
-          (data) => ({ ok: true as const, data }),
-          (error: unknown) => ({ ok: false as const, error }),
-        ),
-        api.reportHistory(50).catch(() => [] as ReportSummaryDto[]),
-      ]);
+      const result = request.source === "local-admin"
+        ? {
+          data: await localReportAdminApi.diagnostic(request.learnerId, request.weekStart, controller.signal),
+          history: [] as ReportSummaryDto[],
+          usedHistoryFallback: false,
+        }
+        : await loadAuthenticatedReportWithHistoryFallback(request.weekStart, controller);
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
-      let usedHistoryFallback = false;
-      let data: DiagnosticReportDto;
-      if (diagnosticResult.ok) {
-        data = diagnosticResult.data;
-      } else if (diagnosticResult.error instanceof ApiError && diagnosticResult.error.status >= 500) {
-        const learner = readStoredLearner();
-        if (!learner) throw diagnosticResult.error;
-        data = diagnosticReportFromHistory(historyData, learner, weekStart);
-        usedHistoryFallback = true;
-      } else {
-        throw diagnosticResult.error;
-      }
+      const { data, history: historyData, usedHistoryFallback } = result;
       setHistory(historyData);
       if (isEmptyDiagnosticReport(data)) {
         cancelSpeechRequests();
@@ -204,7 +227,16 @@ function ConnectedReportDashboard() {
       if (usedHistoryFallback) setNotice("완료된 학습 이력으로 주간 리포트를 표시하고 있습니다.");
     } catch (error: unknown) {
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
-      if (error instanceof ApiError && error.status === 401) {
+      if (request.source === "local-admin") {
+        cancelSpeechRequests();
+        setSpeechByDomain({});
+        reportRef.current = null;
+        setReport(null);
+        setHistory([]);
+        setLoadState("error");
+        setNotice("선택한 학습자의 리포트 데이터를 불러오지 못했습니다.");
+        if (error instanceof ApiError && (error.status === 403 || error.status === 404)) setLocalAdminAvailable(false);
+      } else if (error instanceof ApiError && error.status === 401) {
         cancelSpeechRequests();
         setSpeechByDomain({});
         reportRef.current = null;
@@ -234,6 +266,24 @@ function ConnectedReportDashboard() {
     modeRef.current = mode;
     selectedDomainRef.current = selectedDomainId;
   }, [mode, report, selectedDomainId]);
+
+  const selectLearner = (learner: LocalAdminLearner) => {
+    const weekStart = requestedWeekRef.current ?? reportRef.current?.period.week_start;
+    reportSequenceRef.current += 1;
+    reportControllerRef.current?.abort();
+    cancelSpeechRequests();
+    setSpeechByDomain({});
+    setExpandedDomainId(null);
+    setNotice("");
+    setRefreshing(false);
+    reportRef.current = null;
+    setReport(null);
+    setHistory([]);
+    setLoadState("loading");
+    selectedLearnerRef.current = learner;
+    setSelectedLearner(learner);
+    void loadReport(weekStart, learner);
+  };
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -282,14 +332,20 @@ function ConnectedReportDashboard() {
     const domainId = domain.domain_id;
     const cached = speechByDomain[domainId];
     if (speechLoadDecision(cached) === "reuse") return;
+    const currentReport = reportRef.current;
+    if (!currentReport) return;
+    const learner = selectedLearnerRef.current;
     speechControllersRef.current.get(domainId)?.abort();
     const controller = new AbortController();
     speechControllersRef.current.set(domainId, controller);
     setSpeechByDomain((current) => ({ ...current, [domainId]: { state: "loading" } }));
-    void api.diagnosticSpeechEvidence(domainId, {
-      weekStart: reportRef.current!.period.week_start,
-      signal: controller.signal,
-    }).then(
+    const evidenceRequest = learner
+      ? localReportAdminApi.speechEvidence(learner.learner_id, domainId, currentReport.period.week_start, controller.signal)
+      : api.diagnosticSpeechEvidence(domainId, {
+        weekStart: reportRef.current!.period.week_start,
+        signal: controller.signal,
+      });
+    void evidenceRequest.then(
       (evidence) => {
         if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
         speechControllersRef.current.delete(domainId);
@@ -350,6 +406,14 @@ function ConnectedReportDashboard() {
       onNextWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, 1))}
       onRetry={() => void loadReport(requestedWeekRef.current)}
       speechByDomain={speechByDomain}
+      topAccessory={localAdminAvailable ? (
+        <LocalLearnerSearch
+          currentLearner={selectedLearner ?? report.learner}
+          searchLearners={localReportAdminApi.search}
+          onSelect={selectLearner}
+          onUnavailable={() => setLocalAdminAvailable(false)}
+        />
+      ) : undefined}
       onRequestSpeech={(domainId) => {
         const domain = groupedDomains.find((item) => item.domain_id === domainId);
         if (domain) loadSpeechEvidence(domain);

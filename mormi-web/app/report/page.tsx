@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localReportAdminConfig } from "../local-report-admin-policy";
 import { ReportDashboard } from "./ReportDashboard";
 
 export const metadata: Metadata = {
@@ -8,5 +9,6 @@ export const metadata: Metadata = {
 
 export default async function ReportPage({ searchParams }: { searchParams: Promise<{ example?: string }> }) {
   const { example } = await searchParams;
-  return <ReportDashboard completeExample={example === "complete"} />;
+  const localAdminEnabled = localReportAdminConfig(process.env) !== null;
+  return <ReportDashboard completeExample={example === "complete"} localAdminEnabled={localAdminEnabled} />;
 }

@@ -27,9 +27,10 @@ export const localReportAdminApi = {
     );
   },
 
-  diagnostic(learnerId: number, weekStart: string, signal?: AbortSignal) {
+  diagnostic(learnerId: number, weekStart?: string, signal?: AbortSignal) {
+    const query = weekStart ? `?week_start=${encodeURIComponent(weekStart)}` : "";
     return localAdminRequest<DiagnosticReportDto>(
-      `/learners/${learnerId}/diagnostic?week_start=${encodeURIComponent(weekStart)}`,
+      `/learners/${learnerId}/diagnostic${query}`,
       signal,
     );
   },

@@ -34,15 +34,7 @@ export function LocalLearnerSearch({
   const normalizedQuery = query.trim();
 
   useEffect(() => {
-    if (normalizedQuery.length < 2) {
-      setResults([]);
-      setLoading(false);
-      setCompleted(false);
-      setError(false);
-      setActiveIndex(-1);
-      setOpen(false);
-      return;
-    }
+    if (normalizedQuery.length < 2) return;
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
@@ -151,21 +143,29 @@ export function LocalLearnerSearch({
         onKeyDown={handleKeyDown}
       />
       {open && (
-        <ul id={RESULTS_ID} role="listbox" aria-label="학습자 검색 결과">
-          {loading && <li role="status">검색 중…</li>}
+        <ul className="local-learner-results" id={RESULTS_ID} role="listbox" aria-label="학습자 검색 결과">
+          {loading && <li className="local-learner-results__loading" role="status">검색 중…</li>}
           {!loading && error && (
-            <li role="alert">
+            <li className="local-learner-results__error" role="alert">
               검색하지 못했습니다. <button type="button" onClick={() => setRetryVersion((version) => version + 1)}>다시 시도</button>
             </li>
           )}
-          {!loading && !error && completed && results.length === 0 && <li>일치하는 학습자가 없습니다</li>}
+          {!loading && !error && completed && results.length === 0 && <li className="local-learner-results__empty">일치하는 학습자가 없습니다</li>}
           {!loading && !error && results.map((learner, index) => (
             <li
               id={`local-learner-option-${learner.learner_id}`}
               key={learner.learner_id}
               role="option"
               aria-selected={index === activeIndex}
+              className={`local-learner-results__option ${index === activeIndex ? "is-active" : ""}`}
               onClick={() => selectLearner(learner)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  selectLearner(learner);
+                }
+              }}
+              tabIndex={-1}
             >
               {learner.display_name} · #{learner.learner_id}
             </li>
