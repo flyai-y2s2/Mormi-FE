@@ -11,6 +11,7 @@ import {
 } from "../api-client";
 import { DomainDetail } from "./DomainDetail";
 import { NumericReportPreview } from "./NumericReportPreview";
+import { completeDiagnosticReportExample } from "./complete-report-example";
 import { ReportTrendChart } from "./ReportTrendChart";
 import {
   chooseDiagnosticSelection,
@@ -32,6 +33,7 @@ import {
   type DiagnosticEvidenceLink,
   type DiagnosticSpeechState,
 } from "./diagnostic-report-interactions";
+import { shiftIsoWeek } from "./weekly-report-period";
 
 type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
 const reportModes = ["HOME", "LIFE"] as const;
@@ -106,7 +108,7 @@ function EvidenceLinks({
 }
 
 export function ReportDashboard({ completeExample = false }: { completeExample?: boolean }) {
-  if (completeExample) return <NumericReportPreview />;
+  if (completeExample) return <NumericReportPreview report={completeDiagnosticReportExample} />;
   return <ConnectedReportDashboard />;
 }
 
@@ -124,6 +126,7 @@ function ConnectedReportDashboard() {
   const selectedDomainRef = useRef("");
   const reportControllerRef = useRef<AbortController | null>(null);
   const reportSequenceRef = useRef(0);
+  const requestedWeekRef = useRef<string | undefined>(undefined);
   const speechControllersRef = useRef(new Map<string, AbortController>());
   const tabRefs = useRef<Partial<Record<DiagnosticMode, HTMLButtonElement>>>({});
   const chartSectionRef = useRef<HTMLElement | null>(null);
@@ -135,12 +138,13 @@ function ConnectedReportDashboard() {
     speechControllersRef.current.clear();
   }, []);
 
-  const loadReport = useCallback(async () => {
+  const loadReport = useCallback(async (weekStart?: string) => {
     const previousReport = reportRef.current;
     const previousMode = modeRef.current;
     const previousDomainId = selectedDomainRef.current;
     const sequence = reportSequenceRef.current + 1;
     reportSequenceRef.current = sequence;
+    requestedWeekRef.current = weekStart;
     reportControllerRef.current?.abort();
     const controller = new AbortController();
     reportControllerRef.current = controller;
@@ -150,7 +154,7 @@ function ConnectedReportDashboard() {
     setNotice("");
 
     try {
-      const data = await api.diagnosticReport(controller.signal);
+      const data = await api.diagnosticReport({ weekStart, signal: controller.signal });
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
       if (isEmptyDiagnosticReport(data)) {
         cancelSpeechRequests();
@@ -160,8 +164,8 @@ function ConnectedReportDashboard() {
         setReport(data);
         setMode("HOME");
         setSelectedDomainId("");
-        setLoadState("empty");
-        setNotice("아직 학습 기록이 없습니다. 학습을 시작하면 이곳에 변화 근거가 쌓입니다.");
+        setLoadState("ready");
+        setNotice("");
         return;
       }
 
@@ -259,7 +263,10 @@ function ConnectedReportDashboard() {
     const controller = new AbortController();
     speechControllersRef.current.set(domainId, controller);
     setSpeechByDomain((current) => ({ ...current, [domainId]: { state: "loading" } }));
-    void api.diagnosticSpeechEvidence(domainId, controller.signal).then(
+    void api.diagnosticSpeechEvidence(domainId, {
+      weekStart: reportRef.current!.period.week_start,
+      signal: controller.signal,
+    }).then(
       (evidence) => {
         if (controller.signal.aborted || speechControllersRef.current.get(domainId) !== controller) return;
         speechControllersRef.current.delete(domainId);
@@ -310,7 +317,15 @@ function ConnectedReportDashboard() {
   };
 
   if (loadState === "ready" && report) {
-    return <NumericReportPreview key={`${report.learner.learner_id}:${report.data_range.last_at ?? "current"}`} report={report} />;
+    return <NumericReportPreview
+      key={`${report.learner.learner_id}:${report.period.week_start}`}
+      report={report}
+      refreshing={refreshing}
+      notice={notice}
+      onPreviousWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, -1))}
+      onNextWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, 1))}
+      onRetry={() => void loadReport(requestedWeekRef.current)}
+    />;
   }
 
   const stateTitle = loadState === "loading"

@@ -14,6 +14,7 @@ async function loadPreview() {
     .replace('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve("react/jsx-runtime")).href))
     .replace('"react"', JSON.stringify(pathToFileURL(require.resolve("react")).href))
     .replace('"./numeric-report-live-model"', JSON.stringify(new URL("../app/report/numeric-report-live-model.ts", import.meta.url).href))
+    .replace('"./weekly-report-period"', JSON.stringify(new URL("../app/report/weekly-report-period.ts", import.meta.url).href))
     .replace('import Link from "next/link";', 'const Link = ({ children, ...props }) => _jsx("a", { ...props, children });');
   return import(`data:text/javascript;base64,${Buffer.from(moduleCode).toString("base64")}`);
 }
@@ -99,6 +100,39 @@ test("leads with the current state and turns the selected domain into one next-l
     assert.match(dom.container.querySelector(".numeric-next-plan").textContent, /가격 더하기/);
     assert.doesNotMatch(dom.container.querySelector(".numeric-next-plan").textContent, /돈 세기 3문제/);
 
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("offers bounded week navigation and omits an empty LIFE tab", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(),
+    import("../app/report/complete-report-example.ts"),
+    import("react"),
+    import("react-dom/server"),
+  ]);
+  const homeOnly = { ...completeDiagnosticReportExample, modes: [completeDiagnosticReportExample.modes[0], { mode: "LIFE", domains: [] }] };
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, { report: homeOnly })));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  let previous = 0;
+  let next = 0;
+
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, { report: homeOnly, onPreviousWeek: () => { previous += 1; }, onNextWeek: () => { next += 1; } })); });
+    const previousButton = dom.container.querySelector('button[aria-label="이전 주 리포트"]');
+    const nextButton = dom.container.querySelector('button[aria-label="다음 주 리포트"]');
+    assert.equal(previousButton.disabled, false);
+    assert.equal(nextButton.disabled, true);
+    assert.equal(dom.container.querySelector('[role="tab"][aria-label="실생활 · 응용"]'), null);
+    await act(async () => { previousButton.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    await act(async () => { nextButton.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    assert.equal(previous, 1);
+    assert.equal(next, 0);
     await act(async () => { root.unmount(); });
   } finally {
     dom.cleanup();

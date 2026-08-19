@@ -364,18 +364,26 @@ test("renders the complete example as a numeric diagnostic preview without a cha
   assert.match(html, /학습자<\/span><strong>김민준/);
   assert.match(html, /개인 진단 리포트/);
   assert.match(html, /정답률/);
-  assert.match(html, /86%/);
+  assert.match(html, /81%/);
   assert.match(html, /정답까지 평균/);
-  assert.match(html, /2\.4회/);
-  assert.match(html, /1\.3회/);
-  assert.match(html, /혼자 말하기/);
-  assert.match(html, /L4부터 L0까지 60%, 20%, 20%, 0%, 0%/);
+  assert.match(html, /모르미 가르치기/);
+  assert.match(html, /8월 2주차/);
   assert.match(html, /현재 영역별 상태/);
   assert.match(html, /AI가 본 변화/);
   assert.match(html, /과거·최근 발화 보기/);
   assert.match(html, /AI 다음 학습 제안/);
   assert.doesNotMatch(html, /<svg\b/);
   assert.doesNotMatch(html, /diagnostic-chart/);
+});
+
+test("numeric weekly preview keeps its compact control outside the report paper", async () => {
+  const preview = await readFile(new URL("../app/report/NumericReportPreview.tsx", import.meta.url), "utf8");
+  assert.match(preview, /className="weekly-report-nav"/);
+  assert.match(preview, /aria-label="이전 주 리포트"/);
+  assert.match(preview, /aria-label="다음 주 리포트"/);
+  assert.match(preview, /반복학습/);
+  assert.match(preview, /모르미 가르치기/);
+  assert.doesNotMatch(preview, />세션별 변화</);
 });
 
 test("diagnostic report renders as one compact Korean A4 document", async () => {
@@ -413,10 +421,11 @@ test("diagnostic report uses the approved interactive data contract", async () =
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(dashboard, /api\.diagnosticReport\(controller\.signal\)/);
+  assert.match(dashboard, /api\.diagnosticReport\(\{ weekStart, signal: controller\.signal \}\)/);
   assert.match(dashboard, /role="tablist"/);
   assert.match(dashboard, /role="tab"/);
-  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId, controller\.signal\)/);
+  assert.match(dashboard, /api\.diagnosticSpeechEvidence\(domainId, \{/);
+  assert.match(dashboard, /weekStart: reportRef\.current!\.period\.week_start/);
   assert.match(dashboard, /새로 계산/);
   assert.match(dashboard, /마지막 학습 기록/);
   assert.doesNotMatch(dashboard, /최근 갱신/);

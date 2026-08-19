@@ -5,6 +5,7 @@ import { buildNumericLiveReport } from "../app/report/numeric-report-live-model.
 
 const report: DiagnosticReportDto = {
   learner: { learner_id: 3, display_name: "리포트 검증 아동" },
+  period: { week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul", earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17" },
   data_range: { total_home_sessions: 13, total_life_visits: 1 },
   current_summary: {
     concept_performance: { text: "돈 세기 문제 정답률은 최근 72%입니다.", evidence_refs: ["drill:money-count"] },
@@ -42,7 +43,7 @@ test("maps live evidence without inventing attempts or speech metrics", () => {
   assert.deepEqual(money.metrics, [
     ["정답률", "84%", "72%"],
     ["정답까지 평균", "—", "—"],
-    ["혼자 말하기", "—", "—"],
+    ["모르미 가르치기", "—", "—"],
   ]);
   assert.equal(money.status, "growing");
   assert.equal(money.headline, "돈 세기, 지금 발달 중이에요");
@@ -61,4 +62,17 @@ test("keeps one-record life evidence in collecting state", () => {
   assert.equal(life.metrics[0][2], "100%");
   assert.equal(life.status, "collecting");
   assert.equal(life.repeatCount, 2);
+  assert.equal(life.changeReason, "최근 정답률은 100%예요. 비교할 기록이 더 필요해요.");
+});
+
+test("keeps completed HOME-only evidence in HOME without inventing LIFE domains", () => {
+  const homeOnly: DiagnosticReportDto = {
+    ...report,
+    modes: [report.modes[0]!, { mode: "LIFE", domains: [] }],
+    domains: [report.domains[0]!],
+  };
+
+  const model = buildNumericLiveReport(homeOnly);
+  assert.equal(model.domains.HOME.length, 1);
+  assert.equal(model.domains.LIFE.length, 0);
 });

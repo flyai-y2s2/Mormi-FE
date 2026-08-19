@@ -71,8 +71,9 @@ function headline(label: string, status: NumericPreviewStatus): string {
   return `${label} 기록을 더 모으고 있어요`;
 }
 
-function changeReason(recent: string, direction?: DiagnosticDirection): string {
+function changeReason(recent: string, totalCount: number, direction?: DiagnosticDirection): string {
   if (recent === "—") return "비교 가능한 정답 기록을 더 모으고 있어요.";
+  if (totalCount < 2) return `최근 정답률은 ${recent}예요. 비교할 기록이 더 필요해요.`;
   if (direction === "DECLINING") return `최근 정답률은 ${recent}로, 이전보다 낮아져 다시 확인이 필요해요.`;
   if (direction === "IMPROVING") return `최근 정답률은 ${recent}로, 이전보다 좋아지고 있어요.`;
   if (direction === "MAINTAINING") return `최근 정답률은 ${recent}로 비슷하게 유지되고 있어요.`;
@@ -117,7 +118,7 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
     const metrics: readonly NumericComparisonRow[] = [
       ["정답률", historyAccuracy, recentAccuracy],
       ["정답까지 평균", "—", "—"],
-      ["혼자 말하기", historySpeech, recentSpeech],
+      ["모르미 가르치기", historySpeech, recentSpeech],
     ];
     return {
       id: domainId,
@@ -129,7 +130,7 @@ function buildMode(report: DiagnosticReportDto, mode: DiagnosticMode): NumericPr
       recentCount: accuracy?.recent_count ?? 0,
       headline: headline(label, status),
       dominantStage: "—",
-      changeReason: changeReason(recentAccuracy, selectedStatus?.direction),
+      changeReason: changeReason(recentAccuracy, accuracy?.points.length ?? 0, selectedStatus?.direction),
       thinkingChange: report.current_summary.explanation_change.text,
       nextCheck: advice.nextCheck,
       pastUtterance: "비교 가능한 과거 발화 기록이 없습니다.",
