@@ -11,6 +11,7 @@ import {
   type ReportSummaryDto,
 } from "../api-client";
 import { DomainDetail } from "./DomainDetail";
+import { diagnosticReportFromHistory } from "./diagnostic-history-fallback";
 import { NumericReportPreview } from "./NumericReportPreview";
 import { completeDiagnosticReportExample } from "./complete-report-example";
 import { ReportTrendChart } from "./ReportTrendChart";
@@ -156,11 +157,26 @@ function ConnectedReportDashboard() {
     setNotice("");
 
     try {
-      const [data, historyData] = await Promise.all([
-        api.diagnosticReport({ weekStart, signal: controller.signal }),
+      const [diagnosticResult, historyData] = await Promise.all([
+        api.diagnosticReport({ weekStart, signal: controller.signal }).then(
+          (data) => ({ ok: true as const, data }),
+          (error: unknown) => ({ ok: false as const, error }),
+        ),
         api.reportHistory(50).catch(() => [] as ReportSummaryDto[]),
       ]);
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
+      let usedHistoryFallback = false;
+      let data: DiagnosticReportDto;
+      if (diagnosticResult.ok) {
+        data = diagnosticResult.data;
+      } else if (diagnosticResult.error instanceof ApiError && diagnosticResult.error.status >= 500) {
+        const learner = readStoredLearner();
+        if (!learner) throw diagnosticResult.error;
+        data = diagnosticReportFromHistory(historyData, learner, weekStart);
+        usedHistoryFallback = true;
+      } else {
+        throw diagnosticResult.error;
+      }
       setHistory(historyData);
       if (isEmptyDiagnosticReport(data)) {
         cancelSpeechRequests();
@@ -185,6 +201,7 @@ function ConnectedReportDashboard() {
       setMode(nextSelection.mode);
       setSelectedDomainId(nextSelection.domain_id);
       setLoadState("ready");
+      if (usedHistoryFallback) setNotice("완료된 학습 이력으로 주간 리포트를 표시하고 있습니다.");
     } catch (error: unknown) {
       if (!reportRequestAccepted(reportSequenceRef.current, sequence, controller.signal.aborted)) return;
       if (error instanceof ApiError && error.status === 401) {
