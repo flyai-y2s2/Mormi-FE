@@ -32,7 +32,7 @@ test("server-renders the Morami onboarding", async () => {
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, layout] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -44,6 +44,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StarNote.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
   const aiTest = await readFile(new URL("../app/ai-test/AiDialogueTest.tsx", import.meta.url), "utf8");
@@ -115,6 +116,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);
   assert.match(starNote, /className=\{`star-note \$\{className\}`\.trim\(\)\}/);
   assert.match(starNote, /note-ring[^>]*>별<br \/>노<br \/>트/);
+  // 별노트 전용 폰트는 첫 화면에서 미리 받고, 로드 전에는 고딕 대체 글꼴을
+  // 잠깐 그리지 않는다. 그래야 별노트 진입 시 글꼴이 뒤늦게 바뀌지 않는다.
+  assert.match(layout, /rel="preload" href="\/fonts\/nanum-child-hope\.ttf" as="font" type="font\/ttf"/);
+  assert.match(css, /font-family: "Mormi Child Hope";[\s\S]{0,240}font-display: block;/);
   assert.doesNotMatch(cafe, /모르미의 공부노트/);
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);

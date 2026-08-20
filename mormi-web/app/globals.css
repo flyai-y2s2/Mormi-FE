@@ -3,7 +3,8 @@
 @font-face {
   font-family: "Mormi Child Hope";
   src: url("/fonts/nanum-child-hope.ttf") format("truetype");
-  font-display: swap;
+  /* 별노트가 먼저 고딕체로 그려졌다가 바뀌는 FOUT를 막는다. 폰트는 layout에서 미리 받는다. */
+  font-display: block;
   font-style: normal;
   font-weight: 400;
 }

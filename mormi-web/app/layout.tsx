@@ -27,5 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ko"><body>{children}</body></html>;
+  return <html lang="ko">
+    <head>
+      <link rel="preload" href="/fonts/nanum-child-hope.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+    </head>
+    <body>{children}</body>
+  </html>;
 }
