@@ -111,6 +111,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
   assert.match(talkStage, /궁금해 사전/);
+  // 카페 툴바도 집 학습과 같은 시각 언어를 쓴다. 사전은 원형 책 아이콘,
+  // 이전 버튼은 흰색 바탕의 초록 테두리 버튼이다.
+  assert.match(talkStage, /className="cafe-talk-note"[\s\S]{0,220}ui-icon--book/);
+  assert.match(css, /\.cafe-talk-note\{[^}]*width:88px[^}]*height:88px[^}]*border-radius:50%/);
+  assert.match(css, /\.cafe-talk-back\{[^}]*min-height:48px[^}]*border:3px solid #78cda6/);
   // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
   assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);
   assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);

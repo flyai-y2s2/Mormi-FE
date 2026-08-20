@@ -1402,19 +1402,20 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 툴바는 그림 위에 떠 있지 않고 흐름의 첫 줄이 된다. 겹침이 없어야 아래 여백을 계산할 수 있다. */
 .cafe-talk-toolbar{width:100%;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between}
 .cafe-talk-back{
-  min-height:clamp(38px,5vh,46px);padding:0 16px;display:flex;align-items:center;gap:8px;
-  border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.94);
-  box-shadow:0 5px 0 #cce7da;cursor:pointer;font-size:clamp(13px,1.6vh,15px);font-weight:900
+  min-height:48px;padding:0 18px;display:flex;align-items:center;gap:8px;
+  border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.92);
+  box-shadow:0 5px 0 #cce7da;cursor:pointer;font-size:15px;font-weight:900
 }
 .cafe-talk-back span{font-size:21px;line-height:1}
 .cafe-talk-back:hover{background:#effaf4;transform:translateY(-1px)}
 .cafe-talk-note{
-  padding:clamp(7px,1vh,10px) 15px;display:flex;align-items:center;gap:7px;
-  border:0;border-radius:999px;color:#62509d;background:#f0eaff;cursor:pointer;
+  width:88px;height:88px;min-height:88px;padding:8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;border:0;border-radius:50%;
+  color:#62509d;background:#f0eaff;cursor:pointer;
   box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);
-  font-size:clamp(12px,1.5vh,14px);font-weight:950
+  font-size:13px;font-weight:950;line-height:1.15
 }
-.cafe-talk-note span{color:#765fc0;font-size:clamp(15px,2vh,19px);line-height:1}
+.cafe-talk-note>.ui-icon{flex:0 0 auto}
 
 .cafe-talk-flow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
 
@@ -1523,11 +1524,19 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 좁은 화면에서도 순서는 그대로다. 캐릭터만 더 작아져 질문 글이 두 줄 안에 들어온다. */
 @media(max-width:760px){
   .figma-cafe.is-talk{padding:0 10px;background-attachment:scroll}
+  .cafe-talk-back{min-height:44px;padding:0 14px;font-size:13px}
+  .cafe-talk-note{width:72px;height:72px;min-height:72px;font-size:11px}
   .cafe-talk-bubble{border-width:4px;border-radius:18px;grid-template-columns:52px minmax(0,1fr);gap:10px}
   .cafe-talk-queue{border-radius:18px}
   .cafe-talk-menu__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .cafe-talk-equation{gap:7px}
   .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
+}
+
+@media(max-width:560px){
+  .cafe-talk-back{min-height:40px;padding:0 11px;border-width:2px;font-size:11px}
+  .cafe-talk-note{width:58px;height:58px;min-height:58px;padding:6px;font-size:9px}
+  .cafe-talk-note>.ui-icon{transform:scale(.82)}
 }
 
 /* 줄 서기의 별노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */
