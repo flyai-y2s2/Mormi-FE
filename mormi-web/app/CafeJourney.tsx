@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
-import { menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
+import { calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
 import { CafeStageComplete, type CafeStageResult } from "./CafeStageComplete";
 import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
@@ -631,7 +631,7 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
       {step === "sum" && calculationScene === "dialogue" && (
         <CafeTalkStage
           conversation={cafeConversations.calculate}
-          line={mormiLines.calculate}
+          line={calculationDialogueLine(mormiLines.calculate)}
           fallbackLine={fallbackLines.calculate}
           inputText={dialogueInputs.calculate ?? ""}
           sending={dialogueSending}

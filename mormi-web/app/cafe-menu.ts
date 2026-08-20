@@ -35,6 +35,12 @@ export function menuDisplayName(id: unknown, name: unknown) {
   return typeof name === "string" && name.trim() ? name : "메뉴";
 }
 
+/** 메뉴 선택 직후의 서버 문구를 화면 행동에 맞는 자연스러운 연결 문장으로 다듬는다. */
+export function calculationDialogueLine(line: string | undefined) {
+  if (!line) return line;
+  return line.replace(/^네가 알려줘서 알겠어\.\s*나\s*/, "메뉴를 골랐구나! 이제 ");
+}
+
 /** 중앙 메뉴 카드와 서버 선택지를 ID로만 연결한다. 배열 순서는 사용하지 않는다. */
 export function menuChoiceById<T extends CafeMenuChoice>(menuId: unknown, choices: readonly T[]) {
   if (typeof menuId !== "string") return undefined;

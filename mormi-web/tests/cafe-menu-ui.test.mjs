@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { menuChoiceById, menuDisplayName, menuPairTotal } from "../app/cafe-menu.ts";
+import { calculationDialogueLine, menuChoiceById, menuDisplayName, menuPairTotal } from "../app/cafe-menu.ts";
 import { choiceIdForTypedAnswer } from "../app/cafe-choice-input.ts";
 
 test("connects the clicked menu to the server choice by exact id", () => {
@@ -23,6 +23,14 @@ test("renames americano only on screen and keeps budget math canonical", () => {
   assert.equal(menuChoiceById("americano", [{ id: "americano" }])?.id, "americano");
   assert.equal(menuPairTotal("americano", "cookie"), 5000);
   assert.equal(menuPairTotal("strawberry-juice", "sandwich"), 9000);
+});
+
+test("describes a menu click as a selection before the calculation question", () => {
+  assert.equal(
+    calculationDialogueLine("네가 알려줘서 알겠어. 나 두 메뉴가 모두 얼마인지랑 어떻게 계산하는지 헷갈려... 알려줄 수 있어?"),
+    "메뉴를 골랐구나! 이제 두 메뉴가 모두 얼마인지랑 어떻게 계산하는지 헷갈려... 알려줄 수 있어?",
+  );
+  assert.equal(calculationDialogueLine("그럼 두 메뉴는 모두 얼마야?"), "그럼 두 메뉴는 모두 얼마야?");
 });
 
 test("lets queue learners answer before revealing server choices", () => {
