@@ -7,6 +7,33 @@ test("shows local-admin search instead of requiring learner login", () => {
   assert.equal(reportLandingFor({ localAdminEnabled: true, hasStoredLearner: false }), "local-admin-search");
 });
 
+test("teacher mode requires its password before showing learner search", () => {
+  assert.equal(reportLandingFor({
+    localAdminEnabled: true,
+    hasStoredLearner: true,
+    teacherMode: true,
+    teacherAuthRequired: true,
+    teacherAuthenticated: false,
+  }), "teacher-login");
+  assert.equal(reportLandingFor({
+    localAdminEnabled: true,
+    hasStoredLearner: false,
+    teacherMode: true,
+    teacherAuthRequired: true,
+    teacherAuthenticated: true,
+  }), "local-admin-search");
+});
+
+test("teacher mode reports missing production configuration instead of falling back to learner login", () => {
+  assert.equal(reportLandingFor({
+    localAdminEnabled: false,
+    hasStoredLearner: false,
+    teacherMode: true,
+    teacherAuthRequired: false,
+    teacherAuthenticated: false,
+  }), "teacher-unavailable");
+});
+
 test("selects the local-admin diagnostic source for a selected learner", () => {
   assert.deepEqual(reportRequestFor({ selectedLearnerId: 19, weekStart: "2026-08-17" }), {
     source: "local-admin",
