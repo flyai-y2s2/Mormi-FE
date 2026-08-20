@@ -1043,7 +1043,15 @@ function Onboarding({ onSignup, onLogin }: {
     <section className="onboarding-scene">
       <div className="onboarding-morami"><Morami expression="happy" /></div>
       <div className="onboarding-greeting">
-        <span>모르미</span>
+        <Image
+          className="onboarding-brand"
+          src="/ui/igeonaega-logo.png"
+          alt="이제 거꾸로, 내가 가르칠게. 이거, 내가!"
+          width={1000}
+          height={562}
+          sizes="(max-width: 760px) 250px, 360px"
+          priority
+        />
         <h1>안녕, 나 모르미야!</h1>
         <p>우리 집에서 준비하고 같이 카페에 가자.</p>
         {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}

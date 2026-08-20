@@ -22,6 +22,8 @@ test("server-renders the Morami onboarding", async () => {
   const html = await response.text();
   assert.match(html, /안녕,/);
   assert.match(html, /나 모르미야!/);
+  assert.match(html, /igeonaega-logo\.png/);
+  assert.match(html, /이제 거꾸로, 내가 가르칠게\. 이거, 내가!/);
   // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
   // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
   // 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이므로 기본 버튼은 로그인이 쓴다.
@@ -64,6 +66,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /useState<Stage>\("onboarding"\)/);
   assert.match(app, /onboarding-secondary onboarding-secondary--button[\s\S]{0,200}>처음 시작하는 거예요/);
   assert.match(css, /\.onboarding-greeting \{[^}]*width:min\(650px,100%\)/);
+  assert.match(css, /\.onboarding-brand \{[^}]*width:min\(360px,80%\)[^}]*height:auto/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.onboarding-brand \{[^}]*width:min\(250px,86%\)/);
   assert.match(css, /\.onboarding-greeting__actions \{[^}]*grid-template-columns:minmax\(0,1\.35fr\) minmax\(0,\.9fr\)/);
   assert.match(css, /\.onboarding-greeting__actions \.onboarding-secondary \{[^}]*min-height:76px[^}]*font-size:18px/);
   assert.match(css, /\.onboarding-name-card \.onboarding-secondary--button \{[^}]*min-height:64px[^}]*font-size:17px[^}]*text-decoration:none/);
