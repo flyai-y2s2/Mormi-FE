@@ -121,6 +121,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /\.cafe-talk-note\{[^}]*width:88px[^}]*height:88px[^}]*border-radius:50%/);
   assert.match(css, /\.cafe-talk-note\{[^}]*white-space:nowrap[^}]*word-break:keep-all/);
   assert.match(css, /\.cafe-talk-back\{[^}]*min-height:48px[^}]*border:3px solid #78cda6/);
+  assert.match(css, /\.cafe-talk-bubble p\{[^}]*font-size:clamp\(17px,1\.55vw,20px\)/);
   // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
   assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);
   assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);

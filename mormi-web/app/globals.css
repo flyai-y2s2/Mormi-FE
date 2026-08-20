@@ -1430,7 +1430,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .cafe-talk-bubble__text::before{left:-23px;border-right:18px solid #78cda6}
 .cafe-talk-bubble__text::after{left:-13px;border-right:18px solid #fff}
 .cafe-talk-bubble b{display:block;margin:0 0 5px;color:#3f8c68;font-size:15px;line-height:1.2;letter-spacing:-.3px}
-.cafe-talk-bubble p{margin:0;color:#1f2a24;font-size:clamp(20px,1.9vw,24px);font-weight:850;line-height:1.45;letter-spacing:-.7px}
+.cafe-talk-bubble p{margin:0;color:#1f2a24;font-size:clamp(17px,1.55vw,20px);font-weight:850;line-height:1.5;letter-spacing:-.5px}
 .cafe-talk-bubble__text>.mormi-help-card{margin-top:2px}
 .cafe-talk-dont-know{min-width:0;min-height:38px;margin:0;padding:0 16px;align-self:flex-end;border:2px solid #cfe0d7;border-radius:999px;color:#5c7268;background:#f7fbf9;box-shadow:none;cursor:pointer;font-size:14px;line-height:1.25;font-weight:850}
 .cafe-talk-dont-know:hover{color:#2f4f40;border-color:#78cda6;background:#eef9f3;transform:translateY(-1px)}
@@ -1549,7 +1549,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .cafe-talk-bubble__text::before{left:36px}
   .cafe-talk-bubble__text::after{left:36px}
   .cafe-talk-bubble b{font-size:13px}
-  .cafe-talk-bubble p{font-size:17px}
+  .cafe-talk-bubble p{font-size:16px}
   .cafe-talk-stage{padding:15px 12px 18px;border-width:3px;border-radius:24px}
   .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:1fr;gap:8px}
   .cafe-talk-answer .cafe-ai-followup input{min-height:56px;font-size:17px}
