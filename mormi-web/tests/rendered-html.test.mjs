@@ -109,7 +109,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(cafe, /주문하려면 줄을 서야 하나 봐|각각 사람들이 몇 명씩 있어|더 짧은 줄에는 몇 명이 있어/);
   // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
-  assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
+  assert.match(talkStage, /cafe-talk-bubble[\s\S]*cafe-talk-dont-know[\s\S]*cafe-talk-stage[\s\S]*cafe-talk-answer/);
   assert.match(talkStage, /궁금해 사전/);
   // 카페 툴바도 집 학습과 같은 시각 언어를 쓴다. 사전은 원형 책 아이콘,
   // 이전 버튼은 흰색 바탕의 초록 테두리 버튼이다.
@@ -161,7 +161,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? turn\.help_card : null\}/);
+  assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? conversation\?\.turn\.help_card \?\? null : null\}/);
   assert.match(app, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
   // 같이 읽기 문장과 다음 버튼은 문제 카드 밖으로 흩어지지 않고 하나의
   // 모델링 카드 안에서 읽힌다. 태블릿에서도 CTA가 화면 전체 폭으로 늘어나지 않는다.

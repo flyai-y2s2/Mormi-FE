@@ -1222,9 +1222,9 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .figma-cafe.is-talk>.figma-cafe__bar{display:none}
 .figma-cafe.is-talk .cafe-talk{
-  width:min(940px,100%);height:100%;min-height:0;margin:0 auto;
-  padding:clamp(10px,1.8vh,18px) clamp(4px,1.4vw,16px) clamp(10px,2vh,20px);
-  display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px);
+  width:min(1135px,100%);height:100%;min-height:0;margin:0 auto;position:relative;
+  padding:20px 28px;
+  display:flex;flex-direction:column;
   border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible
 }
 
@@ -1396,8 +1396,8 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .diagnostic-trends,.diagnostic-chart-panel,.summary-strips article,.diagnostic-highlights,.diagnostic-evidence{break-inside:avoid}
 }
 
-/* 툴바는 그림 위에 떠 있지 않고 흐름의 첫 줄이 된다. 겹침이 없어야 아래 여백을 계산할 수 있다. */
-.cafe-talk-toolbar{width:100%;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between}
+/* 툴바는 집 가르치기와 같이 양 끝, 질문·문제·입력은 가운데 600px 기둥. */
+.cafe-talk-toolbar{width:calc(100% - 56px);height:88px;margin:0;position:absolute;top:22px;left:28px;z-index:8;display:flex;align-items:flex-start;justify-content:space-between}
 .cafe-talk-back{
   min-height:48px;padding:0 18px;display:flex;align-items:center;gap:8px;
   border:3px solid #78cda6;border-radius:16px;color:#3f6655;background:rgba(255,255,255,.92);
@@ -1414,37 +1414,38 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .cafe-talk-note>.ui-icon{flex:0 0 auto}
 
-.cafe-talk-flow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px)}
+.cafe-talk-flow{width:100%;min-height:100%;padding:104px 28px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
 
-/* ① 질문: 캐릭터와 말풍선이 한 줄. 글 길이만큼만 높이를 쓴다. */
+/* ① 질문: 집 가르치기처럼 모르미는 왼쪽, 도움 버튼은 말풍선 안에 둔다. */
 .cafe-talk-bubble{
-  flex:0 0 auto;min-height:0;margin:0;
-  padding:clamp(10px,1.6vh,18px) clamp(14px,2.2vw,24px);
-  display:grid;grid-template-columns:clamp(56px,8vw,92px) minmax(0,1fr);align-items:center;
-  gap:clamp(10px,1.6vw,18px);
-  border:5px solid #78cda6;border-radius:22px;background:#fff;box-shadow:0 6px 0 #cfe9dc
+  width:min(600px,100%);min-height:0;margin:0;position:relative
 }
-/* 칸을 명시해 둔다. 좁은 화면 규칙이 모르미를 아랫줄로 내려 보내면
-   말풍선이 캐릭터 칸으로 밀려 들어가 글자가 한 자씩 끊긴다. */
 .cafe-talk-morami{
-  grid-column:1;grid-row:1;
-  width:100%;height:clamp(62px,10vh,104px);align-self:center;justify-self:center;
-  object-fit:contain;object-position:center bottom;filter:drop-shadow(0 9px 13px rgba(58,74,64,.14))
+  width:172px;height:222px;margin:0 14px 0 0;position:absolute;right:100%;bottom:-26px;z-index:5;
+  object-fit:contain;object-position:center bottom;filter:contrast(1.05) saturate(1.08) drop-shadow(0 12px 14px rgba(45,86,68,.26))
 }
-.cafe-talk-bubble__text{grid-column:2;grid-row:1;min-width:0}
-.cafe-talk-bubble b{display:block;margin:0 0 3px;color:#3f6655;font-size:clamp(14px,1.9vh,19px)}
-.cafe-talk-bubble p{margin:0;color:#202924;font-size:clamp(16px,2.4vh,23px);font-weight:800;line-height:1.4}
+.cafe-talk-bubble__text{width:100%;min-width:0;min-height:0;padding:19px 24px 17px;position:relative;z-index:3;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:10px;border:5px solid #78cda6;border-radius:24px;background:#fff;box-shadow:0 12px 28px rgba(52,84,68,.13)}
+.cafe-talk-bubble__text::before,.cafe-talk-bubble__text::after{content:"";width:0;height:0;position:absolute;top:36px;border-top:13px solid transparent;border-bottom:13px solid transparent}
+.cafe-talk-bubble__text::before{left:-23px;border-right:18px solid #78cda6}
+.cafe-talk-bubble__text::after{left:-13px;border-right:18px solid #fff}
+.cafe-talk-bubble b{display:block;margin:0 0 5px;color:#3f8c68;font-size:15px;line-height:1.2;letter-spacing:-.3px}
+.cafe-talk-bubble p{margin:0;color:#1f2a24;font-size:clamp(20px,1.9vw,24px);font-weight:850;line-height:1.45;letter-spacing:-.7px}
+.cafe-talk-bubble__text>.mormi-help-card{margin-top:2px}
+.cafe-talk-dont-know{min-width:0;min-height:38px;margin:0;padding:0 16px;align-self:flex-end;border:2px solid #cfe0d7;border-radius:999px;color:#5c7268;background:#f7fbf9;box-shadow:none;cursor:pointer;font-size:14px;line-height:1.25;font-weight:850}
+.cafe-talk-dont-know:hover{color:#2f4f40;border-color:#78cda6;background:#eef9f3;transform:translateY(-1px)}
+.cafe-talk-dont-know:disabled{opacity:1;cursor:wait}
+.cafe-talk-dont-know.is-loading::before{content:"";width:14px;height:14px;margin-right:8px;display:inline-block;vertical-align:-2px;border:2px solid #c8d8d0;border-top-color:#4ba77f;border-radius:50%;animation:teachHelpSpin .75s linear infinite}
 
-/* ② 문제 그림: 남는 세로 공간을 전부 가져간다. */
-.cafe-talk-stage{flex:1 1 auto;min-height:clamp(120px,20vh,190px);display:flex;align-items:center;justify-content:center}
-.cafe-talk-stage>*{max-height:100%}
+/* ② 문제: 집 가르치기와 같은 흰 카드에 넣어 배경과 분리한다. */
+.cafe-talk-stage{width:min(600px,100%);min-height:0;padding:20px 26px 24px;display:flex;align-items:center;justify-content:center;border:4px solid #e4f1ea;border-radius:32px;background:rgba(255,255,255,.95);box-shadow:0 16px 36px rgba(52,84,68,.14)}
+.cafe-talk-stage>*{max-width:100%;max-height:none}
 
 /* 줄 서기 사진. 사람을 세는 문제라 한 명도 잘리면 안 된다. 바깥 칸이 높이를 받고,
    그림틀은 원본 비율(4:3)을 지킨 채 그 안에서만 커졌다 작아진다.
    틀과 그림의 비율이 같으니 "왼쪽 줄·오른쪽 줄" 이름표도 늘 줄 바로 아래에 붙는다. */
 .cafe-talk-queue{
   flex:0 0 auto;display:block;
-  height:100%;max-height:100%;width:auto;max-width:100%;aspect-ratio:900/675;margin:0;
+  width:100%;height:auto;max-height:none;aspect-ratio:900/675;margin:0;
   position:relative;overflow:hidden;border:0;border-radius:24px;
   background:#fffaf0;box-shadow:0 8px 0 rgba(225,209,174,.7)
 }
@@ -1500,40 +1501,58 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   font-size:clamp(16px,2.4vh,22px);font-weight:950;text-align:center
 }
 
-/* ③ 알려주기: 늘 화면 맨 아래. 입력칸과 버튼을 한 줄에 두어 세로를 아낀다. */
-.cafe-talk-answer{flex:0 0 auto;width:100%;min-width:0;align-self:stretch}
+/* ③ 알려주기: 문제 카드와 같은 폭으로 맞춰 시선이 그대로 아래로 떨어진다. */
+.cafe-talk-answer{width:min(600px,100%);min-width:0;margin:0}
 .cafe-talk-answer .cafe-ai-followup{
-  width:100%;margin:0;padding:clamp(9px,1.4vh,15px) clamp(11px,1.8vw,17px);
-  border-color:#78cda6;background:rgba(255,255,255,.97);box-shadow:0 6px 0 #cce7da
+  width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none
 }
-.cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) clamp(92px,12vw,128px);align-items:end;gap:9px}
-.cafe-talk-answer .cafe-ai-followup label{gap:5px;color:#3f6655;font-size:clamp(12px,1.5vh,14px);font-weight:850}
-.cafe-talk-answer .cafe-ai-followup input{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
-.cafe-talk-answer .cafe-ai-followup form>button{min-height:clamp(44px,5.6vh,56px);font-size:clamp(15px,1.9vh,17px)}
+.cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 140px;align-items:stretch;gap:10px}
+.cafe-talk-answer .cafe-ai-followup label{gap:0;color:#3f6655;font-size:0;font-weight:850}
+.cafe-talk-answer .cafe-ai-followup input{min-height:64px;padding:0 18px;border:4px solid #78cda6;border-radius:18px;background:#fff;box-shadow:0 8px 22px rgba(52,84,68,.12);font-size:18px}
+.cafe-talk-answer .cafe-ai-followup form>button{width:140px;min-height:64px;margin:0;border-radius:18px;color:#fff;background:#49ac7f;box-shadow:0 6px 0 #35825e,0 10px 22px rgba(52,84,68,.16);font-size:18px;line-height:1.4;font-weight:950}
 .cafe-talk-answer .cafe-ai-choices{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
-.cafe-talk-answer .cafe-ai-choices button{min-height:clamp(44px,5.6vh,56px)}
-.cafe-talk-answer .cafe-help-card{margin-bottom:10px;padding:10px 13px;font-size:clamp(13px,1.6vh,15px)}
-.cafe-talk-answer .cafe-ai-followup .cafe-ai-dont-know{margin:7px auto 0;min-height:0;padding:4px 8px;color:#59665f;font-size:clamp(13px,1.6vh,15px);font-weight:850}
-.cafe-talk-answer .mormi-help-card{margin-bottom:clamp(13px,2vh,18px)}
-.cafe-help-loading{margin:0 0 12px;padding:11px 13px;display:flex;align-items:center;justify-content:center;gap:9px;border:2px solid #d8c9f2;border-radius:14px;color:#6f5ba2;background:#faf6ff;font-size:clamp(13px,1.6vh,15px);font-weight:850}
+.cafe-talk-answer .cafe-ai-choices button{min-height:60px;border:4px solid #78cda6;border-radius:15px;color:#304c3f;background:#fff;box-shadow:none;font-size:18px}
+.cafe-talk-answer .figma-cafe-action{width:100%;min-height:58px;margin:0}
+.cafe-help-loading{margin:2px 0 0;padding:11px 13px;display:flex;align-items:center;justify-content:center;gap:9px;border:2px solid #d8c9f2;border-radius:14px;color:#6f5ba2;background:#faf6ff;font-size:clamp(13px,1.6vh,15px);font-weight:850}
 .cafe-help-loading>i{width:16px;height:16px;flex:0 0 16px;border:3px solid #e5dcf5;border-top-color:#7159a8;border-radius:50%;animation:teachHelpSpin .75s linear infinite}
 
-/* 좁은 화면에서도 순서는 그대로다. 캐릭터만 더 작아져 질문 글이 두 줄 안에 들어온다. */
-@media(max-width:760px){
-  .figma-cafe.is-talk{padding:0 10px;background-attachment:scroll}
+/* 옆에 모르미를 세울 자리가 없으면 집 가르치기처럼 말풍선 위로 올린다. */
+@media(max-width:980px){
+  .figma-cafe.is-talk{padding:0;background-attachment:scroll}
+  .figma-cafe.is-talk .cafe-talk{padding:18px 14px 30px}
+  .cafe-talk-toolbar{width:calc(100% - 32px);top:16px;left:16px}
   .cafe-talk-back{min-height:44px;padding:0 14px;font-size:13px}
   .cafe-talk-note{width:72px;height:72px;min-height:72px;font-size:11px}
-  .cafe-talk-bubble{border-width:4px;border-radius:18px;grid-template-columns:52px minmax(0,1fr);gap:10px}
+  .cafe-talk-flow{padding:92px 12px 16px;gap:14px}
+  .cafe-talk-bubble{display:flex;flex-direction:column;align-items:flex-start}
+  .cafe-talk-morami{width:132px;height:172px;margin:0 0 -8px 10px;position:relative;right:auto;bottom:auto}
+  .cafe-talk-bubble__text{padding:16px 19px 15px}
+  .cafe-talk-bubble__text::before,.cafe-talk-bubble__text::after{top:auto;border-top:0;border-right:13px solid transparent;border-left:13px solid transparent}
+  .cafe-talk-bubble__text::before{left:44px;bottom:100%;border-bottom:15px solid #78cda6}
+  .cafe-talk-bubble__text::after{left:44px;bottom:calc(100% - 5px);border-bottom:15px solid #fff}
+  .cafe-talk-stage{padding:17px 18px 20px}
   .cafe-talk-queue{border-radius:18px}
   .cafe-talk-menu__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .cafe-talk-equation{gap:7px}
-  .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:minmax(0,1fr) 84px;gap:7px}
 }
 
 @media(max-width:560px){
+  .figma-cafe.is-talk .cafe-talk{padding:10px 8px 28px}
+  .cafe-talk-toolbar{width:calc(100% - 18px);top:9px;left:9px}
   .cafe-talk-back{min-height:40px;padding:0 11px;border-width:2px;font-size:11px}
   .cafe-talk-note{width:58px;height:58px;min-height:58px;padding:6px;font-size:9px}
   .cafe-talk-note>.ui-icon{transform:scale(.82)}
+  .cafe-talk-flow{padding:74px 4px 12px;gap:11px}
+  .cafe-talk-morami{width:108px;height:142px;margin-left:6px}
+  .cafe-talk-bubble__text{padding:15px 16px 13px;border-width:4px;border-radius:20px}
+  .cafe-talk-bubble__text::before{left:36px}
+  .cafe-talk-bubble__text::after{left:36px}
+  .cafe-talk-bubble b{font-size:13px}
+  .cafe-talk-bubble p{font-size:17px}
+  .cafe-talk-stage{padding:15px 12px 18px;border-width:3px;border-radius:24px}
+  .cafe-talk-answer .cafe-ai-followup form{grid-template-columns:1fr;gap:8px}
+  .cafe-talk-answer .cafe-ai-followup input{min-height:56px;font-size:17px}
+  .cafe-talk-answer .cafe-ai-followup form>button{width:100%;min-height:52px}
 }
 
 /* 줄 서기의 별노트·클리어 장면은 입력이 없어 예전 카드 레이아웃을 그대로 쓴다. */

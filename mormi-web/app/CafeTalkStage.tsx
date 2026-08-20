@@ -58,6 +58,15 @@ export function CafeTalkStage({
   children: ReactNode;
 }) {
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
+  const inputKind = conversation?.turn.input.kind;
+  const canRequestHelp = Boolean(
+    conversation
+    && conversation.turn.state_version > 0
+    && conversation.turn.status !== "completed"
+    && inputKind !== "none"
+    && inputKind !== "joint"
+    && inputKind !== "button",
+  );
   return (
     <main className="figma-cafe-panel cafe-talk">
       <div className="cafe-talk-toolbar">
@@ -71,6 +80,19 @@ export function CafeTalkStage({
           <div className="cafe-talk-bubble__text">
             <b>모르미</b>
             <p>{line || fallbackLine}</p>
+            {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>모르미가 도움 카드를 찾고 있어요…</span></div>}
+            <MormiHelpCard card={helpVisible ? conversation?.turn.help_card ?? null : null} />
+            {canRequestHelp && (
+              <button
+                type="button"
+                className={`cafe-talk-dont-know${helpLoading ? " is-loading" : ""}`}
+                disabled={sending || helpLoading}
+                aria-busy={helpLoading}
+                onClick={() => onSubmit({ type: "no_response" })}
+              >
+                {helpLoading ? "도움 찾는 중…" : "잘 모르겠어"}
+              </button>
+            )}
           </div>
         </section>
         {/* 문제 문구는 모르미 대화에서 이미 물어본다. 그림 위에 같은 질문을 또 두지 않는다. */}
@@ -80,14 +102,11 @@ export function CafeTalkStage({
             conversation={conversation}
             inputText={inputText}
             sending={sending}
-            helpVisible={helpVisible}
-            helpLoading={helpLoading}
             deferChoices={deferChoices}
             choiceFallbackVisible={choiceFallbackVisible}
             onInput={onInput}
             onSubmit={onSubmit}
             onChoiceFallback={onChoiceFallback}
-            onHelpRequest={() => onSubmit({ type: "no_response" })}
           />
         </aside>
       </section>
@@ -100,26 +119,20 @@ export function CafeDialogueControls({
   conversation,
   inputText,
   sending,
-  helpVisible,
-  helpLoading,
   deferChoices = false,
   choiceFallbackVisible = false,
   onInput,
   onSubmit,
   onChoiceFallback,
-  onHelpRequest,
 }: {
   conversation: MormiConversation | undefined;
   inputText: string;
   sending: boolean;
-  helpVisible: boolean;
-  helpLoading: boolean;
   deferChoices?: boolean;
   choiceFallbackVisible?: boolean;
   onInput: (value: string) => void;
   onSubmit: (response: CafeDialogueResponse) => void;
   onChoiceFallback?: () => void;
-  onHelpRequest: () => void;
 }) {
   if (!conversation || conversation.turn.state_version === 0 || conversation.turn.status === "completed") return null;
   const { turn } = conversation;
@@ -150,8 +163,6 @@ export function CafeDialogueControls({
   };
 
   return <aside className="cafe-ai-followup" aria-live="polite">
-    {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>모르미가 도움 카드를 찾고 있어요…</span></div>}
-    <MormiHelpCard card={helpVisible ? turn.help_card : null} />
     {inputKind === "text" && <form onSubmit={(event) => {
       event.preventDefault();
       if (!inputText.trim() || sending) return;
@@ -193,6 +204,5 @@ export function CafeDialogueControls({
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
     </form>}
     {(inputKind === "joint" || inputKind === "button") && <button className="figma-cafe-action" disabled={sending} onClick={() => onSubmit({ type: "action", values: actionValues })}>{turn.input.submit_label || "도움 카드와 같이 해보기"}</button>}
-    {inputKind !== "none" && inputKind !== "joint" && inputKind !== "button" && <button className="cafe-ai-dont-know" disabled={sending || helpLoading} onClick={onHelpRequest}>{helpLoading ? "도움 찾는 중…" : "잘 모르겠어"}</button>}
   </aside>;
 }
