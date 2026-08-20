@@ -22,7 +22,6 @@ type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
 const stationCopy = [
   { title: "줄 서기", description: "더 짧은 줄을 찾아요", image: "/cafe-stages/queue-v2.png" },
-  { title: "메뉴 고르기", description: "예산 안에서 메뉴를 골라요", image: "/cafe-stages/menu-v3.png" },
   { title: "메뉴 값 계산하기", description: "두 메뉴 가격을 더해요", image: "/cafe-stages/payment-v3.png" },
   { title: "거스름돈 받기", description: "10,000원에서 메뉴값을 빼요", image: "/cafe-stages/change-v3.png" },
 ] as const;
@@ -39,11 +38,7 @@ type CafeStage = "queue" | "menu" | "calculate" | "change";
 
 /** 스테이션 순서대로의 AI 시나리오. 화면이 뽑은 문제를 함께 보내야 시작된다. */
 const cafeScenarioByStation = ["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"] as const;
-/** 스테이션 번호 → 서버 스테이지 이름. */
-const stageByStation = ["queue", "menu", "calculate", "change"] as const satisfies readonly CafeStage[];
-
 type QueueScene = "dialogue" | "note" | "thanks" | "clear";
-type MenuScene = "dialogue" | "thanks" | "clear";
 type CalculationScene = "dialogue" | "thanks" | "clear";
 type ChangeScene = "dialogue" | "thanks" | "clear";
 const budgets = [7000, 8000] as const;
@@ -77,7 +72,6 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
-  const [menuScene, setMenuScene] = useState<MenuScene>("dialogue");
   const [calculationScene, setCalculationScene] = useState<CalculationScene>("dialogue");
   const [changeScene, setChangeScene] = useState<ChangeScene>("dialogue");
   const [menuBudget, setMenuBudget] = useState<number>(8000);
@@ -113,6 +107,9 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
   // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
   const visitId = useRef<string | null>(null);
   const visitPromise = useRef<Promise<string> | null>(null);
+  // 화면은 메뉴 선택과 합계 계산을 하나의 2단계로 묶지만, Spring BE는 두 저장
+  // 단계를 구분한다. 복구할 때 어느 대화부터 이어야 하는지 서버 단계를 기억한다.
+  const visitStage = useRef<CafeStage | "complete">("queue");
 
   useEffect(() => {
     // 방문 생성이 끝나기 전에 답을 눌러도 유실되지 않도록 같은 Promise를 공유한다.
@@ -128,10 +125,10 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
 
     const pending = load.then((visit) => {
       visitId.current = visit.cafe_visit_id;
-      if (visit.stage === "menu") setJourneyProgress((progress) => Math.max(progress, 1));
-      if (visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 2));
-      if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 3));
-      if (visit.stage === "complete") setJourneyProgress(4);
+      visitStage.current = visit.stage as CafeStage | "complete";
+      if (visit.stage === "menu" || visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 1));
+      if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 2));
+      if (visit.stage === "complete") setJourneyProgress(3);
       setMenuBudget(visit.target_amount);
       return visit.cafe_visit_id;
     }).catch((error: unknown) => {
@@ -167,6 +164,11 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
     setCafeConversations((current) => ({ ...current, [stage]: conversation }));
     setMormiLines((lines) => ({ ...lines, [stage]: conversation.turn.mormi.text }));
     setDialogueError("");
+    if (conversation.stage_progress) {
+      visitStage.current = conversation.stage_progress.completed
+        ? conversation.stage_progress.next_stage
+        : conversation.stage_progress.stage;
+    }
     if (conversation.stage_progress?.stage === stage && conversation.stage_progress.completed) {
       validatedStages.current[stage] = true;
     }
@@ -264,24 +266,24 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
         budget: menuBudget,
         over_budget: false,
       });
-      setMenuScene("thanks");
+      finishMenuStory();
     } else if (stage === "calculate") {
-      if (!replaying) setJourneyProgress((progress) => Math.max(progress, 3));
+      if (!replaying) setJourneyProgress((progress) => Math.max(progress, 2));
       setCalculationScene("thanks");
     } else {
-      if (!replaying) setJourneyProgress(4);
+      if (!replaying) setJourneyProgress(3);
       setChangeScene("thanks");
     }
   }
 
   const changeMenu = menu.find((item) => item.id === changeMenuId) ?? menu[0];
   const changeTarget = 10000 - changeMenu.price;
-  const stationIndex = step === "overview" ? Math.min(journeyProgress, 3) : step === "queue" ? 0 : step === "menu" ? 1 : step === "sum" ? 2 : 3;
-  // 네 돌다리를 다 깬 뒤에는 지도가 연습장이 된다. 어느 스테이지든 골라 다시 푼다.
+  const stationIndex = step === "overview" ? Math.min(journeyProgress, 2) : step === "queue" ? 0 : step === "menu" || step === "sum" ? 1 : 2;
+  // 세 스테이지를 다 깬 뒤에는 지도가 연습장이 된다. 어느 스테이지든 골라 다시 푼다.
   const allStationsCleared = journeyProgress >= stationCopy.length;
   // 대화 화면인지. 축하·노트 장면은 입력이 없어 100svh 세로 배분을 쓰지 않는다.
   const isTalk = (step === "queue" && queueScene === "dialogue")
-    || (step === "menu" && menuScene === "dialogue")
+    || step === "menu"
     || (step === "sum" && calculationScene === "dialogue")
     || (step === "change" && changeScene === "dialogue");
 
@@ -308,8 +310,8 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
     // 이미 깬 돌다리를 다시 눌렀으면 새 회차다. 서버가 새 대화를 열어 주어야
     // 이번에 뽑은 문제로 다시 풀 수 있다. 진행 중인 스테이지는 이어받는다.
     const isReplay = index < journeyProgress;
-    replayStages.current[stageByStation[index]] = isReplay;
     if (index === 0) {
+      replayStages.current.queue = isReplay;
       const counts = randomQueueCounts();
       setQueueCounts(counts);
       setQueueScene("dialogue");
@@ -317,35 +319,43 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
         scenario_id: cafeScenarioByStation[0],
         queue_context: { left_count: counts.left, right_count: counts.right },
       }, isReplay);
+      setStep("queue");
     }
     if (index === 1) {
-      const nextMormeyMenu = randomItem(menu);
-      const nextBudget = randomItem(budgets);
-      setMenuBudget(nextBudget);
-      setMormeyMenuId(nextMormeyMenu.id);
-      setMenuChildMenuId("");
-      setMenuScene("dialogue");
-      openCafeDialogue("menu", {
-        scenario_id: cafeScenarioByStation[1],
-        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
-      }, isReplay);
+      // 새 방문이 이미 서버의 calculate 단계까지 왔다면 메뉴 선택을 다시 시키지
+      // 않고 합계 질문부터 복구한다. 완료된 2단계의 재연습은 두 과정을 모두 푼다.
+      if (!isReplay && visitStage.current === "calculate") {
+        const nextSumMenu = randomItem(menu);
+        replayStages.current.calculate = false;
+        openCafeDialogue("calculate", {
+          scenario_id: cafeScenarioByStation[2],
+          cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
+        }, false);
+        setStep("sum");
+      } else {
+        const nextMormeyMenu = randomItem(menu);
+        const nextBudget = randomItem(budgets);
+        replayStages.current.menu = isReplay;
+        setMenuBudget(nextBudget);
+        setMormeyMenuId(nextMormeyMenu.id);
+        setMenuChildMenuId("");
+        openCafeDialogue("menu", {
+          scenario_id: cafeScenarioByStation[1],
+          cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
+        }, isReplay);
+        setStep("menu");
+      }
     }
     if (index === 2) {
-      const nextSumMenu = randomItem(menu);
-      openCafeDialogue("calculate", {
-        scenario_id: cafeScenarioByStation[2],
-        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-      }, isReplay);
-    }
-    if (index === 3) {
       const nextChangeMenu = randomItem(menu);
+      replayStages.current.change = isReplay;
       setChangeMenuId(nextChangeMenu.id);
       openCafeDialogue("change", {
         scenario_id: cafeScenarioByStation[3],
         cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
       }, isReplay);
+      setStep("change");
     }
-    setStep((["queue", "menu", "sum", "change"] as CafeStep[])[index]);
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
   }
 
@@ -356,30 +366,25 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
 
   function showStageSummary(stage: CafeStage) {
     if (stage === "queue") setQueueScene("clear");
-    if (stage === "menu") setMenuScene("clear");
     if (stage === "calculate") setCalculationScene("clear");
     if (stage === "change") setChangeScene("clear");
   }
 
   function finishMenuStory() {
-    // 메뉴 고르기만 다시 연습한 거라면 계산 단계로 끌고 가지 않고 지도로 돌아간다.
-    if (replayStages.current.menu) {
-      returnToMap();
-      return;
-    }
-    // 메뉴 고르기에서 곧장 넘어올 때도 계산 스테이지 대화를 새로 연다.
+    // 화면의 2단계는 메뉴 고르기와 값 계산을 한 흐름으로 묶는다. 서버는 두 단계를
+    // 따로 저장하므로 메뉴 검증이 끝난 직후 기존 계산 대화를 그대로 연다.
     // 이걸 빼면 대화가 없어 turn.status 가 "completed" 가 되지 않고,
     // 합계를 맞혀도 스테이지가 끝나지 않는다.
     const nextSumMenu = randomItem(menu);
-    setJourneyProgress((progress) => Math.max(progress, 2));
-    replayStages.current.calculate = false;
+    const calculationReplay = replayStages.current.menu === true;
+    replayStages.current.calculate = calculationReplay;
     openCafeDialogue("calculate", {
       scenario_id: cafeScenarioByStation[2],
       cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-    }, false);
+    }, calculationReplay);
     setStep("sum");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    captureMormeyEvent("cafe_station_started", { station_index: 3, station: cafeStations[2] });
+    captureMormeyEvent("cafe_station_started", { station_index: 2, station: cafeStations[1] });
   }
 
   function finishCalculationStory() {
@@ -602,7 +607,7 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
         </main>
       )}
 
-      {step === "menu" && menuScene === "dialogue" && (
+      {step === "menu" && (
         <CafeTalkStage
           conversation={cafeConversations.menu}
           line={mormiLines.menu}
@@ -621,25 +626,6 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
             onMenuChoice={(choiceId) => answerMenuChoice("menu", choiceId)}
           />
         </CafeTalkStage>
-      )}
-
-      {step === "menu" && menuScene === "thanks" && (
-        <CafeStageThanks
-          learnerName={learnerName}
-          title="메뉴 고르기 완료!"
-          onNext={() => showStageSummary("menu")}
-        />
-      )}
-
-      {step === "menu" && menuScene === "clear" && (
-        <CafeStageComplete
-          stageNumber={2}
-          title="예산 안에서 메뉴를"
-          highlight="잘 골랐어요!"
-          results={completionResults("menu")}
-          actionLabel="다음으로"
-          onAction={finishMenuStory}
-        />
       )}
 
       {step === "sum" && calculationScene === "dialogue" && (
@@ -665,7 +651,7 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
 
       {step === "sum" && calculationScene === "clear" && (
         <CafeStageComplete
-          stageNumber={3}
+          stageNumber={2}
           title="두 메뉴의 값을"
           highlight="정확히 더했어요!"
           results={completionResults("calculate")}
@@ -704,7 +690,7 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
 
       {step === "change" && changeScene === "clear" && (
         <CafeStageComplete
-          stageNumber={4}
+          stageNumber={3}
           title="거스름돈까지"
           highlight="바르게 계산했어요!"
           results={completionResults("change")}
@@ -724,7 +710,7 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
       {step === "done" && (
         <main className="figma-cafe-panel figma-cafe-done">
           <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 예산에 맞춰 메뉴를 담고, 메뉴 값을 더하고, 거스름돈까지 확인했어.</p>
+          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 메뉴를 골라 값을 더하고, 거스름돈까지 확인했어.</p>
             <div className="figma-cafe-done__actions"><button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
             <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div></div>
         </main>

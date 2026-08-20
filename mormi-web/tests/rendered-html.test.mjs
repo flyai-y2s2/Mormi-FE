@@ -85,7 +85,6 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /카페 스테이지 선택/);
   assert.match(cafe, /CAFE QUEST/);
   assert.match(cafe, /cafe-stages\/queue-v2\.png/);
-  assert.match(cafe, /cafe-stages\/menu-v3\.png/);
   assert.match(cafe, /cafe-stages\/payment-v3\.png/);
   assert.match(cafe, /cafe-stages\/change-v3\.png/);
   // 스테이지 진입구는 카드의 "도전하기" 하나뿐이다.
@@ -133,10 +132,18 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
-  assert.match(cafe, /예산 안에서 메뉴를/);
+  assert.match(cafe, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
-  assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 4);
-  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 4);
+  assert.match(cafe, /const calculationReplay = replayStages\.current\.menu === true;[\s\S]{0,400}\}, calculationReplay\);/);
+  // 지도에는 줄 서기·메뉴 값 계산·거스름돈 세 단계만 보인다. Spring BE의
+  // menu → calculate 저장 순서는 2단계 안에서 이어져 기존 계약을 건너뛰지 않는다.
+  assert.match(journey, /cafeStations = \["줄 서기", "메뉴 값 계산하기", "거스름돈 받기"\]/);
+  assert.doesNotMatch(cafe, /\{ title: "메뉴 고르기"/);
+  assert.match(cafe, /cafeScenarioByStation = \["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"\]/);
+  assert.match(cafe, /stageNumber=\{1\}[\s\S]*stageNumber=\{2\}[\s\S]*stageNumber=\{3\}/);
+  assert.doesNotMatch(cafe, /stageNumber=\{4\}/);
+  assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 3);
+  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 3);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
