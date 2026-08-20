@@ -32,7 +32,7 @@ test("server-renders the Morami onboarding", async () => {
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, layout] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, stageComplete, layout] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -44,6 +44,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StarNote.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/CafeStageComplete.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
@@ -143,6 +144,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /stageNumber=\{1\}[\s\S]*stageNumber=\{2\}[\s\S]*stageNumber=\{3\}/);
   assert.doesNotMatch(cafe, /stageNumber=\{4\}/);
   assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 3);
+  assert.match(stageComplete, /별노트/);
+  assert.match(stageComplete, /현재 돈/);
+  assert.match(stageComplete, /현재 스테이지/);
+  assert.match(stageComplete, /currentMoney\.toLocaleString/);
+  assert.match(app, /coinBalance=\{coinBalance\}/);
   assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 3);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);

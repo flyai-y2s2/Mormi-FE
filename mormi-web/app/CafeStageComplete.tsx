@@ -2,27 +2,30 @@
 
 import Image from "next/image";
 
-export type CafeStageResult = {
-  label: string;
-  value: string;
-};
-
-/** 반복학습 완료 장면과 같은 구성으로 카페 네 스테이지의 결과를 보여 준다. */
+/** 반복학습 완료 장면과 같은 구성으로 카페 세 단계의 현재 상태를 보여 준다. */
 export function CafeStageComplete({
   stageNumber,
   title,
   highlight,
-  results,
+  noteCount,
+  currentMoney,
   actionLabel,
   onAction,
 }: {
   stageNumber: number;
   title: string;
   highlight: string;
-  results: CafeStageResult[];
+  noteCount: number;
+  currentMoney: number;
   actionLabel: string;
   onAction: () => void;
 }) {
+  const statuses = [
+    { label: "별노트", value: `${noteCount}개`, image: "/ui/mormi-star.png" },
+    { label: "현재 돈", value: `${currentMoney.toLocaleString("ko-KR")}원`, image: "/ui/mormi-coin.png" },
+    { label: "현재 스테이지", value: `${stageNumber}/3`, image: "/ui/mormi-cafe.png" },
+  ];
+
   return (
     <div className="cafe-stage-complete-wrap">
       <section className="complete-scene cafe-stage-complete">
@@ -39,11 +42,12 @@ export function CafeStageComplete({
         <div className="complete-copy">
           <p className="eyebrow">STAGE {stageNumber} CLEAR!</p>
           <h1>{title}<br /><em>{highlight}</em></h1>
-          <div className="cafe-stage-complete__results" aria-label={`스테이지 ${stageNumber} 결과`}>
-            {results.map((result) => (
-              <span key={result.label}>
-                <strong>{result.value}</strong>
-                <small>{result.label}</small>
+          <div className="today-badges cafe-stage-complete__status" aria-label={`스테이지 ${stageNumber} 현재 상태`}>
+            {statuses.map((status) => (
+              <span key={status.label}>
+                <Image src={status.image} alt="" width={72} height={72} unoptimized />
+                <strong>{status.value}</strong>
+                <small>{status.label}</small>
               </span>
             ))}
           </div>

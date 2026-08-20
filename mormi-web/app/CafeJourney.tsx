@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
 import { calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
-import { CafeStageComplete, type CafeStageResult } from "./CafeStageComplete";
+import { CafeStageComplete } from "./CafeStageComplete";
 import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
@@ -29,6 +29,7 @@ const stationCopy = [
 type Props = {
   learnerName: string;
   learnerId: number;
+  coinBalance: number;
   /** 진행도가 알려 준 진행 중 방문. 있으면 새로 만들지 않고 이 방문을 이어 받는다. */
   activeVisitId?: string | null;
   onBack: () => void;
@@ -67,7 +68,7 @@ function conversationInputKey(conversation: MormiConversation | undefined) {
   return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
 }
 
-export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: Props) {
+export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
@@ -77,7 +78,6 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
   const [menuBudget, setMenuBudget] = useState<number>(8000);
   const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
   // 메뉴 고르기에서 아이가 고른 메뉴. 대화가 검증한 사실에서만 받아 축하 장면에 쓴다.
-  const [menuChildMenuId, setMenuChildMenuId] = useState<string>("");
   // 거스름돈은 완료 화면의 분석 이벤트가 주문 금액을 알아야 해서 화면도 함께 기억한다.
   // 계산 스테이지는 문제 전체를 turn.visual 이 들고 오므로 따로 둘 필요가 없다.
   const [changeMenuId, setChangeMenuId] = useState<string>("americano");
@@ -153,12 +153,6 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
       } else if (stage === "change") {
         setChangeMenuId(restoredCafe.mormi_menu_id);
       }
-    }
-    // 아이가 고른 메뉴는 대화가 검증한 사실에서만 읽는다. 화면이 따로 기억하면
-    // 새로고침이나 재연습 뒤에 서버가 채점한 답과 어긋난다.
-    if (stage === "menu") {
-      const picked = conversation.turn.completion?.verified_facts?.child_menu_id;
-      if (typeof picked === "string" && menu.some((item) => item.id === picked)) setMenuChildMenuId(picked);
     }
     cafeTalks.current[stage] = conversation;
     setCafeConversations((current) => ({ ...current, [stage]: conversation }));
@@ -338,7 +332,6 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
         replayStages.current.menu = isReplay;
         setMenuBudget(nextBudget);
         setMormeyMenuId(nextMormeyMenu.id);
-        setMenuChildMenuId("");
         openCafeDialogue("menu", {
           scenario_id: cafeScenarioByStation[1],
           cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
@@ -428,44 +421,8 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
     setDialogueInput(stage, "");
   }
 
-  function completionResults(stage: CafeStage): CafeStageResult[] {
-    const conversation = cafeConversations[stage];
-    const facts = conversation?.turn.completion?.verified_facts ?? {};
-    const context = conversation?.scenario_context;
-    const menuName = (id: unknown) => menu.find((item) => item.id === id)?.name ?? "확인 완료";
-    const won = (value: unknown) => typeof value === "number" ? `${value.toLocaleString("ko-KR")}원` : "확인 완료";
-
-    if (stage === "queue") {
-      const left = typeof facts.left_count === "number" ? facts.left_count : queueCounts.left;
-      const right = typeof facts.right_count === "number" ? facts.right_count : queueCounts.right;
-      return [
-        { label: "왼쪽 줄", value: `${left}명` },
-        { label: "오른쪽 줄", value: `${right}명` },
-        { label: "더 짧은 줄", value: left < right ? "왼쪽" : "오른쪽" },
-      ];
-    }
-    if (stage === "menu") {
-      const firstId = context?.cafe_context?.mormi_menu_id ?? mormeyMenuId;
-      const childId = facts.child_menu_id ?? menuChildMenuId;
-      const total = typeof firstId === "string" && typeof childId === "string" ? menuPairTotal(firstId, childId) : null;
-      return [
-        { label: "모르미 메뉴", value: menuName(firstId) },
-        { label: "내 메뉴", value: menuName(childId) },
-        { label: "합계", value: won(total) },
-      ];
-    }
-    if (stage === "calculate") {
-      return [
-        { label: "첫 번째 메뉴", value: menuName(context?.cafe_context?.mormi_menu_id) },
-        { label: "두 번째 메뉴", value: menuName(facts.child_menu_id) },
-        { label: "계산한 합계", value: won(facts.result) },
-      ];
-    }
-    return [
-      { label: "주문한 메뉴", value: menuName(context?.cafe_context?.mormi_menu_id) },
-      { label: "낸 돈", value: "10,000원" },
-      { label: "거스름돈", value: won(facts.result) },
-    ];
+  function noteCount(stage: CafeStage) {
+    return cafeConversations[stage]?.turn.note_update ? 1 : 0;
   }
 
   /** 중앙 사진 카드의 메뉴 ID를 현재 서버 선택지 ID와 직접 연결한다. */
@@ -592,7 +549,8 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
               stageNumber={1}
               title="줄을 비교하는 방법을"
               highlight="알게 됐어요!"
-              results={completionResults("queue")}
+              noteCount={noteCount("queue")}
+              currentMoney={coinBalance}
               actionLabel="지도에서 확인하기"
               onAction={returnToMap}
             />
@@ -654,7 +612,8 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
           stageNumber={2}
           title="두 메뉴의 값을"
           highlight="정확히 더했어요!"
-          results={completionResults("calculate")}
+          noteCount={noteCount("calculate")}
+          currentMoney={coinBalance}
           actionLabel="지도에서 확인하기"
           onAction={finishCalculationStory}
         />
@@ -693,7 +652,8 @@ export function CafeJourney({ learnerName, activeVisitId, onBack, onComplete }: 
           stageNumber={3}
           title="거스름돈까지"
           highlight="바르게 계산했어요!"
-          results={completionResults("change")}
+          noteCount={noteCount("change")}
+          currentMoney={coinBalance}
           actionLabel="완료하기"
           onAction={finishChangeStory}
         />

@@ -1951,6 +1951,7 @@ export function MoramiApp() {
       {stage === "cafe" && <CafeJourney
         learnerName={childName}
         learnerId={learner.id}
+        coinBalance={coinBalance}
         activeVisitId={activeCafeVisitId}
         onBack={showOutside}
         onComplete={showHome}
