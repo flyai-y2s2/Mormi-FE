@@ -421,8 +421,11 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     setDialogueInput(stage, "");
   }
 
-  function noteCount(stage: CafeStage) {
-    return cafeConversations[stage]?.turn.note_update ? 1 : 0;
+  function noteCount(...stages: CafeStage[]) {
+    return new Set(stages.flatMap((stage) => {
+      const note = cafeConversations[stage]?.turn.note_update;
+      return note ? [note.note_id] : [];
+    })).size;
   }
 
   /** 중앙 사진 카드의 메뉴 ID를 현재 서버 선택지 ID와 직접 연결한다. */
@@ -612,7 +615,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
           stageNumber={2}
           title="두 메뉴의 값을"
           highlight="정확히 더했어요!"
-          noteCount={noteCount("calculate")}
+          noteCount={noteCount("menu", "calculate")}
           currentMoney={coinBalance}
           actionLabel="지도에서 확인하기"
           onAction={finishCalculationStory}
@@ -668,12 +671,18 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
       )}
 
       {step === "done" && (
-        <main className="figma-cafe-panel figma-cafe-done">
-          <Image src="/morami/celebrate-cutout.png" alt="기뻐하는 모르미" width={420} height={420} unoptimized />
-          <div><span>카페 외출 완료</span><h1>우리 힘으로 주문했어!</h1><p>줄을 고르고, 메뉴를 골라 값을 더하고, 거스름돈까지 확인했어.</p>
-            <div className="figma-cafe-done__actions"><button onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>
-            <button className="figma-cafe-done__practice" onClick={returnToMap}>스테이지 더 연습하기</button></div></div>
-        </main>
+        <CafeStageComplete
+          stageNumber={3}
+          eyebrow="카페 외출 완료"
+          title="우리 힘으로"
+          highlight="주문했어!"
+          noteCount={noteCount("queue", "menu", "calculate", "change")}
+          currentMoney={coinBalance}
+          actionLabel="모르미와 집으로"
+          onAction={() => { void goHomeWithMormi(); }}
+          secondaryActionLabel="스테이지 더 연습하기"
+          onSecondaryAction={returnToMap}
+        />
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
       {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
