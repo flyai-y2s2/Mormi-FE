@@ -27,11 +27,12 @@ test("server-renders the Morami onboarding", async () => {
   // 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이므로 기본 버튼은 로그인이 쓴다.
   assert.match(html, /로그인하기/);
   assert.match(html, /처음 왔어요/);
+  assert.match(html, /onboarding-greeting__actions/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, layout] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -43,6 +44,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MormiDialogueUi.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StarNote.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
   const aiTest = await readFile(new URL("../app/ai-test/AiDialogueTest.tsx", import.meta.url), "utf8");
@@ -59,6 +61,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 반복학습용 정적 문항에도 대화 API와 같은 카피 품질 계약을 적용한다.
   assert.doesNotMatch(curriculum, /어떤 방법이 맞을까|퍼진 넓이|느낌으로|눈대중|한눈에 대충|색만 보기|크기만 보기/);
   assert.match(app, /useState<Stage>\("onboarding"\)/);
+  assert.match(app, /onboarding-secondary onboarding-secondary--button[\s\S]{0,200}>처음 시작하는 거예요/);
+  assert.match(css, /\.onboarding-greeting \{[^}]*width:min\(650px,100%\)/);
+  assert.match(css, /\.onboarding-greeting__actions \{[^}]*grid-template-columns:minmax\(0,1\.35fr\) minmax\(0,\.9fr\)/);
+  assert.match(css, /\.onboarding-greeting__actions \.onboarding-secondary \{[^}]*min-height:76px[^}]*font-size:18px/);
+  assert.match(css, /\.onboarding-name-card \.onboarding-secondary--button \{[^}]*min-height:64px[^}]*font-size:17px[^}]*text-decoration:none/);
   // 반복 문제의 질문은 카드 머리 한 곳에만 있다. 카드 밖과 안에 같은 문장을 두면
   // 시선이 카드 안에 머물러 위쪽 질문을 지나친다.
   assert.match(app, /<header className="practice-card__head">/);
@@ -78,7 +85,6 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /카페 스테이지 선택/);
   assert.match(cafe, /CAFE QUEST/);
   assert.match(cafe, /cafe-stages\/queue-v2\.png/);
-  assert.match(cafe, /cafe-stages\/menu-v3\.png/);
   assert.match(cafe, /cafe-stages\/payment-v3\.png/);
   assert.match(cafe, /cafe-stages\/change-v3\.png/);
   // 스테이지 진입구는 카드의 "도전하기" 하나뿐이다.
@@ -104,11 +110,20 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]{0,900}cafe-talk-stage[\s\S]{0,900}cafe-talk-answer/);
   assert.match(talkStage, /궁금해 사전/);
+  // 카페 툴바도 집 학습과 같은 시각 언어를 쓴다. 사전은 원형 책 아이콘,
+  // 이전 버튼은 흰색 바탕의 초록 테두리 버튼이다.
+  assert.match(talkStage, /className="cafe-talk-note"[\s\S]{0,220}ui-icon--book/);
+  assert.match(css, /\.cafe-talk-note\{[^}]*width:88px[^}]*height:88px[^}]*border-radius:50%/);
+  assert.match(css, /\.cafe-talk-back\{[^}]*min-height:48px[^}]*border:3px solid #78cda6/);
   // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
   assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);
   assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);
   assert.match(starNote, /className=\{`star-note \$\{className\}`\.trim\(\)\}/);
   assert.match(starNote, /note-ring[^>]*>별<br \/>노<br \/>트/);
+  // 별노트 전용 폰트는 첫 화면에서 미리 받고, 로드 전에는 고딕 대체 글꼴을
+  // 잠깐 그리지 않는다. 그래야 별노트 진입 시 글꼴이 뒤늦게 바뀌지 않는다.
+  assert.match(layout, /rel="preload" href="\/fonts\/nanum-child-hope\.ttf" as="font" type="font\/ttf"/);
+  assert.match(css, /font-family: "Mormi Child Hope";[\s\S]{0,240}font-display: block;/);
   assert.doesNotMatch(cafe, /모르미의 공부노트/);
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
@@ -117,10 +132,18 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
   assert.match(cafe, /randomItem\(menu\)/);
-  assert.match(cafe, /예산 안에서 메뉴를/);
+  assert.match(cafe, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
-  assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 4);
-  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 4);
+  assert.match(cafe, /const calculationReplay = replayStages\.current\.menu === true;[\s\S]{0,400}\}, calculationReplay\);/);
+  // 지도에는 줄 서기·메뉴 값 계산·거스름돈 세 단계만 보인다. Spring BE의
+  // menu → calculate 저장 순서는 2단계 안에서 이어져 기존 계약을 건너뛰지 않는다.
+  assert.match(journey, /cafeStations = \["줄 서기", "메뉴 값 계산하기", "거스름돈 받기"\]/);
+  assert.doesNotMatch(cafe, /\{ title: "메뉴 고르기"/);
+  assert.match(cafe, /cafeScenarioByStation = \["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"\]/);
+  assert.match(cafe, /stageNumber=\{1\}[\s\S]*stageNumber=\{2\}[\s\S]*stageNumber=\{3\}/);
+  assert.doesNotMatch(cafe, /stageNumber=\{4\}/);
+  assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 3);
+  assert.equal((cafe.match(/<CafeStageThanks\b/g) || []).length, 3);
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
@@ -178,6 +201,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
+  assert.match(app, /저번에 도와줘서 고마워! 이번에도 또 같이 가주라!/);
+  assert.doesNotMatch(app, /카페 가는 거 이제 자신 있어! 또 연습하러 가자!/);
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
   // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
