@@ -39,6 +39,7 @@ import { localReportAdminApi, type LocalAdminLearner } from "../local-report-adm
 import { LocalLearnerSearch } from "./LocalLearnerSearch";
 import { reportLandingFor, reportRequestFor } from "./local-admin-report-flow";
 import { shiftIsoWeek } from "./weekly-report-period";
+import { TeacherReportLogin } from "./TeacherReportLogin";
 
 type LoadState = "loading" | "ready" | "auth" | "empty" | "error";
 const reportModes = ["HOME", "LIFE"] as const;
@@ -115,6 +116,9 @@ function EvidenceLinks({
 type ReportDashboardProps = {
   completeExample?: boolean;
   localAdminEnabled?: boolean;
+  teacherMode?: boolean;
+  teacherAuthRequired?: boolean;
+  teacherAuthenticated?: boolean;
 };
 
 async function loadAuthenticatedReportWithHistoryFallback(weekStart: string | undefined, controller: AbortController) {
@@ -136,12 +140,54 @@ async function loadAuthenticatedReportWithHistoryFallback(weekStart: string | un
   };
 }
 
-export function ReportDashboard({ completeExample = false, localAdminEnabled = false }: ReportDashboardProps) {
+export function ReportDashboard({
+  completeExample = false,
+  localAdminEnabled = false,
+  teacherMode = false,
+  teacherAuthRequired = false,
+  teacherAuthenticated = false,
+}: ReportDashboardProps) {
   if (completeExample) return <NumericReportPreview report={completeDiagnosticReportExample} />;
-  return <ConnectedReportDashboard localAdminEnabled={localAdminEnabled} />;
+  if (teacherMode && !localAdminEnabled) {
+    return (
+      <main className="report-page">
+        <ReportShellHeader />
+        <article className="report-paper teacher-report-gate">
+          <section className="teacher-report-unavailable" role="status">
+            <h1>교사용 리포트를 준비 중입니다</h1>
+            <p>운영 환경의 교사용 리포트 설정을 확인해 주세요.</p>
+          </section>
+        </article>
+      </main>
+    );
+  }
+  if (teacherMode && teacherAuthRequired && !teacherAuthenticated) {
+    return (
+      <main className="report-page">
+        <ReportShellHeader />
+        <article className="report-paper teacher-report-gate"><TeacherReportLogin /></article>
+      </main>
+    );
+  }
+  return <ConnectedReportDashboard
+    localAdminEnabled={localAdminEnabled}
+    teacherMode={teacherMode}
+    teacherAuthRequired={teacherAuthRequired}
+    teacherAuthenticated={teacherAuthenticated}
+  />;
 }
 
-function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnabled }: { localAdminEnabled: boolean }) {
+function ConnectedReportDashboard({
+  localAdminEnabled: initiallyLocalAdminEnabled,
+  teacherMode,
+  teacherAuthRequired,
+  teacherAuthenticated,
+}: {
+  localAdminEnabled: boolean;
+  teacherMode: boolean;
+  teacherAuthRequired: boolean;
+  teacherAuthenticated: boolean;
+}) {
   const [report, setReport] = useState<DiagnosticReportDto | null>(null);
   const [history, setHistory] = useState<ReportSummaryDto[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -290,6 +336,9 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
       const landing = reportLandingFor({
         localAdminEnabled: initiallyLocalAdminEnabled,
         hasStoredLearner: Boolean(readStoredLearner()),
+        teacherMode,
+        teacherAuthRequired,
+        teacherAuthenticated,
       });
       if (landing === "auth") {
         setLoadState("auth");
@@ -309,7 +358,7 @@ function ConnectedReportDashboard({ localAdminEnabled: initiallyLocalAdminEnable
       reportControllerRef.current?.abort();
       cancelSpeechRequests();
     };
-  }, [cancelSpeechRequests, initiallyLocalAdminEnabled, loadReport]);
+  }, [cancelSpeechRequests, initiallyLocalAdminEnabled, loadReport, teacherAuthenticated, teacherAuthRequired, teacherMode]);
 
   const groupedDomains = report ? groupDiagnosticDomains(report) : [];
   const modeDomains = groupedDomains.filter((domain) => domain.mode === mode);

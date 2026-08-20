@@ -23,7 +23,7 @@ test("login entry links teachers directly to the report", async () => {
     import("react-dom/server"),
   ]);
   const html = server.renderToStaticMarkup(React.createElement(TeacherReportEntry));
-  assert.match(html, /href="\/report"/);
+  assert.match(html, /href="\/report\?teacher=1"/);
   assert.match(html, />교사용 리포트<\/a>/);
   assert.match(html, /class="teacher-report-entry"/);
 });
