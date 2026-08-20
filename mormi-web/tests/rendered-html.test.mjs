@@ -115,6 +115,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 이전 버튼은 흰색 바탕의 초록 테두리 버튼이다.
   assert.match(talkStage, /className="cafe-talk-note"[\s\S]{0,220}ui-icon--book/);
   assert.match(css, /\.cafe-talk-note\{[^}]*width:88px[^}]*height:88px[^}]*border-radius:50%/);
+  assert.match(css, /\.cafe-talk-note\{[^}]*white-space:nowrap[^}]*word-break:keep-all/);
   assert.match(css, /\.cafe-talk-back\{[^}]*min-height:48px[^}]*border:3px solid #78cda6/);
   // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
   assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);

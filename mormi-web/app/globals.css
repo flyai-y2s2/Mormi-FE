@@ -1410,7 +1410,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   align-items:center;justify-content:center;gap:6px;border:0;border-radius:50%;
   color:#62509d;background:#f0eaff;cursor:pointer;
   box-shadow:0 6px 0 #d9cff5,0 14px 30px rgba(70,55,105,.12);
-  font-size:13px;font-weight:950;line-height:1.15
+  font-size:13px;font-weight:950;line-height:1.15;white-space:nowrap;word-break:keep-all
 }
 .cafe-talk-note>.ui-icon{flex:0 0 auto}
 
