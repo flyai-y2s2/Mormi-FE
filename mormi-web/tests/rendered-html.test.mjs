@@ -201,6 +201,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
+  assert.match(app, /저번에 도와줘서 고마워! 이번에도 또 같이 가주라!/);
+  assert.doesNotMatch(app, /카페 가는 거 이제 자신 있어! 또 연습하러 가자!/);
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
   // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);

@@ -1177,7 +1177,7 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
   return (
     <section className="journey-hub journey-hub--outside">
       <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
-      <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "카페 가는 거 이제 자신 있어! 또 연습하러 가자!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
+      <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "저번에 도와줘서 고마워! 이번에도 또 같이 가주라!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
       <div className="destination-grid">
         <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} disabled={!isUnlocked} onClick={onCafe}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt="모르미와 갈 카페" width={1000} height={720} priority unoptimized />
