@@ -974,7 +974,7 @@ function Onboarding({ onSignup, onLogin }: {
           />
           {formError && <p className="onboarding-error" role="alert">{formError}</p>}
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
-          <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 시작하는 거예요</button>
+          <button type="button" className="onboarding-secondary onboarding-secondary--button" onClick={() => goTo("signup")}>처음 시작하는 거예요</button>
           <TeacherReportEntry />
         </form>
       </section>
