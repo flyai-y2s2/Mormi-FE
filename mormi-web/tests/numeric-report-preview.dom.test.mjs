@@ -13,6 +13,7 @@ async function loadPreview() {
   const moduleCode = code
     .replace('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve("react/jsx-runtime")).href))
     .replace('"react"', JSON.stringify(pathToFileURL(require.resolve("react")).href))
+    .replace('"../expression-ladder"', JSON.stringify(new URL("../app/expression-ladder.ts", import.meta.url).href))
     .replace('"./numeric-report-live-model"', JSON.stringify(new URL("../app/report/numeric-report-live-model.ts", import.meta.url).href))
     .replace('"./weekly-report-period"', JSON.stringify(new URL("../app/report/weekly-report-period.ts", import.meta.url).href))
     .replace('import Link from "next/link";', 'const Link = ({ children, ...props }) => _jsx("a", { ...props, children });');
@@ -61,7 +62,7 @@ test("hydrates LIFE values and binds the comparison to the selected category", a
     const comparison = dom.container.querySelector(".numeric-session-comparison").textContent;
     for (const value of ["45%", "68%", "3.0회", "2.0회", "10%", "30%"])
       assert.match(comparison, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    assert.equal(dom.container.querySelector(".numeric-ladder-bars").getAttribute("aria-label"), "L4부터 L0까지 30%, 30%, 20%, 15%, 5%");
+    assert.equal(dom.container.querySelector(".numeric-ladder-bars").getAttribute("aria-label"), "L4, L3, L2, L0 순서로 30%, 30%, 35%, 5%");
 
     await act(async () => { root.unmount(); });
   } finally {
@@ -126,9 +127,9 @@ test("gives all ladder levels equal width while encoding share only as height", 
   const dom = setDom(server.renderToString(React.createElement(NumericReportPreview)));
   try {
     const bars = [...dom.container.querySelectorAll(".numeric-ladder-bars > span")];
-    assert.equal(bars.length, 5);
-    assert.deepEqual(bars.map((bar) => bar.style.flexGrow), ["1", "1", "1", "1", "1"]);
-    assert.deepEqual(bars.map((bar) => bar.style.flexBasis), ["0px", "0px", "0px", "0px", "0px"]);
+    assert.equal(bars.length, 4);
+    assert.deepEqual(bars.map((bar) => bar.style.flexGrow), ["1", "1", "1", "1"]);
+    assert.deepEqual(bars.map((bar) => bar.style.flexBasis), ["0px", "0px", "0px", "0px"]);
     assert.ok(bars.every((bar) => bar.style.getPropertyValue("--bar-height")), "각 비율은 막대 높이로 표현해야 한다");
   } finally {
     dom.cleanup();
@@ -148,9 +149,9 @@ test("renders a single visible ladder bar when one level owns 100 percent", asyn
   const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, { report })));
   try {
     const bars = [...dom.container.querySelectorAll(".numeric-ladder-bars > span")];
-    assert.equal(bars.length, 5, "단계명 자리는 L4부터 L0까지 유지해야 한다");
+    assert.equal(bars.length, 4, "현재 단계명 자리는 L4, L3, L2, L0 네 개여야 한다");
     assert.equal(bars.filter((bar) => !bar.classList.contains("is-empty")).length, 1);
-    assert.equal(bars.filter((bar) => bar.classList.contains("is-empty")).length, 4);
+    assert.equal(bars.filter((bar) => bar.classList.contains("is-empty")).length, 3);
     assert.equal(bars.find((bar) => !bar.classList.contains("is-empty"))?.querySelector("i")?.textContent, "L0");
   } finally {
     dom.cleanup();

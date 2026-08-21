@@ -7,6 +7,7 @@ import type {
   DiagnosticTrendPointDto,
   ReportSummaryDto,
 } from "../api-client";
+import { ACTIVE_EXPRESSION_LEVELS, canonicalExpressionLevel } from "../expression-ladder";
 
 export type NumericPreviewStatus = "good" | "growing" | "review" | "collecting";
 export type NumericComparisonRow = readonly [label: string, history: string, recent: string];
@@ -66,11 +67,11 @@ function attemptsToCorrect(points: DiagnosticDomainTrendDto["points"], recentOnl
 }
 
 function ladderShares(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): readonly [string, string] {
-  const levels = ["L4", "L3", "L2", "L1", "L0"] as const;
+  const levels = ACTIVE_EXPRESSION_LEVELS;
   const selected = points
     .filter((point) => !recentOnly || point.recent)
-    .map((point) => point.expression_level?.toUpperCase())
-    .filter((level): level is typeof levels[number] => levels.includes(level as typeof levels[number]));
+    .map((point) => canonicalExpressionLevel(point.expression_level))
+    .filter((level): level is typeof levels[number] => Boolean(level));
   if (selected.length === 0) return ["—", "—"];
   const exact = levels.map((level) => selected.filter((item) => item === level).length * 100 / selected.length);
   const shares = exact.map(Math.floor);
@@ -92,7 +93,7 @@ function pointsWithHistory(
     const history = historyBySession.get(point.evidence_id);
     if (!history) return point;
     const ladder = Number.isInteger(history.ladder) && history.ladder >= 0 && history.ladder <= 4
-      ? `L${history.ladder}`
+      ? canonicalExpressionLevel(`L${history.ladder}`)
       : undefined;
     return {
       ...point,
@@ -149,7 +150,7 @@ function recommendation(status: NumericPreviewStatus, label: string, hasSpeech: 
     repeatCount,
     ladderStart: hasSpeech ? "L2" : "기록 필요",
     ladderRule: hasSpeech
-      ? "두 번 연속 혼자 설명하면 한 단계 높이고, 막히면 한 단계 낮춰 도움을 제공합니다."
+      ? "두 번 연속 혼자 설명하면 한 단계 높이고, 막히면 L2 선택지부터 제공한 뒤 L0에서 같이 해결합니다."
       : "발화 기록을 먼저 1회 모은 뒤 시작 단계를 추천합니다.",
     nextCheck: `${label} 풀이 방법을 자신의 말로 설명하는지 확인해 주세요.`,
   };
@@ -200,7 +201,7 @@ function buildMode(
       label,
       status,
       metrics,
-      sessionRows: [...metrics, ["발화 단계 사용 비율 (L4/L3/L2/L1/L0)", historyLadder, recentLadder]],
+      sessionRows: [...metrics, ["발화 단계 사용 비율 (L4/L3/L2/L0)", historyLadder, recentLadder]],
       historyCount: accuracy?.total_count ?? 0,
       recentCount: accuracy?.recent_count ?? 0,
       headline: headline(label, status),

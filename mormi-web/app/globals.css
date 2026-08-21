@@ -286,7 +286,7 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .learned-card { padding: 26px; text-align: center; background: linear-gradient(145deg, #fff, #fff9dc); }
 .learned-card > .ui-icon { margin-bottom:6px; }.learned-card h2 { margin: 7px 0; font-size: 29px; }.learned-card p { color: var(--muted); font-weight: 700; }.learned-card .primary-button { margin-top: 10px; }
 
-/* L4 → L3 → L2 → L1 → L0 Mormey teaching flow */
+/* L4 → L3 → L2 → L0 Mormey teaching flow (legacy L1 is reported as L2) */
 .app-shell--teach { background:#f6f1e9 url('/scenes/home-room-cute-v3.png') center/cover fixed; }
 .app-shell--teach::before { content:""; position:fixed; inset:0; pointer-events:none; background:rgba(255,252,244,.34); }
 .teaching-scene { width:min(100%,1135px); max-width:1135px; min-height:744px; padding:20px 28px; position:relative; z-index:1; }

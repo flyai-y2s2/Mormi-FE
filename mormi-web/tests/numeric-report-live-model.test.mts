@@ -130,7 +130,7 @@ test("calculates attempts-to-correct and recent L4-L0 shares from backend eviden
 
   assert.equal(model.learnerName, "이재용");
   assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
-  assert.deepEqual(money.sessionRows.at(-1), ["발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "67/0/33/0/0%", "67/0/33/0/0%"]);
+  assert.deepEqual(money.sessionRows.at(-1), ["발화 단계 사용 비율 (L4/L3/L2/L0)", "67/0/33/0%", "67/0/33/0%"]);
   assert.equal(money.dominantStage, "L4");
 });
 
@@ -153,7 +153,7 @@ test("keeps rounded ladder shares at exactly one hundred percent", () => {
   };
 
   assert.deepEqual(buildNumericLiveReport(equalLevels).domains.HOME[0]!.sessionRows.at(-1), [
-    "발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "34/33/33/0/0%", "34/33/33/0/0%",
+    "발화 단계 사용 비율 (L4/L3/L2/L0)", "34/33/33/0%", "34/33/33/0%",
   ]);
 });
 
@@ -185,9 +185,38 @@ test("falls back to deployed session history when diagnostic points lack new met
   const money = buildNumericLiveReport(legacyReport, history).domains.HOME[0]!;
   assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
   assert.deepEqual(money.sessionRows.at(-1), [
-    "발화 단계 사용 비율 (L4/L3/L2/L1/L0)", "50/0/50/0/0%", "0/0/100/0/0%",
+    "발화 단계 사용 비율 (L4/L3/L2/L0)", "50/0/50/0%", "0/0/100/0%",
   ]);
   assert.equal(money.dominantStage, "L2");
+});
+
+test("keeps legacy L1 evidence raw while aggregating it into the L2 report bucket", () => {
+  const legacyPoint = {
+    ...report.modes[0]!.domains[0]!.points[0]!,
+    evidence_id: "legacy-l1",
+    expression_level: "L1",
+    recent: true,
+  };
+  const l2Point = {
+    ...report.modes[0]!.domains[0]!.points[1]!,
+    evidence_id: "current-l2",
+    expression_level: "L2",
+    recent: true,
+  };
+  const legacyEvidence: DiagnosticReportDto = {
+    ...report,
+    modes: [{
+      mode: "HOME",
+      domains: [
+        { ...report.modes[0]!.domains[0]!, label: "돈 세기 · 반복학습" },
+        { ...report.modes[0]!.domains[0]!, label: "돈 세기 · 모르미 가르치기", points: [legacyPoint, l2Point] },
+      ],
+    }, { mode: "LIFE", domains: [] }],
+  };
+
+  const row = buildNumericLiveReport(legacyEvidence).domains.HOME[0]!.sessionRows.at(-1);
+  assert.deepEqual(row, ["발화 단계 사용 비율 (L4/L3/L2/L0)", "0/0/100/0%", "0/0/100/0%"]);
+  assert.equal(legacyPoint.expression_level, "L1", "입력 원본은 L1 그대로 보존한다");
 });
 
 test("labels static example data as an example learner", () => {
