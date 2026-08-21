@@ -1,5 +1,7 @@
 "use client";
 
+import type { WireExpressionLevel } from "./expression-ladder";
+
 /**
  * Mormi 학습 백엔드(Spring) 클라이언트.
  *
@@ -170,7 +172,8 @@ export type DiagnosticTrendPointDto = {
   supported_score: number;
   attempt_count?: number;
   question_count?: number;
-  expression_level?: "L4" | "L3" | "L2" | "L1" | "L0" | string;
+  /** L1은 과거 기록 호환용이며 화면·통계에서는 L2로 합산한다. */
+  expression_level?: WireExpressionLevel | string;
   recent: boolean;
 };
 

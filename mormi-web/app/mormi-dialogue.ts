@@ -1,3 +1,5 @@
+import type { WireExpressionLevel } from "./expression-ladder";
+
 export type MormiScene = "home_teach" | "cafe";
 export type MormiMood = "curious" | "listening" | "thinking" | "relieved" | "celebrating";
 export type MormiInputKind = "text" | "choices" | "fill" | "count" | "equation" | "joint" | "button" | "none";
@@ -112,7 +114,8 @@ export type MormiTurn = {
     verified_facts: Record<string, string | number | boolean>;
   } | null;
   pedagogy?: {
-    expression_level: "L4" | "L3" | "L2" | "L1" | "L0";
+    /** L1은 구버전 대화 복구용 입력 호환 값이며 신규 턴은 L4/L3/L2/L0만 사용한다. */
+    expression_level: WireExpressionLevel;
     hint_level: "H0" | "H1" | "H2" | "H3";
     subgoal_id: string;
     verified_slots: Record<string, string | number | boolean>;

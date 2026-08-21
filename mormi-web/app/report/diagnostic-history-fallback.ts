@@ -8,6 +8,7 @@ import type {
   LearnerProfile,
   ReportSummaryDto,
 } from "../api-client";
+import { canonicalExpressionLevel } from "../expression-ladder";
 
 const sessionById = new Map(sessions.map((session) => [session.id, session]));
 
@@ -107,7 +108,7 @@ export function diagnosticReportFromHistory(
         attempt_count: Math.max(0, summary.repetitions),
         question_count: Math.max(0, summary.mastery_target),
         expression_level: Number.isInteger(summary.ladder) && summary.ladder >= 0 && summary.ladder <= 4
-          ? `L${summary.ladder}`
+          ? canonicalExpressionLevel(`L${summary.ladder}`)
           : undefined,
         recent: day >= weekStart,
       })),
