@@ -1868,3 +1868,39 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .dictionary-api-values{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dictionary-api-values span{min-height:94px}
 }
+
+/* 모은 별: 서버 완료 세션을 아이가 다시 읽을 수 있는 개념 모아보기 */
+.player-hud>button.player-stat{appearance:none;font:inherit;text-align:left;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+.player-hud>button.player-stat:hover{transform:translateY(-2px);box-shadow:0 8px 0 #ebd995}
+.player-hud>button.player-stat:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
+.collected-stars-backdrop{z-index:125;padding:clamp(10px,3vw,30px);background:rgba(37,48,42,.46)}
+.collected-stars-modal{width:min(920px,100%);max-height:min(90svh,820px);padding:clamp(22px,3.2vw,38px);position:relative;display:flex;flex-direction:column;overflow:hidden;border:5px solid #edcf61;border-radius:32px;background:#fffdf5;box-shadow:0 10px 0 #dcb840,0 28px 70px rgba(55,47,23,.28)}
+.collected-stars-close{width:42px;height:42px;position:absolute;z-index:2;top:15px;right:17px;border:0;border-radius:50%;color:#735818;background:#fff2b9;cursor:pointer;font-size:27px;font-weight:950;line-height:1}
+.collected-stars-close:focus-visible,.collected-stars-done:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
+.collected-stars-modal>header{padding-right:50px;display:flex;align-items:center;gap:14px}
+.collected-stars-modal>header>img{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 7px 8px rgba(129,91,13,.2))}
+.collected-stars-modal>header p{margin:0;color:#388765;font-size:14px;font-weight:950}
+.collected-stars-modal>header h2{margin:1px 0;color:#28463a;font-size:clamp(30px,4.5vw,46px);line-height:1.1}
+.collected-stars-modal>header span{color:#718078;font-size:15px;font-weight:800}
+.collected-stars-grid{margin:24px -5px 7px;padding:5px 5px 15px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;overflow:auto;overscroll-behavior:contain}
+.collected-stars-card{min-height:190px;padding:19px 17px;border:3px solid #f0df9d;border-radius:23px;background:#fff;box-shadow:0 6px 0 #ead68c}
+.collected-stars-card__stars{height:43px;display:flex;align-items:center}
+.collected-stars-card__stars img{width:38px;height:38px;margin-left:-8px;object-fit:contain}.collected-stars-card__stars img:first-child{margin-left:0}
+.collected-stars-card h3{margin:13px 0 7px;color:#29483b;font-size:21px;line-height:1.25;word-break:keep-all}
+.collected-stars-card p{margin:0;color:#66776f;font-size:15px;font-weight:750;line-height:1.55;word-break:keep-all}
+.collected-stars-empty{min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.collected-stars-empty img{width:145px;height:150px;object-fit:contain}.collected-stars-empty h3{margin:2px 0 7px;color:#29483b;font-size:25px}.collected-stars-empty p{max-width:420px;margin:0;color:#718078;font-weight:750;line-height:1.5}
+.collected-stars-done{width:min(280px,100%);min-height:54px;margin:17px auto 0;flex:0 0 auto;border:0;border-radius:17px;color:#29483b;background:#ffdc68;box-shadow:0 6px 0 #dfb638;cursor:pointer;font-size:18px;font-weight:950}
+
+@media(max-width:760px){
+  .collected-stars-modal{max-height:92svh;border-radius:27px}
+  .collected-stars-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  .collected-stars-backdrop{align-items:end;padding:7px}
+  .collected-stars-modal{max-height:94svh;padding:22px 15px 25px;border-width:4px;border-radius:28px}
+  .collected-stars-modal>header{gap:9px}.collected-stars-modal>header>img{width:55px;height:55px}.collected-stars-modal>header h2{font-size:30px}.collected-stars-modal>header span{font-size:12px}
+  .collected-stars-grid{margin-top:18px;grid-template-columns:1fr;gap:11px}
+  .collected-stars-card{min-height:0;padding:15px 16px}.collected-stars-card__stars{height:34px}.collected-stars-card__stars img{width:31px;height:31px}.collected-stars-card h3{margin:9px 0 4px;font-size:19px}.collected-stars-card p{font-size:14px}
+  .collected-stars-empty{min-height:300px}.collected-stars-empty img{width:125px;height:130px}
+}

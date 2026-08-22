@@ -17,6 +17,7 @@ import {
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
 import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices } from "./answer-choices";
 import { CafeJourney } from "./CafeJourney";
+import { CollectedStarsModal } from "./CollectedStarsModal";
 import { DictionaryModal } from "./DictionaryCard";
 import { dialogueErrorMessage } from "./dialogue-errors";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
@@ -1124,6 +1125,7 @@ function ProfileMenu({ name, loggingOut, onLogout }: {
 }
 
 function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
+  const [starsOpen, setStarsOpen] = useState(false);
   const requiredSessions = cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session));
   const done = requiredSessions.filter((session) => completedSessionIds.includes(session.id)).length;
   const unlocked = done === requiredSessions.length;
@@ -1148,13 +1150,14 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
         <div className="home-room-character-column">
           <div className="player-hud" aria-label="나의 모험 정보">
             <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
-            <div className="player-stat player-stat--star"><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></div>
+            <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></button>
             <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
           </div>
           <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
         </div>
       </div>
       {!unlocked && nextSession && <button className="home-next-lesson" onClick={() => onOpenSession(sessions.findIndex((session) => session.id === nextSession.id))}><span>카페까지 {requiredSessions.length - done}개 남았어요</span><b>다음 필수 개념: {nextSession.title} →</b></button>}
+      {starsOpen && <CollectedStarsModal completedSessionIds={completedSessionIds} onClose={() => setStarsOpen(false)} />}
     </section>
   );
 }
