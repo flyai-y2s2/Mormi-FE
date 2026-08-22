@@ -1844,6 +1844,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .outside-scene-head .eyebrow{justify-content:center}
 .outside-morami-talk{justify-content:center}
 .destination-grid{width:100%}
+.destination-card--amusement{text-decoration:none}
 @media(max-width:760px){.journey-hub--outside{justify-content:flex-start}}
 
 /* 카페 스테이지 선택: 카드 묶음을 화면 가운데에 놓고, 잠김·진행·완료를 한눈에 구분한다. */

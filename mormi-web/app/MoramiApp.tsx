@@ -1202,7 +1202,11 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
           <span className="destination-shade" />
           <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : "모르미와 들어가기 →"}</strong></div>
         </button>
-        <article className="destination-card destination-card--soon"><Image src="/scenes/market-cute-v4.png" alt="잠긴 마트" width={800} height={600} unoptimized /><span><UiIcon name="lock" size="small" /> 다음 외출</span><h2>마트 가기</h2><p>집에서 새 스테이션을 풀면 갈 수 있어요.</p><b>곧 만나요</b></article>
+        <a className="destination-card destination-card--cafe destination-card--amusement is-unlocked" href="/amusement-park-preview">
+          <Image src="/amusement-park/park-map.png" alt="모르미와 갈 놀이동산" width={800} height={600} unoptimized />
+          <span className="destination-shade" />
+          <div><small>새로운 외출</small><h2>놀이동산 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>모르미와 출발하기 →</strong></div>
+        </a>
       </div>
     </section>
   );

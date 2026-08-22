@@ -4,6 +4,7 @@ import test from "node:test";
 
 const { amusementParkPreview } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park-preview/AmusementParkPreview.tsx", import.meta.url), "utf8");
+const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
 
 test("놀이동산 FE 계약은 곱셈·나눗셈·혼합 3단계를 순서대로 고정한다", () => {
   assert.deepEqual(amusementParkPreview.stage_order, ["ticket", "snack_split", "pass_break_even"]);
@@ -48,4 +49,11 @@ test("미션은 카페 대화 흐름과 로그인 이름을 쓰고 선후배 호
   assert.match(component, /cafe-talk-answer/);
   assert.doesNotMatch(component, /선배|후배/);
   assert.doesNotMatch(component, /\{stage\.prompt\}/);
+});
+
+test("외출 화면의 기존 마트 자리는 놀이동산 진입 카드로 연결한다", () => {
+  assert.match(app, /href="\/amusement-park-preview"/);
+  assert.match(app, /놀이동산 가기/);
+  assert.match(app, /\/amusement-park\/park-map\.png/);
+  assert.doesNotMatch(app, /마트 가기/);
 });
