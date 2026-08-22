@@ -17,7 +17,15 @@ globalThis.fetch = async (input, init) => {
   return nextResponse();
 };
 
-const { api, apiRequest, setUnauthorizedHandler, storeSession, ApiError } =
+const {
+  api,
+  apiRequest,
+  setUnauthorizedHandler,
+  storeSession,
+  storeEducatorSession,
+  clearEducatorSession,
+  ApiError,
+} =
   await import("../app/api-client.ts");
 
 function respond(status, body) {
@@ -117,4 +125,40 @@ test("별노트 다음 페이지는 서버 cursor를 바꾸지 않고 인증된 
   assert.equal(lastRequest.input, "/api/be/v1/learners/42/star-notes?limit=20&cursor=note_older%2F%2B%3D%3D");
   assert.equal(lastRequest.init.headers.authorization, "Bearer test-token");
   assert.equal(lastRequest.init.method, undefined);
+});
+
+test("교사 세션은 학생 세션과 분리해 저장하고 지운다", () => {
+  withSession();
+  storeEducatorSession("teacher-token", {
+    id: 7,
+    displayName: "김교사",
+    position: "교사",
+    organizationId: 3,
+    organizationName: "모르미초",
+  });
+
+  assert.equal(localStorage.getItem("mormi-access-token"), "test-token");
+  assert.equal(localStorage.getItem("mormi-educator-token"), "teacher-token");
+
+  clearEducatorSession();
+  assert.equal(localStorage.getItem("mormi-access-token"), "test-token");
+  assert.equal(localStorage.getItem("mormi-educator-token"), null);
+  assert.equal(localStorage.getItem("mormi-educator"), null);
+});
+
+test("학급 API는 학생 토큰이 아니라 교사 토큰으로 요청한다", async () => {
+  withSession();
+  storeEducatorSession("teacher-token", {
+    id: 7,
+    displayName: "김교사",
+    position: "교사",
+    organizationId: 3,
+    organizationName: "모르미초",
+  });
+  nextResponse = respond(200, []);
+
+  await api.cohorts();
+
+  assert.equal(lastRequest.input, "/api/be/v1/cohorts");
+  assert.equal(lastRequest.init.headers.authorization, "Bearer teacher-token");
 });

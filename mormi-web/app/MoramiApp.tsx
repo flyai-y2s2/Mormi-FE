@@ -10,6 +10,7 @@ import {
   clearSession,
   readStoredLearner,
   setUnauthorizedHandler,
+  storeEducatorSession,
   storeSession,
   type AuthResponse,
   type ThemeView,
@@ -981,7 +982,7 @@ function Onboarding({ onSignup, onLogin }: {
           />
           {formError && <p className="onboarding-error" role="alert">{formError}</p>}
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? "찾는 중…" : "이어서 하기"} <span className="button-arrow" /></button>
-          <button type="button" className="onboarding-secondary onboarding-secondary--button" onClick={() => goTo("signup")}>처음 시작하는 거예요</button>
+          <button type="button" className="onboarding-secondary onboarding-secondary--button" onClick={() => window.location.assign("/signup")}>처음 시작하는 거예요</button>
           <TeacherReportEntry />
         </form>
       </section>
@@ -1064,7 +1065,7 @@ function Onboarding({ onSignup, onLogin }: {
         {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}
         <div className="onboarding-greeting__actions">
           <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>
-          <button type="button" className="onboarding-secondary" onClick={() => goTo("signup")}>처음 왔어요</button>
+          <button type="button" className="onboarding-secondary" onClick={() => window.location.assign("/signup")}>처음 왔어요</button>
         </div>
       </div>
     </section>
@@ -1912,8 +1913,19 @@ export function MoramiApp() {
   async function handleLogin(loginId: string, password: string) {
     try {
       const restored = await api.login(loginId, password);
-      await enterApp(restored);
-      captureMormeyEvent("learner_restored");
+      if (restored.role === "educator") {
+        storeEducatorSession(restored.access_token, {
+          id: restored.educator.id,
+          displayName: restored.educator.display_name,
+          position: restored.educator.position,
+          organizationId: restored.educator.organization_id,
+          organizationName: restored.educator.organization_name,
+        });
+        window.location.assign("/teacher/cohorts");
+      } else {
+        await enterApp({ ...restored.learner, access_token: restored.access_token });
+        captureMormeyEvent("learner_restored");
+      }
       return null;
     } catch (error) {
       return toAuthFailure(error, "login");

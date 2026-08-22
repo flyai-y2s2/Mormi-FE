@@ -18,6 +18,8 @@ import type { WireExpressionLevel } from "./expression-ladder";
 const BASE_URL = "/api/be";
 const TOKEN_KEY = "mormi-access-token";
 const LEARNER_KEY = "mormi-learner";
+const EDUCATOR_TOKEN_KEY = "mormi-educator-token";
+const EDUCATOR_KEY = "mormi-educator";
 const REQUEST_TIMEOUT_MS = 20_000;
 
 export const apiEnabled = true;
@@ -29,13 +31,90 @@ export type LearnerProfile = {
   analyticsId?: string;
 };
 
-/** 가입·로그인 응답. 두 경로가 같은 본문을 주므로 storeSession 을 그대로 쓴다. */
+/** 학생 가입 응답. 통합 로그인에서는 learner 안에 이 프로필이 들어온다. */
 export type AuthResponse = {
   id: number;
   display_name: string;
   research_code: string;
   analytics_id: string;
   access_token: string;
+};
+
+export type EducatorProfile = {
+  id: number;
+  displayName: string;
+  position: "교사" | "연구자";
+  organizationId: number;
+  organizationName: string;
+};
+
+export type EducatorAuthResponse = {
+  id: number;
+  display_name: string;
+  position: "교사" | "연구자";
+  organization_id: number;
+  organization_name: string;
+  access_token: string;
+};
+
+type LoginLearner = Omit<AuthResponse, "access_token"> & { access_token?: string | null };
+type LoginEducator = Omit<EducatorAuthResponse, "access_token"> & { access_token?: string | null };
+
+export type LoginResponse =
+  | { role: "learner"; access_token: string; learner: LoginLearner; educator?: null }
+  | { role: "educator"; access_token: string; learner?: null; educator: LoginEducator };
+
+export type Cohort = {
+  id: number;
+  name: string;
+  class_code: string;
+  organization_id: number;
+  created_at: string;
+};
+
+export type CohortLearner = {
+  id: number;
+  display_name: string;
+  research_code: string;
+  enrolled_at: string;
+};
+
+export type CohortTaskReport = {
+  learning_session_id: string;
+  curriculum_session_id: string;
+  task_key: string;
+  activity: string;
+  attempt_count: number;
+  wrong_attempt_count: number;
+  first_try_success: boolean | null;
+  retry_success: boolean | null;
+  success_after_help: boolean | null;
+  expression_start: string | null;
+  expression_end: string | null;
+  expression_lowest: string | null;
+  hint_start: string | null;
+  hint_end: string | null;
+  hint_max: string | null;
+  completion_outcome: string | null;
+  system_failure: boolean | null;
+  bottleneck_candidate: string | null;
+  bottleneck_evidence_count: number | null;
+};
+
+export type CohortLearnerReport = {
+  learner_id: number;
+  session_count: number;
+  tasks: CohortTaskReport[];
+};
+
+export type CohortReport = {
+  snapshot_id: number;
+  cohort_id: number;
+  period_start: string;
+  period_end: string;
+  body: { disclaimer?: string; learners?: CohortLearnerReport[] };
+  aggregation_rule_version: string;
+  created_at: string;
 };
 
 export type ProgressSnapshot = {
@@ -422,6 +501,11 @@ function readToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+export function readEducatorToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(EDUCATOR_TOKEN_KEY);
+}
+
 export function storeSession(token: string, learner: LearnerProfile) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(LEARNER_KEY, JSON.stringify(learner));
@@ -442,9 +526,27 @@ export function readStoredLearner(): LearnerProfile | null {
   return null;
 }
 
+export function storeEducatorSession(token: string, educator: EducatorProfile) {
+  localStorage.setItem(EDUCATOR_TOKEN_KEY, token);
+  localStorage.setItem(EDUCATOR_KEY, JSON.stringify(educator));
+}
+
+export function readStoredEducator(): EducatorProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = localStorage.getItem(EDUCATOR_KEY);
+    return value ? JSON.parse(value) as EducatorProfile : null;
+  } catch { return null; }
+}
+
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(LEARNER_KEY);
+}
+
+export function clearEducatorSession() {
+  localStorage.removeItem(EDUCATOR_TOKEN_KEY);
+  localStorage.removeItem(EDUCATOR_KEY);
 }
 
 /**
@@ -461,7 +563,11 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
  * 인증이 필요한 요청에서만 부른다. 로그인·가입 실패의 401 은 입력값을 유지한 채
  * 그 화면에서 안내해야 하므로 여기로 오지 않는다(두 함수는 auth=false 로 호출한다).
  */
-function handleUnauthorized() {
+function handleUnauthorized(auth: "learner" | "educator") {
+  if (auth === "educator") {
+    clearEducatorSession();
+    return;
+  }
   clearSession();
   unauthorizedHandler?.();
 }
@@ -469,17 +575,18 @@ function handleUnauthorized() {
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
-  auth = true,
+  auth: "learner" | "educator" | boolean = "learner",
   timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   if (!apiEnabled) throw new ApiError(0, "api_disabled", "API base URL is not configured");
 
   const headers: Record<string, string> = { "content-type": "application/json" };
-  if (auth) {
-    const token = readToken();
+  const authScope = auth === true ? "learner" : auth;
+  if (authScope) {
+    const token = authScope === "educator" ? readEducatorToken() : readToken();
     if (!token) {
       // 저장된 토큰이 사라진 상태. 서버에 물어볼 것도 없이 로그인 화면으로 돌린다.
-      handleUnauthorized();
+      handleUnauthorized(authScope);
       throw new ApiError(401, "unauthorized", "학습자 토큰이 없습니다.");
     }
     headers.authorization = `Bearer ${token}`;
@@ -521,7 +628,7 @@ export async function apiRequest<T>(
     } catch { /* 본문이 없을 수 있다 */ }
     // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
     // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.
-    if (auth && response.status === 401) handleUnauthorized();
+    if (authScope && response.status === 401) handleUnauthorized(authScope);
     throw new ApiError(response.status, code, message, fields);
   }
   if (response.status === 204) return undefined as T;
@@ -550,9 +657,22 @@ export const api = {
    * 가입 여부를 떠볼 수 없게 서버가 일부러 구분하지 않으므로 화면도 한 문구로만 안내한다.
    */
   login(loginId: string, password: string) {
-    return apiRequest<AuthResponse>("/v1/auth/login", {
+    return apiRequest<LoginResponse>("/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ login_id: loginId, password }),
+    }, false);
+  },
+
+  educatorSignup(organizationName: string, displayName: string, position: "교사" | "연구자", loginId: string, password: string) {
+    return apiRequest<EducatorAuthResponse>("/v1/auth/educators/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        organization_name: organizationName,
+        display_name: displayName,
+        position,
+        login_id: loginId,
+        password,
+      }),
     }, false);
   },
 
@@ -570,6 +690,40 @@ export const api = {
   /** 해당 학습자의 모든 기기 토큰을 폐기한다. */
   logoutAll() {
     return apiRequest<void>("/v1/auth/logout-all", { method: "POST" });
+  },
+
+  educatorLogout() {
+    return apiRequest<void>("/v1/auth/logout", { method: "POST" }, "educator");
+  },
+
+  cohorts() {
+    return apiRequest<Cohort[]>("/v1/cohorts", {}, "educator");
+  },
+
+  createCohort(name: string) {
+    return apiRequest<Cohort>("/v1/cohorts", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }, "educator");
+  },
+
+  cohortLearners(cohortId: number) {
+    return apiRequest<CohortLearner[]>(`/v1/cohorts/${cohortId}/learners`, {}, "educator");
+  },
+
+  issueResearchCodes(cohortId: number, codes: string[]) {
+    return apiRequest<Array<{ code: string; learner_id?: number }>>(`/v1/cohorts/${cohortId}/research-codes`, {
+      method: "POST",
+      body: JSON.stringify({ codes }),
+    }, "educator");
+  },
+
+  cohortReport(cohortId: number, options: { from?: string; to?: string } = {}) {
+    const params = new URLSearchParams();
+    if (options.from) params.set("from", options.from);
+    if (options.to) params.set("to", options.to);
+    const query = params.size ? `?${params.toString()}` : "";
+    return apiRequest<CohortReport>(`/v1/cohorts/${cohortId}/reports${query}`, {}, "educator");
   },
 
   progress() {
