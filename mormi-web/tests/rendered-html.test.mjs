@@ -143,7 +143,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /randomItem\(menu\)/);
   assert.match(cafe, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
-  assert.match(cafe, /const calculationReplay = replayStages\.current\.menu === true;[\s\S]{0,400}\}, calculationReplay\);/);
+  assert.match(cafe, /const calculationReplay = replayStages\.current\.menu === true;[\s\S]{0,400}\}, calculationReplay \? "restart" : "resume"\);/);
   // 지도에는 줄 서기·메뉴 값 계산·거스름돈 세 단계만 보인다. Spring BE의
   // menu → calculate 저장 순서는 2단계 안에서 이어져 기존 계약을 건너뛰지 않는다.
   assert.match(journey, /cafeStations = \["줄 서기", "메뉴 값 계산하기", "거스름돈 받기"\]/);

@@ -20,6 +20,14 @@ import { CafeJourney } from "./CafeJourney";
 import { CollectedStarsModal } from "./CollectedStarsModal";
 import { DictionaryModal } from "./DictionaryCard";
 import { dialogueErrorMessage } from "./dialogue-errors";
+import {
+  cafeStageFromRememberedScreen,
+  createDialogueStartIntent,
+  readReloadDialogueId,
+  readReloadDialogueScreen,
+  rememberDialogueId,
+  rememberDialogueScreen,
+} from "./dialogue-restart";
 import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
 import {
@@ -1213,6 +1221,13 @@ export function MoramiApp() {
     questionIndex: number;
     wrongChoiceIndexes: number[];
   } | null>(null);
+  const reloadDialogueScreen = useRef(readReloadDialogueScreen());
+  const reloadDialogueId = useRef(readReloadDialogueId());
+  const previousTeachingConversationId = useRef<string | null>(null);
+  const teachingStartRequest = useRef<{
+    sessionId: string;
+    intent: ReturnType<typeof createDialogueStartIntent>;
+  } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
@@ -1354,6 +1369,7 @@ export function MoramiApp() {
 
     learningSessionId.current = view.learning_session_id;
     learningSessionPromise.current = Promise.resolve(view.learning_session_id);
+    previousTeachingConversationId.current = view.conversation_id ?? reloadDialogueId.current;
     attemptCounter.current = drills.reduce((max, attempt) => Math.max(max, attempt.attempt_no), 0);
     attemptWriteError.current = null;
     attemptWriteQueue.current = Promise.resolve();
@@ -1430,6 +1446,11 @@ export function MoramiApp() {
       });
     } catch { /* device-local progress is optional */ }
   }, [restoreLearningSession, refreshThemes]);
+
+  useEffect(() => {
+    if (stage === "teach") rememberDialogueScreen("home-teach");
+    else if (stage !== "cafe") rememberDialogueScreen(null);
+  }, [stage]);
 
   /** 토큰이 만료·폐기됐을 때 돌아갈 자리. 화면에 남은 남의 진행도까지 함께 비운다. */
   const returnToAuthScreen = useCallback(() => {
@@ -1573,6 +1594,7 @@ export function MoramiApp() {
   function applyTeachingConversation(nextConversation: MormiConversation) {
     const nextTurn = nextConversation.turn;
     setMormiConversation(nextConversation);
+    rememberDialogueId(nextConversation.conversation_id);
     setDialogue(nextTurn.mormi.text);
     setExpression(expressionFromMormiMood(nextTurn.mormi.mood));
     setSolvedAtLevel(scaffoldLevel(nextTurn));
@@ -1600,7 +1622,22 @@ export function MoramiApp() {
       if (!sessionId || attemptWriteError.current) {
         throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
       }
-      applyTeachingConversation(await startHomeTeaching(sessionId));
+      const startMode = reloadDialogueScreen.current === "home-teach" ? "restart" : "resume";
+      const request = teachingStartRequest.current?.sessionId === sessionId
+        ? teachingStartRequest.current
+        : { sessionId, intent: createDialogueStartIntent(startMode) };
+      teachingStartRequest.current = request;
+      const nextConversation = await startHomeTeaching(sessionId, request.intent);
+      if (startMode === "restart"
+          && previousTeachingConversationId.current
+          && nextConversation.conversation_id === previousTeachingConversationId.current) {
+        throw new Error("새 가르치기 대화를 시작하지 못했어요. 다시 시도해 주세요.");
+      }
+      applyTeachingConversation(nextConversation);
+      previousTeachingConversationId.current = nextConversation.conversation_id;
+      teachingStartRequest.current = null;
+      reloadDialogueScreen.current = null;
+      reloadDialogueId.current = null;
     } catch (error) {
       if (error instanceof ApiError) {
         // 아이 화면에는 쉬운 안내만 표시하되, 운영 진단에는 BE가 정제한
@@ -1790,6 +1827,8 @@ export function MoramiApp() {
     setTeachError("");
     setTeachRewardAmount(0);
     setSolvedAtLevel(null);
+    previousTeachingConversationId.current = null;
+    teachingStartRequest.current = null;
     setHomeworkSolved(false);
     setHomeworkIndex(0);
     setHomeworkCorrect(0);
@@ -1965,6 +2004,12 @@ export function MoramiApp() {
         learnerId={learner.id}
         coinBalance={coinBalance}
         activeVisitId={activeCafeVisitId}
+        reloadDialogueStage={cafeStageFromRememberedScreen(reloadDialogueScreen.current)}
+        reloadConversationId={reloadDialogueId.current}
+        onReloadRestarted={() => {
+          reloadDialogueScreen.current = null;
+          reloadDialogueId.current = null;
+        }}
         onBack={showOutside}
         onComplete={showHome}
       />}

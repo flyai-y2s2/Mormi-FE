@@ -11,6 +11,7 @@ import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
 import { CafeTalkStage, type CafeDialogueResponse } from "./CafeTalkStage";
 import { cafeStations } from "./journey-config";
 import { dialogueErrorMessage } from "./dialogue-errors";
+import { createDialogueStartIntent, rememberDialogueId, rememberDialogueScreen, type DialogueStartMode } from "./dialogue-restart";
 import {
   startCafeDialogue,
   submitMormiResponseThroughBe,
@@ -26,16 +27,19 @@ const stationCopy = [
   { title: "거스름돈 받기", description: "10,000원에서 메뉴값을 빼요", image: "/cafe-stages/change-v3.png" },
 ] as const;
 
+type CafeStage = "queue" | "menu" | "calculate" | "change";
 type Props = {
   learnerName: string;
   learnerId: number;
   coinBalance: number;
   /** 진행도가 알려 준 진행 중 방문. 있으면 새로 만들지 않고 이 방문을 이어 받는다. */
   activeVisitId?: string | null;
+  reloadDialogueStage?: CafeStage | null;
+  reloadConversationId?: string | null;
+  onReloadRestarted?: () => void;
   onBack: () => void;
   onComplete: () => void;
 };
-type CafeStage = "queue" | "menu" | "calculate" | "change";
 
 /** 스테이션 순서대로의 AI 시나리오. 화면이 뽑은 문제를 함께 보내야 시작된다. */
 const cafeScenarioByStation = ["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"] as const;
@@ -68,7 +72,7 @@ function conversationInputKey(conversation: MormiConversation | undefined) {
   return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
 }
 
-export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, onComplete }: Props) {
+export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDialogueStage, reloadConversationId, onReloadRestarted, onBack, onComplete }: Props) {
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
@@ -91,6 +95,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [problemContextError, setProblemContextError] = useState<CafeStage | null>(null);
   const dialogueRequestInFlight = useRef(false);
+  const reloadDialogueStageRef = useRef<CafeStage | null>(reloadDialogueStage ?? null);
+  const reloadDialogueIdRef = useRef<string | null>(reloadConversationId ?? null);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
   // 화면은 fallbackLines 의 문구를 그대로 쓴다.
@@ -100,6 +106,14 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
   const [cafeConversations, setCafeConversations] = useState<Partial<Record<CafeStage, MormiConversation>>>({});
   const cafeTalks = useRef<Partial<Record<CafeStage, MormiConversation>>>({});
   const cafeTalkPromises = useRef<Partial<Record<CafeStage, Promise<MormiConversation | null>>>>({});
+  const cafeDialogueStartRequests = useRef<Partial<Record<CafeStage, {
+    input: {
+      scenario_id: (typeof cafeScenarioByStation)[number];
+      queue_context?: { left_count: number; right_count: number };
+      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; budget?: number };
+    };
+    intent: ReturnType<typeof createDialogueStartIntent>;
+  }>>>({});
   const validatedStages = useRef<Partial<Record<CafeStage, boolean>>>({});
   const finalizedStages = useRef<Partial<Record<CafeStage, boolean>>>({});
   // 이미 깬 돌다리를 다시 여는 중인지. 재연습은 진행도를 밀지 않고 지도로 돌아온다.
@@ -111,6 +125,15 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
   // 화면은 메뉴 선택과 합계 계산을 하나의 2단계로 묶지만, Spring BE는 두 저장
   // 단계를 구분한다. 복구할 때 어느 대화부터 이어야 하는지 서버 단계를 기억한다.
   const visitStage = useRef<CafeStage | "complete">("queue");
+
+  useEffect(() => {
+    const screen = step === "queue" && queueScene === "dialogue" ? "cafe-queue"
+      : step === "menu" ? "cafe-menu"
+        : step === "sum" && calculationScene === "dialogue" ? "cafe-calculate"
+          : step === "change" && changeScene === "dialogue" ? "cafe-change"
+            : null;
+    rememberDialogueScreen(screen);
+  }, [calculationScene, changeScene, queueScene, step]);
 
   useEffect(() => {
     // 방문 생성이 끝나기 전에 답을 눌러도 유실되지 않도록 같은 Promise를 공유한다.
@@ -156,6 +179,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
       }
     }
     cafeTalks.current[stage] = conversation;
+    rememberDialogueId(conversation.conversation_id);
     setCafeConversations((current) => ({ ...current, [stage]: conversation }));
     setMormiLines((lines) => ({ ...lines, [stage]: conversation.turn.mormi.text }));
     setDialogueError("");
@@ -182,8 +206,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
       queue_context?: { left_count: number; right_count: number };
       cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; budget?: number };
     },
-    /** true 면 서버가 새 회차 대화를 연다. 이미 끝낸 스테이지를 새 문제로 다시 풀 때 쓴다. */
-    restart: boolean,
+    startMode: DialogueStartMode,
   ) {
     setMormiLines((lines) => ({ ...lines, [stage]: undefined }));
     setCafeConversations((current) => ({ ...current, [stage]: undefined }));
@@ -201,11 +224,31 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     validatedStages.current[stage] = false;
     finalizedStages.current[stage] = false;
 
+    const startRequest = cafeDialogueStartRequests.current[stage] ?? {
+      input,
+      intent: createDialogueStartIntent(startMode),
+    };
+    cafeDialogueStartRequests.current[stage] = startRequest;
+
     const pending = (async () => {
       try {
         const id = visitId.current ?? await visitPromise.current;
         if (!id) throw new Error("카페 방문을 먼저 열어 주세요.");
-        return applyCafeConversation(stage, await startCafeDialogue(id, { ...input, restart }));
+        const conversation = await startCafeDialogue(id, { ...startRequest.input, ...startRequest.intent });
+        if (startRequest.intent.start_mode === "restart"
+            && (conversation.turn.task_index !== 0
+              || (reloadDialogueIdRef.current && conversation.conversation_id === reloadDialogueIdRef.current))) {
+          throw new Error("새 문제의 첫 대화를 불러오지 못했어요.");
+        }
+        if (cafeDialogueStartRequests.current[stage] === startRequest) {
+          delete cafeDialogueStartRequests.current[stage];
+        }
+        if (reloadDialogueStageRef.current === stage) {
+          reloadDialogueStageRef.current = null;
+          reloadDialogueIdRef.current = null;
+          onReloadRestarted?.();
+        }
+        return applyCafeConversation(stage, conversation);
       } catch (error: unknown) {
         setDialogueError(dialogueErrorMessage(error, "모르미 대화를 시작하지 못했어요."));
         return null;
@@ -318,7 +361,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
       openCafeDialogue("queue", {
         scenario_id: cafeScenarioByStation[0],
         queue_context: { left_count: counts.left, right_count: counts.right },
-      }, isReplay);
+      }, isReplay || reloadDialogueStageRef.current === "queue" ? "restart" : "resume");
       setStep("queue");
     }
     if (index === 1) {
@@ -330,7 +373,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
         openCafeDialogue("calculate", {
           scenario_id: cafeScenarioByStation[2],
           cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-        }, false);
+        }, reloadDialogueStageRef.current === "calculate" ? "restart" : "resume");
         setStep("sum");
       } else {
         const nextMormeyMenu = randomItem(menu);
@@ -341,7 +384,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
         openCafeDialogue("menu", {
           scenario_id: cafeScenarioByStation[1],
           cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
-        }, isReplay);
+        }, isReplay || reloadDialogueStageRef.current === "menu" ? "restart" : "resume");
         setStep("menu");
       }
     }
@@ -352,7 +395,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
       openCafeDialogue("change", {
         scenario_id: cafeScenarioByStation[3],
         cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
-      }, isReplay);
+      }, isReplay || reloadDialogueStageRef.current === "change" ? "restart" : "resume");
       setStep("change");
     }
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
@@ -380,7 +423,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     openCafeDialogue("calculate", {
       scenario_id: cafeScenarioByStation[2],
       cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-    }, calculationReplay);
+    }, calculationReplay ? "restart" : "resume");
     setStep("sum");
     window.scrollTo({ top: 0, behavior: "smooth" });
     captureMormeyEvent("cafe_station_started", { station_index: 2, station: cafeStations[1] });
@@ -478,7 +521,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     openCafeDialogue("menu", {
       scenario_id: cafeScenarioByStation[1],
       cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
-    }, true);
+    }, "restart");
     setStep("menu");
   }
 

@@ -252,11 +252,14 @@ export function recoverMormiConversation(conversationId: string) {
 }
 
 /** 운영 경로: 인증 토큰을 가진 FE → Spring BE → FastAPI AI. */
-export async function startHomeTeaching(learningSessionId: string) {
+export async function startHomeTeaching(
+  learningSessionId: string,
+  intent: { start_mode: "restart" | "resume"; request_id: string },
+) {
   const { apiRequest } = await import("./api-client");
   return apiRequest<MormiConversation>(
     `/v1/learning-sessions/${encodeURIComponent(learningSessionId)}/teaching`,
-    { method: "POST" },
+    { method: "POST", body: JSON.stringify(intent) },
   );
 }
 
@@ -266,8 +269,8 @@ export async function startCafeDialogue(
     scenario_id: "cafe_queue" | "cafe_budget_menu" | "cafe_menu_total" | "cafe_change";
     queue_context?: { left_count: number; right_count: number };
     cafe_context?: MormiCafeContext;
-    /** 이미 끝낸 스테이지를 다시 연습할 때 true. 서버가 새 회차 대화를 연다. */
-    restart?: boolean;
+    start_mode: "restart" | "resume";
+    request_id: string;
   },
 ) {
   const { apiRequest } = await import("./api-client");
