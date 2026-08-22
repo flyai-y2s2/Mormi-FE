@@ -370,6 +370,25 @@ export type DictionaryCardEnvelope = {
   card: DictionaryCardPayload;
 };
 
+/** GET /v1/learners/{learner_id}/star-notes 의 서버 저장 별노트 한 건. */
+export type StarNoteListItem = {
+  note_id: string;
+  skill_id: string;
+  text: string;
+  attribution: string;
+  attribution_label: string;
+  evidence: string;
+  scene: string;
+  scenario_id: string;
+  task_id: string;
+  created_at: string;
+};
+
+export type StarNoteListResponse = {
+  star_notes: StarNoteListItem[];
+  next_cursor?: string;
+};
+
 export type RetentionPolicy = "no_raw" | "30_days" | "90_days" | "permanent";
 
 export type LearnerConsent = {
@@ -597,6 +616,19 @@ export const api = {
 
   dictionaryForConversation(conversationId: string) {
     return apiRequest<DictionaryCardEnvelope>(`/v1/dialogue/conversations/${conversationId}/dictionary-card`);
+  },
+
+  /**
+   * BE가 저장하고 활성 상태로 유지한 본인 별노트만 최신순으로 읽는다.
+   * next_cursor는 서버가 준 값을 해석하거나 바꾸지 않고 다음 요청에 그대로 보낸다.
+   */
+  starNotes(learnerId: number, options: { limit?: number; cursor?: string; signal?: AbortSignal } = {}) {
+    const params = new URLSearchParams({ limit: String(options.limit ?? 20) });
+    if (options.cursor) params.set("cursor", options.cursor);
+    return apiRequest<StarNoteListResponse>(
+      `/v1/learners/${learnerId}/star-notes?${params.toString()}`,
+      { signal: options.signal },
+    );
   },
 
   getCafeVisit(visitId: string) {

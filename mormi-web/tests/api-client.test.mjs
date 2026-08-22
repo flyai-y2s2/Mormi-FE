@@ -11,9 +11,13 @@ globalThis.localStorage = {
 globalThis.window = { setTimeout, clearTimeout };
 
 let nextResponse = null;
-globalThis.fetch = async () => nextResponse();
+let lastRequest = null;
+globalThis.fetch = async (input, init) => {
+  lastRequest = { input: String(input), init };
+  return nextResponse();
+};
 
-const { apiRequest, setUnauthorizedHandler, storeSession, ApiError } =
+const { api, apiRequest, setUnauthorizedHandler, storeSession, ApiError } =
   await import("../app/api-client.ts");
 
 function respond(status, body) {
@@ -101,4 +105,16 @@ test("204 는 본문 없이 통과한다", async () => {
   nextResponse = respond(204);
 
   assert.equal(await apiRequest("/v1/auth/logout", { method: "POST" }), undefined);
+});
+
+test("별노트 다음 페이지는 서버 cursor를 바꾸지 않고 인증된 BE 경로로 요청한다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  nextResponse = respond(200, { star_notes: [], next_cursor: "note_older/+==" });
+
+  await api.starNotes(42, { limit: 20, cursor: "note_older/+==" });
+
+  assert.equal(lastRequest.input, "/api/be/v1/learners/42/star-notes?limit=20&cursor=note_older%2F%2B%3D%3D");
+  assert.equal(lastRequest.init.headers.authorization, "Bearer test-token");
+  assert.equal(lastRequest.init.method, undefined);
 });

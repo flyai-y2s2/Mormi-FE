@@ -32,6 +32,7 @@ import {
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 import { variedMoneyVisualAmounts } from "./money-visual";
 import { StarNote } from "./StarNote";
+import { StarNoteArchiveModal } from "./StarNoteArchiveModal";
 import { TeacherReportEntry } from "./TeacherReportEntry";
 import type { Problem, Session, Visual } from "./morami-content";
 
@@ -1242,6 +1243,7 @@ export function MoramiApp() {
   const [showOtherConcepts, setShowOtherConcepts] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
+  const [starNoteArchiveOpen, setStarNoteArchiveOpen] = useState(false);
   const [drillIndex, setDrillIndex] = useState(0);
   const [drillCorrect, setDrillCorrect] = useState(0);
   const [drillAttempts, setDrillAttempts] = useState(0);
@@ -1431,6 +1433,7 @@ export function MoramiApp() {
 
   /** 토큰이 만료·폐기됐을 때 돌아갈 자리. 화면에 남은 남의 진행도까지 함께 비운다. */
   const returnToAuthScreen = useCallback(() => {
+    setStarNoteArchiveOpen(false);
     setLearner(defaultLearner);
     setCompletedSessionIds([]);
     setCoinBalance(6000);
@@ -1943,6 +1946,7 @@ export function MoramiApp() {
           </nav>}
         </div>}
         <div className="top-actions">
+          {stage === "home" && <button className="star-note-archive-link" type="button" onClick={() => setStarNoteArchiveOpen(true)} aria-haspopup="dialog"><UiIcon name="star" size="small" />별노트</button>}
           <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
         </div>
@@ -2166,6 +2170,7 @@ export function MoramiApp() {
         expectedContentVersion={mormiConversation?.turn.dictionary_ref?.content_version}
         onClose={() => setDictionaryOpen(false)}
       />}
+      {starNoteArchiveOpen && <StarNoteArchiveModal learnerId={learner.id} onClose={() => setStarNoteArchiveOpen(false)} />}
     </main>
   );
 }

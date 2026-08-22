@@ -1904,3 +1904,38 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .collected-stars-card{min-height:0;padding:15px 16px}.collected-stars-card__stars{height:34px}.collected-stars-card__stars img{width:31px;height:31px}.collected-stars-card h3{margin:9px 0 4px;font-size:19px}.collected-stars-card p{font-size:14px}
   .collected-stars-empty{min-height:300px}.collected-stars-empty img{width:125px;height:130px}
 }
+
+/* 별노트 모아보기: Spring BE가 저장한 활성 별노트만 최신순으로 표시한다. */
+.star-note-archive-link{min-height:44px;padding:0 15px;display:inline-flex;align-items:center;gap:7px;border:2px solid #ead98f;border-radius:15px;color:#65521e;background:#fff9dc;box-shadow:0 4px 0 #ddc872;cursor:pointer;font:inherit;font-size:14px;font-weight:950}
+.star-note-archive-link:hover{transform:translateY(-1px);box-shadow:0 5px 0 #ddc872}
+.star-note-archive-link:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
+.star-note-archive-backdrop{z-index:126;padding:clamp(9px,3vw,30px);background:rgba(37,48,42,.48)}
+.star-note-archive-modal{width:min(1040px,100%);max-height:min(92svh,860px);padding:clamp(21px,3vw,36px);position:relative;display:flex;flex-direction:column;overflow:hidden;border:5px solid #8fd2b2;border-radius:32px;background:#fffdf7;box-shadow:0 10px 0 #67b48e,0 28px 70px rgba(39,78,59,.28)}
+.star-note-archive-close{width:42px;height:42px;position:absolute;z-index:2;top:15px;right:17px;border:0;border-radius:50%;color:#286247;background:#e5f6ed;cursor:pointer;font-size:27px;font-weight:950;line-height:1}
+.star-note-archive-close:focus-visible,.star-note-archive-modal button:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
+.star-note-archive-modal>header{padding-right:50px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px}
+.star-note-archive-modal>header>img{width:68px;height:68px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(118,87,15,.18))}
+.star-note-archive-modal>header p{margin:0;color:#388765;font-size:14px;font-weight:950}
+.star-note-archive-modal>header h2{margin:1px 0;color:#28463a;font-size:clamp(28px,4vw,43px);line-height:1.12}
+.star-note-archive-modal>header span{color:#718078;font-size:14px;font-weight:800}
+.star-note-archive-refresh{min-height:44px;padding:0 15px;border:2px solid #cce8d9;border-radius:14px;color:#2d7455;background:#f3fbf6;cursor:pointer;font:inherit;font-size:13px;font-weight:900}.star-note-archive-refresh:disabled{opacity:.52;cursor:default}
+.star-note-archive-grid{min-height:0;margin:23px -5px 4px;padding:5px 5px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;gap:14px;overflow:auto;overscroll-behavior:contain}
+.star-note-archive-card{min-width:0;min-height:220px;height:max-content;padding:19px 18px;display:flex;flex-direction:column;border:3px solid #d8eadf;border-radius:23px;background:#fff;box-shadow:0 6px 0 #c9dfd2}
+.star-note-archive-card__meta{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#73847b;font-size:11px;font-weight:800}.star-note-archive-card__meta span{padding:6px 9px;border-radius:999px;color:#2f7557;background:#e7f6ed;font-size:12px;font-weight:950}.star-note-archive-card__meta time{text-align:right}
+.star-note-archive-card>p{margin:18px 0;color:#29483b;font-size:18px;font-weight:850;line-height:1.55;overflow-wrap:anywhere;word-break:keep-all}
+.star-note-archive-card>footer{margin-top:auto;padding-top:13px;display:grid;gap:4px;border-top:1px solid #e4eee8;color:#5f756a;font-size:12px;font-weight:850}.star-note-archive-card>footer small{color:#96a29c;font-size:10px;overflow-wrap:anywhere}
+.star-note-archive-state{min-height:390px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.star-note-archive-state>img{width:140px;height:148px;object-fit:contain}.star-note-archive-state h3{max-width:540px;margin:10px 0 6px;color:#29483b;font-size:clamp(21px,3vw,28px);line-height:1.4;word-break:keep-all}.star-note-archive-state p{margin:0;color:#718078;font-weight:750}.star-note-archive-state button,.star-note-archive-more button{min-height:50px;margin-top:20px;padding:0 22px;border:0;border-radius:15px;color:#fff;background:#4cab7d;box-shadow:0 5px 0 #32845e;cursor:pointer;font:inherit;font-size:15px;font-weight:950}.star-note-archive-state .star-note-archive-return{margin-top:12px;color:#426557;background:#eef7f2;box-shadow:0 4px 0 #cee5d9}
+.star-note-archive-spinner{width:52px;height:52px;border:7px solid #dff1e7;border-top-color:#3e9f72;border-radius:50%;animation:starNoteArchiveSpin .8s linear infinite}@keyframes starNoteArchiveSpin{to{transform:rotate(360deg)}}
+.star-note-archive-more{min-height:67px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.star-note-archive-more p{margin:0;color:#9b5147;font-size:13px;font-weight:850}.star-note-archive-more button{min-width:230px;margin-top:9px}.star-note-archive-more button:disabled{opacity:.58;cursor:wait}.star-note-archive-more>span{color:#718078;font-size:13px;font-weight:850}
+
+@media(max-width:800px){
+  .star-note-archive-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .star-note-archive-modal>header{grid-template-columns:auto minmax(0,1fr)}
+  .star-note-archive-refresh{grid-column:1/-1;width:max-content;margin-left:auto}
+}
+@media(max-width:540px){
+  .star-note-archive-link{width:44px;min-width:44px;padding:0;justify-content:center;font-size:0}.star-note-archive-link .ui-icon{margin:0}
+  .star-note-archive-backdrop{align-items:end;padding:7px}.star-note-archive-modal{max-height:94svh;padding:21px 14px 24px;border-width:4px;border-radius:28px}.star-note-archive-modal>header{padding-right:42px;gap:9px}.star-note-archive-modal>header>img{width:50px;height:50px}.star-note-archive-modal>header h2{font-size:27px}.star-note-archive-modal>header span{font-size:11px}.star-note-archive-refresh{min-height:40px}
+  .star-note-archive-grid{margin-top:15px;grid-template-columns:1fr;gap:11px}.star-note-archive-card{min-height:170px;padding:16px}.star-note-archive-card>p{margin:14px 0;font-size:16px}
+  .star-note-archive-state{min-height:340px}.star-note-archive-state>img{width:120px;height:128px}
+}
