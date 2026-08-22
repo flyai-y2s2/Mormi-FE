@@ -34,7 +34,7 @@ test("server-renders the Morami onboarding", async () => {
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
-  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, stageComplete, layout] = await Promise.all([
+  const [curriculum, original, app, cafe, journey, css, cafeMenu, talkStage, stageVisual, dialogueUi, starNote, stageComplete, layout, moneyVisual] = await Promise.all([
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -48,6 +48,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
     readFile(new URL("../app/StarNote.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeStageComplete.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/money-visual.ts", import.meta.url), "utf8"),
   ]);
   const dialogueContract = await readFile(new URL("../app/mormi-dialogue.ts", import.meta.url), "utf8");
   const aiTest = await readFile(new URL("../app/ai-test/AiDialogueTest.tsx", import.meta.url), "utf8");
@@ -260,7 +261,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /export const transferTarget = 3/);
   assert.match(app, /varyProblem/);
   assert.match(app, /const isCurrencyVisual = !problem\.visual\.labels\?\.length/);
-  assert.match(app, /\? problem\.visual\.amounts\s*:\s*problem\.visual\.amounts\.map/);
+  assert.match(app, /variedMoneyVisualAmounts\(problem\.visual\.amounts, !isCurrencyVisual, seed\)/);
+  assert.match(moneyVisual, /currencyVisualDenominations = \[100, 500, 1000, 5000\]/);
   assert.match(app, /shuffleProblemAnswers/);
   assert.match(app, /ensureFourAnswers/);
   assert.match(app, /answers\.length >= 4/);
