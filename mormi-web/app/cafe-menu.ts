@@ -21,6 +21,12 @@ type MenuContractContext = {
   mormi_menu_id: string;
   budget?: number;
 };
+type CafeProblemStage = "queue" | "menu" | "calculate" | "change";
+type CafeProblemScenarioContext = {
+  queue_context?: { left_count: number; right_count: number };
+  cafe_context?: MenuContractContext;
+};
+type CafeProblemVisual = { type: string; data: Record<string, unknown> };
 
 export type MenuSelectionValidation =
   | { valid: true; mormiMenuId: string; childMenuId: string; budget: number; total: number }
@@ -32,6 +38,76 @@ export const menuItemsForAi = menu.map(({ id, name, price, image }) => ({
   price,
   image_url: image,
 }));
+
+function objectValue(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function contractMenuBoard(context: MenuContractContext) {
+  if (context.menu_items.length !== menu.length) return null;
+  const byId = new Map<string, MenuContractItem>();
+  for (const item of context.menu_items) {
+    if (byId.has(item.id)) return null;
+    byId.set(item.id, item);
+  }
+  const matches = menu.every((item) => byId.get(item.id)?.price === item.price);
+  return matches ? byId : null;
+}
+
+function visualMenuMatches(value: unknown, board: Map<string, MenuContractItem>, expectedId?: string) {
+  const item = objectValue(value);
+  if (!item || typeof item.id !== "string" || typeof item.price !== "number") return false;
+  return (!expectedId || item.id === expectedId) && board.get(item.id)?.price === item.price;
+}
+
+/** 서버 컨텍스트와 AI 시각자료가 아이에게 보여 줄 한 문제를 가리키는지 렌더링 전에 확인한다. */
+export function cafeProblemContextMatches(
+  stage: CafeProblemStage,
+  scenarioContext: CafeProblemScenarioContext | undefined,
+  visual: CafeProblemVisual,
+) {
+  if (stage === "queue") {
+    const queue = scenarioContext?.queue_context;
+    if (!queue || !((queue.left_count === 2 && queue.right_count === 1)
+      || (queue.left_count === 1 && queue.right_count === 2))) return false;
+    if (visual.type !== "cafe_queues") return true;
+    return visual.data.left_people === queue.left_count && visual.data.right_people === queue.right_count;
+  }
+
+  const context = scenarioContext?.cafe_context;
+  if (!context) return false;
+  const board = contractMenuBoard(context);
+  if (!board || !board.has(context.mormi_menu_id)) return false;
+  if (stage === "menu" && ![7000, 8000].includes(context.budget ?? -1)) return false;
+
+  if (visual.type === "cafe_menu") {
+    const visualItems = Array.isArray(visual.data.menu_items) ? visual.data.menu_items : [];
+    if (visualItems.length !== context.menu_items.length
+      || !visualItems.every((item) => visualMenuMatches(item, board))) return false;
+    const mormiPick = objectValue(visual.data.mormi_pick);
+    if (mormiPick?.id !== context.mormi_menu_id) return false;
+    const childPick = visual.data.child_pick == null ? null : objectValue(visual.data.child_pick);
+    if (visual.data.child_pick != null && (!childPick || !visualMenuMatches(childPick, board))) return false;
+    if (typeof context.budget === "number" && visual.data.budget !== context.budget) return false;
+  }
+
+  if (["cafe_calculation", "money_calculation", "joint_money_calculation", "vertical_equation"].includes(visual.type)) {
+    const mormiMenu = objectValue(visual.data.mormi_menu);
+    if (mormiMenu && !visualMenuMatches(mormiMenu, board, context.mormi_menu_id)) return false;
+    const childMenu = objectValue(visual.data.child_menu);
+    if (childMenu && !visualMenuMatches(childMenu, board)) return false;
+    if (visual.type === "cafe_calculation" && stage === "calculate") {
+      if (visual.data.operation !== "addition" || !mormiMenu || !childMenu
+        || visual.data.left !== mormiMenu.price || visual.data.right !== childMenu.price) return false;
+    }
+    if (visual.data.operation === "subtraction") {
+      if (visual.data.left !== 10000 || !mormiMenu || visual.data.right !== mormiMenu.price) return false;
+    }
+  }
+  return true;
+}
 
 /** AI 시각자료가 넘겨준 메뉴에 그림이 비어 있으면 메뉴판에서 같은 id 를 찾아 채운다. */
 export function menuImage(id: unknown, imageUrl?: unknown) {

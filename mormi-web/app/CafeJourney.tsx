@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
-import { api } from "./api-client";
-import { calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, validateMenuSelectionContext } from "./cafe-menu";
+import { api, ApiError } from "./api-client";
+import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, validateMenuSelectionContext } from "./cafe-menu";
 import { CafeStageComplete } from "./CafeStageComplete";
 import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
@@ -47,6 +47,20 @@ type QueueScene = "dialogue" | "note" | "thanks" | "clear";
 type CalculationScene = "dialogue" | "thanks" | "clear";
 type ChangeScene = "dialogue" | "thanks" | "clear";
 const budgets = [7000, 8000] as const;
+const cafeProblemContractErrorCodes = new Set([
+  "queue_count_range",
+  "queue_count_equal",
+  "menu_unknown",
+  "menu_items_duplicate",
+  "menu_price_mismatch",
+  "mormi_menu_unknown",
+  "menu_duplicate",
+  "budget",
+]);
+
+function isCafeProblemContractError(error: unknown) {
+  return error instanceof ApiError && cafeProblemContractErrorCodes.has(error.code);
+}
 
 /** 모르미 대화가 아직 첫 줄을 보내기 전에 쓰는 기본 문구. */
 const fallbackLines: Record<CafeStage, string> = {
@@ -162,7 +176,19 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     visitPromise.current = pending;
   }, [activeVisitId]);
 
+  function showProblemRecovery(stage: CafeStage) {
+    delete cafeTalks.current[stage];
+    setCafeConversations((current) => ({ ...current, [stage]: undefined }));
+    setMormiLines((current) => ({ ...current, [stage]: undefined }));
+    setDialogueError("");
+    setProblemContextError(stage);
+  }
+
   function applyCafeConversation(stage: CafeStage, conversation: MormiConversation) {
+    if (!cafeProblemContextMatches(stage, conversation.scenario_context, conversation.turn.visual)) {
+      showProblemRecovery(stage);
+      return null;
+    }
     const restoredQueue = conversation.scenario_context?.queue_context;
     if (stage === "queue" && restoredQueue
         && Number.isInteger(restoredQueue.left_count)
@@ -214,6 +240,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setDialogueInputs((current) => ({ ...current, [stage]: "" }));
     setHelpVisibleStages((current) => ({ ...current, [stage]: false }));
     setHelpLoadingStage(null);
+    setProblemContextError(null);
     if (stage === "queue") setQueueChoiceFallbackKey(null);
     if (stage === "calculate") setCalculationScene("dialogue");
     if (stage === "change") {
@@ -250,7 +277,11 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         }
         return applyCafeConversation(stage, conversation);
       } catch (error: unknown) {
-        setDialogueError(dialogueErrorMessage(error, "모르미 대화를 시작하지 못했어요."));
+        if (cafeDialogueStartRequests.current[stage] === startRequest) {
+          delete cafeDialogueStartRequests.current[stage];
+        }
+        if (isCafeProblemContractError(error)) showProblemRecovery(stage);
+        else setDialogueError(dialogueErrorMessage(error, "모르미 대화를 시작하지 못했어요."));
         return null;
       }
     })();
@@ -270,7 +301,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       });
       return applyCafeConversation(stage, next);
     } catch (error: unknown) {
-      setDialogueError(dialogueErrorMessage(error, "답을 보내지 못했어요."));
+      if (isCafeProblemContractError(error)) showProblemRecovery(stage);
+      else setDialogueError(dialogueErrorMessage(error, "답을 보내지 못했어요."));
       return null;
     } finally {
       dialogueRequestInFlight.current = false;
@@ -513,16 +545,49 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     void answerMormi(stage, { type: "choice", choice_ids: [choice.id] });
   }
 
-  function retryMenuProblem() {
+  function retryCafeProblem(stage: CafeStage) {
+    if (stage === "queue") {
+      const counts = randomQueueCounts();
+      setQueueCounts(counts);
+      setQueueScene("dialogue");
+      openCafeDialogue("queue", {
+        scenario_id: cafeScenarioByStation[0],
+        queue_context: { left_count: counts.left, right_count: counts.right },
+      }, "restart");
+      setStep("queue");
+      return;
+    }
+
     const nextMormeyMenu = randomItem(menu);
-    const nextBudget = randomItem(budgets);
-    setMormeyMenuId(nextMormeyMenu.id);
-    setMenuBudget(nextBudget);
-    openCafeDialogue("menu", {
-      scenario_id: cafeScenarioByStation[1],
-      cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
+    if (stage === "menu") {
+      const nextBudget = randomItem(budgets);
+      setMormeyMenuId(nextMormeyMenu.id);
+      setMenuBudget(nextBudget);
+      openCafeDialogue("menu", {
+        scenario_id: cafeScenarioByStation[1],
+        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
+      }, "restart");
+      setStep("menu");
+      return;
+    }
+
+    if (stage === "calculate") {
+      setCalculationScene("dialogue");
+      openCafeDialogue("calculate", {
+        scenario_id: cafeScenarioByStation[2],
+        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id },
+      }, "restart");
+      setStep("sum");
+      return;
+    }
+
+    setChangeMenuId(nextMormeyMenu.id);
+    setChangeScene("dialogue");
+    openCafeDialogue("change", {
+      scenario_id: cafeScenarioByStation[3],
+      cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id },
     }, "restart");
-    setStep("menu");
+    setStep("change");
   }
 
   return (
@@ -749,7 +814,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         />
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
-      {problemContextError === "menu" && <div className="cafe-problem-recovery" role="alert"><p>메뉴와 예산 정보가 달라졌어요. 새 문제를 불러와 주세요.</p><button type="button" onClick={retryMenuProblem}>문제 다시 불러오기</button></div>}
+      {problemContextError && <div className="cafe-problem-recovery" role="alert"><p>화면과 문제 정보가 달라졌어요. 새 문제를 불러와 주세요.</p><button type="button" onClick={() => retryCafeProblem(problemContextError)}>문제 다시 불러오기</button></div>}
       {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
         <div className="cafe-budget-modal">
           <Image src="/morami/confused-cutout.png" alt="다시 골라 달라고 부탁하는 모르미" width={150} height={150} unoptimized />

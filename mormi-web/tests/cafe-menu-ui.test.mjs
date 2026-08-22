@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { calculationDialogueLine, menu, menuChoiceById, menuDisplayName, menuPairTotal, validateMenuSelectionContext } from "../app/cafe-menu.ts";
+import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuDisplayName, menuPairTotal, validateMenuSelectionContext } from "../app/cafe-menu.ts";
 import { choiceIdForTypedAnswer } from "../app/cafe-choice-input.ts";
 
 test("connects the clicked menu to the server choice by exact id", () => {
@@ -60,6 +60,68 @@ test("rejects duplicate or mismatched display context instead of guessing a budg
   assert.deepEqual(validateMenuSelectionContext(undefined, problem.visual, "cookie"), { valid: false, reason: "missing" });
 });
 
+test("renders only queue counts represented by the fixed queue image", () => {
+  const exact = {
+    scenario: { queue_context: { left_count: 2, right_count: 1 } },
+    visual: { type: "cafe_queues", data: { left_people: 2, right_people: 1 } },
+  };
+  assert.equal(cafeProblemContextMatches("queue", exact.scenario, exact.visual), true);
+  assert.equal(cafeProblemContextMatches("queue", exact.scenario, {
+    ...exact.visual,
+    data: { left_people: 1, right_people: 2 },
+  }), false);
+  assert.equal(cafeProblemContextMatches("queue", {
+    queue_context: { left_count: 3, right_count: 1 },
+  }, exact.visual), false);
+});
+
+test("rejects menu price, duplicate, and visual drift before rendering", () => {
+  const exact = menuProblem("milk", 7000);
+  const scenario = { cafe_context: exact.context };
+  const visual = { type: "cafe_menu", data: exact.visual };
+  assert.equal(cafeProblemContextMatches("menu", scenario, visual), true);
+
+  const wrongPrice = exact.context.menu_items.map((item) => item.id === "cookie" ? { ...item, price: 2500 } : item);
+  assert.equal(cafeProblemContextMatches("menu", {
+    cafe_context: { ...exact.context, menu_items: wrongPrice },
+  }, visual), false);
+  assert.equal(cafeProblemContextMatches("menu", {
+    cafe_context: { ...exact.context, menu_items: [...exact.context.menu_items.slice(0, -1), exact.context.menu_items[0]] },
+  }, visual), false);
+  assert.equal(cafeProblemContextMatches("menu", scenario, {
+    type: "cafe_menu",
+    data: { ...exact.visual, budget: 8000 },
+  }), false);
+});
+
+test("keeps calculation and change visuals on the canonical menu prices", () => {
+  const context = { cafe_context: { menu_items: menu, mormi_menu_id: "sandwich" } };
+  const exactCalculation = {
+    type: "cafe_calculation",
+    data: {
+      operation: "addition",
+      left: 5000,
+      right: 2000,
+      mormi_menu: menu.find((item) => item.id === "sandwich"),
+      child_menu: menu.find((item) => item.id === "cookie"),
+    },
+  };
+  assert.equal(cafeProblemContextMatches("calculate", context, exactCalculation), true);
+  assert.equal(cafeProblemContextMatches("calculate", context, {
+    ...exactCalculation,
+    data: { ...exactCalculation.data, right: 3000 },
+  }), false);
+  assert.equal(cafeProblemContextMatches("change", context, {
+    type: "cafe_calculation",
+    data: {
+      operation: "subtraction",
+      left: 10000,
+      right: 4500,
+      mormi_menu: menu.find((item) => item.id === "sandwich"),
+    },
+  }), false);
+});
+
 test("lets queue learners answer before revealing server choices", () => {
   const choices = [
     { id: "left", label: "왼쪽" },
@@ -86,7 +148,9 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(journey, /choice_ids: \[choice\.id\]/);
   assert.match(journey, /validateMenuSelectionContext\(context, conversation\.turn\.visual\.data, choice\.id\)/);
   assert.match(journey, /validation\.total > validation\.budget[\s\S]{0,500}setBudgetModalOpen\(true\)/);
-  assert.match(journey, /setProblemContextError\("menu"\)/);
+  assert.match(journey, /cafeProblemContextMatches\(stage, conversation\.scenario_context, conversation\.turn\.visual\)/);
+  assert.match(journey, /isCafeProblemContractError\(error\)/);
+  assert.match(journey, /retryCafeProblem\(problemContextError\)/);
   assert.match(journey, /문제 다시 불러오기/);
   assert.match(journey, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(journey, /const budgets = \[7000, 8000\] as const/);
