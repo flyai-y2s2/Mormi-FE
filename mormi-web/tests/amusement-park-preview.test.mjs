@@ -21,14 +21,31 @@ test("본전은 4번, 자유이용권 이득은 5번부터로 구분한다", () 
 test("FE 미리보기는 서버 판정을 흉내 내지 않고 원문 인용·전이·별노트 장면만 제공한다", () => {
   assert.match(component, /FE 계약 미리보기/);
   assert.match(component, /explanation\.trim\(\)/);
-  assert.match(component, /전이 성공/);
+  assert.match(component, /stage\.transfer\.prompt/);
   assert.match(component, /별노트/);
   assert.doesNotMatch(component, /api\./);
 });
 
-test("놀이동산에서 쓰는 생성 이미지 4개가 프로젝트에 존재한다", async () => {
-  for (const file of ["park-map.png", "ticket-booth.png", "churros-split.png", "ride-pass.png"]) {
+test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 존재한다", async () => {
+  for (const file of [
+    "park-map.png",
+    "ticket-booth.png",
+    "churros-split.png",
+    "ride-pass.png",
+    "ticket-elements-v2.png",
+    "churros-elements-v2.png",
+    "pass-elements-v2.png",
+  ]) {
     await access(new URL(`../public/amusement-park/${file}`, import.meta.url));
   }
 });
 
+test("미션은 카페 대화 흐름과 로그인 이름을 쓰고 선후배 호칭과 중복 질문을 렌더링하지 않는다", () => {
+  assert.match(component, /readStoredLearner/);
+  assert.match(component, /nameWithSubjectParticle/);
+  assert.match(component, /cafe-talk-bubble/);
+  assert.match(component, /cafe-talk-stage/);
+  assert.match(component, /cafe-talk-answer/);
+  assert.doesNotMatch(component, /선배|후배/);
+  assert.doesNotMatch(component, /\{stage\.prompt\}/);
+});

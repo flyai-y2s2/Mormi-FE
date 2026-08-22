@@ -27,6 +27,7 @@ export type AmusementStageContract = {
   skill: "multiply" | "divide" | "mixed";
   strategy: string;
   image_url: string;
+  element_image_url: string;
   mormi_misconception: string;
   prompt: string;
   facts: AmusementFact[];
@@ -54,8 +55,9 @@ export const amusementParkPreview: AmusementVisitContract = {
       skill: "multiply",
       strategy: "같은 돈이 여러 번이면 곱하면 돼",
       image_url: "/amusement-park/ticket-booth.png",
+      element_image_url: "/amusement-park/ticket-elements-v2.png",
       mormi_misconception: "표가 네 장이면 가격도 네 번 봐야 하나? 그냥 3,000원만 내면 되는 줄 알았어.",
-      prompt: "1인 3,000원인 표를 우리 일행 2명 모두 사려면 얼마를 내야 하는지 모르미에게 설명해 주세요.",
+      prompt: "표 두 장의 값을 어떻게 구하는지 알려줄래?",
       facts: [
         { key: "ticket_price", label: "1인 입장료", value: 3000, unit: "원" },
         { key: "party_count", label: "우리 일행", value: 2, unit: "명" },
@@ -75,8 +77,9 @@ export const amusementParkPreview: AmusementVisitContract = {
       skill: "divide",
       strategy: "똑같이 나누고, 거꾸로 곱해서 확인해",
       image_url: "/amusement-park/churros-split.png",
+      element_image_url: "/amusement-park/churros-elements-v2.png",
       mormi_misconception: "먼저 돈 내는 사람이 조금 더 내도 되지 않아? 똑같이 내는 방법은 잘 모르겠어.",
-      prompt: "9,000원인 츄러스 세트를 3명이 똑같이 내려면 한 명이 얼마씩 내야 하는지 설명해 주세요.",
+      prompt: "츄러스 값을 똑같이 나누는 방법을 알려줄래?",
       facts: [
         { key: "snack_total", label: "간식 합계", value: 9000, unit: "원" },
         { key: "payer_count", label: "나눠 낼 사람", value: 3, unit: "명" },
@@ -96,8 +99,9 @@ export const amusementParkPreview: AmusementVisitContract = {
       skill: "mixed",
       strategy: "몇 번이면 같아지는지 먼저 찾아",
       image_url: "/amusement-park/ride-pass.png",
+      element_image_url: "/amusement-park/pass-elements-v2.png",
       mormi_misconception: "자유이용권이 더 비싸니까 무조건 더 좋은 거 아니야? 비싼 게 더 이득일 것 같아.",
-      prompt: "1회 2,500원이고 자유이용권이 10,000원일 때, 몇 번 타면 본전이고 언제부터 이득인지 설명해 주세요.",
+      prompt: "몇 번 타면 두 가격이 같아지는지 알려줄래?",
       facts: [
         { key: "single_ride_price", label: "놀이기구 1회", value: 2500, unit: "원" },
         { key: "day_pass_price", label: "자유이용권", value: 10000, unit: "원" },
@@ -111,4 +115,3 @@ export const amusementParkPreview: AmusementVisitContract = {
     },
   ],
 };
-
