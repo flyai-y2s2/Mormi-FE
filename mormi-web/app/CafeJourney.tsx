@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api } from "./api-client";
-import { calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, menuPairTotal } from "./cafe-menu";
+import { calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, validateMenuSelectionContext } from "./cafe-menu";
 import { CafeStageComplete } from "./CafeStageComplete";
 import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
@@ -75,8 +75,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [calculationScene, setCalculationScene] = useState<CalculationScene>("dialogue");
   const [changeScene, setChangeScene] = useState<ChangeScene>("dialogue");
-  const [menuBudget, setMenuBudget] = useState<number>(8000);
-  const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
+  const [, setMenuBudget] = useState<number>(8000);
+  const [, setMormeyMenuId] = useState<string>("strawberry-juice");
   // 메뉴 고르기에서 아이가 고른 메뉴. 대화가 검증한 사실에서만 받아 축하 장면에 쓴다.
   // 거스름돈은 완료 화면의 분석 이벤트가 주문 금액을 알아야 해서 화면도 함께 기억한다.
   // 계산 스테이지는 문제 전체를 turn.visual 이 들고 오므로 따로 둘 필요가 없다.
@@ -89,6 +89,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
   const [queueChoiceFallbackKey, setQueueChoiceFallbackKey] = useState<string | null>(null);
   const [changeChoiceFallbackKey, setChangeChoiceFallbackKey] = useState<string | null>(null);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [problemContextError, setProblemContextError] = useState<CafeStage | null>(null);
   const dialogueRequestInFlight = useRef(false);
 
   // 모르미가 건네는 말. Mormi-AI 가 비었거나 실패하면 값이 비고,
@@ -158,6 +159,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     setCafeConversations((current) => ({ ...current, [stage]: conversation }));
     setMormiLines((lines) => ({ ...lines, [stage]: conversation.turn.mormi.text }));
     setDialogueError("");
+    setProblemContextError(null);
     if (conversation.stage_progress) {
       visitStage.current = conversation.stage_progress.completed
         ? conversation.stage_progress.next_stage
@@ -251,15 +253,19 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
         setQueueScene("thanks");
       }
     } else if (stage === "menu") {
-      const picked = cafeTalks.current.menu?.turn.completion?.verified_facts?.child_menu_id;
-      const childMenu = menu.find((item) => item.id === picked);
-      const mormeyPick = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
-      captureMormeyEvent("cafe_menu_selected", {
-        menu_ids: [mormeyPick.id, childMenu?.id ?? ""].join(","),
-        total: mormeyPick.price + (childMenu?.price ?? 0),
-        budget: menuBudget,
-        over_budget: false,
-      });
+      const conversation = cafeTalks.current.menu;
+      const context = conversation?.scenario_context?.cafe_context;
+      const picked = conversation?.turn.completion?.verified_facts?.child_menu_id;
+      const mormeyPick = context?.menu_items.find((item) => item.id === context.mormi_menu_id);
+      const childMenu = context?.menu_items.find((item) => item.id === picked);
+      if (context && typeof context.budget === "number" && mormeyPick && childMenu) {
+        captureMormeyEvent("cafe_menu_selected", {
+          menu_ids: [mormeyPick.id, childMenu.id].join(","),
+          total: mormeyPick.price + childMenu.price,
+          budget: context.budget,
+          over_budget: false,
+        });
+      }
       finishMenuStory();
     } else if (stage === "calculate") {
       if (!replaying) setJourneyProgress((progress) => Math.max(progress, 2));
@@ -439,18 +445,21 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
 
     if (stage === "menu") {
       const context = conversation.scenario_context?.cafe_context;
-      const mormiMenuId = context?.mormi_menu_id ?? mormeyMenuId;
-      const budget = context?.budget ?? menuBudget;
-      const total = menuPairTotal(mormiMenuId, choice.id);
-      if (total === null) {
-        setDialogueError("메뉴 가격을 확인하지 못했어요. 다른 메뉴를 골라 주세요.");
+      const validation = validateMenuSelectionContext(context, conversation.turn.visual.data, choice.id);
+      if (!validation.valid) {
+        if (validation.reason === "duplicate") {
+          setDialogueError("모르미가 고른 메뉴 말고 다른 메뉴를 골라 주세요.");
+        } else {
+          setDialogueError("");
+          setProblemContextError("menu");
+        }
         return;
       }
-      if (total > budget) {
+      if (validation.total > validation.budget) {
         captureMormeyEvent("cafe_menu_selected", {
-          menu_ids: [mormiMenuId, choice.id].join(","),
-          total,
-          budget,
+          menu_ids: [validation.mormiMenuId, validation.childMenuId].join(","),
+          total: validation.total,
+          budget: validation.budget,
           over_budget: true,
         });
         setBudgetModalOpen(true);
@@ -459,6 +468,18 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
     }
 
     void answerMormi(stage, { type: "choice", choice_ids: [choice.id] });
+  }
+
+  function retryMenuProblem() {
+    const nextMormeyMenu = randomItem(menu);
+    const nextBudget = randomItem(budgets);
+    setMormeyMenuId(nextMormeyMenu.id);
+    setMenuBudget(nextBudget);
+    openCafeDialogue("menu", {
+      scenario_id: cafeScenarioByStation[1],
+      cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
+    }, true);
+    setStep("menu");
   }
 
   return (
@@ -685,6 +706,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, onBack, o
         />
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
+      {problemContextError === "menu" && <div className="cafe-problem-recovery" role="alert"><p>메뉴와 예산 정보가 달라졌어요. 새 문제를 불러와 주세요.</p><button type="button" onClick={retryMenuProblem}>문제 다시 불러오기</button></div>}
       {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
         <div className="cafe-budget-modal">
           <Image src="/morami/confused-cutout.png" alt="다시 골라 달라고 부탁하는 모르미" width={150} height={150} unoptimized />

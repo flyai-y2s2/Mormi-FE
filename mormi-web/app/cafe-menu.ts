@@ -15,6 +15,17 @@ export type CafeMenuChoice = {
   disabled?: boolean | null;
 };
 
+type MenuContractItem = { id: string; price: number };
+type MenuContractContext = {
+  menu_items: readonly MenuContractItem[];
+  mormi_menu_id: string;
+  budget?: number;
+};
+
+export type MenuSelectionValidation =
+  | { valid: true; mormiMenuId: string; childMenuId: string; budget: number; total: number }
+  | { valid: false; reason: "missing" | "mismatch" | "duplicate" };
+
 export const menuItemsForAi = menu.map(({ id, name, price, image }) => ({
   id,
   name,
@@ -51,4 +62,58 @@ export function menuPairTotal(mormiMenuId: string, childMenuId: string) {
   const mormiMenu = menu.find((item) => item.id === mormiMenuId);
   const childMenu = menu.find((item) => item.id === childMenuId);
   return mormiMenu && childMenu ? mormiMenu.price + childMenu.price : null;
+}
+
+/**
+ * 아이에게 보여 준 메뉴와 서버가 판정할 scenario_context가 같은 문제인지 확인한다.
+ * 하나라도 다르면 로컬 가격으로 추측하지 않고 문제를 다시 받는다.
+ */
+export function validateMenuSelectionContext(
+  context: MenuContractContext | undefined,
+  visualData: Record<string, unknown>,
+  childMenuId: string,
+): MenuSelectionValidation {
+  if (!context || typeof context.budget !== "number") return { valid: false, reason: "missing" };
+  if (context.mormi_menu_id === childMenuId) return { valid: false, reason: "duplicate" };
+
+  const contextById = new Map(context.menu_items.map((item) => [item.id, item]));
+  const mormiItem = contextById.get(context.mormi_menu_id);
+  const childItem = contextById.get(childMenuId);
+  if (!mormiItem || !childItem) return { valid: false, reason: "mismatch" };
+
+  const visualPick = visualData.mormi_pick;
+  const visualPickId = visualPick && typeof visualPick === "object" && !Array.isArray(visualPick)
+    ? (visualPick as { id?: unknown }).id
+    : undefined;
+  const visualItems = Array.isArray(visualData.menu_items)
+    ? visualData.menu_items.filter((item): item is MenuContractItem => Boolean(
+      item && typeof item === "object" && !Array.isArray(item)
+      && typeof (item as MenuContractItem).id === "string"
+      && typeof (item as MenuContractItem).price === "number",
+    ))
+    : [];
+  const visualById = new Map(visualItems.map((item) => [item.id, item]));
+  const canonicalById = new Map(menu.map((item) => [item.id, item]));
+  const idsToVerify = [context.mormi_menu_id, childMenuId];
+  const contractMatches = idsToVerify.every((id) => {
+    const contextItem = contextById.get(id);
+    const visualItem = visualById.get(id);
+    const canonicalItem = canonicalById.get(id as CafeMenuItem["id"]);
+    return Boolean(contextItem && visualItem && canonicalItem
+      && contextItem.price === visualItem.price
+      && contextItem.price === canonicalItem.price);
+  });
+  if (visualPickId !== context.mormi_menu_id
+    || visualData.budget !== context.budget
+    || !contractMatches) {
+    return { valid: false, reason: "mismatch" };
+  }
+
+  return {
+    valid: true,
+    mormiMenuId: context.mormi_menu_id,
+    childMenuId,
+    budget: context.budget,
+    total: mormiItem.price + childItem.price,
+  };
 }

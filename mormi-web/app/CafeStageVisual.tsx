@@ -90,8 +90,8 @@ export function CafeStageVisual({
               key={String(item.id)}
               data-choice-id={choice?.id}
               className={["cafe-talk-card", "is-menu-choice", mormiSelected ? "is-mormi" : "", childSelected ? "is-child" : ""].filter(Boolean).join(" ")}
-              disabled={!choice || sending}
-              onClick={() => { if (choice) onMenuChoice?.(choice.id); }}
+              disabled={mormiSelected || !choice || sending}
+              onClick={() => { if (choice && !mormiSelected) onMenuChoice?.(choice.id); }}
               aria-label={mormiSelected ? `${displayName}, 모르미가 고른 메뉴` : `${displayName} ${won(item.price)}원 선택`}
             >
               <Image src={menuImage(item.id, item.image_url)} alt="" width={170} height={105} unoptimized />

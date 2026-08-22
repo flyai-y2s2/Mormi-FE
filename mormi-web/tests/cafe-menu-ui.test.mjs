@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { calculationDialogueLine, menuChoiceById, menuDisplayName, menuPairTotal } from "../app/cafe-menu.ts";
+import { calculationDialogueLine, menu, menuChoiceById, menuDisplayName, menuPairTotal, validateMenuSelectionContext } from "../app/cafe-menu.ts";
 import { choiceIdForTypedAnswer } from "../app/cafe-choice-input.ts";
 
 test("connects the clicked menu to the server choice by exact id", () => {
@@ -33,6 +33,33 @@ test("describes a menu click as a selection before the calculation question", ()
   assert.equal(calculationDialogueLine("그럼 두 메뉴는 모두 얼마야?"), "그럼 두 메뉴는 모두 얼마야?");
 });
 
+function menuProblem(mormiMenuId, budget) {
+  const mormiPick = menu.find((item) => item.id === mormiMenuId);
+  return {
+    context: { menu_items: menu, mormi_menu_id: mormiMenuId, budget },
+    visual: { menu_items: menu, mormi_pick: mormiPick, budget },
+  };
+}
+
+test("uses the displayed server context for 7,000 won budget boundaries", () => {
+  const milk = menuProblem("milk", 7000);
+  assert.deepEqual(validateMenuSelectionContext(milk.context, milk.visual, "strawberry-juice"), {
+    valid: true, mormiMenuId: "milk", childMenuId: "strawberry-juice", budget: 7000, total: 6000,
+  });
+  assert.equal(validateMenuSelectionContext(milk.context, milk.visual, "sandwich").valid, true);
+
+  const cake = menuProblem("strawberry-cake", 7000);
+  const over = validateMenuSelectionContext(cake.context, cake.visual, "americano");
+  assert.equal(over.valid && over.total > over.budget, true);
+});
+
+test("rejects duplicate or mismatched display context instead of guessing a budget result", () => {
+  const problem = menuProblem("milk", 7000);
+  assert.deepEqual(validateMenuSelectionContext(problem.context, problem.visual, "milk"), { valid: false, reason: "duplicate" });
+  assert.deepEqual(validateMenuSelectionContext(problem.context, { ...problem.visual, budget: 8000 }, "cookie"), { valid: false, reason: "mismatch" });
+  assert.deepEqual(validateMenuSelectionContext(undefined, problem.visual, "cookie"), { valid: false, reason: "missing" });
+});
+
 test("lets queue learners answer before revealing server choices", () => {
   const choices = [
     { id: "left", label: "왼쪽" },
@@ -57,7 +84,10 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(visual, /menuChoiceById\(item\.id, conversation\.turn\.input\.choices\)/);
   assert.match(visual, /onMenuChoice\?\.\(choice\.id\)/);
   assert.match(journey, /choice_ids: \[choice\.id\]/);
-  assert.match(journey, /if \(total === null\)[\s\S]{0,250}return;[\s\S]{0,100}if \(total > budget\)[\s\S]{0,500}setBudgetModalOpen\(true\)[\s\S]{0,100}return;/);
+  assert.match(journey, /validateMenuSelectionContext\(context, conversation\.turn\.visual\.data, choice\.id\)/);
+  assert.match(journey, /validation\.total > validation\.budget[\s\S]{0,500}setBudgetModalOpen\(true\)/);
+  assert.match(journey, /setProblemContextError\("menu"\)/);
+  assert.match(journey, /문제 다시 불러오기/);
   assert.match(journey, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
   assert.match(journey, /const budgets = \[7000, 8000\] as const/);
 
@@ -78,4 +108,5 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(css, /\.cafe-help-loading\{margin:2px 0 0/);
   assert.match(css, /\.cafe-talk-menu__grid \{ grid-template-columns:repeat\(3,minmax\(140px,1fr\)\)/);
   assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(visual, /disabled=\{mormiSelected \|\| !choice \|\| sending\}/);
 });

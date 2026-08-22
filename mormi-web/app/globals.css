@@ -1776,6 +1776,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 .cafe-budget-backdrop{z-index:180}
+.cafe-problem-recovery{width:min(620px,calc(100% - 24px));margin:18px auto;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;border:3px solid #e7ad9e;border-radius:18px;color:#8d4439;background:#fff4f1;box-shadow:0 5px 0 #e4b8ad;font-size:15px;font-weight:850}.cafe-problem-recovery p{margin:0}.cafe-problem-recovery button{min-height:46px;padding:0 16px;flex:0 0 auto;border:0;border-radius:14px;color:#fff;background:#ba6656;cursor:pointer;font:inherit;font-weight:950}
 .cafe-budget-modal{width:min(430px,100%);padding:26px 24px 24px;display:flex;flex-direction:column;align-items:center;border:4px solid #f1cb73;border-radius:28px;background:#fffdf7;box-shadow:0 8px 0 #ddb65b,0 24px 55px rgba(66,48,24,.2);text-align:center}
 .cafe-budget-modal img{width:140px;height:130px;object-fit:contain}
 .cafe-budget-modal h2{margin:8px 0 22px;color:#4c3a2b;font-size:clamp(22px,4vw,29px);line-height:1.4;word-break:keep-all}
@@ -1783,6 +1784,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .teaching-help-loading{margin:0;padding:10px 12px;border:2px solid #d8c9f2;border-radius:13px;color:#6f5ba2;background:#faf6ff;font-size:14px;font-weight:850;text-align:center}
 
 @media(max-width:560px){
+  .cafe-problem-recovery{align-items:stretch;flex-direction:column}.cafe-problem-recovery button{width:100%}
   .cafe-budget-backdrop{padding:12px}
   .cafe-budget-modal{padding:20px 16px}
   .cafe-budget-modal img{width:112px;height:105px}
