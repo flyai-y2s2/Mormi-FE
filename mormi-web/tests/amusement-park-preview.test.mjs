@@ -5,6 +5,7 @@ import test from "node:test";
 const { amusementParkPreview } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park-preview/AmusementParkPreview.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
 test("놀이동산 FE 계약은 곱셈·나눗셈·혼합 3단계를 순서대로 고정한다", () => {
   assert.deepEqual(amusementParkPreview.stage_order, ["ticket", "snack_split", "pass_break_even"]);
@@ -56,4 +57,9 @@ test("외출 화면의 기존 마트 자리는 놀이동산 진입 카드로 연
   assert.match(app, /놀이동산 가기/);
   assert.match(app, /\/amusement-park\/park-map\.png/);
   assert.doesNotMatch(app, /마트 가기/);
+});
+
+test("외출 화면의 카페와 놀이동산 카드는 데스크톱에서 같은 너비를 쓴다", () => {
+  assert.match(css, /\.destination-grid\s*\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.destination-grid\s*\{\s*grid-template-columns:1fr/);
 });
