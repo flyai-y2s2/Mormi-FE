@@ -9,6 +9,483 @@
   font-weight: 400;
 }
 
+/* ── 놀이동산 생활수학 FE 계약 미리보기 ───────────────────────── */
+.park-map,
+.park-mission,
+.park-clear {
+  min-height: 100svh;
+  color: #233f36;
+  overflow: hidden;
+  position: relative;
+}
+
+.park-map__background,
+.park-mission__background {
+  object-fit: cover;
+  z-index: 0;
+}
+
+.park-map__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(23, 69, 91, 0.08), rgba(255, 251, 240, 0.2) 42%, rgba(255, 247, 229, 0.92));
+}
+
+.park-map__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 28px;
+  justify-content: space-between;
+  left: 50%;
+  max-width: 1380px;
+  padding: 34px 42px;
+  position: relative;
+  transform: translateX(-50%);
+  width: calc(100% - 72px);
+  z-index: 3;
+}
+
+.park-map__header > div:first-child {
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 32px;
+  box-shadow: 0 18px 50px rgba(62, 45, 85, 0.16);
+  padding: 24px 32px;
+}
+
+.park-map__header p {
+  color: #e76454;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin: 0 0 6px;
+}
+
+.park-map__header h1 {
+  color: #284940;
+  font-size: clamp(28px, 3vw, 48px);
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+  margin: 0 0 8px;
+}
+
+.park-map__header > div:first-child span {
+  color: #66766f;
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-weight: 700;
+}
+
+.park-map__progress {
+  backdrop-filter: blur(16px);
+  background: rgba(37, 64, 57, 0.86);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  color: white;
+  min-width: 220px;
+  padding: 18px 20px;
+}
+
+.park-map__progress > span {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 99px;
+  display: block;
+  height: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.park-map__progress i {
+  background: linear-gradient(90deg, #ffd864, #ff8c73);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 400ms ease;
+}
+
+.park-map__progress b {
+  display: block;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-align: right;
+}
+
+.park-map__missions {
+  align-items: stretch;
+  display: grid;
+  gap: clamp(18px, 2vw, 34px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: clamp(80px, 12vh, 150px) auto 0;
+  max-width: 1280px;
+  padding: 0 38px 70px;
+  position: relative;
+  z-index: 4;
+}
+
+.park-map__missions button {
+  aspect-ratio: 0.86;
+  background: #fffaf0;
+  border: 5px solid rgba(255, 255, 255, 0.94);
+  border-radius: 34px;
+  box-shadow: 0 18px 0 rgba(173, 128, 70, 0.2), 0 30px 55px rgba(52, 42, 67, 0.18);
+  color: #2b443c;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  text-align: left;
+  transform: translateY(0) rotate(-1deg);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.park-map__missions button:nth-child(2) { transform: translateY(-28px) rotate(1deg); }
+.park-map__missions button:nth-child(3) { transform: translateY(4px) rotate(-0.5deg); }
+.park-map__missions button:not(:disabled):hover { transform: translateY(-9px) scale(1.025); }
+.park-map__missions button:nth-child(2):not(:disabled):hover { transform: translateY(-37px) scale(1.025); }
+.park-map__missions button:disabled { cursor: not-allowed; filter: grayscale(0.85) brightness(0.88); }
+.park-map__missions button.is-current { border-color: #ffd45a; box-shadow: 0 18px 0 #eab83a, 0 32px 60px rgba(52, 42, 67, 0.22); }
+.park-map__missions button.is-cleared { border-color: #7ed3ad; }
+
+.park-map__missions button > img {
+  height: 58% !important;
+  object-fit: cover;
+}
+
+.park-map__missions button > div {
+  background: linear-gradient(180deg, rgba(255, 250, 240, 0.96), #fffaf0 28%);
+  bottom: 0;
+  left: 0;
+  min-height: 46%;
+  padding: 20px 24px 22px;
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+
+.park-map__missions h2 {
+  font-size: clamp(24px, 2.2vw, 34px);
+  letter-spacing: -0.04em;
+  margin: 9px 0 3px;
+}
+
+.park-map__missions p {
+  color: #77817d;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 17px;
+}
+
+.park-map__missions strong {
+  color: #34755e;
+  font-size: 16px;
+}
+
+.park-map__mission-no {
+  align-items: center;
+  background: #264d41;
+  border: 4px solid white;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  font-size: 22px;
+  font-weight: 900;
+  height: 58px;
+  justify-content: center;
+  left: 18px;
+  position: absolute;
+  top: 18px;
+  width: 58px;
+  z-index: 3;
+}
+
+.is-cleared .park-map__mission-no { background: #55ad85; }
+
+.park-skill {
+  background: #e6f5ef;
+  border-radius: 99px;
+  color: #337760;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 6px 11px;
+}
+
+.park-skill--divide { background: #fff0d2; color: #a86a1c; }
+.park-skill--mixed { background: #eee8ff; color: #6954ad; }
+
+.park-map__mormi {
+  bottom: -72px;
+  left: max(4px, calc(50% - 760px));
+  position: absolute;
+  z-index: 5;
+}
+
+.park-map__mormi img { filter: drop-shadow(0 20px 22px rgba(36, 45, 40, 0.2)); }
+.park-map__mormi p {
+  background: white;
+  border: 4px solid #8bd6b5;
+  border-radius: 24px 24px 24px 5px;
+  color: #52655e;
+  font-size: 17px;
+  font-weight: 700;
+  left: 205px;
+  margin: 0;
+  min-width: 185px;
+  padding: 14px 17px;
+  position: absolute;
+  top: 54px;
+}
+
+.park-map__mormi b { color: #247357; }
+.park-exit {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid white;
+  border-radius: 16px;
+  bottom: 24px;
+  color: #35594d;
+  font-weight: 900;
+  padding: 12px 18px;
+  position: fixed;
+  right: 24px;
+  text-decoration: none;
+  z-index: 7;
+}
+
+.park-preview-label {
+  background: rgba(35, 54, 48, 0.82);
+  border-radius: 99px;
+  bottom: 24px;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  left: 50%;
+  letter-spacing: 0.03em;
+  padding: 9px 15px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 9;
+}
+
+.park-mission {
+  padding: 28px;
+}
+
+.park-mission__blur {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 250, 241, 0.72);
+  inset: 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.park-mission > header {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid white;
+  border-radius: 24px;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto 22px;
+  max-width: 1420px;
+  padding: 13px 18px;
+  position: relative;
+  z-index: 3;
+}
+
+.park-mission > header button {
+  background: #edf8f3;
+  border: 0;
+  border-radius: 14px;
+  color: #376759;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 13px 18px;
+}
+
+.park-mission > header div { align-items: baseline; display: flex; gap: 12px; }
+.park-mission > header div span { color: #e16855; font-size: 13px; font-weight: 900; letter-spacing: 0.08em; }
+.park-mission > header div b { font-size: 24px; }
+
+.park-mission__board {
+  background: rgba(255, 255, 255, 0.94);
+  border: 4px solid white;
+  border-radius: 38px;
+  box-shadow: 0 30px 80px rgba(44, 42, 58, 0.18);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(330px, 0.78fr) minmax(500px, 1.22fr);
+  margin: 0 auto;
+  max-width: 1420px;
+  min-height: calc(100svh - 132px);
+  padding: 26px;
+  position: relative;
+  z-index: 3;
+}
+
+.park-mission__visual {
+  border-radius: 28px;
+  min-height: 550px;
+  overflow: hidden;
+  position: relative;
+}
+
+.park-mission__visual > img { object-fit: cover; }
+.park-mission__visual > div {
+  background: linear-gradient(180deg, transparent, rgba(22, 45, 38, 0.9));
+  bottom: 0;
+  color: white;
+  left: 0;
+  padding: 90px 28px 28px;
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+
+.park-mission__visual span { color: #ffd86d; display: block; font-size: 14px; font-weight: 900; margin-bottom: 6px; }
+.park-mission__visual b { font-size: clamp(24px, 2.4vw, 37px); letter-spacing: -0.04em; }
+.park-mission__play { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+.park-dialogue {
+  align-items: center;
+  background: #f4fff9;
+  border: 4px solid #88d2b1;
+  border-radius: 28px;
+  display: flex;
+  gap: 12px;
+  min-height: 190px;
+  padding: 18px 24px 18px 12px;
+}
+
+.park-dialogue img { flex: 0 0 auto; object-fit: contain; }
+.park-dialogue > div { min-width: 0; }
+.park-dialogue span { color: #348267; display: block; font-size: 14px; font-weight: 900; margin-bottom: 7px; }
+.park-dialogue p { color: #243c34; font-size: clamp(20px, 2vw, 30px); font-weight: 900; letter-spacing: -0.035em; line-height: 1.32; margin: 0; }
+.park-dialogue strong { color: #7557b5; display: block; font-size: clamp(22px, 2.2vw, 34px); margin-top: 10px; }
+.park-dialogue em { color: #31785e; display: block; font-size: 18px; font-style: normal; font-weight: 900; margin-top: 7px; }
+
+.park-teach-panel,
+.park-next-panel,
+.park-star-note {
+  background: #fffaf1;
+  border: 3px solid #f1deba;
+  border-radius: 28px;
+  flex: 1;
+  padding: 22px 26px;
+}
+
+.park-facts { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 17px; }
+.park-facts span { background: white; border-radius: 18px; box-shadow: 0 7px 0 #ecdfc7; padding: 14px 16px; }
+.park-facts small { color: #8a8176; display: block; font-size: 13px; font-weight: 800; }
+.park-facts b { color: #2a6451; display: block; font-size: 26px; margin-top: 2px; }
+.park-teach-panel > p { color: #4c4b46; font-size: 18px; font-weight: 800; line-height: 1.5; margin: 16px 0; }
+.park-teach-panel label { color: #316a58; display: block; font-size: 15px; font-weight: 900; margin-bottom: 7px; }
+.park-teach-panel textarea {
+  background: white;
+  border: 3px solid #acd9c6;
+  border-radius: 18px;
+  color: #253c35;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  min-height: 104px;
+  padding: 16px;
+  resize: none;
+  width: 100%;
+}
+
+.park-answer-block { background: #fff1d7; border-radius: 14px; color: #74582d; display: flex; flex-direction: column; font-size: 14px; margin-top: 10px; padding: 10px 14px; }
+.park-teach-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 14px; }
+.park-teach-actions button,
+.park-next-panel button,
+.park-star-note button,
+.park-clear button {
+  background: #ffd666;
+  border: 0;
+  border-radius: 17px;
+  box-shadow: 0 7px 0 #e5b62f;
+  color: #294b40;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 900;
+  padding: 15px 22px;
+}
+
+.park-teach-actions button:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.5; }
+.park-teach-actions button.is-ghost { background: white; box-shadow: none; color: #6e7c76; text-decoration: underline; }
+.park-next-panel { align-items: center; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.park-next-panel span { color: #7560b2; font-size: 14px; font-weight: 900; letter-spacing: 0.08em; }
+.park-next-panel p { color: #384e46; font-size: clamp(20px, 2vw, 30px); font-weight: 900; margin: 14px 0 26px; }
+.park-next-panel.is-transfer { background: #f1fbf6; border-color: #a5d9c2; }
+.park-star-note { background: #fff6d9; border-color: #edca5c; }
+.park-star-note > span { color: #7d5a00; font-size: 18px; font-weight: 900; }
+.park-star-note blockquote { color: #3f3930; font-size: clamp(24px, 2.4vw, 36px); font-weight: 900; line-height: 1.35; margin: 24px 0 10px; }
+.park-star-note p { color: #8b6d2b; font-weight: 800; margin: 0 0 6px; }
+.park-star-note small { color: #847c6b; display: block; margin-bottom: 24px; }
+
+.park-clear {
+  align-items: center;
+  background: radial-gradient(circle at 60% 36%, #fffcee, #eafff5 55%, #e9e4ff);
+  display: flex;
+  gap: clamp(20px, 6vw, 100px);
+  justify-content: center;
+  padding: 50px;
+}
+
+.park-clear > img { filter: drop-shadow(0 28px 28px rgba(62, 59, 75, 0.18)); position: relative; z-index: 2; }
+.park-clear > section { background: rgba(255, 255, 255, 0.94); border: 4px solid white; border-radius: 38px; box-shadow: 0 25px 60px rgba(62, 59, 75, 0.13); max-width: 650px; padding: clamp(30px, 5vw, 65px); position: relative; z-index: 2; }
+.park-clear > section > span { background: #55ab83; border-radius: 99px; color: white; display: inline-block; font-size: 14px; font-weight: 900; letter-spacing: 0.08em; padding: 9px 15px; }
+.park-clear h1 { color: #2e3e38; font-size: clamp(42px, 5vw, 72px); letter-spacing: -0.06em; line-height: 1.05; margin: 24px 0 13px; }
+.park-clear h1 b { color: #36a777; }
+.park-clear section > p { color: #68766f; font-size: 19px; font-weight: 700; }
+.park-clear section > div { background: #fff6d5; border: 3px solid #f0ce57; border-radius: 22px; margin: 25px 0; padding: 17px 20px; }
+.park-clear section > div small { color: #8a7131; display: block; font-weight: 800; }
+.park-clear section > div strong { color: #674f16; display: block; font-size: 23px; margin-top: 4px; }
+
+@media (max-width: 900px) {
+  .park-map { overflow: auto; }
+  .park-map__header { flex-direction: column; padding: 24px 18px; width: 100%; }
+  .park-map__progress { min-width: 0; width: 100%; }
+  .park-map__missions { grid-template-columns: 1fr; margin-top: 10px; max-width: 580px; padding: 0 22px 170px; }
+  .park-map__missions button,
+  .park-map__missions button:nth-child(2),
+  .park-map__missions button:nth-child(3) { aspect-ratio: 1.2; transform: none; }
+  .park-map__missions button:not(:disabled):hover,
+  .park-map__missions button:nth-child(2):not(:disabled):hover { transform: translateY(-5px); }
+  .park-map__mormi { bottom: -80px; left: -40px; position: fixed; transform: scale(0.8); transform-origin: bottom left; }
+  .park-mission { overflow: auto; padding: 12px; }
+  .park-mission__board { grid-template-columns: 1fr; min-height: 0; padding: 15px; }
+  .park-mission__visual { min-height: 330px; }
+  .park-dialogue p { font-size: 21px; }
+  .park-clear { flex-direction: column; gap: 0; padding: 26px 18px; }
+  .park-clear > img { height: 280px; object-fit: contain; width: 250px; }
+}
+
+@media (max-width: 560px) {
+  .park-map__header > div:first-child { border-radius: 22px; padding: 18px 19px; }
+  .park-map__header h1 { font-size: 29px; }
+  .park-map__missions button { aspect-ratio: 0.95; }
+  .park-map__missions button > div { padding: 15px 18px 18px; }
+  .park-map__mormi p { display: none; }
+  .park-exit { bottom: 16px; right: 14px; }
+  .park-preview-label { bottom: 68px; white-space: nowrap; }
+  .park-mission > header { padding: 9px; }
+  .park-mission > header div span { display: none; }
+  .park-mission > header div b { font-size: 18px; }
+  .park-mission__visual { min-height: 250px; }
+  .park-dialogue { align-items: flex-start; padding: 13px; }
+  .park-dialogue img { height: 92px; width: 80px; }
+  .park-dialogue p { font-size: 18px; }
+  .park-teach-panel,
+  .park-next-panel,
+  .park-star-note { padding: 17px; }
+  .park-facts { grid-template-columns: 1fr 1fr; }
+  .park-facts b { font-size: 20px; }
+  .park-teach-actions { flex-direction: column-reverse; }
+  .park-teach-actions button { width: 100%; }
+  .park-clear h1 { font-size: 42px; }
+}
+
 :root {
   --ink: #203c32;
   --muted: #52685e;
