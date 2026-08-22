@@ -213,30 +213,6 @@
 .park-skill--divide { background: #fff0d2; color: #a86a1c; }
 .park-skill--mixed { background: #eee8ff; color: #6954ad; }
 
-.park-map__mormi {
-  bottom: -72px;
-  left: max(4px, calc(50% - 760px));
-  position: absolute;
-  z-index: 5;
-}
-
-.park-map__mormi img { filter: drop-shadow(0 20px 22px rgba(36, 45, 40, 0.2)); }
-.park-map__mormi p {
-  background: white;
-  border: 4px solid #8bd6b5;
-  border-radius: 24px 24px 24px 5px;
-  color: #52655e;
-  font-size: 17px;
-  font-weight: 700;
-  left: 205px;
-  margin: 0;
-  min-width: 185px;
-  padding: 14px 17px;
-  position: absolute;
-  top: 54px;
-}
-
-.park-map__mormi b { color: #247357; }
 .park-exit {
   background: rgba(255, 255, 255, 0.9);
   border: 2px solid white;
@@ -452,7 +428,6 @@
   .park-map__missions button:nth-child(3) { aspect-ratio: 1.2; transform: none; }
   .park-map__missions button:not(:disabled):hover,
   .park-map__missions button:nth-child(2):not(:disabled):hover { transform: translateY(-5px); }
-  .park-map__mormi { bottom: -80px; left: -40px; position: fixed; transform: scale(0.8); transform-origin: bottom left; }
   .park-mission { overflow: auto; padding: 12px; }
   .park-mission__board { grid-template-columns: 1fr; min-height: 0; padding: 15px; }
   .park-mission__visual { min-height: 330px; }
@@ -466,7 +441,6 @@
   .park-map__header h1 { font-size: 29px; }
   .park-map__missions button { aspect-ratio: 0.95; }
   .park-map__missions button > div { padding: 15px 18px 18px; }
-  .park-map__mormi p { display: none; }
   .park-exit { bottom: 16px; right: 14px; }
   .park-preview-label { bottom: 68px; white-space: nowrap; }
   .park-mission > header { padding: 9px; }

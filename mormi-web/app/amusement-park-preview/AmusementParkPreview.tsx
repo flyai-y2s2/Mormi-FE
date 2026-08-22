@@ -34,7 +34,6 @@ function ParkMap({ completed, learnerName, onOpen }: { completed: number; learne
         </button>;
       })}
     </section>
-    <div className="park-map__mormi"><Image src="/morami/bright-cutout.png" alt="놀이동산에 온 모르미" width={290} height={340} priority unoptimized /><p>돈 계산이 헷갈려.<br /><b>{nameWithSubjectParticle(learnerName)} 결정해 줘!</b></p></div>
     <Link className="park-exit" href="/">← 집으로</Link>
     <small className="park-preview-label">서버 저장 없는 FE 미리보기</small>
   </main>;

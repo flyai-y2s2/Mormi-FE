@@ -50,6 +50,7 @@ test("미션은 카페 대화 흐름과 로그인 이름을 쓰고 선후배 호
   assert.match(component, /cafe-talk-answer/);
   assert.doesNotMatch(component, /선배|후배/);
   assert.doesNotMatch(component, /\{stage\.prompt\}/);
+  assert.doesNotMatch(component, /park-map__mormi|돈 계산이 헷갈려/);
 });
 
 test("외출 화면의 기존 마트 자리는 놀이동산 진입 카드로 연결한다", () => {
