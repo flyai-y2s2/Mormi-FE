@@ -84,7 +84,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /morami-onboarding-complete/);
   assert.match(app, /완료하면 카페에 갈 수 있어요!/);
   assert.match(app, /카페 필수 개념/);
-  assert.match(app, /곱셈·나눗셈 준비 개념/);
+  assert.match(app, /놀이동산 필수 개념/);
   assert.match(journey, /"money-count"/);
   assert.match(journey, /"money-price"/);
   assert.match(journey, /"money-budget"/);
