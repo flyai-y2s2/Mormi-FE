@@ -499,7 +499,9 @@
 
 .park-cafe-talk .cafe-talk-toolbar,
 .park-cafe-talk .cafe-talk-flow,
-.park-cafe-talk .park-preview-label {
+.park-cafe-talk .park-preview-label,
+.park-cafe-talk > .cafe-talk,
+.park-dialogue-error {
   position: relative;
   z-index: 3;
 }
@@ -511,6 +513,38 @@
 .park-cafe-talk .cafe-talk-flow {
   min-height: 100svh;
   justify-content: center;
+}
+
+.park-cafe-talk > .cafe-talk {
+  min-height: 100svh;
+  background: transparent;
+}
+
+.park-dialogue-error {
+  width: min(720px, calc(100% - 32px));
+  margin: -92px auto 24px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px solid #e8a596;
+  border-radius: 16px;
+  color: #8b4639;
+  background: rgba(255, 244, 241, .97);
+  box-shadow: 0 8px 24px rgba(99, 61, 52, .12);
+  font-weight: 850;
+}
+
+.park-dialogue-error button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: #cf6d5d;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .park-talk-status {
@@ -816,6 +850,64 @@
   margin: 0;
 }
 
+.park-clear > section > .park-clear__star-note {
+  margin: 24px 0;
+  padding: 20px;
+  border: 3px solid #f0ce57;
+  border-radius: 22px;
+  background: #fffaf0;
+  box-shadow: 0 7px 0 #e8cb6c;
+}
+
+.park-clear__star-note .note-ring {
+  flex: 0 0 auto;
+}
+
+.park-clear__star-note .note-content {
+  min-width: 0;
+}
+
+.park-clear__star-note .note-content h2 {
+  font-size: clamp(17px, 2vw, 23px);
+}
+
+.mormi-help-amusement-solution {
+  display: grid;
+  gap: 8px;
+}
+
+.mormi-help-amusement-solution > strong {
+  color: #63509b;
+  font-size: clamp(20px, 2.3vw, 28px);
+}
+
+.mormi-help-amusement-solution > p {
+  margin: 0;
+  color: #3d6858;
+  font-weight: 850;
+}
+
+.mormi-help-amusement-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mormi-help-amusement-facts span {
+  padding: 8px 10px;
+  display: grid;
+  border-radius: 12px;
+  background: white;
+}
+
+.mormi-help-amusement-facts small {
+  color: #718078;
+}
+
+.mormi-help-amusement-facts b {
+  color: #2f765b;
+}
+
 @media (max-width: 980px) {
   .park-cafe-talk .cafe-talk-flow { justify-content: flex-start; }
 }
@@ -846,6 +938,7 @@
   .park-connection-state { padding: 12px; }
   .park-connection-state > section { padding: 22px 16px; }
   .park-connection-state section > div { flex-direction: column; }
+  .park-dialogue-error { margin-top: -72px; flex-direction: column; text-align: center; }
 }
 
 :root {
@@ -1954,6 +2047,19 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:760px){.journey-hub--outside{justify-content:flex-start}}
 
 /* 카페 스테이지 선택: 카드 묶음을 화면 가운데에 놓고, 잠김·진행·완료를 한눈에 구분한다. */
+.figma-park{
+  background:linear-gradient(rgba(255,250,242,.86),rgba(255,248,235,.92)),url('/amusement-park/park-map.png') center/cover fixed;
+}
+.figma-cafe__bar>.figma-park__back{
+  min-height:58px;padding:0 22px;display:flex;align-items:center;justify-content:center;
+  border:0;border-radius:18px;color:#3f352f;background:#fff8ec;box-shadow:0 6px 0 #dcc8a7;
+  font-size:15px;font-weight:950;text-decoration:none;
+}
+.figma-park .figma-cafe__place-image{object-fit:contain}
+.figma-park-map .figma-cafe-map__image img{object-position:center}
+@media(max-width:430px){
+  .figma-cafe__bar>.figma-park__back{min-height:48px;padding:0 10px;font-size:11px}
+}
 .figma-cafe--overview{
   min-height:100svh;padding:18px 24px 34px;
   display:flex;flex-direction:column;
@@ -2536,6 +2642,19 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .cafe-required-lessons > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
 .cafe-required-lessons > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
+
+/* 놀이동산 준비 세션은 같은 반복학습 컴포넌트를 사용하되 장소만 색으로 구분한다. */
+.amusement-required-lessons {
+  background:linear-gradient(180deg,#fff6df,#fff0d9);
+  box-shadow:inset 0 0 0 1px rgba(222,139,76,.18), 0 10px 30px rgba(134,86,42,.09);
+}
+.amusement-required-lessons > button { border-color:rgba(222,139,76,.18); }
+.amusement-required-lessons > button:hover,
+.amusement-required-lessons > button.is-next { border-color:rgba(222,139,76,.44); }
+.amusement-required-lessons > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
+.amusement-required-lessons > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
+.amusement-required-lessons > button em { color:#9c5f38; background:#fff5e9; }
+.amusement-required-lessons > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
 
 /* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
    묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */

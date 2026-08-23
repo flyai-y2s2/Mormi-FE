@@ -14,6 +14,7 @@ export function CafeStageComplete({
   onAction,
   secondaryActionLabel,
   onSecondaryAction,
+  statusItems,
 }: {
   stageNumber: number;
   eyebrow?: string;
@@ -25,8 +26,9 @@ export function CafeStageComplete({
   onAction: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
+  statusItems?: Array<{ label: string; value: string; image: string }>;
 }) {
-  const statuses = [
+  const statuses = statusItems ?? [
     { label: "별노트", value: `${noteCount}개`, image: "/ui/mormi-star.png" },
     { label: "현재 돈", value: `${currentMoney.toLocaleString("ko-KR")}원`, image: "/ui/mormi-coin.png" },
     { label: "현재 스테이지", value: `${stageNumber}/3`, image: "/ui/mormi-cafe.png" },

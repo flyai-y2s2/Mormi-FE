@@ -84,11 +84,15 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /morami-onboarding-complete/);
   assert.match(app, /완료하면 카페에 갈 수 있어요!/);
   assert.match(app, /카페 필수 개념/);
+  assert.match(app, /놀이동산 필수 개념/);
   assert.match(journey, /"money-count"/);
   assert.match(journey, /"money-price"/);
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"number-count"/);
   assert.match(journey, /"number-compare"/);
+  assert.match(journey, /"multiply-addition"/);
+  assert.match(journey, /"divide-share"/);
+  assert.match(journey, /"divide-group"/);
   assert.match(cafe, /카페 스테이지 선택/);
   assert.match(cafe, /CAFE QUEST/);
   assert.match(cafe, /cafe-stages\/queue-v2\.png/);
@@ -222,7 +226,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(talkStage, /className="cafe-talk-morami" src=\{chatImage\}/);
   assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
-  assert.match(app, /카페에 필요한 개념부터 배워요/);
+  assert.match(app, /생활에 필요한 개념부터 배워요/);
   assert.match(app, /저번에 도와줘서 고마워! 이번에도 또 같이 가주라!/);
   assert.doesNotMatch(app, /카페 가는 거 이제 자신 있어! 또 연습하러 가자!/);
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
@@ -632,12 +636,13 @@ test("production dialogue flows through deployed Spring BE while the AI BFF stay
     readFile(new URL("../../scripts/start-local-stack.sh", import.meta.url), "utf8"),
   ]);
 
-  assert.match(dialogue, /type MormiScene = "home_teach" \| "cafe"/);
+  assert.match(dialogue, /type MormiScene = "home_teach" \| "cafe" \| "amusement_park"/);
   assert.match(dialogue, /startMormiConversation/);
   assert.match(dialogue, /submitMormiResponse/);
   assert.match(dialogue, /recoverMormiConversation/);
   assert.match(dialogue, /startHomeTeaching/);
   assert.match(dialogue, /startCafeDialogue/);
+  assert.match(dialogue, /startAmusementParkDialogue/);
   assert.match(dialogue, /submitMormiResponseThroughBe/);
   assert.match(dialogue, /pendingResponseByTurn/);
   assert.match(dialogue, /stableResponseSignature/);

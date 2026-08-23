@@ -28,6 +28,7 @@ const stationCopy = [
 ] as const;
 
 type CafeStage = "queue" | "menu" | "calculate" | "change";
+type CafeProgressStage = CafeStage | "complete";
 type Props = {
   learnerName: string;
   learnerId: number;
@@ -84,6 +85,10 @@ function randomQueueCounts() {
 function conversationInputKey(conversation: MormiConversation | undefined) {
   if (!conversation) return "";
   return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
+}
+
+function isCafeProgressStage(stage: string): stage is CafeProgressStage {
+  return ["queue", "menu", "calculate", "change", "complete"].includes(stage);
 }
 
 export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDialogueStage, reloadConversationId, onReloadRestarted, onBack, onComplete }: Props) {
@@ -210,7 +215,9 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setMormiLines((lines) => ({ ...lines, [stage]: conversation.turn.mormi.text }));
     setDialogueError("");
     setProblemContextError(null);
-    if (conversation.stage_progress) {
+    if (conversation.stage_progress
+      && isCafeProgressStage(conversation.stage_progress.stage)
+      && isCafeProgressStage(conversation.stage_progress.next_stage)) {
       visitStage.current = conversation.stage_progress.completed
         ? conversation.stage_progress.next_stage
         : conversation.stage_progress.stage;

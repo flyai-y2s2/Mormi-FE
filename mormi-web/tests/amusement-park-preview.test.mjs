@@ -16,13 +16,15 @@ test("놀이동산 FE에는 서버 문제 fixture 대신 표시 자산과 파생
   assert.doesNotMatch(contract, /amusementParkPreview|verified_facts|ticket_price:\s*3000|snack_total:\s*9000/);
 });
 
-test("방문 시작·스테이지 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
+test("방문 시작·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
   assert.match(component, /api\.startAmusementParkVisit\(\)/);
-  assert.match(component, /api\.submitAmusementParkStage/);
+  assert.match(component, /startAmusementParkDialogue/);
+  assert.match(component, /submitMormiResponseThroughBe/);
   assert.match(component, /api\.getAmusementParkVisit/);
   assert.match(component, /api\.completeAmusementParkVisit/);
   assert.match(component, /visit\.stage_progress\[stageId\]/);
-  assert.match(component, /answers:\s*derivedAnswers/);
+  assert.match(component, /next\.stage_progress\?\.completed/);
+  assert.doesNotMatch(component, /api\.submitAmusementParkStage|answers:\s*derivedAnswers/);
   assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
 });
 
@@ -33,11 +35,39 @@ test("서버 오류 때 로컬 문제를 대신 보여주지 않고 재시도 �
   assert.doesNotMatch(component, /fallback.*stage|fixture/i);
 });
 
-test("AI 놀이동산 대화가 준비되기 전에는 로컬 도움말과 별노트를 만들지 않는다", () => {
-  assert.doesNotMatch(component, /잘 모르겠어|park-help-card|park-star-note|별노트/);
+test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공통 UI로 렌더링한다", () => {
+  assert.match(component, /<CafeTalkStage/);
+  assert.match(component, /helpVisible=\{helpVisible\}/);
+  assert.match(component, /helpLoading=\{helpLoading\}/);
+  assert.match(component, /response\.type === "no_response"/);
+  assert.match(component, /amusement_park_transfer/);
+  assert.match(component, /<CafeStageComplete/);
+  assert.match(component, /noteCount=\{noteText \? 1 : 0\}/);
   assert.doesNotMatch(component, /정답 알려줘/);
-  assert.match(component, /stage\.mormi_misconception/);
-  assert.match(component, /stage\.strategy/);
+  assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
+});
+
+test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
+  assert.match(component, /onOpen\(stageId, cleared\)/);
+  assert.match(component, /cleared \? "다시 연습"/);
+  assert.match(component, /openDialogue\(replay \? "restart" : "resume"\)/);
+  assert.doesNotMatch(component, /if \(alreadyCompleted/);
+});
+
+test("놀이동산 지도와 완료 장면은 카페 공통 화면 틀을 사용한다", () => {
+  assert.match(component, /figma-cafe figma-cafe--overview figma-park/);
+  assert.match(component, /figma-cafe__bar/);
+  assert.match(component, /figma-cafe-map figma-park-map/);
+  assert.match(component, /figma-cafe-map__stones/);
+  assert.match(component, /figma-cafe figma-cafe--done figma-park/);
+});
+
+test("배포 AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
+  const errors = await readFile(new URL("../app/dialogue-errors.ts", import.meta.url), "utf8");
+  assert.match(errors, /amusementDialogueErrorMessage/);
+  assert.match(errors, /dialogue_invalid_request\.upstream_/);
+  assert.match(errors, /놀이동산 대화 서버가 아직 최신 버전이 아니에요/);
+  assert.match(component, /amusementDialogueErrorMessage/);
 });
 
 test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 존재한다", async () => {
