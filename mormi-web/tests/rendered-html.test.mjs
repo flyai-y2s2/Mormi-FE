@@ -636,12 +636,13 @@ test("production dialogue flows through deployed Spring BE while the AI BFF stay
     readFile(new URL("../../scripts/start-local-stack.sh", import.meta.url), "utf8"),
   ]);
 
-  assert.match(dialogue, /type MormiScene = "home_teach" \| "cafe"/);
+  assert.match(dialogue, /type MormiScene = "home_teach" \| "cafe" \| "amusement_park"/);
   assert.match(dialogue, /startMormiConversation/);
   assert.match(dialogue, /submitMormiResponse/);
   assert.match(dialogue, /recoverMormiConversation/);
   assert.match(dialogue, /startHomeTeaching/);
   assert.match(dialogue, /startCafeDialogue/);
+  assert.match(dialogue, /startAmusementParkDialogue/);
   assert.match(dialogue, /submitMormiResponseThroughBe/);
   assert.match(dialogue, /pendingResponseByTurn/);
   assert.match(dialogue, /stableResponseSignature/);

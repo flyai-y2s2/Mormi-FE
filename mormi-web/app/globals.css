@@ -499,7 +499,9 @@
 
 .park-cafe-talk .cafe-talk-toolbar,
 .park-cafe-talk .cafe-talk-flow,
-.park-cafe-talk .park-preview-label {
+.park-cafe-talk .park-preview-label,
+.park-cafe-talk > .cafe-talk,
+.park-dialogue-error {
   position: relative;
   z-index: 3;
 }
@@ -511,6 +513,38 @@
 .park-cafe-talk .cafe-talk-flow {
   min-height: 100svh;
   justify-content: center;
+}
+
+.park-cafe-talk > .cafe-talk {
+  min-height: 100svh;
+  background: transparent;
+}
+
+.park-dialogue-error {
+  width: min(720px, calc(100% - 32px));
+  margin: -92px auto 24px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px solid #e8a596;
+  border-radius: 16px;
+  color: #8b4639;
+  background: rgba(255, 244, 241, .97);
+  box-shadow: 0 8px 24px rgba(99, 61, 52, .12);
+  font-weight: 850;
+}
+
+.park-dialogue-error button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: #cf6d5d;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .park-talk-status {
@@ -816,6 +850,64 @@
   margin: 0;
 }
 
+.park-clear > section > .park-clear__star-note {
+  margin: 24px 0;
+  padding: 20px;
+  border: 3px solid #f0ce57;
+  border-radius: 22px;
+  background: #fffaf0;
+  box-shadow: 0 7px 0 #e8cb6c;
+}
+
+.park-clear__star-note .note-ring {
+  flex: 0 0 auto;
+}
+
+.park-clear__star-note .note-content {
+  min-width: 0;
+}
+
+.park-clear__star-note .note-content h2 {
+  font-size: clamp(17px, 2vw, 23px);
+}
+
+.mormi-help-amusement-solution {
+  display: grid;
+  gap: 8px;
+}
+
+.mormi-help-amusement-solution > strong {
+  color: #63509b;
+  font-size: clamp(20px, 2.3vw, 28px);
+}
+
+.mormi-help-amusement-solution > p {
+  margin: 0;
+  color: #3d6858;
+  font-weight: 850;
+}
+
+.mormi-help-amusement-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mormi-help-amusement-facts span {
+  padding: 8px 10px;
+  display: grid;
+  border-radius: 12px;
+  background: white;
+}
+
+.mormi-help-amusement-facts small {
+  color: #718078;
+}
+
+.mormi-help-amusement-facts b {
+  color: #2f765b;
+}
+
 @media (max-width: 980px) {
   .park-cafe-talk .cafe-talk-flow { justify-content: flex-start; }
 }
@@ -846,6 +938,7 @@
   .park-connection-state { padding: 12px; }
   .park-connection-state > section { padding: 22px 16px; }
   .park-connection-state section > div { flex-direction: column; }
+  .park-dialogue-error { margin-top: -72px; flex-direction: column; text-align: center; }
 }
 
 :root {

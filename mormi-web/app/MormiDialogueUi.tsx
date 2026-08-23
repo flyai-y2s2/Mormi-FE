@@ -50,6 +50,33 @@ function HelpVisual({ card }: { card: HelpCard }) {
     </div>;
   }
 
+  if (["amusement_equation", "amusement_transfer_equation"].includes(type ?? "")) {
+    const left = formatValue(data.left);
+    const right = formatValue(data.right);
+    const symbol = textValue(data.symbol) ?? "×";
+    if (!left || !right) return null;
+    return <div className="mormi-help-equation" aria-label="놀이동산 계산 도움">
+      <strong>{left}</strong><span>{symbol}</span><strong>{right}</strong><span>=</span><strong>□</strong>
+    </div>;
+  }
+
+  if (["amusement_joint_solution", "amusement_transfer_solution"].includes(type ?? "")) {
+    const equation = textValue(data.equation);
+    const conclusion = textValue(data.conclusion);
+    const facts = Array.isArray(data.facts) ? data.facts : [];
+    return <div className="mormi-help-amusement-solution">
+      {equation && <strong>{equation}</strong>}
+      {!equation && facts.length > 0 && <div className="mormi-help-amusement-facts">
+        {facts.map((fact, index) => {
+          if (!fact || typeof fact !== "object") return null;
+          const item = fact as Record<string, unknown>;
+          return <span key={`${String(item.key ?? "fact")}-${index}`}><small>{textValue(item.label)}</small><b>{formatValue(item.value)}{textValue(item.unit)}</b></span>;
+        })}
+      </div>}
+      {conclusion && <p>{conclusion}</p>}
+    </div>;
+  }
+
   if (type === "budget_meter") {
     const budget = finiteNumber(data.budget);
     const price = finiteNumber(data.mormi_price);

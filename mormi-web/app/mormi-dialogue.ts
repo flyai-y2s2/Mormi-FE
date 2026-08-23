@@ -1,6 +1,6 @@
 import type { WireExpressionLevel } from "./expression-ladder";
 
-export type MormiScene = "home_teach" | "cafe";
+export type MormiScene = "home_teach" | "cafe" | "amusement_park";
 export type MormiMood = "curious" | "listening" | "thinking" | "relieved" | "celebrating";
 export type MormiInputKind = "text" | "choices" | "fill" | "count" | "equation" | "joint" | "button" | "none";
 export type MormiResponseType = "text" | "choice" | "fill" | "count" | "equation" | "action" | "no_response";
@@ -33,6 +33,20 @@ export type MormiCafeContext = {
   menu_items: MormiMenuItem[];
   mormi_menu_id: string;
   budget?: number;
+};
+
+export type MormiParkContext = {
+  theme_id: "amusement_park";
+  stage_id: "ticket" | "snack_split" | "pass_break_even";
+  title: string;
+  mission: string;
+  skill: string;
+  strategy: string;
+  mormi_misconception: string;
+  prompt: string;
+  facts: Array<{ key: string; label: string; value: number; unit: string }>;
+  required_verified_fact_keys: string[];
+  transfer: { prompt: string; equation: string; conclusion: string };
 };
 
 export type StartMormiConversation = {
@@ -146,12 +160,13 @@ export type MormiConversation = {
   scenario_context?: {
     queue_context?: { left_count: number; right_count: number };
     cafe_context?: MormiCafeContext;
+    park_context?: MormiParkContext;
   };
   /** Spring BE가 AI의 검증 슬롯과 생활수학 단계 기록을 맞춘 결과. */
   stage_progress?: {
-    stage: "queue" | "menu" | "calculate" | "change";
+    stage: "queue" | "menu" | "calculate" | "change" | "ticket" | "snack_split" | "pass_break_even";
     completed: boolean;
-    next_stage: "queue" | "menu" | "calculate" | "change" | "complete";
+    next_stage: "queue" | "menu" | "calculate" | "change" | "ticket" | "snack_split" | "pass_break_even" | "complete";
     source: "pending" | "stage_attempt" | "dialogue_verified_facts";
   };
 };
@@ -278,6 +293,27 @@ export async function startCafeDialogue(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export type AmusementScenarioId =
+  | "amusement_ticket_multiply"
+  | "amusement_snack_divide"
+  | "amusement_pass_compare";
+
+/** 운영 경로: 놀이동산 문제 사실은 FE가 보내지 않고 Spring BE의 방문 스냅샷을 쓴다. */
+export async function startAmusementParkDialogue(
+  visitId: string,
+  input: {
+    scenario_id: AmusementScenarioId;
+    start_mode: "restart" | "resume";
+    request_id: string;
+  },
+) {
+  const { apiRequest } = await import("./api-client");
+  return apiRequest<MormiConversation>(
+    `/v1/amusement-park-visits/${encodeURIComponent(visitId)}/dialogues`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
 export async function submitMormiResponseThroughBe(
