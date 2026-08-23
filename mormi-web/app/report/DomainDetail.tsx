@@ -66,7 +66,7 @@ export function DomainDetail({ domain, speech }: DomainDetailProps) {
         ) : (
           <>
             <div className="speech-comparison">
-              <EvidenceSample label="과거 대표 발화" sample={speech.evidence.past} />
+              {speech.evidence.past && <EvidenceSample label="과거 대표 발화" sample={speech.evidence.past} />}
               <EvidenceSample label="최근 대표 발화" sample={speech.evidence.recent} />
             </div>
             {speech.evidence.verified_elements.length > 0 && (

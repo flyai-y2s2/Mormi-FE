@@ -274,7 +274,7 @@ test("diagnostic fixtures mirror Spring's empty and speech-evidence JSON shapes"
   assert.deepEqual(Object.keys(unavailable).sort(), ["available", "domain_id", "message", "verified_elements"]);
   assert.equal(speechText(unavailable), "비교 가능한 발화 근거가 부족합니다.");
   assert.equal(speechText(available), "동전을 세 개 더해서 여섯 개예요.");
-  assert.equal(available.past.hint_level, undefined);
+  assert.equal(available.past?.hint_level, undefined);
   assert.equal(available.recent.expression_level, undefined);
 
   const impossibleAvailableMessage: AvailableSpeechEvidenceDto = {

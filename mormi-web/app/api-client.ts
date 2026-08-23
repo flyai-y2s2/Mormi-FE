@@ -298,6 +298,37 @@ export type DiagnosticReportPeriodDto = {
   latest_week_start: string;
 };
 
+export type LadderRecommendationAction = "UPGRADE" | "MAINTAIN" | "ADJUST_DOWN" | "INSUFFICIENT_EVIDENCE";
+
+export type LadderPredictionDto = {
+  level: "L2" | "L3" | "L4";
+  confidence: number;
+};
+
+export type LadderRecommendationDto = {
+  analysis_id: string;
+  learner_id: number;
+  skill_id: string;
+  trigger_session_id: string;
+  session_ids: string[];
+  current_level: "L0" | "L2" | "L3" | "L4";
+  recommended_level: "L0" | "L2" | "L3" | "L4";
+  action: LadderRecommendationAction;
+  current_accuracy: number | null;
+  evidence_count: number;
+  reason_code: string;
+  recent_predictions: LadderPredictionDto[];
+  model_version: string;
+  recommendation_version: number;
+  approved: boolean;
+  analyzed_at: string;
+};
+
+export type LadderApprovalResponseDto = {
+  analysis_id: string;
+  status: string;
+};
+
 export type DiagnosticReportDto = {
   learner: DiagnosticLearnerDto;
   period: DiagnosticReportPeriodDto;
@@ -309,6 +340,7 @@ export type DiagnosticReportDto = {
   observe_point: DiagnosticHighlightDto;
   evidence_counts: DiagnosticEvidenceCountsDto;
   narrative_fallback: boolean;
+  ladder_recommendations?: LadderRecommendationDto[];
 };
 
 export type SpeechSampleDto = {
@@ -328,7 +360,7 @@ export type AvailableSpeechEvidenceDto = SpeechEvidenceBaseDto & {
   available: true;
   /** Spring constructs null and omits this field through its NON_NULL policy. */
   message?: never;
-  past: SpeechSampleDto;
+  past?: SpeechSampleDto;
   recent: SpeechSampleDto;
   change_summary: string;
 };
@@ -815,6 +847,17 @@ export const api = {
     return apiRequest<SpeechEvidenceDto>(
       `/v1/reports/diagnostic/speech-evidence?${params.toString()}`,
       { signal: options.signal },
+    );
+  },
+
+  approveLadderRecommendation(analysisId: string, recommendationVersion: number, signal?: AbortSignal) {
+    return apiRequest<LadderApprovalResponseDto>(
+      `/v1/reports/diagnostic/ladder-recommendations/${encodeURIComponent(analysisId)}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ recommendation_version: recommendationVersion }),
+        signal,
+      },
     );
   },
 

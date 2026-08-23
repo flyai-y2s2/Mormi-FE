@@ -56,6 +56,57 @@ test("maps live evidence without inventing attempts or speech metrics", () => {
   assert.match(money.thinkingChange, /발화 근거가 부족/);
 });
 
+test("maps the selected subunit ladder recommendation without mixing other units", () => {
+  const recommendationReport = {
+    ...report,
+    ladder_recommendations: [
+      {
+        analysis_id: "analysis-money",
+        learner_id: 3,
+        skill_id: "money-count",
+        trigger_session_id: "session-9",
+        session_ids: ["session-8", "session-9"],
+        current_level: "L2",
+        recommended_level: "L3",
+        action: "UPGRADE",
+        current_accuracy: 0.94,
+        evidence_count: 4,
+        reason_code: "upgrade_threshold_met",
+        recent_predictions: [{ level: "L3", confidence: 0.91 }, { level: "L4", confidence: 0.88 }],
+        model_version: "ladder-v2",
+        recommendation_version: 2,
+        approved: false,
+        analyzed_at: "2026-08-23T10:00:00+09:00",
+      },
+      {
+        analysis_id: "analysis-other",
+        learner_id: 3,
+        skill_id: "other-unit",
+        trigger_session_id: "session-11",
+        session_ids: ["session-10", "session-11"],
+        current_level: "L3",
+        recommended_level: "L2",
+        action: "ADJUST_DOWN",
+        current_accuracy: 0.5,
+        evidence_count: 5,
+        reason_code: "lower_prediction_streak",
+        recent_predictions: [{ level: "L2", confidence: 0.82 }],
+        model_version: "ladder-v2",
+        recommendation_version: 1,
+        approved: false,
+        analyzed_at: "2026-08-23T10:00:00+09:00",
+      },
+    ],
+  } satisfies DiagnosticReportDto;
+
+  const money = buildNumericLiveReport(recommendationReport).domains.HOME[0]!;
+  assert.equal(money.ladderAnalysis?.analysisId, "analysis-money");
+  assert.equal(money.ladderAnalysis?.currentLevel, "L2");
+  assert.equal(money.ladderAnalysis?.recommendedLevel, "L3");
+  assert.equal(money.ladderAnalysis?.currentAccuracy, 94);
+  assert.deepEqual(money.ladderAnalysis?.recentPrediction, { level: "L4", confidence: 88 });
+});
+
 test("recognizes the BE 반복학습 and 모르미 가르치기 labels without dropping teaching evidence", () => {
   const actualLabels: DiagnosticReportDto = {
     ...report,

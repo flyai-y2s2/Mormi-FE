@@ -3,6 +3,7 @@ import type {
   DiagnosticDomainStatusDto,
   DiagnosticDomainTrendDto,
   DiagnosticMode,
+  LadderRecommendationAction,
   DiagnosticReportDto,
   DiagnosticTrendPointDto,
   ReportSummaryDto,
@@ -11,6 +12,17 @@ import { ACTIVE_EXPRESSION_LEVELS, canonicalExpressionLevel } from "../expressio
 
 export type NumericPreviewStatus = "good" | "growing" | "review" | "collecting";
 export type NumericComparisonRow = readonly [label: string, history: string, recent: string];
+export type NumericLadderAnalysis = {
+  analysisId: string;
+  recommendationVersion: number;
+  currentLevel: "L0" | "L2" | "L3" | "L4";
+  recommendedLevel: "L0" | "L2" | "L3" | "L4";
+  action: LadderRecommendationAction;
+  currentAccuracy?: number;
+  evidenceCount: number;
+  recentPrediction?: { level: "L2" | "L3" | "L4"; confidence: number };
+  approved: boolean;
+};
 export type NumericPreviewDomain = {
   id: string;
   label: string;
@@ -29,6 +41,7 @@ export type NumericPreviewDomain = {
   repeatCount: number;
   ladderStart: string;
   ladderRule: string;
+  ladderAnalysis?: NumericLadderAnalysis;
 };
 
 export type NumericLiveReport = {
@@ -191,6 +204,10 @@ function buildMode(
     const [historyLadder] = ladderShares(ladderPoints, false);
     const [recentLadder, dominantStage] = ladderShares(ladderPoints, true);
     const advice = recommendation(status, label, Boolean(speech) || dominantStage !== "—");
+    const ladderRecommendation = mode === "HOME"
+      ? report.ladder_recommendations?.find((item) => item.skill_id === domainId)
+      : undefined;
+    const recentPrediction = ladderRecommendation?.recent_predictions.at(-1);
     const metrics: readonly NumericComparisonRow[] = [
       ["정답률", historyAccuracy, recentAccuracy],
       ["정답까지 평균", historyAttempts, recentAttempts],
@@ -214,6 +231,22 @@ function buildMode(
       repeatCount: advice.repeatCount,
       ladderStart: advice.ladderStart,
       ladderRule: advice.ladderRule,
+      ladderAnalysis: ladderRecommendation ? {
+        analysisId: ladderRecommendation.analysis_id,
+        recommendationVersion: ladderRecommendation.recommendation_version,
+        currentLevel: ladderRecommendation.current_level,
+        recommendedLevel: ladderRecommendation.recommended_level,
+        action: ladderRecommendation.action,
+        currentAccuracy: ladderRecommendation.current_accuracy == null
+          ? undefined
+          : Math.round(ladderRecommendation.current_accuracy * 100),
+        evidenceCount: ladderRecommendation.evidence_count,
+        recentPrediction: recentPrediction ? {
+          level: recentPrediction.level,
+          confidence: Math.round(recentPrediction.confidence * 100),
+        } : undefined,
+        approved: ladderRecommendation.approved,
+      } : undefined,
     } satisfies NumericPreviewDomain;
   }).sort((left, right) => right.historyCount - left.historyCount || left.id.localeCompare(right.id));
 }

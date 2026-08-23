@@ -77,6 +77,11 @@ test("local admin client trims searches, uses the same-origin proxy, and never n
 
     await localReportAdminApi.speechEvidence(19, "money-count", "2026-08-17", controller.signal);
     assert.match(requested[3].url, /learners\/19\/speech-evidence\?domain_id=money-count&week_start=2026-08-17/);
+
+    await localReportAdminApi.approveLadderRecommendation(19, "analysis-1", 2, controller.signal);
+    assert.equal(requested[4].url, "/api/local-report-admin/learners/19/ladder-recommendations/analysis-1/approve");
+    assert.equal(requested[4].init.method, "POST");
+    assert.deepEqual(JSON.parse(requested[4].init.body), { recommendation_version: 2 });
   } finally {
     globalThis.fetch = originalFetch;
   }

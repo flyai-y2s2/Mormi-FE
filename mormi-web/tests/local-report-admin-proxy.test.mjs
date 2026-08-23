@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import test from "node:test";
 
-import { GET } from "../app/api/local-report-admin/[...path]/route.ts";
+import { GET, POST } from "../app/api/local-report-admin/[...path]/route.ts";
 import { createTeacherReportSession, TEACHER_REPORT_COOKIE } from "../app/teacher-report-session.ts";
 
 const localAdminEnv = [
@@ -77,6 +77,37 @@ test("forwards GET requests with only the server-side local admin key", async ()
     assert.equal(forwardedRequest.headers.has("authorization"), false);
     assert.equal(forwardedRequest.method, "GET");
     assert.match(forwardedRequest.url, /\/v1\/local-report-admin\/learners\?query=/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("forwards approval POST bodies to the fixed local-admin origin", async () => {
+  const originalFetch = globalThis.fetch;
+  let forwardedRequest;
+  globalThis.fetch = async (input, init) => {
+    forwardedRequest = new Request(input, init);
+    return new Response(JSON.stringify({ analysis_id: "analysis-1", status: "approved" }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+  try {
+    const response = await withEnv({
+      ENABLE_LOCAL_REPORT_ADMIN: "true",
+      LOCAL_REPORT_ADMIN_ORIGIN: "http://127.0.0.1:8080",
+      LOCAL_REPORT_ADMIN_KEY: "secret",
+      NODE_ENV: "development",
+    }, () => POST(new Request("http://mormi.test/api/local-report-admin/learners/19/ladder-recommendations/analysis-1/approve", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer browser-token" },
+      body: JSON.stringify({ recommendation_version: 2 }),
+    }), { params: Promise.resolve({ path: ["learners", "19", "ladder-recommendations", "analysis-1", "approve"] }) }));
+
+    assert.equal(response.status, 200);
+    assert.equal(forwardedRequest.method, "POST");
+    assert.equal(forwardedRequest.headers.get("X-Mormi-Local-Admin-Key"), "secret");
+    assert.equal(forwardedRequest.headers.has("authorization"), false);
+    assert.deepEqual(await forwardedRequest.json(), { recommendation_version: 2 });
   } finally {
     globalThis.fetch = originalFetch;
   }
