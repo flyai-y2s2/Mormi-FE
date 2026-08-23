@@ -64,7 +64,7 @@ function ParkMap({ visit, learnerName, onOpen }: {
     <main className="figma-cafe-map figma-park-map">
       <header className="figma-cafe-map__heading">
         <span>{allCompleted ? "PARK PRACTICE" : "PARK QUEST"}</span>
-        <h1>{allCompleted ? "놀이동산 돈 관리를 다 배웠어요!" : `${learnerName}와 모르미의 돈 관리 미션`}</h1>
+        <h1>{allCompleted ? "놀이동산 돈 관리를 다 배웠어요!" : `${learnerName}의 놀이동산 돈 관리 미션`}</h1>
         <p>{allCompleted ? "연습하고 싶은 스테이지를 골라 몇 번이든 다시 해 봐요." : "스테이지를 하나씩 완료하며 돈을 관리해 봐요."}</p>
         <div className="figma-cafe-map__progress"><span aria-hidden="true"><i style={{ width: `${(completed / visit.stage_order.length) * 100}%` }} /></span><b>{completed} / {visit.stage_order.length} 완료</b></div>
       </header>
