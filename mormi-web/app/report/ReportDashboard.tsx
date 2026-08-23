@@ -422,15 +422,12 @@ function ConnectedReportDashboard({
 
   const approveLadderRecommendation = async (analysisId: string, recommendationVersion: number) => {
     const learner = selectedLearnerRef.current;
-    if (learner) {
-      await localReportAdminApi.approveLadderRecommendation(
-        learner.learner_id,
-        analysisId,
-        recommendationVersion,
-      );
-    } else {
-      await api.approveLadderRecommendation(analysisId, recommendationVersion);
-    }
+    if (!learner) throw new Error("teacher learner selection is required");
+    await localReportAdminApi.approveLadderRecommendation(
+      learner.learner_id,
+      analysisId,
+      recommendationVersion,
+    );
   };
 
   const openDomain = (domain: DiagnosticDomainGroup) => {
@@ -490,7 +487,7 @@ function ConnectedReportDashboard({
         const domain = groupedDomains.find((item) => item.domain_id === domainId);
         if (domain) loadSpeechEvidence(domain);
       }}
-      onApproveLadder={approveLadderRecommendation}
+      onApproveLadder={selectedLearner ? approveLadderRecommendation : undefined}
     />;
   }
 

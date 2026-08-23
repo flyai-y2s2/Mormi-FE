@@ -144,7 +144,8 @@ export function NumericReportPreview({
   const canApproveLadder = Boolean(
     ladderAnalysis
       && (ladderAnalysis.action === "UPGRADE" || ladderAnalysis.action === "ADJUST_DOWN")
-      && !ladderApplied,
+      && !ladderApplied
+      && onApproveLadder,
   );
   const approveLadder = async () => {
     if (!ladderAnalysis || !onApproveLadder || !canApproveLadder || approvalState === "saving") return;

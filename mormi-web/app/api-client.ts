@@ -850,17 +850,6 @@ export const api = {
     );
   },
 
-  approveLadderRecommendation(analysisId: string, recommendationVersion: number, signal?: AbortSignal) {
-    return apiRequest<LadderApprovalResponseDto>(
-      `/v1/reports/diagnostic/ladder-recommendations/${encodeURIComponent(analysisId)}/approve`,
-      {
-        method: "POST",
-        body: JSON.stringify({ recommendation_version: recommendationVersion }),
-        signal,
-      },
-    );
-  },
-
   /** 새로고침 복구용. 시도 전체가 함께 온다. */
   getSession(sessionId: string) {
     return apiRequest<SessionView>(`/v1/learning-sessions/${sessionId}`);

@@ -435,11 +435,46 @@ test("renders the four ladder analysis states and only offers approval for a rea
 
   for (const [action, recommended_level, copy, hasButton] of cases) {
     const report = { ...completeDiagnosticReportExample, ladder_recommendations: [{ ...base, action, recommended_level }] };
-    const html = server.renderToString(React.createElement(NumericReportPreview, { report }));
+    const html = server.renderToString(React.createElement(NumericReportPreview, {
+      report,
+      onApproveLadder: hasButton ? async () => {} : undefined,
+    }));
     assert.match(html, new RegExp(copy));
     assert.match(html, new RegExp(`L2.*${recommended_level}`));
     assert.equal(html.includes("이 단계로 적용"), hasButton);
   }
+});
+
+test("shows a recommendation but never offers approval without the teacher handler", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const report = {
+    ...completeDiagnosticReportExample,
+    ladder_recommendations: [{
+      analysis_id: "analysis-learner-read-only",
+      learner_id: completeDiagnosticReportExample.learner.learner_id,
+      skill_id: "money-count",
+      trigger_session_id: "session-2",
+      session_ids: ["session-1", "session-2"],
+      current_level: "L2",
+      recommended_level: "L3",
+      action: "UPGRADE",
+      current_accuracy: 0.95,
+      evidence_count: 5,
+      reason_code: "upgrade_threshold_met",
+      recent_predictions: [{ level: "L3", confidence: 0.92 }],
+      model_version: "ladder-v2",
+      recommendation_version: 3,
+      approved: false,
+      analyzed_at: "2026-08-23T10:00:00+09:00",
+    }],
+  };
+
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report }));
+
+  assert.doesNotMatch(html, /이 단계로 적용/);
+  assert.match(html, /교사 확인/);
 });
 
 test("approves a ladder level change once and shows its applied state without a popup", async () => {

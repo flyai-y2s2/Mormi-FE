@@ -115,19 +115,6 @@ test("204 는 본문 없이 통과한다", async () => {
   assert.equal(await apiRequest("/v1/auth/logout", { method: "POST" }), undefined);
 });
 
-test("학습자 단계 추천 승인은 분석 버전과 함께 인증된 POST로 보낸다", async () => {
-  withSession();
-  setUnauthorizedHandler(null);
-  nextResponse = respond(200, { analysis_id: "analysis-1", status: "approved" });
-
-  await api.approveLadderRecommendation("analysis-1", 3);
-
-  assert.equal(lastRequest.input, "/api/be/v1/reports/diagnostic/ladder-recommendations/analysis-1/approve");
-  assert.equal(lastRequest.init.method, "POST");
-  assert.deepEqual(JSON.parse(lastRequest.init.body), { recommendation_version: 3 });
-  assert.equal(lastRequest.init.headers.authorization, "Bearer test-token");
-});
-
 test("별노트 다음 페이지는 서버 cursor를 바꾸지 않고 인증된 BE 경로로 요청한다", async () => {
   withSession();
   setUnauthorizedHandler(null);
