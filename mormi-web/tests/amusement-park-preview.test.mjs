@@ -62,11 +62,11 @@ test("놀이동산 지도와 완료 장면은 카페 공통 화면 틀을 사용
   assert.match(component, /figma-cafe figma-cafe--done figma-park/);
 });
 
-test("배포 AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
+test("BE·AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
   const errors = await readFile(new URL("../app/dialogue-errors.ts", import.meta.url), "utf8");
   assert.match(errors, /amusementDialogueErrorMessage/);
   assert.match(errors, /dialogue_invalid_request\.upstream_/);
-  assert.match(errors, /놀이동산 대화 서버가 아직 최신 버전이 아니에요/);
+  assert.match(errors, /놀이동산 대화 준비 정보가 맞지 않아요/);
   assert.match(component, /amusementDialogueErrorMessage/);
 });
 
