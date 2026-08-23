@@ -2537,6 +2537,19 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .cafe-required-lessons > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
 .cafe-required-lessons > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
 
+/* 놀이동산 준비 세션은 같은 반복학습 컴포넌트를 사용하되 장소만 색으로 구분한다. */
+.amusement-required-lessons {
+  background:linear-gradient(180deg,#fff6df,#fff0d9);
+  box-shadow:inset 0 0 0 1px rgba(222,139,76,.18), 0 10px 30px rgba(134,86,42,.09);
+}
+.amusement-required-lessons > button { border-color:rgba(222,139,76,.18); }
+.amusement-required-lessons > button:hover,
+.amusement-required-lessons > button.is-next { border-color:rgba(222,139,76,.44); }
+.amusement-required-lessons > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
+.amusement-required-lessons > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
+.amusement-required-lessons > button em { color:#9c5f38; background:#fff5e9; }
+.amusement-required-lessons > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
+
 /* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
    묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
 .room-list-heading { margin-bottom:18px; padding:11px 26px; }

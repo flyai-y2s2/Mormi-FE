@@ -29,7 +29,12 @@ import {
   rememberDialogueId,
   rememberDialogueScreen,
 } from "./dialogue-restart";
-import { cafeRequiredSessionIds, isCafeUnlocked } from "./journey-config";
+import {
+  amusementParkRequiredSessionIds,
+  cafeRequiredSessionIds,
+  isCafeUnlocked,
+  outsideRequiredSessionIds,
+} from "./journey-config";
 import { curriculumForSession, masteryTarget, mathAreas, sessions, simpleLearnedLine, transferTarget } from "./math-curriculum";
 import {
   startHomeTeaching,
@@ -1322,9 +1327,11 @@ export function MoramiApp() {
   const selectedArea = mathAreas.find((area) => area.id === selectedAreaId) ?? null;
   const selectedAreaSessions = useMemo(() => selectedArea?.sessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)) ?? [], [selectedArea]);
   const cafeConceptSessions = useMemo(() => cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
+  const amusementParkConceptSessions = useMemo(() => amusementParkRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session)), []);
   /** 다음에 할 개념 하나만 강조한다. 다섯 줄이 모두 같은 무게면 어디부터 눌러야 할지 알 수 없다. */
   const nextConceptId = cafeConceptSessions.find((session) => !completedSessionIds.includes(session.id))?.id;
-  const otherConceptSessions = useMemo(() => sessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])), []);
+  const nextAmusementConceptId = amusementParkConceptSessions.find((session) => !completedSessionIds.includes(session.id))?.id;
+  const otherConceptSessions = useMemo(() => sessions.filter((session) => !outsideRequiredSessionIds.includes(session.id as (typeof outsideRequiredSessionIds)[number])), []);
   const teachingTurn = mormiConversation?.turn ?? null;
   const teachingProblem = useMemo(
     () => teachingProblemFromTurn(teachingTurn, currentDrill),
@@ -2044,15 +2051,19 @@ export function MoramiApp() {
         <section className="curriculum-home curriculum-home--room">
           {!selectedArea ? (
             <>
-              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>카페에 필요한 개념부터 배워요</h1><p>필수 개념 {cafeConceptSessions.length}개를 모두 끝내면 카페가 열려요.</p></div>
+              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>외출에 필요한 개념부터 배워요</h1><p>카페와 놀이동산에서 쓸 개념을 반복학습으로 준비해요.</p></div>
               <section className="cafe-required-lessons">
                 <div><strong><UiIcon name="cafe" size="small" /> 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
                 {cafeConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{session.title}</b><small>{session.id === "number-count" ? "줄의 사람을 1~5명까지 정확히 세어요" : session.id === "number-compare" ? "두 줄 중 사람이 더 적은 쪽을 찾아요" : session.id === "money-count" ? "100원·500원·1,000원·5,000원의 값을 읽어요" : session.id === "money-price" ? "모르미와 내가 고른 두 메뉴값을 더해요" : "예산과 합계를 비교하고 10,000원에서 메뉴값을 빼요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
               </section>
+              <section className="cafe-required-lessons amusement-required-lessons">
+                <div><strong><span aria-hidden="true">🎡</span> 놀이동산 준비 반복학습</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료</span></div>
+                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><span><b>{session.id === "multiply-addition" ? "표값을 여러 번 계산해요" : session.id === "divide-share" ? "간식값을 똑같이 나누어요" : "본전이 되는 횟수를 찾아요"}</b><small>{session.id === "multiply-addition" ? "같은 돈이 여러 번이면 곱셈으로 계산해요" : session.id === "divide-share" ? "전체 금액을 여러 명이 똑같이 나누는 방법을 익혀요" : "같은 금액이 몇 번 모이면 같아지는지 찾아요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+              </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
               {showOtherConcepts && <div className="room-area-list other-concepts-list">
                 {mathAreas.map((area) => {
-                  const areaSessions = area.sessionIds.filter((id) => !cafeRequiredSessionIds.includes(id as (typeof cafeRequiredSessionIds)[number]));
+                  const areaSessions = area.sessionIds.filter((id) => !outsideRequiredSessionIds.includes(id as (typeof outsideRequiredSessionIds)[number]));
                   const done = areaSessions.filter((id) => completedSessionIds.includes(id)).length;
                   if (!areaSessions.length) return null;
                   return <button key={area.id} style={{ "--area-color": area.color } as React.CSSProperties} onClick={() => showArea(area.id)}><i>{done === areaSessions.length ? "✓" : done}</i><span><b>{area.title}</b><small>{area.description}</small></span><em>{done}/{areaSessions.length}<b>›</b></em></button>;
@@ -2065,7 +2076,7 @@ export function MoramiApp() {
               <button className="area-back" onClick={showAreaList}><span>‹</span> 개념 영역으로</button>
               <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>{selectedArea.title}</h1><p>{selectedArea.description}</p></div>
               <div className="curriculum-path-list math-course-list math-course-list--detail">
-                {selectedAreaSessions.filter((session) => !cafeRequiredSessionIds.includes(session.id as (typeof cafeRequiredSessionIds)[number])).map((session, index, visibleSessions) => <div className="curriculum-path-row" key={session.id}>{(index === 0 || visibleSessions[index - 1]?.unit !== session.unit) && <div className="curriculum-unit-marker"><span>{session.unit}</span><i>STAGE {index + 1}</i></div>}<CurriculumCourseButton session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={false} onOpen={openSession} /></div>)}
+                {selectedAreaSessions.filter((session) => !outsideRequiredSessionIds.includes(session.id as (typeof outsideRequiredSessionIds)[number])).map((session, index, visibleSessions) => <div className="curriculum-path-row" key={session.id}>{(index === 0 || visibleSessions[index - 1]?.unit !== session.unit) && <div className="curriculum-unit-marker"><span>{session.unit}</span><i>STAGE {index + 1}</i></div>}<CurriculumCourseButton session={session} index={sessions.findIndex((candidate) => candidate.id === session.id)} completed={completedSessionIds.includes(session.id)} cafeRequired={false} onOpen={openSession} /></div>)}
               </div>
             </div>
           )}

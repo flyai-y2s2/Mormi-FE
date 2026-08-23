@@ -6,6 +6,24 @@ export const cafeRequiredSessionIds = [
   "money-budget",
 ] as const;
 
+/**
+ * 놀이동산의 세 미션 전에 복습할 기존 학습 세션.
+ *
+ * 새 정적 문제를 FE에서 만들지 않고 BE·AI가 이미 알고 있는 세션만 재사용한다.
+ * 놀이동산 해금 자체는 서버가 카페 완료 여부로 판정하므로, 이 목록은 준비 학습
+ * 진입점이며 서버의 장소 진행 규칙을 대신하지 않는다.
+ */
+export const amusementParkRequiredSessionIds = [
+  "multiply-addition",
+  "divide-share",
+  "divide-group",
+] as const;
+
+export const outsideRequiredSessionIds = [
+  ...cafeRequiredSessionIds,
+  ...amusementParkRequiredSessionIds,
+] as const;
+
 export const cafeStations = ["줄 서기", "메뉴 값 계산하기", "거스름돈 받기"] as const;
 
 export const cafeMoney = [
