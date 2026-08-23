@@ -24,3 +24,13 @@ export function dialogueErrorMessage(error: unknown, fallback: string) {
   }
   return error.message || fallback;
 }
+
+/** 놀이동산 계약이 아직 배포되지 않은 AI를 BE가 호출할 때 홈 학습용 문구를 숨긴다. */
+export function amusementDialogueErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof ApiError
+    && error.code.startsWith("dialogue_invalid_request.upstream_")
+    && (error.code.includes("upstream_400") || error.code.includes("upstream_422"))) {
+    return "놀이동산 대화 서버가 아직 최신 버전이 아니에요. 잠시 후 다시 시작해 주세요.";
+  }
+  return dialogueErrorMessage(error, fallback);
+}

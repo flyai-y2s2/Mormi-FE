@@ -2047,6 +2047,19 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:760px){.journey-hub--outside{justify-content:flex-start}}
 
 /* 카페 스테이지 선택: 카드 묶음을 화면 가운데에 놓고, 잠김·진행·완료를 한눈에 구분한다. */
+.figma-park{
+  background:linear-gradient(rgba(255,250,242,.86),rgba(255,248,235,.92)),url('/amusement-park/park-map.png') center/cover fixed;
+}
+.figma-cafe__bar>.figma-park__back{
+  min-height:58px;padding:0 22px;display:flex;align-items:center;justify-content:center;
+  border:0;border-radius:18px;color:#3f352f;background:#fff8ec;box-shadow:0 6px 0 #dcc8a7;
+  font-size:15px;font-weight:950;text-decoration:none;
+}
+.figma-park .figma-cafe__place-image{object-fit:contain}
+.figma-park-map .figma-cafe-map__image img{object-position:center}
+@media(max-width:430px){
+  .figma-cafe__bar>.figma-park__back{min-height:48px;padding:0 10px;font-size:11px}
+}
 .figma-cafe--overview{
   min-height:100svh;padding:18px 24px 34px;
   display:flex;flex-direction:column;
