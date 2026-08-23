@@ -162,3 +162,64 @@ test("학급 API는 학생 토큰이 아니라 교사 토큰으로 요청한다"
   assert.equal(lastRequest.input, "/api/be/v1/cohorts");
   assert.equal(lastRequest.init.headers.authorization, "Bearer teacher-token");
 });
+
+test("놀이동산 방문 시작·조회·완료는 배포된 방문 API 경로를 사용한다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  const visit = {
+    theme_id: "amusement_park",
+    visit_id: "park-1",
+    stage_order: ["ticket", "snack_split", "pass_break_even"],
+    stage_progress: { ticket: "available", snack_split: "locked", pass_break_even: "locked" },
+    stages: [],
+    started_at: "2026-08-23T00:00:00Z",
+    completed_at: null,
+    attempts: [],
+  };
+
+  nextResponse = respond(200, visit);
+  await api.startAmusementParkVisit();
+  assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits");
+  assert.equal(lastRequest.init.method, "POST");
+
+  nextResponse = respond(200, visit);
+  await api.getAmusementParkVisit("park-1");
+  assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits/park-1");
+  assert.equal(lastRequest.init.method, undefined);
+
+  nextResponse = respond(200, { ...visit, completed_at: "2026-08-23T00:10:00Z" });
+  await api.completeAmusementParkVisit("park-1");
+  assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits/park-1/complete");
+  assert.equal(lastRequest.init.method, "POST");
+});
+
+test("놀이동산 스테이지 제출은 계산한 파생값만 answers에 보낸다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  nextResponse = respond(200, {
+    visit_id: "park-1",
+    stage: "ticket",
+    is_correct: true,
+    next_stage: "snack_split",
+    next_stage_unlocked: true,
+    attempts: 1,
+    expected_answers: { total_price: 6000 },
+    submitted_answers: { total_price: 6000 },
+    feedback_code: "ticket_correct",
+  });
+
+  await api.submitAmusementParkStage("park-1", "ticket", {
+    answers: { total_price: 6000 },
+    attempt_no: 1,
+    elapsed_ms: 4200,
+  });
+
+  assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits/park-1/stages/ticket");
+  assert.equal(lastRequest.init.method, "POST");
+  assert.deepEqual(JSON.parse(lastRequest.init.body), {
+    answers: { total_price: 6000 },
+    attempt_no: 1,
+    elapsed_ms: 4200,
+  });
+  assert.doesNotMatch(lastRequest.init.body, /ticket_price|party_count|verified_facts/);
+});

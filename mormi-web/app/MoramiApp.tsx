@@ -1179,9 +1179,10 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
+function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCafe }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
+  amusementParkTheme: ThemeView | null;
   /** 한 번이라도 카페에 다녀왔는지. 다녀왔으면 다시 연습하러 가는 안내로 바꾼다. */
   cafeVisited: boolean;
   onCafe: () => void;
@@ -1192,6 +1193,10 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
   const lockedNote = remainingCount === null
     ? `필수 개념 ${requiredCount}개를 끝내야 열려요`
     : `필수 개념 ${requiredCount}개 중 ${remainingCount}개가 남았어요`;
+  const parkUnlocked = amusementParkTheme?.unlocked === true;
+  const parkLockedNote = amusementParkTheme
+    ? "카페 미션을 모두 완료하면 열려요"
+    : "놀이동산을 준비하고 있어요";
   return (
     <section className="journey-hub journey-hub--outside">
       <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> 모르미의 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
@@ -1202,11 +1207,15 @@ function OutsideHub({ unlocked, cafeTheme, cafeVisited, onCafe }: {
           <span className="destination-shade" />
           <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : "모르미와 들어가기 →"}</strong></div>
         </button>
-        <a className="destination-card destination-card--cafe destination-card--amusement is-unlocked" href="/amusement-park-preview">
+        {parkUnlocked ? <a className="destination-card destination-card--cafe destination-card--amusement is-unlocked" href="/amusement-park-preview">
           <Image src="/amusement-park/park-map.png" alt="모르미와 갈 놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
-          <div><small>새로운 외출</small><h2>놀이동산 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>모르미와 출발하기 →</strong></div>
-        </a>
+          <div><small>진행</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>모르미와 출발하기 →</strong></div>
+        </a> : <article className="destination-card destination-card--cafe destination-card--amusement is-locked">
+          <Image src="/amusement-park/park-map.png" alt="잠긴 놀이동산" width={800} height={600} unoptimized />
+          <span className="destination-shade" />
+          <div><small>잠김</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
+        </article>}
       </div>
     </section>
   );
@@ -1341,6 +1350,7 @@ export function MoramiApp() {
   }, []);
 
   const cafeTheme = themes?.find((theme) => theme.theme_id === "cafe") ?? null;
+  const amusementParkTheme = themes?.find((theme) => theme.theme_id === "amusement_park") ?? null;
 
   /**
    * 새로고침 복구. 서버가 들고 있는 진행 중 세션을 그대로 화면에 되돌린다.
@@ -2011,7 +2021,7 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} amusementParkTheme={amusementParkTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
 
       {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
           네 스테이지가 모두 열린 연습 모드로 돌아온다. */}

@@ -390,6 +390,68 @@ export type CafeVisitView = CafeVisitState & {
   attempts: StageAttemptView[];
 };
 
+export type AmusementStageId = "ticket" | "snack_split" | "pass_break_even";
+export type AmusementStageProgress = "locked" | "available" | "completed";
+
+export type AmusementFactView = {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+};
+
+export type AmusementTransferView = {
+  prompt: string;
+  equation: string;
+  conclusion: string;
+};
+
+export type AmusementStageView = {
+  stage_id: AmusementStageId;
+  scenario_id: string;
+  title: string;
+  mission: string;
+  skill: "multiply" | "divide" | "compare";
+  strategy: string;
+  mormi_misconception: string;
+  prompt: string;
+  facts: AmusementFactView[];
+  verified_facts: Record<string, number>;
+  transfer: AmusementTransferView;
+};
+
+export type AmusementStageAttemptView = {
+  stage: AmusementStageId;
+  attempt_no: number;
+  is_correct: boolean;
+  elapsed_ms: number | null;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type AmusementParkVisitView = {
+  theme_id: "amusement_park";
+  visit_id: string;
+  stage_order: AmusementStageId[];
+  stage_progress: Record<AmusementStageId, AmusementStageProgress>;
+  stages: AmusementStageView[];
+  started_at: string;
+  completed_at: string | null;
+  attempts: AmusementStageAttemptView[];
+};
+
+export type AmusementStageResult = {
+  visit_id: string;
+  stage: AmusementStageId;
+  is_correct: boolean;
+  next_stage: AmusementStageId | null;
+  next_stage_unlocked: boolean;
+  attempts: number;
+  expected_answers: Record<string, number>;
+  submitted_answers: Record<string, number>;
+  feedback_code: string;
+};
+
 /**
  * GET /v1/themes. 외출 장소 하나의 상태다.
  *
@@ -893,6 +955,32 @@ export const api = {
 
   cafeComplete(visitId: string) {
     return apiRequest<CafeVisitState>(`/v1/cafe-visits/${visitId}/complete`, { method: "POST" });
+  },
+
+  /** 진행 중인 놀이동산 방문을 이어 받고, 없으면 서버에서 새 방문을 시작한다. */
+  startAmusementParkVisit() {
+    return apiRequest<AmusementParkVisitView>("/v1/amusement-park-visits", { method: "POST" });
+  },
+
+  /** 스테이지 제출 뒤 서버가 확정한 최신 잠금·완료 상태를 다시 읽는다. */
+  getAmusementParkVisit(visitId: string) {
+    return apiRequest<AmusementParkVisitView>(`/v1/amusement-park-visits/${visitId}`);
+  },
+
+  /** 주어진 문제값은 보내지 않고 아이가 계산한 파생값만 보낸다. */
+  submitAmusementParkStage(visitId: string, stageId: AmusementStageId, body: {
+    answers: Record<string, number>;
+    attempt_no: number;
+    elapsed_ms?: number;
+  }) {
+    return apiRequest<AmusementStageResult>(`/v1/amusement-park-visits/${visitId}/stages/${stageId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  completeAmusementParkVisit(visitId: string) {
+    return apiRequest<AmusementParkVisitView>(`/v1/amusement-park-visits/${visitId}/complete`, { method: "POST" });
   },
 };
 

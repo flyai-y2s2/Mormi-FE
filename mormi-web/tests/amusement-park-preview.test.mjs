@@ -2,30 +2,42 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const { amusementParkPreview } = await import("../app/amusement-park-contract.ts");
+const { amusementAnswerFields, amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park-preview/AmusementParkPreview.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
+const contract = await readFile(new URL("../app/amusement-park-contract.ts", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-test("놀이동산 FE 계약은 곱셈·나눗셈·혼합 3단계를 순서대로 고정한다", () => {
-  assert.deepEqual(amusementParkPreview.stage_order, ["ticket", "snack_split", "pass_break_even"]);
-  assert.deepEqual(amusementParkPreview.stages.map((stage) => stage.skill), ["multiply", "divide", "mixed"]);
+test("놀이동산 FE에는 서버 문제 fixture 대신 표시 자산과 파생값 입력 계약만 남는다", () => {
+  assert.deepEqual(Object.keys(amusementStageVisuals), ["ticket", "snack_split", "pass_break_even"]);
+  assert.deepEqual(amusementAnswerFields.ticket.map((field) => field.key), ["total_price"]);
+  assert.deepEqual(amusementAnswerFields.snack_split.map((field) => field.key), ["per_person"]);
+  assert.deepEqual(amusementAnswerFields.pass_break_even.map((field) => field.key), ["break_even_rides", "benefit_from_rides"]);
+  assert.doesNotMatch(contract, /amusementParkPreview|verified_facts|ticket_price:\s*3000|snack_total:\s*9000/);
 });
 
-test("본전은 4번, 자유이용권 이득은 5번부터로 구분한다", () => {
-  const stage = amusementParkPreview.stages[2];
-  assert.equal(stage.verified_facts.break_even_rides, 4);
-  assert.equal(stage.verified_facts.benefit_from_rides, 5);
-  assert.match(stage.transfer.conclusion, /네 번이면 본전/);
-  assert.match(stage.transfer.conclusion, /다섯 번부터/);
+test("방문 시작·스테이지 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
+  assert.match(component, /api\.startAmusementParkVisit\(\)/);
+  assert.match(component, /api\.submitAmusementParkStage/);
+  assert.match(component, /api\.getAmusementParkVisit/);
+  assert.match(component, /api\.completeAmusementParkVisit/);
+  assert.match(component, /visit\.stage_progress\[stageId\]/);
+  assert.match(component, /answers:\s*derivedAnswers/);
+  assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
 });
 
-test("FE 미리보기는 서버 판정을 흉내 내지 않고 원문 인용·전이·별노트 장면만 제공한다", () => {
-  assert.match(component, /FE 계약 미리보기/);
-  assert.match(component, /explanation\.trim\(\)/);
-  assert.match(component, /stage\.transfer\.prompt/);
-  assert.match(component, /별노트/);
-  assert.doesNotMatch(component, /api\./);
+test("서버 오류 때 로컬 문제를 대신 보여주지 않고 재시도 상태를 제공한다", () => {
+  assert.match(component, /로컬 문제로 대신 보여주지 않고/);
+  assert.match(component, /다시 시도/);
+  assert.match(component, /instanceof ApiError/);
+  assert.doesNotMatch(component, /fallback.*stage|fixture/i);
+});
+
+test("AI 놀이동산 대화가 준비되기 전에는 로컬 도움말과 별노트를 만들지 않는다", () => {
+  assert.doesNotMatch(component, /잘 모르겠어|park-help-card|park-star-note|별노트/);
+  assert.doesNotMatch(component, /정답 알려줘/);
+  assert.match(component, /stage\.mormi_misconception/);
+  assert.match(component, /stage\.strategy/);
 });
 
 test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 존재한다", async () => {
@@ -42,21 +54,11 @@ test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 �
   }
 });
 
-test("미션은 카페 대화 흐름과 로그인 이름을 쓰고 선후배 호칭과 중복 질문을 렌더링하지 않는다", () => {
-  assert.match(component, /readStoredLearner/);
-  assert.match(component, /nameWithSubjectParticle/);
-  assert.match(component, /cafe-talk-bubble/);
-  assert.match(component, /cafe-talk-stage/);
-  assert.match(component, /cafe-talk-answer/);
-  assert.doesNotMatch(component, /선배|후배/);
-  assert.doesNotMatch(component, /\{stage\.prompt\}/);
-  assert.doesNotMatch(component, /park-map__mormi|돈 계산이 헷갈려/);
-});
-
-test("외출 화면의 기존 마트 자리는 놀이동산 진입 카드로 연결한다", () => {
+test("외출의 놀이동산 카드는 themes 응답의 해금 상태로만 활성화한다", () => {
+  assert.match(app, /theme\.theme_id === "amusement_park"/);
+  assert.match(app, /amusementParkTheme\?\.unlocked === true/);
   assert.match(app, /href="\/amusement-park-preview"/);
-  assert.match(app, /놀이동산 가기/);
-  assert.match(app, /\/amusement-park\/park-map\.png/);
+  assert.match(app, /카페 미션을 모두 완료하면 열려요/);
   assert.doesNotMatch(app, /마트 가기/);
 });
 

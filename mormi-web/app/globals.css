@@ -9,7 +9,7 @@
   font-weight: 400;
 }
 
-/* ── 놀이동산 생활수학 FE 계약 미리보기 ───────────────────────── */
+/* ── 놀이동산 생활수학 ───────────────────────────────────────── */
 .park-map,
 .park-mission,
 .park-clear {
@@ -212,6 +212,7 @@
 
 .park-skill--divide { background: #fff0d2; color: #a86a1c; }
 .park-skill--mixed { background: #eee8ff; color: #6954ad; }
+.park-skill--compare { background: #eee8ff; color: #6954ad; }
 
 .park-exit {
   background: rgba(255, 255, 255, 0.9);
@@ -227,7 +228,8 @@
   z-index: 7;
 }
 
-.park-preview-label {
+.park-preview-label,
+.park-server-label {
   background: rgba(35, 54, 48, 0.82);
   border-radius: 99px;
   bottom: 24px;
@@ -678,6 +680,129 @@
   margin: 0;
 }
 
+.park-answer-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.park-answer-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.park-answer-fields label {
+  min-width: 0;
+  color: #346b59;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.park-answer-fields label > span {
+  min-height: 54px;
+  margin-top: 5px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 3px solid #9bd7bd;
+  border-radius: 16px;
+  background: white;
+}
+
+.park-answer-fields input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #255f4c;
+  background: transparent;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.park-answer-fields em {
+  color: #5d746a;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.park-answer-form > button {
+  min-height: 54px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 16px;
+  color: white;
+  background: #58ad82;
+  box-shadow: 0 7px 0 #347a5b;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.park-answer-form > button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.7);
+  opacity: .55;
+}
+
+.park-submit-feedback {
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  color: #754c2b;
+  background: #fff3dc;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.park-connection-state {
+  min-height: 100svh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  color: #27483d;
+}
+
+.park-connection-state > img {
+  object-fit: cover;
+  filter: blur(8px);
+  transform: scale(1.04);
+}
+
+.park-connection-state::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 250, 240, .78);
+}
+
+.park-connection-state > section {
+  width: min(620px, 100%);
+  padding: 34px;
+  position: relative;
+  z-index: 2;
+  border: 4px solid white;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 24px 65px rgba(52, 68, 60, .16);
+  text-align: center;
+}
+
+.park-connection-state > section > img { width: 190px; height: 220px; object-fit: contain; }
+.park-connection-state h1 { margin: 4px 0 8px; font-size: clamp(24px, 3vw, 38px); line-height: 1.25; }
+.park-connection-state p { margin: 0; color: #68776f; }
+.park-connection-state section > div { margin-top: 22px; display: flex; justify-content: center; gap: 10px; }
+.park-connection-state button,
+.park-connection-state a { padding: 13px 18px; border: 0; border-radius: 14px; font-weight: 900; text-decoration: none; }
+.park-connection-state button { color: white; background: #55aa80; cursor: pointer; }
+.park-connection-state button:disabled { opacity: .6; cursor: wait; }
+.park-connection-state a { color: #45665a; background: #edf5f1; }
+
 .park-star-note--cafe {
   padding: 18px 22px;
 }
@@ -713,7 +838,14 @@
   .park-note-visual { min-height: 170px; }
   .park-note-visual span { font-size: 62px; }
   .park-note-visual strong { font-size: 20px; }
-  .park-preview-label { display: none; }
+  .park-preview-label,
+  .park-server-label { display: none; }
+  .park-answer-form { grid-template-columns: 1fr; }
+  .park-answer-fields { grid-template-columns: 1fr; }
+  .park-answer-form > button { width: 100%; }
+  .park-connection-state { padding: 12px; }
+  .park-connection-state > section { padding: 22px 16px; }
+  .park-connection-state section > div { flex-direction: column; }
 }
 
 :root {
