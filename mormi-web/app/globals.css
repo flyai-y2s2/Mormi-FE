@@ -2916,3 +2916,14 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 
 @media(max-width:820px){.signup-role-options{grid-template-columns:1fr}.signup-role-options button{min-height:135px}.teacher-portal__header{grid-template-columns:1fr auto}.teacher-portal__header>div{display:none}.teacher-cohort-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-code-issuer{grid-template-columns:1fr}.teacher-report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.signup-role-scene,.educator-signup-scene{padding:12px}.signup-role-card,.educator-signup-card{padding:25px 17px;border-radius:25px}.teacher-portal__header{padding:12px 14px;gap:10px}.teacher-portal__brand{font-size:18px}.teacher-portal__header button{padding:0 10px;font-size:12px}.teacher-page{width:min(100% - 24px,1180px);padding-top:32px}.teacher-create-cohort>div{grid-template-columns:1fr}.teacher-cohort-grid{grid-template-columns:1fr}.teacher-report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-task-list article{grid-template-columns:1fr}.teacher-task-list article>strong{width:max-content}}
+
+/* 부팅(새로고침 복구) 화면. 홈·온보딩과 같은 방 배경 위에 안내만 잠깐 뒤에 띄운다. */
+.app-shell--booting { background:#f6f1e9 url('/scenes/home-room-cute-v3.png') center/cover fixed; }
+.app-shell--booting::before { content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(90deg,rgba(255,250,238,.28),rgba(255,250,238,.06)); }
+.boot-scene { min-height:100vh; display:grid; place-items:center; padding:24px; position:relative; z-index:1; }
+.boot-card { max-width:420px; padding:26px 30px; border-radius:32px; background:linear-gradient(145deg,#fff,#fff9dc); box-shadow:0 13px 35px rgba(80,60,130,.11); text-align:center; opacity:0; animation:bootCardIn .35s .4s ease both; }
+.boot-card > .ui-icon { margin-bottom:6px; }
+.boot-card h2 { margin:7px 0; font-size:29px; }
+.boot-card p { margin:0; color:var(--muted); font-weight:700; }
+@keyframes bootCardIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce) { .boot-card { animation:none; opacity:1; } }

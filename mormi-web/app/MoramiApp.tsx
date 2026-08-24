@@ -51,7 +51,8 @@ import { TeacherReportEntry } from "./TeacherReportEntry";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
-type Stage = "onboarding" | "home" | "outside" | "cafe" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
+// booting: 새로고침 뒤 서버에서 진행도·진행 중 세션을 되살리는 동안의 자리. 확정되기 전엔 다른 화면을 그리지 않는다.
+type Stage = "booting" | "onboarding" | "home" | "outside" | "cafe" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
 
 const expressions: Record<Expression, string> = {
   calm: "/morami/calm-cutout.png",
@@ -1270,7 +1271,9 @@ export function MoramiApp() {
       }),
     };
   }, [sessionIndex, variantSeed]);
-  const [stage, setStage] = useState<Stage>("onboarding");
+  // "onboarding" 으로 시작하면 로그인된 아이도 새로고침마다 온보딩 → 홈 → 원래 화면이 차례로 보인다.
+  // 복구가 끝날 때까지 booting 에 머물고, 어느 화면으로 갈지는 아래 부팅 effect 가 한 번만 정한다.
+  const [stage, setStage] = useState<Stage>("booting");
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expression, setExpression] = useState<Expression>("happy");
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
@@ -1434,27 +1437,31 @@ export function MoramiApp() {
         setCoinBalance(snapshot.wallet_balance);
         setActiveCafeVisitId(snapshot.active_cafe_visit_id ?? null);
         refreshThemes();
-        setStage("home");
         // 이름과 원문은 보내지 않고, 서버가 발급한 가명 id 로만 식별한다.
         identifyLearner(snapshot.analytics_id);
 
-        // 진행 중 세션이 남아 있으면 홈을 거쳐 반복 화면으로 되돌아간다.
-        // 실패해도 홈은 그대로 두어, 아이가 새 개념을 고를 수 있게 한다.
-        if (snapshot.active_learning_session_id) {
-          await restoreLearningSession(snapshot.active_learning_session_id)
-            .catch((error: unknown) => {
+        // 진행 중 세션이 남아 있으면 홈을 거치지 않고 바로 반복 화면으로 되돌아간다.
+        // 복구 전에 홈을 먼저 그리면 getSession 응답을 기다리는 동안 홈이 그대로 보인다.
+        // 복구에 실패하면 홈으로 두어, 아이가 새 개념을 고를 수 있게 한다.
+        const restored = snapshot.active_learning_session_id
+          ? await restoreLearningSession(snapshot.active_learning_session_id).catch((error: unknown) => {
               console.warn("[mormi-api] 학습 세션 복구 실패", error);
               return false;
-            });
-        }
+            })
+          : false;
+        if (!restored) setStage("home");
       }).catch((error: unknown) => {
-        // 토큰이 만료·삭제되었으면 온보딩부터 다시 시작한다.
-        if (error instanceof ApiError && (error.status === 401 || error.status === 404)) return;
-        console.warn("[mormi-api] 진행도 조회 실패", error);
+        // 토큰이 만료·삭제되었으면 온보딩부터 다시 시작한다. 그 밖의 실패도 booting 에 머물 수는 없다.
+        if (!(error instanceof ApiError && (error.status === 401 || error.status === 404))) {
+          console.warn("[mormi-api] 진행도 조회 실패", error);
+        }
+        setStage("onboarding");
       });
       return;
     }
 
+    // 저장된 로그인이 없으면 온보딩으로. 기기에 남은 옛 진행도가 있으면 그 위에 덮어쓴다.
+    // (effect 본문에서 곧바로 setState 하지 않도록 한 프레임 뒤에 정한다.)
     try {
       const saved = JSON.parse(localStorage.getItem("morami-completed-sessions") || "[]") as string[];
       const savedCoins = Number(localStorage.getItem("mormey-coins") || "6000");
@@ -1464,9 +1471,12 @@ export function MoramiApp() {
         setCompletedSessionIds(saved);
         setCoinBalance(Number.isFinite(savedCoins) ? savedCoins : 6000);
         if (savedLearner?.id && savedLearner.name) setLearner(savedLearner);
-        if (onboarded && savedLearner?.id && savedLearner.name) setStage("home");
+        setStage(onboarded && savedLearner?.id && savedLearner.name ? "home" : "onboarding");
       });
-    } catch { /* device-local progress is optional */ }
+    } catch {
+      // 손상된 값은 무시하고 온보딩부터 다시.
+      window.requestAnimationFrame(() => setStage("onboarding"));
+    }
   }, [restoreLearningSession, refreshThemes]);
 
   useEffect(() => {
@@ -2005,7 +2015,7 @@ export function MoramiApp() {
 
   return (
     <main className={`app-shell app-shell--${stage}`}>
-      {stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
+      {stage !== "booting" && stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
         {/* 장소 이동은 화면이 바뀌어도 자리가 변하지 않아야 하는 전역 내비다.
             그래서 콘텐츠가 아니라 프로필과 같은 상단 줄에 둔다. */}
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
@@ -2023,6 +2033,13 @@ export function MoramiApp() {
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
         </div>
       </header>}
+
+      {stage === "booting" && (
+        <section className="boot-scene" aria-busy="true" aria-live="polite">
+          {/* 빠른 응답이면 아무것도 깜빡이지 않도록, 안내는 CSS 에서 잠깐 뒤에 나타난다. */}
+          <div className="boot-card"><UiIcon name="sprout" size="large" /><h2>모르미가 준비하고 있어!</h2><p>하던 곳으로 데려다 줄게.</p></div>
+        </section>
+      )}
 
       {stage === "onboarding" && <Onboarding onSignup={handleSignup} onLogin={handleLogin} />}
 
