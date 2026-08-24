@@ -16,15 +16,19 @@ test("놀이동산 FE에는 서버 문제 fixture 대신 표시 자산과 파생
   assert.doesNotMatch(contract, /amusementParkPreview|verified_facts|ticket_price:\s*3000|snack_total:\s*9000/);
 });
 
-test("방문 시작·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
+test("방문 시작·직접 제출·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
   assert.match(component, /api\.startAmusementParkVisit\(\)/);
+  assert.match(component, /api\.submitAmusementParkStage/);
   assert.match(component, /startAmusementParkDialogue/);
   assert.match(component, /submitMormiResponseThroughBe/);
   assert.match(component, /api\.getAmusementParkVisit/);
   assert.match(component, /api\.completeAmusementParkVisit/);
   assert.match(component, /visit\.stage_progress\[stageId\]/);
   assert.match(component, /next\.stage_progress\?\.completed/);
-  assert.doesNotMatch(component, /api\.submitAmusementParkStage|answers:\s*derivedAnswers/);
+  assert.match(component, /amusementAnswerFields\[stage\.stage_id\]/);
+  assert.match(component, /answers,/);
+  assert.doesNotMatch(component, /ticket_price|party_count|snack_total|payer_count|single_ride_price|day_pass_price/);
+  assert.doesNotMatch(component, /answers:\s*derivedAnswers/);
   assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
 });
 
