@@ -367,7 +367,7 @@ function ParkConnectionState({ message, retrying, onRetry }: { message: string; 
   </main>;
 }
 
-export function AmusementParkPreview() {
+export function AmusementPark() {
   const [visit, setVisit] = useState<AmusementParkVisitView | null>(null);
   const [activeStageId, setActiveStageId] = useState<AmusementStageId | null>(null);
   const [replayingStage, setReplayingStage] = useState(false);

@@ -1,5 +1,6 @@
 // apiRequest 의 401 처리. 인증 요청과 로그인 실패를 auth 인자 하나로 가르는 설계를 지킨다.
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const store = new Map();
@@ -27,6 +28,7 @@ const {
   ApiError,
 } =
   await import("../app/api-client.ts");
+const apiClientSource = await readFile(new URL("../app/api-client.ts", import.meta.url), "utf8");
 
 function respond(status, body) {
   return () => new Response(body === undefined ? null : JSON.stringify(body), {
@@ -222,4 +224,8 @@ test("놀이동산 스테이지 제출은 계산한 파생값만 answers에 보�
     elapsed_ms: 4200,
   });
   assert.doesNotMatch(lastRequest.init.body, /ticket_price|party_count|verified_facts/);
+});
+
+test("놀이동산 마지막 단계 제출 응답은 complete next_stage를 표현한다", () => {
+  assert.match(apiClientSource, /next_stage:\s*AmusementStageId \| "complete" \| null/);
 });

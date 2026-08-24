@@ -3,7 +3,8 @@ import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const { amusementAnswerFields, amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
-const component = await readFile(new URL("../app/amusement-park-preview/AmusementParkPreview.tsx", import.meta.url), "utf8");
+const component = await readFile(new URL("../app/amusement-park/AmusementPark.tsx", import.meta.url), "utf8");
+const previewPage = await readFile(new URL("../app/amusement-park-preview/page.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
 const contract = await readFile(new URL("../app/amusement-park-contract.ts", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
@@ -92,9 +93,14 @@ test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 �
 test("외출의 놀이동산 카드는 themes 응답의 해금 상태로만 활성화한다", () => {
   assert.match(app, /theme\.theme_id === "amusement_park"/);
   assert.match(app, /amusementParkTheme\?\.unlocked === true/);
-  assert.match(app, /href="\/amusement-park-preview"/);
+  assert.match(app, /href="\/amusement-park"/);
   assert.match(app, /카페 미션을 모두 완료하면 열려요/);
   assert.doesNotMatch(app, /마트 가기/);
+});
+
+test("운영 URL은 /amusement-park이고 기존 preview URL은 리다이렉트한다", () => {
+  assert.match(previewPage, /redirect\("\/amusement-park"\)/);
+  assert.doesNotMatch(app, /amusement-park-preview/);
 });
 
 test("카페 완료 뒤와 외출 진입 때 장소 해금 상태를 다시 조회한다", () => {

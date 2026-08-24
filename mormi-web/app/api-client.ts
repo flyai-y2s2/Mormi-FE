@@ -476,7 +476,7 @@ export type AmusementStageResult = {
   visit_id: string;
   stage: AmusementStageId;
   is_correct: boolean;
-  next_stage: AmusementStageId | null;
+  next_stage: AmusementStageId | "complete" | null;
   next_stage_unlocked: boolean;
   attempts: number;
   expected_answers: Record<string, number>;

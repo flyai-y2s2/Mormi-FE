@@ -1,20 +1,35 @@
-# 놀이동산 세션 FE 연동 계약 초안
+# 놀이동산 세션 FE 연동 계약
 
-이 문서는 FE 미리보기 화면을 실제 학습 세션에 연결할 때 필요한 BE 응답을 정리한다. 현재 `/amusement-park-preview`는 화면 검수 전용이며 판정·진행·별노트 저장을 수행하지 않는다.
+놀이동산은 운영 학습 흐름이다. 아이가 보는 URL은 `/amusement-park`이며, 기존 `/amusement-park-preview`는 호환용으로 `/amusement-park`로 리다이렉트한다.
+
+FE는 방문 시작, 단계 제출, AI 대화, 완료 판정을 모두 Spring BE에 맡긴다. 로컬 fixture로 문제를 대신 만들거나 정답, 설명문, 별노트를 임의 생성하지 않는다.
 
 ## 세션 구조
 
 - `theme_id`: `amusement_park`
-- 순서: `ticket` → `snack_split` → `pass_break_even`
-- 방문을 시작할 때 가격과 인원을 고정하고, 같은 `visit_id` 안에서는 바꾸지 않는다.
-- 통과 판정과 단계 해금은 서버의 `verified_facts` 및 `stage_progress`를 기준으로 한다.
+- 순서: `ticket` -> `snack_split` -> `pass_break_even`
+- `stage_id`: `ticket | snack_split | pass_break_even`
+- 해금 조건: 카페 완료. 해금 전 방문 시작은 403이다.
+- 방문을 시작할 때 가격과 인원을 서버가 고정하고, 같은 `visit_id` 안에서는 바꾸지 않는다.
+- 단계 완료와 다음 단계 해금은 서버의 `stage_progress`와 AI 대화 검증 결과를 기준으로 한다.
+
+## FE가 호출하는 BE API
+
+| Method | Path | 용도 |
+| --- | --- | --- |
+| `POST` | `/v1/amusement-park-visits` | 방문 시작. 진행 중 방문이 있으면 이어받는다. |
+| `GET` | `/v1/amusement-park-visits/{id}` | 새로고침, 단계 제출, 대화 완료 뒤 최신 진행 상태를 재조회한다. |
+| `POST` | `/v1/amusement-park-visits/{id}/stages/{stage_id}` | 아이가 계산한 파생 답만 제출한다. |
+| `POST` | `/v1/amusement-park-visits/{id}/complete` | 세 단계가 모두 완료된 방문을 최종 완료 처리한다. |
+| `POST` | `/v1/amusement-park-visits/{id}/dialogues` | 현재 놀이동산 단계의 AI 대화를 시작하거나 복구한다. |
+| `POST` | `/v1/dialogue/conversations/{conversation_id}/responses` | AI 대화 턴에 대한 아이 응답을 BE를 통해 전달한다. |
 
 ## 방문 응답
 
-```json
+```jsonc
 {
   "theme_id": "amusement_park",
-  "visit_id": "uuid",
+  "visit_id": "park_visit_...",
   "stage_order": ["ticket", "snack_split", "pass_break_even"],
   "stage_progress": {
     "ticket": "available",
@@ -41,40 +56,87 @@
         "total_price": 6000
       },
       "transfer": {
-        "prompt": "그럼 1인 3,500원이고 4명이면?",
-        "equation": "3,500 × 4 = 14,000",
-        "conclusion": "3,500원을 네 번 더한 것과 같으니까 14,000원이야!"
+        "prompt": "그럼 1인 4,000원이고 3명이면?",
+        "equation": "4,000 × 3 = 12,000",
+        "conclusion": "4,000원을 3번 더한 것과 같으니까 12,000원이야!"
       }
     }
-  ]
+  ],
+  "started_at": "2026-08-23T00:00:00Z",
+  "completed_at": null,
+  "attempts": []
 }
 ```
 
-## 단계별 `verified_facts`
+`facts`와 `verified_facts`의 숫자는 방문마다 새로 뽑힌다. FE는 값을 하드코딩하지 않고 응답을 그대로 표시한다.
 
-| 단계 | 필수 값 |
-| --- | --- |
-| `ticket` | `ticket_price`, `party_count`, `total_price` |
-| `snack_split` | `snack_total`, `payer_count`, `per_person` |
-| `pass_break_even` | `single_ride_price`, `day_pass_price`, `break_even_rides`, `benefit_from_rides` |
+## 단계별 값
 
-## 대화 및 완료 턴
+| 단계 | 주어지는 값 | 아이가 구하는 값 |
+| --- | --- | --- |
+| `ticket` | `ticket_price`, `party_count` | `total_price` |
+| `snack_split` | `snack_total`, `payer_count` | `per_person` |
+| `pass_break_even` | `single_ride_price`, `day_pass_price` | `break_even_rides`, `benefit_from_rides` |
 
-기존 러닝바이티칭 대화 계약을 유지하되 아래 장면을 구분할 수 있어야 한다.
+직접 제출 경로의 `answers`에는 아이가 구하는 값만 담는다. 주어진 값을 같이 보내면 BE가 `answer_unknown` 400으로 거부한다.
 
-1. 모르미의 개념적 오개념
-2. 아이가 쓴 안전한 원문 인용(`quote_safe`, `evidence_span`)
-3. 배운 전략을 새 숫자에 적용하는 검수된 전이 턴
-4. 아이의 실제 근거 문장만 저장하는 별노트 후보
-5. 검증된 사실을 근거로 한 단계 완료 및 다음 단계 해금
+```jsonc
+// POST /v1/amusement-park-visits/{id}/stages/ticket
+{
+  "answers": { "total_price": 6000 },
+  "attempt_no": 1,
+  "elapsed_ms": 4200
+}
 
-FE는 정답·설명문·별노트를 임의 생성하지 않고 서버 응답을 표시한다. 네트워크 오류일 때 로컬 fixture로 학습을 저장하거나 완료 처리하지 않는다.
+// 200
+{
+  "visit_id": "park_visit_...",
+  "stage": "ticket",
+  "is_correct": true,
+  "next_stage": "snack_split",
+  "next_stage_unlocked": true,
+  "attempts": 1,
+  "expected_answers": { "total_price": 6000 },
+  "submitted_answers": { "total_price": 6000 },
+  "feedback_code": "ticket_correct"
+}
+```
 
-## FE 연결 시 필요한 작업
+마지막 단계 제출 결과의 `next_stage`는 `"complete"`가 될 수 있다. FE 타입은 `AmusementStageId | "complete" | null`로 표현한다.
 
-- 미리보기 fixture를 방문 조회 응답으로 교체
-- 기존 인증/재시도/에러 처리 규칙을 그대로 사용
-- `no_response` 도움 카드 계약 연결
-- 단계 완료 후 서버의 최신 `stage_progress` 재조회
-- 별노트 저장 성공 후에만 완료 화면에 기록 표시
-- 일반 사용자에게 놀이동산 진입점을 노출하는 시점은 API 배포 이후로 제한
+## AI 대화
+
+```jsonc
+// POST /v1/amusement-park-visits/{id}/dialogues
+{
+  "scenario_id": "amusement_ticket_multiply",
+  "start_mode": "resume",
+  "request_id": "요청마다 새 UUID"
+}
+```
+
+FE는 문제 사실을 대화 시작 요청에 보내지 않는다. Spring BE가 방문 스냅샷에서 문제 사실을 꺼내 FastAPI AI에 전달한다.
+
+대화 응답은 카페와 같은 `MormiConversation` 구조를 쓰며, Spring BE가 `stage_progress`를 붙인다.
+
+```jsonc
+{
+  "stage_progress": {
+    "stage": "ticket",
+    "completed": true,
+    "next_stage": "snack_split",
+    "source": "dialogue_verified_facts"
+  }
+}
+```
+
+대화 완료 턴의 `completion.verified_facts`는 Spring BE가 방문에 고정된 값과 다시 대조한다. 값이 맞으면 단계 시도로 기록하고, 맞지 않으면 진행시키지 않는다.
+
+## FE 처리 원칙
+
+- `/amusement-park`는 별도 페이지이므로 홈의 `stage === "cafe"` 화면과 달리 페이지 진입 시 `POST /v1/amusement-park-visits`로 진행 상태를 복구한다.
+- 외출 카드 해금 여부는 `/v1/themes` 응답의 `amusement_park.unlocked`를 우선한다.
+- 단계 제출 또는 AI 대화 완료 뒤에는 `GET /v1/amusement-park-visits/{id}`로 최신 `stage_progress`를 다시 읽는다.
+- 세 단계가 모두 `completed`가 되면 `POST /v1/amusement-park-visits/{id}/complete`를 호출한다.
+- 완료한 스테이지도 새 회차로 다시 연습할 수 있다.
+- 서버 오류 때 로컬 문제로 대체하지 않고 재시도 상태를 보여 준다.
