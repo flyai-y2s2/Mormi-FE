@@ -1,6 +1,5 @@
-import { AmusementParkPreview } from "./AmusementParkPreview";
+import { redirect } from "next/navigation";
 
-export default function AmusementParkPreviewPage() {
-  return <AmusementParkPreview />;
+export default function LegacyAmusementParkRedirectPage() {
+  redirect("/amusement-park");
 }
-

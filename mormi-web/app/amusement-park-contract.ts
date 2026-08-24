@@ -22,6 +22,10 @@ export const amusementStageVisuals: Record<AmusementStageId, {
   },
 };
 
+/**
+ * 직접 제출 UI가 BE에 보낼 파생 정답 키만 정의한다.
+ * 문제 사실과 기대 정답은 방문 응답에 있으며, FE는 여기 있는 필드 이름으로 아이의 답만 수집한다.
+ */
 export const amusementAnswerFields: Record<AmusementStageId, ReadonlyArray<{
   key: string;
   label: string;
