@@ -35,20 +35,6 @@ export type MormiCafeContext = {
   budget?: number;
 };
 
-export type MormiParkContext = {
-  theme_id: "amusement_park";
-  stage_id: "ticket" | "snack_split" | "pass_break_even";
-  title: string;
-  mission: string;
-  skill: string;
-  strategy: string;
-  mormi_misconception: string;
-  prompt: string;
-  facts: Array<{ key: string; label: string; value: number; unit: string }>;
-  required_verified_fact_keys: string[];
-  transfer: { prompt: string; equation: string; conclusion: string };
-};
-
 export type StartMormiConversation = {
   learner_id: number;
   scene: MormiScene;
@@ -125,6 +111,7 @@ export type MormiTurn = {
   completion: {
     outcome: "taught" | "supported" | "bright_exit";
     teach_reward_eligible: boolean;
+    stage_completion_eligible?: boolean;
     verified_facts: Record<string, string | number | boolean>;
   } | null;
   pedagogy?: {
@@ -156,11 +143,11 @@ export type MormiTurn = {
 export type MormiConversation = {
   conversation_id: string;
   turn: MormiTurn;
-  /** Spring BE가 최초 문제와 함께 저장해 새로고침 때 돌려주는 구조 맥락. */
+  /** Spring BE가 방문 연결과 함께 저장해 새로고침 때 돌려주는 구조 맥락. */
   scenario_context?: {
     queue_context?: { left_count: number; right_count: number };
     cafe_context?: MormiCafeContext;
-    park_context?: MormiParkContext;
+    content_owner?: "mormi_ai";
   };
   /** Spring BE가 AI의 검증 슬롯과 생활수학 단계 기록을 맞춘 결과. */
   stage_progress?: {

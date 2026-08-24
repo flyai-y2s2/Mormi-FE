@@ -106,10 +106,27 @@ function ParkProblemVisual({ stage, conversation }: {
     {transferLeft && transferRight && <strong>{transferLeft} {transferSymbol} {transferRight} = □</strong>}
   </div>;
 
+  const rawFacts = conversation?.turn.visual.data.facts;
+  const facts = Array.isArray(rawFacts)
+    ? rawFacts.flatMap((fact) => {
+      if (typeof fact !== "object" || fact === null) return [];
+      const item = fact as Record<string, unknown>;
+      if (typeof item.key !== "string" || typeof item.label !== "string" || typeof item.value !== "number") return [];
+      return [{
+        key: item.key,
+        label: item.label,
+        value: item.value,
+        unit: typeof item.unit === "string" ? item.unit : "",
+      }];
+    })
+    : [];
+
   return <div className="park-problem">
     <Image className="park-problem__element" src={visual.element_image_url} alt={`${stage.title} 문제 요소`} width={900} height={600} priority />
     <div className="park-problem__facts">
-      {stage.facts.map((fact) => <span key={fact.key} className="park-problem__fact"><small>{fact.label}</small><b>{fact.value.toLocaleString("ko-KR")}{fact.unit}</b></span>)}
+      {facts.length > 0
+        ? facts.map((fact) => <span key={fact.key} className="park-problem__fact"><small>{fact.label}</small><b>{fact.value.toLocaleString("ko-KR")}{fact.unit}</b></span>)
+        : <span className="park-problem__fact"><small>문제 정보</small><b>불러오는 중…</b></span>}
     </div>
   </div>;
 }

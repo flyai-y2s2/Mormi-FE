@@ -1,6 +1,5 @@
 // apiRequest 의 401 처리. 인증 요청과 로그인 실패를 auth 인자 하나로 가르는 설계를 지킨다.
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const store = new Map();
@@ -28,8 +27,6 @@ const {
   ApiError,
 } =
   await import("../app/api-client.ts");
-const apiClientSource = await readFile(new URL("../app/api-client.ts", import.meta.url), "utf8");
-
 function respond(status, body) {
   return () => new Response(body === undefined ? null : JSON.stringify(body), {
     status,
@@ -193,39 +190,4 @@ test("놀이동산 방문 시작·조회·완료는 배포된 방문 API 경로�
   await api.completeAmusementParkVisit("park-1");
   assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits/park-1/complete");
   assert.equal(lastRequest.init.method, "POST");
-});
-
-test("놀이동산 스테이지 제출은 계산한 파생값만 answers에 보낸다", async () => {
-  withSession();
-  setUnauthorizedHandler(null);
-  nextResponse = respond(200, {
-    visit_id: "park-1",
-    stage: "ticket",
-    is_correct: true,
-    next_stage: "snack_split",
-    next_stage_unlocked: true,
-    attempts: 1,
-    expected_answers: { total_price: 6000 },
-    submitted_answers: { total_price: 6000 },
-    feedback_code: "ticket_correct",
-  });
-
-  await api.submitAmusementParkStage("park-1", "ticket", {
-    answers: { total_price: 6000 },
-    attempt_no: 1,
-    elapsed_ms: 4200,
-  });
-
-  assert.equal(lastRequest.input, "/api/be/v1/amusement-park-visits/park-1/stages/ticket");
-  assert.equal(lastRequest.init.method, "POST");
-  assert.deepEqual(JSON.parse(lastRequest.init.body), {
-    answers: { total_price: 6000 },
-    attempt_no: 1,
-    elapsed_ms: 4200,
-  });
-  assert.doesNotMatch(lastRequest.init.body, /ticket_price|party_count|verified_facts/);
-});
-
-test("놀이동산 마지막 단계 제출 응답은 complete next_stage를 표현한다", () => {
-  assert.match(apiClientSource, /next_stage:\s*AmusementStageId \| "complete" \| null/);
 });
