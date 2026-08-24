@@ -1,6 +1,24 @@
 @import "tailwindcss";
 
 @font-face {
+  font-family: "Mormi Nadeuri";
+  src: url("/fonts/hakgyoansim-nadeuri-l.otf") format("opentype");
+  size-adjust: 106%;
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Mormi Nadeuri";
+  src: url("/fonts/hakgyoansim-nadeuri-b.otf") format("opentype");
+  size-adjust: 106%;
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
   font-family: "Mormi Child Hope";
   src: url("/fonts/nanum-child-hope.ttf") format("truetype");
   /* 별노트가 먼저 고딕체로 그려졌다가 바뀌는 FOUT를 막는다. 폰트는 layout에서 미리 받는다. */
@@ -471,7 +489,7 @@
 .park-cafe-talk button,
 .park-cafe-talk input,
 .park-clear button {
-  font-family: "Pretendard", "SUIT", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .park-cafe-talk {
@@ -942,6 +960,7 @@
 }
 
 :root {
+  --font-sans: "Mormi Nadeuri", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --ink: #203c32;
   --muted: #52685e;
   --mint: #6bd3a8;
@@ -960,14 +979,14 @@ html, body { margin: 0; min-height: 100%; }
 body {
   color: var(--ink);
   background: #f8fbf7;
-  font-family: "Pretendard", "SUIT", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.55;
   letter-spacing: -.012em;
   -webkit-font-smoothing: antialiased;
 }
-button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea, a { font: inherit; -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.35); outline-offset: 4px; }
 
