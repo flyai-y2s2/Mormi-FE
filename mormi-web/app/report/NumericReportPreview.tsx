@@ -133,14 +133,22 @@ export function NumericReportPreview({
     ];
   const rawLadder = selectedDomain.sessionRows.at(-1)?.[2] ?? "—";
   const ladderValues = rawLadder === "—" ? [] : rawLadder.split("/").map((value) => value.endsWith("%") ? value : `${value}%`);
-  const ladderPlanLabel = selectedDomain.ladderStart === "기록 필요" ? "발화 기록 먼저" : `${selectedDomain.ladderStart}부터 시작`;
-  const ladderPlanDetail = selectedDomain.ladderStart === "기록 필요"
+  const fallbackLadderPlanLabel = selectedDomain.ladderStart === "기록 필요" ? "발화 기록 먼저" : `${selectedDomain.ladderStart}부터 시작`;
+  const fallbackLadderPlanDetail = selectedDomain.ladderStart === "기록 필요"
     ? "아이의 답을 한 번 기록한 뒤 알맞은 시작 단계를 정합니다."
     : `${selectedDomain.ladderStart}에서 아이가 자신의 말로 답해보도록 기다립니다.`;
   const speech = speechByDomain?.[selectedDomain.id];
   const ladderAnalysis = selectedDomain.ladderAnalysis;
   const approvalState = ladderAnalysis ? ladderApprovalState[ladderAnalysis.analysisId] : undefined;
   const ladderApplied = Boolean(ladderAnalysis?.approved || approvalState === "approved");
+  const ladderPlanLabel = ladderAnalysis
+    ? `${ladderAnalysis.recommendedLevel}${ladderApplied ? " 적용" : " 추천"}`
+    : fallbackLadderPlanLabel;
+  const ladderPlanDetail = ladderAnalysis
+    ? ladderAnalysis.action === "MAINTAIN" || ladderAnalysis.action === "INSUFFICIENT_EVIDENCE"
+      ? `${ladderAnalysis.currentLevel} 단계는 ${ladderActionCopy[ladderAnalysis.action]}로 분석했습니다.`
+      : `${ladderAnalysis.currentLevel}에서 ${ladderAnalysis.recommendedLevel}로 조정하는 것이 좋다고 분석했습니다.`
+    : fallbackLadderPlanDetail;
   const canApproveLadder = Boolean(
     ladderAnalysis
       && (ladderAnalysis.action === "UPGRADE" || ladderAnalysis.action === "ADJUST_DOWN")
@@ -188,10 +196,8 @@ export function NumericReportPreview({
           onRequestSpeech?.(selectedDomain.id);
         }}><summary>과거·최근 발화 보기</summary><div>{speech?.state === "loading" ? <p>발화 근거를 불러오는 중이에요.</p> : speech?.state === "ready" && speech.evidence.available ? <>{speech.evidence.past && <p><b>과거</b>{speech.evidence.past.utterance}</p>}<p><b>최근 발화</b>{speech.evidence.recent.utterance}</p><small>{speech.evidence.change_summary}</small></> : speech?.state === "ready" ? <p>비교할 기록이 더 필요해요</p> : speech?.state === "error" ? <p>{speech.message}</p> : <><p><b>과거</b>{selectedDomain.pastUtterance}</p><p><b>최근</b>{selectedDomain.recentUtterance}</p><small>이번 주 전체 {selectedDomain.historyCount}회 · 최근 {selectedDomain.recentCount}회 기록을 함께 봤어요.</small></>}</div></details></div>
       </section>
-      <section id="numeric-next-plan" className="numeric-preview__section numeric-next-plan" aria-labelledby="numeric-next-title"><div className="numeric-next-plan__eyebrow"><span aria-hidden="true">✦</span> AI 다음 학습 제안</div><div className="numeric-next-plan__body"><div><h2 id="numeric-next-title">다음은 {selectedDomain.label} 연습이에요</h2><p>{selectedDomain.nextCheck}</p></div><div className="numeric-next-plan__quick"><span><small>반복학습</small><strong>{selectedDomain.label} {selectedDomain.repeatCount}문제</strong></span><span><small>발화 사다리</small><strong>{ladderPlanLabel}</strong></span></div></div><details><summary>다음 단원 계획 확인</summary><div><p><b>시작 단계</b>{ladderPlanDetail}</p><p><b>단계 조절</b>{selectedDomain.ladderRule}</p><p><b>관찰할 점</b>{selectedDomain.nextCheck}</p></div></details></section>
-      <section className="numeric-preview__section numeric-ladder-analysis" aria-labelledby="numeric-ladder-analysis-title">
-        <div className="numeric-ladder-analysis__heading"><div><span aria-hidden="true">✦</span><div><small>선택한 소단원 자동 분석</small><h2 id="numeric-ladder-analysis-title">발화 사다리 분석</h2></div></div><strong>{selectedDomain.label}</strong></div>
-        {ladderAnalysis ? <div className="numeric-ladder-analysis__result">
+      <section id="numeric-next-plan" className="numeric-preview__section numeric-next-plan" aria-labelledby="numeric-next-title"><div className="numeric-next-plan__eyebrow"><span aria-hidden="true">✦</span> AI 다음 학습 제안</div><div className="numeric-next-plan__body"><div><h2 id="numeric-next-title">다음은 {selectedDomain.label} 연습이에요</h2><p>{selectedDomain.nextCheck}</p></div><div className="numeric-next-plan__quick"><span><small>반복학습</small><strong>{selectedDomain.label} {selectedDomain.repeatCount}문제</strong></span><span><small>발화 사다리</small><strong>{ladderPlanLabel}</strong></span></div></div>
+        {ladderAnalysis && <div className="numeric-ladder-analysis__result">
           <div className="numeric-ladder-analysis__decision"><span>{ladderActionCopy[ladderAnalysis.action]}</span><strong>{ladderAnalysis.currentLevel}<i aria-hidden="true">→</i>{ladderAnalysis.recommendedLevel}</strong><p>최근 발화와 현재 단계 수행을 함께 분석한 결과입니다.</p></div>
           <div className="numeric-ladder-analysis__facts">
             <span><small>최근 발화 예측</small><strong>{ladderAnalysis.recentPrediction?.level ?? "—"}</strong>{ladderAnalysis.recentPrediction && <em>신뢰도 {ladderAnalysis.recentPrediction.confidence}%</em>}</span>
@@ -201,7 +207,8 @@ export function NumericReportPreview({
             {ladderApplied ? <strong className="is-approved">적용 완료</strong> : canApproveLadder ? <button type="button" disabled={approvalState === "saving" || !onApproveLadder} onClick={() => void approveLadder()}>{approvalState === "saving" ? "적용 중…" : "이 단계로 적용"}</button> : <strong>교사 확인</strong>}
             {approvalState === "error" && <small role="alert">단계를 적용하지 못했습니다. 잠시 후 다시 시도해 주세요.</small>}
           </div>
-        </div> : <p className="numeric-ladder-analysis__empty">같은 소단원 반복학습을 연속 2회 완료하면 알림 없이 자동으로 분석합니다.</p>}
+        </div>}
+        <details><summary>다음 단원 계획 확인</summary><div><p><b>시작 단계</b>{ladderPlanDetail}</p><p><b>단계 조절</b>{selectedDomain.ladderRule}</p><p><b>관찰할 점</b>{selectedDomain.nextCheck}</p></div></details>
       </section>
     </article>
   </main>;
