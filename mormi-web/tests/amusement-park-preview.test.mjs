@@ -22,7 +22,7 @@ test("방문 시작·직접 제출·AI 대화 판정·최신 진행 재조회·�
   assert.match(component, /startAmusementParkDialogue/);
   assert.match(component, /submitMormiResponseThroughBe/);
   assert.match(component, /api\.getAmusementParkVisit/);
-  assert.match(component, /api\.completeAmusementParkVisit/);
+  assert.match(component, /if \(allCompleted\) latest = await api\.completeAmusementParkVisit\(visit\.visit_id\);/);
   assert.match(component, /visit\.stage_progress\[stageId\]/);
   assert.match(component, /next\.stage_progress\?\.completed/);
   assert.match(component, /amusementAnswerFields\[stage\.stage_id\]/);
@@ -30,6 +30,7 @@ test("방문 시작·직접 제출·AI 대화 판정·최신 진행 재조회·�
   assert.doesNotMatch(component, /ticket_price|party_count|snack_total|payer_count|single_ride_price|day_pass_price/);
   assert.doesNotMatch(component, /answers:\s*derivedAnswers/);
   assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
+  assert.doesNotMatch(component, /allCompleted\s*&&\s*!latest\.completed_at/);
 });
 
 test("서버 오류 때 로컬 문제를 대신 보여주지 않고 재시도 상태를 제공한다", () => {

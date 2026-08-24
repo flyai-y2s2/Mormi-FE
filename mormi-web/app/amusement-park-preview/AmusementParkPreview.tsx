@@ -219,7 +219,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
     try {
       let latest = await api.getAmusementParkVisit(visit.visit_id);
       const allCompleted = latest.stage_order.every((stageId) => latest.stage_progress[stageId] === "completed");
-      if (allCompleted && !latest.completed_at) latest = await api.completeAmusementParkVisit(visit.visit_id);
+      if (allCompleted) latest = await api.completeAmusementParkVisit(visit.visit_id);
       onVisitChanged(latest);
       setComplete(true);
     } catch (error) {
