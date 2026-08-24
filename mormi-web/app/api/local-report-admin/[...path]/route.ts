@@ -5,7 +5,9 @@ import { isTeacherReportRequestAuthorized } from "../../../teacher-report-sessio
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request, context: { params: Promise<{ path: string[] }> }) {
+type ProxyContext = { params: Promise<{ path: string[] }> };
+
+async function proxy(request: Request, context: ProxyContext, method: "GET" | "POST") {
   const config = localReportAdminConfig(process.env);
   if (!config) return Response.json({ code: "not_found" }, { status: 404 });
   if (!isTeacherReportRequestAuthorized(request, config.auth)) {
@@ -16,8 +18,13 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
   const target = new URL(`/v1/local-report-admin/${path.map(encodeURIComponent).join("/")}`, config.origin);
   target.search = incoming.search;
   const upstream = await fetch(target, {
-    method: "GET",
-    headers: { accept: "application/json", "X-Mormi-Local-Admin-Key": config.key },
+    method,
+    headers: {
+      accept: "application/json",
+      ...(method === "POST" ? { "content-type": "application/json" } : {}),
+      "X-Mormi-Local-Admin-Key": config.key,
+    },
+    body: method === "POST" ? await request.text() : undefined,
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(20_000),
@@ -26,4 +33,12 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
     status: upstream.status,
     headers: { "content-type": upstream.headers.get("content-type") ?? "application/json", "cache-control": "no-store" },
   });
+}
+
+export function GET(request: Request, context: ProxyContext) {
+  return proxy(request, context, "GET");
+}
+
+export function POST(request: Request, context: ProxyContext) {
+  return proxy(request, context, "POST");
 }

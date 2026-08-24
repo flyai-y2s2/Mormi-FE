@@ -1,15 +1,16 @@
 "use client";
 
-import { ApiError, type DiagnosticReportDto, type SpeechEvidenceDto } from "./api-client";
+import { ApiError, type DiagnosticReportDto, type LadderApprovalResponseDto, type SpeechEvidenceDto } from "./api-client";
 
 export type LocalAdminLearner = {
   learner_id: number;
   display_name: string;
 };
 
-async function localAdminRequest<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function localAdminRequest<T>(path: string, signal?: AbortSignal, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api/local-report-admin${path}`, {
-    headers: { accept: "application/json" },
+    ...init,
+    headers: { accept: "application/json", "content-type": "application/json", ...init.headers },
     cache: "no-store",
     signal,
   });
@@ -38,5 +39,18 @@ export const localReportAdminApi = {
   speechEvidence(learnerId: number, domainId: string, weekStart: string, signal?: AbortSignal) {
     const params = new URLSearchParams({ domain_id: domainId, week_start: weekStart });
     return localAdminRequest<SpeechEvidenceDto>(`/learners/${learnerId}/speech-evidence?${params.toString()}`, signal);
+  },
+
+  approveLadderRecommendation(
+    learnerId: number,
+    analysisId: string,
+    recommendationVersion: number,
+    signal?: AbortSignal,
+  ) {
+    return localAdminRequest<LadderApprovalResponseDto>(
+      `/learners/${learnerId}/ladder-recommendations/${encodeURIComponent(analysisId)}/approve`,
+      signal,
+      { method: "POST", body: JSON.stringify({ recommendation_version: recommendationVersion }) },
+    );
   },
 };

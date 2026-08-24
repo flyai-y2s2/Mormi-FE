@@ -379,3 +379,143 @@ test("renders retained empty-week feedback once beside the selector", async () =
   assert.equal((html.match(/이전 결과를 계속 표시합니다/g) ?? []).length, 1);
   assert.equal((html.match(/다시 불러오기/g) ?? []).length, 1);
 });
+
+test("shows an actual recent utterance when there is no older comparison sample", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const html = server.renderToString(React.createElement(NumericReportPreview, {
+    report: completeDiagnosticReportExample,
+    speechByDomain: {
+      "money-count": {
+        state: "ready",
+        evidence: {
+          available: true,
+          domain_id: "money-count",
+          verified_elements: ["계산 순서"],
+          recent: { evidence_id: "recent", utterance: "백 원짜리 세 개라서 삼백 원이야.", occurred_at: "2026-08-22T09:00:00+09:00", expression_level: "L3" },
+          change_summary: "최근 발화 한 건을 확인했습니다.",
+        },
+      },
+    },
+  }));
+
+  assert.match(html, /백 원짜리 세 개라서 삼백 원이야/);
+  assert.match(html, /최근 발화/);
+  assert.doesNotMatch(html, /<b>과거<\/b>/);
+});
+
+test("renders the four ladder analysis states and only offers approval for a real level change", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const base = {
+    analysis_id: "analysis-1",
+    learner_id: completeDiagnosticReportExample.learner.learner_id,
+    skill_id: "money-count",
+    trigger_session_id: "session-2",
+    session_ids: ["session-1", "session-2"],
+    current_level: "L2",
+    recommended_level: "L3",
+    current_accuracy: 0.93,
+    evidence_count: 5,
+    reason_code: "test",
+    recent_predictions: [{ level: "L3", confidence: 0.91 }],
+    model_version: "ladder-v2",
+    recommendation_version: 1,
+    approved: false,
+    analyzed_at: "2026-08-23T10:00:00+09:00",
+  };
+  const cases = [
+    ["UPGRADE", "L3", "다음 단계로 올려도 좋아요", true],
+    ["MAINTAIN", "L2", "현재 단계 유지", false],
+    ["ADJUST_DOWN", "L0", "한 단계 낮춰 다시 연습", true],
+    ["INSUFFICIENT_EVIDENCE", "L2", "분석 근거가 더 필요해요", false],
+  ];
+
+  for (const [action, recommended_level, copy, hasButton] of cases) {
+    const report = { ...completeDiagnosticReportExample, ladder_recommendations: [{ ...base, action, recommended_level }] };
+    const html = server.renderToString(React.createElement(NumericReportPreview, {
+      report,
+      onApproveLadder: hasButton ? async () => {} : undefined,
+    }));
+    assert.match(html, new RegExp(copy));
+    assert.match(html, new RegExp(`L2.*${recommended_level}`));
+    assert.equal(html.includes("이 단계로 적용"), hasButton);
+  }
+});
+
+test("shows a recommendation but never offers approval without the teacher handler", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const report = {
+    ...completeDiagnosticReportExample,
+    ladder_recommendations: [{
+      analysis_id: "analysis-learner-read-only",
+      learner_id: completeDiagnosticReportExample.learner.learner_id,
+      skill_id: "money-count",
+      trigger_session_id: "session-2",
+      session_ids: ["session-1", "session-2"],
+      current_level: "L2",
+      recommended_level: "L3",
+      action: "UPGRADE",
+      current_accuracy: 0.95,
+      evidence_count: 5,
+      reason_code: "upgrade_threshold_met",
+      recent_predictions: [{ level: "L3", confidence: 0.92 }],
+      model_version: "ladder-v2",
+      recommendation_version: 3,
+      approved: false,
+      analyzed_at: "2026-08-23T10:00:00+09:00",
+    }],
+  };
+
+  const html = server.renderToString(React.createElement(NumericReportPreview, { report }));
+
+  assert.doesNotMatch(html, /이 단계로 적용/);
+  assert.match(html, /교사 확인/);
+});
+
+test("approves a ladder level change once and shows its applied state without a popup", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const recommendation = {
+    analysis_id: "analysis-approve",
+    learner_id: completeDiagnosticReportExample.learner.learner_id,
+    skill_id: "money-count",
+    trigger_session_id: "session-2",
+    session_ids: ["session-1", "session-2"],
+    current_level: "L2",
+    recommended_level: "L3",
+    action: "UPGRADE",
+    current_accuracy: 0.95,
+    evidence_count: 5,
+    reason_code: "upgrade_threshold_met",
+    recent_predictions: [{ level: "L3", confidence: 0.92 }],
+    model_version: "ladder-v2",
+    recommendation_version: 3,
+    approved: false,
+    analyzed_at: "2026-08-23T10:00:00+09:00",
+  };
+  const report = { ...completeDiagnosticReportExample, ladder_recommendations: [recommendation] };
+  const approvals = [];
+  const props = { report, onApproveLadder: async (analysisId, version) => { approvals.push([analysisId, version]); } };
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, props)));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, props)); });
+    const button = [...dom.container.querySelectorAll("button")].find((item) => item.textContent === "이 단계로 적용");
+    await act(async () => { button.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
+    assert.deepEqual(approvals, [["analysis-approve", 3]]);
+    assert.match(dom.container.querySelector(".numeric-ladder-analysis").textContent, /적용 완료/);
+    assert.equal(dom.container.querySelector('[role="dialog"]'), null, "승인은 기존 화면 안에서 처리하고 별도 팝업을 만들지 않는다");
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
