@@ -53,6 +53,15 @@ test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공�
   assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
 });
 
+test("놀이동산 직접 답 입력 UI는 고정 정답 예시 대신 현재 문제를 풀게 안내한다", () => {
+  assert.match(component, /placeholder="숫자만 입력"/);
+  assert.match(component, /숫자를 입력해 주세요/);
+  assert.match(component, /answerPanelGuide/);
+  assert.match(css, /\.park-answer-panel__heading small/);
+  assert.doesNotMatch(component, /예:\s*\$\{field\.unit === "원" \? "12000"/);
+  assert.doesNotMatch(component, /placeholder=\{`예:/);
+});
+
 test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
   assert.match(component, /onOpen\(stageId, cleared\)/);
   assert.match(component, /cleared \? "다시 연습"/);

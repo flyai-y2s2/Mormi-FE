@@ -50,6 +50,12 @@ function answerFeedback(result: AmusementStageResult) {
   return "두 값을 다시 살펴봐요.";
 }
 
+function answerPanelGuide(stageId: AmusementStageId) {
+  if (stageId === "ticket") return "표 값과 사람 수를 곱해서 전체 값을 적어요.";
+  if (stageId === "snack_split") return "간식 전체 값을 사람 수로 똑같이 나누고, 한 사람 몫만 적어요.";
+  return "자유이용권과 따로 타는 값을 비교해서 두 칸을 채워요.";
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "로그인 후 놀이동산에 갈 수 있어요.";
@@ -146,15 +152,17 @@ function ParkAnswerPanel({ stage, result, error, sending, onSubmit }: {
     fields.map((field) => [field.key, parseNumberInput(values[field.key] ?? "")]),
   );
   const complete = Object.values(answers).every((value) => value !== null);
+  const submitLabel = sending ? "확인하고 있어요..." : complete ? "답 확인하기" : "숫자를 입력해 주세요";
   return <form className="park-answer-panel" onSubmit={(event) => {
     event.preventDefault();
     if (!complete || sending) return;
     onSubmit(Object.fromEntries(Object.entries(answers).map(([key, value]) => [key, value ?? 0])));
   }}>
     <div className="park-answer-panel__heading">
-      <span>{stage.mission}</span>
+      <span>답 쓰기</span>
       <strong>{stage.prompt}</strong>
-      <p>{stage.mormi_misconception}</p>
+      <p>{answerPanelGuide(stage.stage_id)}</p>
+      <small>모르미 생각: {stage.mormi_misconception}</small>
     </div>
     <div className="park-answer-panel__fields">
       {fields.map((field) => <label key={field.key}>
@@ -163,7 +171,7 @@ function ParkAnswerPanel({ stage, result, error, sending, onSubmit }: {
           inputMode="numeric"
           value={values[field.key] ?? ""}
           onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))}
-          placeholder={`예: ${field.unit === "원" ? "12000" : "5"}`}
+          placeholder="숫자만 입력"
           disabled={sending}
         />
         <small>{field.unit}</small>
@@ -176,7 +184,7 @@ function ParkAnswerPanel({ stage, result, error, sending, onSubmit }: {
       <span>{stage.transfer.equation}</span>
       <em>{stage.transfer.conclusion}</em>
     </details>
-    <button type="submit" disabled={!complete || sending}>{sending ? "확인하고 있어요…" : "답 확인하기"}</button>
+    <button type="submit" disabled={!complete || sending}>{submitLabel}</button>
     {result && <div className={`park-answer-panel__feedback${result.is_correct ? " is-correct" : ""}`} role="status">
       <strong>{answerFeedback(result)}</strong>
       {!result.is_correct && Object.entries(result.expected_answers).length > 0 && <span>
