@@ -18,17 +18,15 @@ test("놀이동산 FE에는 서버 문제 fixture 대신 표시 자산과 파생
   assert.doesNotMatch(contract, /amusementParkPreview|verified_facts|ticket_price:\s*3000|snack_total:\s*9000/);
 });
 
-test("방문 시작·직접 제출·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
+test("방문 시작·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
   assert.match(component, /api\.startAmusementParkVisit\(\)/);
-  assert.match(component, /api\.submitAmusementParkStage/);
   assert.match(component, /startAmusementParkDialogue/);
   assert.match(component, /submitMormiResponseThroughBe/);
   assert.match(component, /api\.getAmusementParkVisit/);
   assert.match(component, /if \(allCompleted\) latest = await api\.completeAmusementParkVisit\(visit\.visit_id\);/);
   assert.match(component, /visit\.stage_progress\[stageId\]/);
   assert.match(component, /next\.stage_progress\?\.completed/);
-  assert.match(component, /amusementAnswerFields\[stage\.stage_id\]/);
-  assert.match(component, /answers,/);
+  assert.doesNotMatch(component, /api\.submitAmusementParkStage|amusementAnswerFields\[stage\.stage_id\]/);
   assert.doesNotMatch(component, /ticket_price|party_count|snack_total|payer_count|single_ride_price|day_pass_price/);
   assert.doesNotMatch(component, /answers:\s*derivedAnswers/);
   assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
@@ -54,21 +52,16 @@ test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공�
   assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
 });
 
-test("놀이동산 직접 답 입력 UI는 공용 선택지와 중복되지 않는 한 화면 입력만 제공한다", () => {
-  assert.match(component, /placeholder="숫자"/);
-  assert.match(component, /모르미에게 알려주기/);
-  assert.match(component, /showDialogueControls=\{false\}/);
-  assert.doesNotMatch(component, /answerPanelGuide|모르미 생각:/);
-  assert.match(css, /\.park-learning-board/);
-  assert.doesNotMatch(component, /예:\s*\$\{field\.unit === "원" \? "12000"/);
-  assert.doesNotMatch(component, /placeholder=\{`예:/);
+test("bug/FE/#39처럼 문제 그림과 공용 모르미 대화 입력만 한 흐름으로 렌더링한다", () => {
+  assert.match(component, /<ParkProblemVisual stage=\{stage\} conversation=\{conversation\} \/>/);
+  assert.doesNotMatch(component, /ParkAnswerPanel|showDialogueControls|park-learning-board/);
+  assert.doesNotMatch(css, /\.park-answer-panel|\.park-learning-board/);
+  assert.match(talkStage, /<aside className="cafe-talk-answer">/);
 });
 
-test("놀이동산 이전 버튼은 폼 제출이나 화면 레이어에 막히지 않고 지도 상태로 돌아간다", () => {
+test("놀이동산 이전 버튼은 일반 버튼으로 지도 상태에 돌아간다", () => {
   assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{\(\) => onBack\(\)\}/);
   assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
-  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar \{[\s\S]*?position:fixed;[\s\S]*?z-index:30;[\s\S]*?pointer-events:none;/);
-  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar > button \{[\s\S]*?pointer-events:auto;/);
 });
 
 test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
