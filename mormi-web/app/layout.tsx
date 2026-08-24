@@ -29,6 +29,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="ko">
     <head>
+      <link rel="preload" href="/fonts/hakgyoansim-nadeuri-l.otf" as="font" type="font/otf" crossOrigin="anonymous" />
+      <link rel="preload" href="/fonts/hakgyoansim-nadeuri-b.otf" as="font" type="font/otf" crossOrigin="anonymous" />
       <link rel="preload" href="/fonts/nanum-child-hope.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
     </head>
     <body>{children}</body>
