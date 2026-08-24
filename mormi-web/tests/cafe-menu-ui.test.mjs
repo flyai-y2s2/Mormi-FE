@@ -132,6 +132,14 @@ test("lets queue learners answer before revealing server choices", () => {
   assert.equal(choiceIdForTypedAnswer("왼쪽 줄", choices), "left");
   assert.equal(choiceIdForTypedAnswer("3", choices), "3");
   assert.equal(choiceIdForTypedAnswer("잘 모르겠어", choices), null);
+
+  const moneyChoices = [
+    { id: "9000", label: "9,000원" },
+    { id: "10000", label: "10,000원" },
+    { id: "11000", label: "11,000원" },
+  ];
+  assert.equal(choiceIdForTypedAnswer("5,000원씩 2명이니까 모두 10,000원이야", moneyChoices), "10000");
+  assert.equal(choiceIdForTypedAnswer("9,000원 아니면 10,000원", moneyChoices), null);
 });
 
 test("keeps help gated and central menu cards as the only menu choice UI", async () => {

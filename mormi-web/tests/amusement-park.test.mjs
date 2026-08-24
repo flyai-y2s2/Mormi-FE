@@ -52,11 +52,15 @@ test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공�
   assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
 });
 
-test("bug/FE/#39처럼 문제 그림과 공용 모르미 대화 입력만 한 흐름으로 렌더링한다", () => {
+test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 받는다", () => {
   assert.match(component, /<ParkProblemVisual stage=\{stage\} conversation=\{conversation\} \/>/);
   assert.doesNotMatch(component, /ParkAnswerPanel|showDialogueControls|park-learning-board/);
   assert.doesNotMatch(css, /\.park-answer-panel|\.park-learning-board/);
   assert.match(talkStage, /<aside className="cafe-talk-answer">/);
+  assert.match(component, /deferChoices/);
+  assert.match(component, /choiceFallbackVisible=\{choiceFallbackVisible\}/);
+  assert.match(talkStage, /모르미에게 내 말로 알려주기/);
+  assert.match(talkStage, /placeholder="내 생각을 짧게 알려줘"/);
 });
 
 test("놀이동산 이전 버튼은 일반 버튼으로 지도 상태에 돌아간다", () => {

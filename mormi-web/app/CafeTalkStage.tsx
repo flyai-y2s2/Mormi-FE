@@ -184,10 +184,10 @@ export function CafeDialogueControls({
       }
       onSubmit({ type: "choice", choice_ids: [choiceId] });
     }}>
-      <label>먼저 내 생각 말해보기
-        <input value={inputText} onChange={(event) => onInput(event.target.value)} placeholder="생각한 답을 적어 줘" />
+      <label>모르미에게 내 말로 알려주기
+        <input value={inputText} maxLength={160} onChange={(event) => onInput(event.target.value)} placeholder="내 생각을 짧게 알려줘" />
       </label>
-      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "먼저 답해보기"}</button>
+      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "알려주기"}</button>
     </form>}
     {(inputKind === "choices" || inputKind === "fill") && !centralMenuPicker && (!delayedChoices || choiceFallbackVisible) && <div className="cafe-ai-choices">
       {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}><MormiChoiceContent choice={choice} /></button>)}
