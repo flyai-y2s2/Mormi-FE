@@ -1991,8 +1991,14 @@ export function MoramiApp() {
 
   function showOutside() {
     captureMormeyEvent("outside_opened", { cafe_unlocked: isCafeUnlocked(completedSessionIds) });
+    refreshThemes();
     setStage("outside");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function completeCafeAndShowHome() {
+    refreshThemes();
+    showHome();
   }
 
   function showArea(areaId: string) {
@@ -2061,7 +2067,7 @@ export function MoramiApp() {
           reloadDialogueId.current = null;
         }}
         onBack={showOutside}
-        onComplete={showHome}
+        onComplete={completeCafeAndShowHome}
       />}
 
       {stage === "curriculum" && (

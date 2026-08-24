@@ -92,6 +92,12 @@ test("외출의 놀이동산 카드는 themes 응답의 해금 상태로만 활�
   assert.doesNotMatch(app, /마트 가기/);
 });
 
+test("카페 완료 뒤와 외출 진입 때 장소 해금 상태를 다시 조회한다", () => {
+  assert.match(app, /function completeCafeAndShowHome\(\) \{[\s\S]{0,120}refreshThemes\(\);[\s\S]{0,120}showHome\(\);[\s\S]{0,40}\}/);
+  assert.match(app, /onComplete=\{completeCafeAndShowHome\}/);
+  assert.match(app, /function showOutside\(\) \{[\s\S]{0,180}refreshThemes\(\);[\s\S]{0,180}setStage\("outside"\)/);
+});
+
 test("외출 화면의 카페와 놀이동산 카드는 데스크톱에서 같은 너비를 쓴다", () => {
   assert.match(css, /\.destination-grid\s*\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.destination-grid\s*\{\s*grid-template-columns:1fr/);
