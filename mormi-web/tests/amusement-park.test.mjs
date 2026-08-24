@@ -4,6 +4,7 @@ import test from "node:test";
 
 const { amusementAnswerFields, amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park/AmusementPark.tsx", import.meta.url), "utf8");
+const talkStage = await readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8");
 const previewPage = await readFile(new URL("../app/amusement-park-preview/page.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
 const contract = await readFile(new URL("../app/amusement-park-contract.ts", import.meta.url), "utf8");
@@ -53,13 +54,21 @@ test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공�
   assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
 });
 
-test("놀이동산 직접 답 입력 UI는 고정 정답 예시 대신 현재 문제를 풀게 안내한다", () => {
-  assert.match(component, /placeholder="숫자만 입력"/);
-  assert.match(component, /숫자를 입력해 주세요/);
-  assert.match(component, /answerPanelGuide/);
-  assert.match(css, /\.park-answer-panel__heading small/);
+test("놀이동산 직접 답 입력 UI는 공용 선택지와 중복되지 않는 한 화면 입력만 제공한다", () => {
+  assert.match(component, /placeholder="숫자"/);
+  assert.match(component, /모르미에게 알려주기/);
+  assert.match(component, /showDialogueControls=\{false\}/);
+  assert.doesNotMatch(component, /answerPanelGuide|모르미 생각:/);
+  assert.match(css, /\.park-learning-board/);
   assert.doesNotMatch(component, /예:\s*\$\{field\.unit === "원" \? "12000"/);
   assert.doesNotMatch(component, /placeholder=\{`예:/);
+});
+
+test("놀이동산 이전 버튼은 폼 제출이나 화면 레이어에 막히지 않고 지도 상태로 돌아간다", () => {
+  assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{\(\) => onBack\(\)\}/);
+  assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar \{[\s\S]*?position:fixed;[\s\S]*?z-index:30;[\s\S]*?pointer-events:none;/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar > button \{[\s\S]*?pointer-events:auto;/);
 });
 
 test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
