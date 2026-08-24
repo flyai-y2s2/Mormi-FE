@@ -16,13 +16,14 @@ export function choiceIdForTypedAnswer(answer: string, choices: ChoiceLike[]) {
   const typed = compact(answer);
   if (!typed) return null;
   const typedNumber = answer.replace(/\D/g, "");
+  const typedNumberParts = answer.match(/\d[\d,]*/g)?.map((value) => value.replaceAll(",", "")) ?? [];
   const matches = choices.filter((choice) => {
     if (choice.disabled) return false;
     const id = compact(choice.id);
     const label = compact(choice.label);
     if (typed === id || typed === label) return true;
     const labelNumber = choice.label.replace(/\D/g, "");
-    if (typedNumber && labelNumber && typedNumber === labelNumber) return true;
+    if (typedNumber && labelNumber && (typedNumber === labelNumber || typedNumberParts.includes(labelNumber))) return true;
     return typed.length >= 2 && label.length >= 2
       && (typed.includes(label) || label.includes(typed));
   });

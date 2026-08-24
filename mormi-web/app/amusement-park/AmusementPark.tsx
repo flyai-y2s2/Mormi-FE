@@ -8,11 +8,10 @@ import {
   api,
   readStoredLearner,
   type AmusementParkVisitView,
-  type AmusementStageResult,
   type AmusementStageId,
   type AmusementStageView,
 } from "../api-client";
-import { amusementAnswerFields, amusementStageVisuals } from "../amusement-park-contract";
+import { amusementStageVisuals } from "../amusement-park-contract";
 import { CafeStageComplete } from "../CafeStageComplete";
 import { CafeTalkStage, type CafeDialogueResponse } from "../CafeTalkStage";
 import { amusementDialogueErrorMessage } from "../dialogue-errors";
@@ -31,24 +30,6 @@ const amusementScenarioByStage: Record<AmusementStageId, AmusementScenarioId> = 
   snack_split: "amusement_snack_divide",
   pass_break_even: "amusement_pass_compare",
 };
-
-function formatNumber(value: number) {
-  return value.toLocaleString("ko-KR");
-}
-
-function parseNumberInput(value: string) {
-  const normalized = value.replaceAll(",", "").trim();
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function answerFeedback(result: AmusementStageResult) {
-  if (result.is_correct) return "좋아요. 모르미가 다음 장소로 갈 수 있어요!";
-  if (result.feedback_code.endsWith("_short")) return "조금 더 큰 값이 필요해요.";
-  if (result.feedback_code.endsWith("_over")) return "조금 더 작은 값이 필요해요.";
-  return "두 값을 다시 살펴봐요.";
-}
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -133,57 +114,6 @@ function ParkProblemVisual({ stage, conversation }: {
   </div>;
 }
 
-function ParkAnswerPanel({ stage, result, error, sending, onSubmit }: {
-  stage: AmusementStageView;
-  result: AmusementStageResult | null;
-  error: string;
-  sending: boolean;
-  onSubmit: (answers: Record<string, number>) => void;
-}) {
-  const fields = amusementAnswerFields[stage.stage_id];
-  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(fields.map((field) => [field.key, ""])));
-  const answers = Object.fromEntries(
-    fields.map((field) => [field.key, parseNumberInput(values[field.key] ?? "")]),
-  );
-  const complete = Object.values(answers).every((value) => value !== null);
-  const submitLabel = sending ? "듣고 있어요…" : "모르미에게 알려주기";
-  return <form className="park-answer-panel" onSubmit={(event) => {
-    event.preventDefault();
-    if (!complete || sending) return;
-    onSubmit(Object.fromEntries(Object.entries(answers).map(([key, value]) => [key, value ?? 0])));
-  }}>
-    <div className="park-answer-panel__fields">
-      {fields.map((field) => <label key={field.key}>
-        <span>{field.label}</span>
-        <input
-          inputMode="numeric"
-          value={values[field.key] ?? ""}
-          onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))}
-          placeholder="숫자"
-          disabled={sending}
-        />
-        <small>{field.unit}</small>
-      </label>)}
-    </div>
-    <details className="park-answer-panel__strategy">
-      <summary>힌트</summary>
-      <p>{stage.strategy}</p>
-      <strong>{stage.transfer.equation}</strong>
-    </details>
-    <button type="submit" disabled={!complete || sending}>{submitLabel}</button>
-    {result && <div className={`park-answer-panel__feedback${result.is_correct ? " is-correct" : ""}`} role="status">
-      <strong>{answerFeedback(result)}</strong>
-      {!result.is_correct && Object.entries(result.expected_answers).length > 0 && <span>
-        확인한 값: {Object.entries(result.expected_answers).map(([key, value]) => {
-          const field = fields.find((item) => item.key === key);
-          return `${field?.label ?? key} ${formatNumber(value)}${field?.unit ?? ""}`;
-        }).join(", ")}
-      </span>}
-    </div>}
-    {error && <div className="park-answer-panel__error" role="alert">{error}</div>}
-  </form>;
-}
-
 function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   visit: AmusementParkVisitView;
   stage: AmusementStageView;
@@ -198,16 +128,11 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   const [sending, setSending] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [helpLoading, setHelpLoading] = useState(false);
+  const [choiceFallbackVisible, setChoiceFallbackVisible] = useState(false);
   const [noteText, setNoteText] = useState<string>();
-  const [stageResult, setStageResult] = useState<AmusementStageResult | null>(null);
-  const [stageError, setStageError] = useState("");
-  const stageStartedAt = useRef(0);
   const requestInFlight = useRef(false);
   const stageIndex = visit.stage_order.indexOf(stage.stage_id);
   const visual = amusementStageVisuals[stage.stage_id];
-  const lastAttemptNo = visit.attempts
-    .filter((attempt) => attempt.stage === stage.stage_id)
-    .reduce((max, attempt) => Math.max(max, attempt.attempt_no), 0);
 
   const finishStage = useCallback(async () => {
     try {
@@ -222,6 +147,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   }, [onVisitChanged, visit.visit_id]);
 
   const applyConversation = useCallback((next: MormiConversation) => {
+    setChoiceFallbackVisible(false);
     setConversation(next);
     if (next.turn.note_update?.text) setNoteText(next.turn.note_update.text);
     if (next.stage_progress?.completed) void finishStage();
@@ -254,7 +180,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   }, [applyConversation, stage.stage_id, visit.visit_id]);
 
   useEffect(() => {
-    stageStartedAt.current = Date.now();
     const timer = window.setTimeout(() => { void openDialogue(replay ? "restart" : "resume"); }, 0);
     return () => window.clearTimeout(timer);
   }, [openDialogue, replay]);
@@ -279,30 +204,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
     } finally {
       requestInFlight.current = false;
       setHelpLoading(false);
-      setSending(false);
-    }
-  };
-
-  const submitStageAnswers = async (answers: Record<string, number>) => {
-    if (requestInFlight.current) return;
-    requestInFlight.current = true;
-    setSending(true);
-    setStageError("");
-    setStageResult(null);
-    try {
-      const result = await api.submitAmusementParkStage(visit.visit_id, stage.stage_id, {
-        answers,
-        attempt_no: lastAttemptNo + 1,
-        elapsed_ms: stageStartedAt.current > 0 ? Date.now() - stageStartedAt.current : undefined,
-      });
-      setStageResult(result);
-      const latest = await api.getAmusementParkVisit(visit.visit_id);
-      onVisitChanged(latest);
-      if (result.is_correct) await finishStage();
-    } catch (error) {
-      setStageError(errorMessage(error));
-    } finally {
-      requestInFlight.current = false;
       setSending(false);
     }
   };
@@ -335,21 +236,14 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
       sending={sending}
       helpVisible={helpVisible}
       helpLoading={helpLoading}
-      showDialogueControls={false}
+      deferChoices
+      choiceFallbackVisible={choiceFallbackVisible}
       onInput={setInputText}
       onSubmit={(response) => { void answerMormi(response); }}
+      onChoiceFallback={() => setChoiceFallbackVisible(true)}
       onBack={onBack}
     >
-      <div className="park-learning-board">
-        <ParkProblemVisual stage={stage} conversation={conversation} />
-        <ParkAnswerPanel
-          stage={stage}
-          result={stageResult}
-          error={stageError}
-          sending={sending}
-          onSubmit={(answers) => { void submitStageAnswers(answers); }}
-        />
-      </div>
+      <ParkProblemVisual stage={stage} conversation={conversation} />
     </CafeTalkStage>
     {dialogueError && <div className="park-dialogue-error" role="alert"><span>{dialogueError}</span><button type="button" disabled={sending} onClick={() => { void openDialogue("restart"); }}>대화 다시 시작</button></div>}
   </div>;

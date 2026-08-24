@@ -12,8 +12,7 @@ import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
  *
  * 아이는 위에서 아래로 한 줄기로 읽는다: ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
  * 세 덩이를 한 화면(100svh) 안에 담아, 답을 쓰려고 아래로 스크롤할 일이 없게 한다.
- * 기본 입력 경로는 모르미 대화 하나다. 전용 숫자 폼을 쓰는 스테이지는 공용 선택지를 숨겨
- * 아이에게 동시에 두 가지 답 UI가 보이지 않게 한다.
+ * 입력 경로는 언제나 모르미 대화 하나뿐이다. 화면이 따로 채점하는 폼은 두지 않는다.
  */
 
 export type CafeDialogueResponse = {
@@ -34,7 +33,6 @@ export function CafeTalkStage({
   sending,
   helpVisible,
   helpLoading,
-  showDialogueControls = true,
   deferChoices = false,
   choiceFallbackVisible = false,
   onInput,
@@ -50,8 +48,6 @@ export function CafeTalkStage({
   sending: boolean;
   helpVisible: boolean;
   helpLoading: boolean;
-  /** 숫자 직접 입력처럼 스테이지가 전용 답 UI를 제공하면 공용 선택지를 숨긴다. */
-  showDialogueControls?: boolean;
   deferChoices?: boolean;
   choiceFallbackVisible?: boolean;
   onInput: (value: string) => void;
@@ -101,7 +97,7 @@ export function CafeTalkStage({
         </section>
         {/* 문제 문구는 모르미 대화에서 이미 물어본다. 그림 위에 같은 질문을 또 두지 않는다. */}
         <div className="cafe-talk-stage">{children}</div>
-        {showDialogueControls && <aside className="cafe-talk-answer">
+        <aside className="cafe-talk-answer">
           <CafeDialogueControls
             conversation={conversation}
             inputText={inputText}
@@ -112,7 +108,7 @@ export function CafeTalkStage({
             onSubmit={onSubmit}
             onChoiceFallback={onChoiceFallback}
           />
-        </aside>}
+        </aside>
       </section>
       {dictionaryOpen && conversation?.conversation_id && <DictionaryModal conversationId={conversation.conversation_id} onClose={() => setDictionaryOpen(false)} />}
     </main>
@@ -188,10 +184,10 @@ export function CafeDialogueControls({
       }
       onSubmit({ type: "choice", choice_ids: [choiceId] });
     }}>
-      <label>먼저 내 생각 말해보기
-        <input value={inputText} onChange={(event) => onInput(event.target.value)} placeholder="생각한 답을 적어 줘" />
+      <label>모르미에게 내 말로 알려주기
+        <input value={inputText} maxLength={160} onChange={(event) => onInput(event.target.value)} placeholder="내 생각을 짧게 알려줘" />
       </label>
-      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "먼저 답해보기"}</button>
+      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "알려주기"}</button>
     </form>}
     {(inputKind === "choices" || inputKind === "fill") && !centralMenuPicker && (!delayedChoices || choiceFallbackVisible) && <div className="cafe-ai-choices">
       {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}><MormiChoiceContent choice={choice} /></button>)}
