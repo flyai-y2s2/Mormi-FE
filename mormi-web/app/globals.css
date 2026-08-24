@@ -673,7 +673,7 @@
 
 .park-answer-panel__heading {
   display: grid;
-  gap: 4px;
+  gap: 5px;
 }
 
 .park-answer-panel__heading span {
@@ -691,10 +691,22 @@
 
 .park-answer-panel__heading p {
   margin: 0;
-  color: #7b6253;
+  color: #3f725b;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 900;
   line-height: 1.45;
+}
+
+.park-answer-panel__heading small {
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #7b6253;
+  background: #fff7ed;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
 }
 
 .park-answer-panel__fields {
@@ -738,6 +750,12 @@
   font-weight: 950;
   line-height: 1;
   outline: none;
+}
+
+.park-answer-panel__fields input::placeholder {
+  color: #9aac9f;
+  opacity: 1;
+  font-size: 20px;
 }
 
 .park-answer-panel__fields small {
@@ -789,7 +807,7 @@
 
 .park-answer-panel > button:disabled {
   opacity: .55;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .park-answer-panel__feedback,
