@@ -3,7 +3,7 @@
 @font-face {
   font-family: "Mormi Nadeuri";
   src: url("/fonts/hakgyoansim-nadeuri-l.otf") format("opentype");
-  size-adjust: 106%;
+  size-adjust: 128%;
   font-display: swap;
   font-style: normal;
   font-weight: 400;
@@ -12,7 +12,7 @@
 @font-face {
   font-family: "Mormi Nadeuri";
   src: url("/fonts/hakgyoansim-nadeuri-b.otf") format("opentype");
-  size-adjust: 106%;
+  size-adjust: 128%;
   font-display: swap;
   font-style: normal;
   font-weight: 700;
