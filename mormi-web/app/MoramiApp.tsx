@@ -1239,7 +1239,7 @@ function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCa
   onCafe: () => void;
   onAmusementPark: () => void;
 }) {
-  const { displayName } = useCharacterName();
+  const { displayName, rename } = useCharacterName();
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
   const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
   const remainingCount = cafeTheme?.remaining_session_ids.length ?? null;
@@ -1258,16 +1258,16 @@ function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCa
         <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} disabled={!isUnlocked} onClick={onCafe}>
           <Image src="/scenes/cafe-bakery-cute-v4.png" alt={`${displayName}와 갈 카페`} width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : `${displayName}와 들어가기 →`}</strong></div>
+          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{rename(cafeTheme?.title ?? "카페")} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : `${displayName}와 들어가기 →`}</strong></div>
         </button>
         {parkUnlocked ? <button type="button" className="destination-card destination-card--cafe destination-card--amusement is-unlocked" onClick={onAmusementPark}>
           <Image src="/amusement-park/park-map.png" alt={`${displayName}와 갈 놀이동산`} width={800} height={600} unoptimized />
           <span className="destination-shade" />
-          <div><small>진행</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>{displayName}와 출발하기 →</strong></div>
+          <div><small>진행</small><h2>{rename(amusementParkTheme?.title ?? "놀이동산")} 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>{displayName}와 출발하기 →</strong></div>
         </button> : <article className="destination-card destination-card--cafe destination-card--amusement is-locked">
           <Image src="/amusement-park/park-map.png" alt="잠긴 놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
-          <div><small>잠김</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
+          <div><small>잠김</small><h2>{rename(amusementParkTheme?.title ?? "놀이동산")} 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
         </article>}
       </div>
     </section>
