@@ -2679,6 +2679,8 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
    묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
 .room-list-heading { margin-bottom:18px; padding:11px 26px; }
 .room-list-heading h1 { margin:0 0 2px; font-size:29px; }
+.room-list-heading--curriculum{padding:20px 28px}
+.room-list-heading--curriculum h1{margin:0;font-size:clamp(34px,5vw,46px);letter-spacing:-2px}
 .cafe-required-lessons { margin-bottom:14px; }
 .cafe-required-lessons > div:first-child { padding:2px 6px 11px; }
 /* 남은 번호가 거의 안 보였다. 완료(초록)와는 구분하되 존재감은 준다. */

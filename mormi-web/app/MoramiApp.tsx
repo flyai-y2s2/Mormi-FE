@@ -16,7 +16,7 @@ import {
   type ThemeView,
 } from "./api-client";
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
-import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices } from "./answer-choices";
+import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices, seededChoiceIndex } from "./answer-choices";
 import { CafeJourney } from "./CafeJourney";
 import { CollectedStarsModal } from "./CollectedStarsModal";
 import { DictionaryModal } from "./DictionaryCard";
@@ -30,7 +30,9 @@ import {
   rememberDialogueScreen,
 } from "./dialogue-restart";
 import {
+  amusementParkRequiredConceptTitles,
   amusementParkRequiredSessionIds,
+  cafeRequiredConceptTitles,
   cafeRequiredSessionIds,
   isCafeUnlocked,
   outsideRequiredSessionIds,
@@ -601,9 +603,15 @@ function shuffleProblemAnswers(problem: Problem, seed: number): Problem {
   if (orderedNumbers) return { ...problem, answers: orderedNumbers };
   const otherAnswers = ensuredAnswers.filter((answer) => answer !== problem.correct);
   const answers = shuffleWords(otherAnswers, seed + 101);
-  const correctPosition = Math.abs(seed) % (answers.length + 1);
+  const correctPosition = seededChoiceIndex(seed, answers.length + 1);
   answers.splice(correctPosition, 0, problem.correct);
   return { ...problem, answers };
+}
+
+function randomVariantSeed() {
+  const value = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(value);
+  return (value[0] % 2_000_000_000) + 1;
 }
 
 function extraLifeProblem(session: Session, seed: number): Problem {
@@ -1837,9 +1845,10 @@ export function MoramiApp() {
   }
 
   function openSession(nextIndex: number) {
+    const nextVariantSeed = randomVariantSeed();
     finishInProgress.current = false;
     setSessionIndex(nextIndex);
-    setVariantSeed((seed) => seed + 97 + nextIndex * 13);
+    setVariantSeed(nextVariantSeed);
     setStage("drill");
     setExpression("calm");
     setDialogue("");
@@ -1876,8 +1885,7 @@ export function MoramiApp() {
     attemptCounter.current = 0;
     attemptWriteError.current = null;
     attemptWriteQueue.current = Promise.resolve();
-    const seed = variantSeed + 97 + nextIndex * 13;
-    learningSessionPromise.current = api.startSession(sessions[nextIndex].id, seed)
+    learningSessionPromise.current = api.startSession(sessions[nextIndex].id, nextVariantSeed)
       .then((started) => {
         learningSessionId.current = started.learning_session_id;
         return started.learning_session_id;
@@ -2066,14 +2074,14 @@ export function MoramiApp() {
         <section className="curriculum-home curriculum-home--room">
           {!selectedArea ? (
             <>
-              <div className="room-list-heading"><p className="eyebrow">집에서 복습하기</p><h1>생활에 필요한 개념부터 배워요</h1><p>밖에서도 자연스럽게 사용할 수 있도록 반복학습으로 준비해요.</p></div>
+              <div className="room-list-heading room-list-heading--curriculum"><h1>집에서 복습하기</h1></div>
               <section className="cafe-required-lessons">
                 <div><strong><UiIcon name="cafe" size="small" /> 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
-                {cafeConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{session.title}</b><small>{session.id === "number-count" ? "줄의 사람을 1~5명까지 정확히 세어요" : session.id === "number-compare" ? "두 줄 중 사람이 더 적은 쪽을 찾아요" : session.id === "money-count" ? "100원·500원·1,000원·5,000원의 값을 읽어요" : session.id === "money-price" ? "모르미와 내가 고른 두 메뉴값을 더해요" : "예산과 합계를 비교하고 10,000원에서 메뉴값을 빼요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                {cafeConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{cafeRequiredConceptTitles[session.id as keyof typeof cafeRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
               </section>
               <section className="cafe-required-lessons amusement-required-lessons">
                 <div><strong><span aria-hidden="true">🎡</span> 놀이동산 필수 개념</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료</span></div>
-                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><span><b>{session.title}</b><small>{session.id === "multiply-addition" ? "같은 수를 여러 번 더하는 방법을 익혀요" : session.id === "divide-share" ? "전체를 모두에게 같은 만큼 나누어 봐요" : "같은 수씩 묶고 몇 묶음인지 찾아요"}</small></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
               </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
               {showOtherConcepts && <div className="room-area-list other-concepts-list">

@@ -14,10 +14,25 @@ export const cafeRequiredSessionIds = [
  * 진입점이며 서버의 장소 진행 규칙을 대신하지 않는다.
  */
 export const amusementParkRequiredSessionIds = [
-  "multiply-addition",
+  "multiply-groups",
   "divide-share",
   "divide-group",
 ] as const;
+
+/** 장소 카드에서는 교과서식 세션명보다 다음 미션에서 바로 할 행동을 보여 준다. */
+export const cafeRequiredConceptTitles: Record<(typeof cafeRequiredSessionIds)[number], string> = {
+  "number-count": "사람 수 차례대로 세기",
+  "number-compare": "더 적은 줄 찾기",
+  "money-count": "돈의 값 합쳐 세기",
+  "money-price": "두 메뉴값 더하기",
+  "money-budget": "예산 안에서 고르기",
+};
+
+export const amusementParkRequiredConceptTitles: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
+  "multiply-groups": "같은 가격을 사람 수만큼 계산하기",
+  "divide-share": "간식값을 똑같이 나누기",
+  "divide-group": "몇 번 타면 본전인지 찾기",
+};
 
 export const outsideRequiredSessionIds = [
   ...cafeRequiredSessionIds,

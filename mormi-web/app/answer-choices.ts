@@ -27,6 +27,21 @@ function numericChoiceWithValue(template: string, value: number) {
 }
 
 /**
+ * 연속된 seed도 1→2→3→4처럼 순환하지 않도록 32비트로 충분히 섞는다.
+ * 같은 seed는 같은 위치를 돌려주므로 새로고침 복구 때 아이가 보던 보기는 유지된다.
+ */
+export function seededChoiceIndex(seed: number, choiceCount: number) {
+  if (!Number.isInteger(choiceCount) || choiceCount <= 0) return 0;
+  let mixed = Math.abs(Math.trunc(seed)) >>> 0;
+  mixed ^= mixed >>> 16;
+  mixed = Math.imul(mixed, 0x7feb352d);
+  mixed ^= mixed >>> 15;
+  mixed = Math.imul(mixed, 0x846ca68b);
+  mixed ^= mixed >>> 16;
+  return (mixed >>> 0) % choiceCount;
+}
+
+/**
  * 수 보기는 작은 값부터 보여 주되 정답의 순위는 문항 seed에 따라 바꾼다.
  * 기존처럼 정답의 양옆 값만 정렬하면 정답이 늘 두 번째가 되는 문제를 막는다.
  */
@@ -45,7 +60,7 @@ export function orderedNumericChoicesWithSeededCorrect(
     .map((value) => Math.abs(value - correctValue))
     .filter((value) => Number.isInteger(value) && value > 0);
   const step = distances.length > 0 ? Math.min(...distances) : 1;
-  const desiredPosition = Math.abs(seed) % ordered.length;
+  const desiredPosition = seededChoiceIndex(seed, ordered.length);
   const availableLowerPositions = Math.max(0, Math.floor(correctValue / step));
   const correctPosition = Math.min(desiredPosition, availableLowerPositions);
 

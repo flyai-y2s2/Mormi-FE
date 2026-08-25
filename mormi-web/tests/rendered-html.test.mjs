@@ -100,7 +100,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(journey, /"money-budget"/);
   assert.match(journey, /"number-count"/);
   assert.match(journey, /"number-compare"/);
-  assert.match(journey, /"multiply-addition"/);
+  assert.match(journey, /"multiply-groups"/);
   assert.match(journey, /"divide-share"/);
   assert.match(journey, /"divide-group"/);
   assert.match(cafe, /카페 스테이지 선택/);
@@ -236,7 +236,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(talkStage, /className="cafe-talk-morami" src=\{chatImage\}/);
   assert.match(app, /className="teaching-morami"><Morami expression="confused"/);
   assert.match(app, /다른 개념 더보기/);
-  assert.match(app, /생활에 필요한 개념부터 배워요/);
+  assert.doesNotMatch(app, /생활에 필요한 개념부터 배워요|밖에서도 자연스럽게 사용할 수 있도록 반복학습으로 준비해요/);
   assert.match(app, /저번에 도와줘서 고마워! 이번에도 또 같이 가주라!/);
   assert.doesNotMatch(app, /카페 가는 거 이제 자신 있어! 또 연습하러 가자!/);
   // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
