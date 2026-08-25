@@ -64,7 +64,7 @@ import { nameWithSubjectParticle } from "./korean-name";
 import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
-// booting: 새로고침 뒤 서버에서 진행도·진행 중 세션을 되살리는 동안의 자리. 확정되기 전엔 다른 화면을 그리지 않는다.
+// booting: 새로고침 뒤 서버 진행도를 읽고 메인으로 들어가기 전까지의 자리.
 type Stage = "booting" | "onboarding" | "home" | "outside" | "cafe" | "amusement" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
 
 const expressions: Record<Expression, string> = {
@@ -100,16 +100,6 @@ function expressionFromMormiMood(mood: MormiTurn["mormi"]["mood"]): Expression {
 function scaffoldLevel(turn: MormiTurn | null) {
   const level = turn?.pedagogy?.expression_level;
   return level ? Number(level.slice(1)) : null;
-}
-
-/**
- * answer_meta.selected_choice_id 는 `${sessionId}:${questionIndex}:choice:${index}` 꼴이다.
- * 마지막 조각이 보기 번호다. 형식이 다르면 -1 을 돌려 복구에서 빠지게 한다.
- */
-function choiceIndexOf(selectedChoiceId: unknown) {
-  if (typeof selectedChoiceId !== "string") return -1;
-  const parsed = Number(selectedChoiceId.split(":").pop());
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : -1;
 }
 
 const teachingBlank = `(\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0)`;
@@ -1280,18 +1270,13 @@ export function MoramiApp() {
   const [characterNameOpen, setCharacterNameOpen] = useState(false);
   // 반복 문제의 서버 세션과 기록은 순서대로 확정한 뒤에만 가르치기 대화를 시작한다.
   const learningSessionId = useRef<string | null>(null);
+  const [dictionaryLearningSessionId, setDictionaryLearningSessionId] = useState<string | null>(null);
   const learningSessionPromise = useRef<Promise<string> | null>(null);
   const attemptWriteQueue = useRef<Promise<void>>(Promise.resolve());
   const attemptWriteError = useRef<unknown>(null);
   const attemptCounter = useRef(0);
-  // 복구한 잠긴 오답. 문제 보기가 복구된 seed 로 다시 만들어진 뒤에 적용한다.
-  const pendingDrillRestore = useRef<{
-    curriculumSessionId: string;
-    questionIndex: number;
-    wrongChoiceIndexes: number[];
-  } | null>(null);
-  const reloadDialogueScreen = useRef(readReloadDialogueScreen());
-  const reloadDialogueId = useRef(readReloadDialogueId());
+  const [reloadDialogueScreen, setReloadDialogueScreen] = useState(readReloadDialogueScreen);
+  const [reloadDialogueId, setReloadDialogueId] = useState(readReloadDialogueId);
   const previousTeachingConversationId = useRef<string | null>(null);
   const teachingStartRequest = useRef<{
     sessionId: string;
@@ -1320,8 +1305,8 @@ export function MoramiApp() {
       }),
     };
   }, [sessionIndex, variantSeed]);
-  // "onboarding" 으로 시작하면 로그인된 아이도 새로고침마다 온보딩 → 홈 → 원래 화면이 차례로 보인다.
-  // 복구가 끝날 때까지 booting 에 머물고, 어느 화면으로 갈지는 아래 부팅 effect 가 한 번만 정한다.
+  // "onboarding" 으로 시작하면 로그인된 아이도 새로고침마다 온보딩이 잠깐 보인다.
+  // 진행도를 읽을 때까지 booting 에 머물고, 로그인 상태면 아래 부팅 effect 가 홈으로 보낸다.
   const [stage, setStage] = useState<Stage>("booting");
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expression, setExpression] = useState<Expression>("happy");
@@ -1356,7 +1341,7 @@ export function MoramiApp() {
   const [homeworkIndex, setHomeworkIndex] = useState(0);
   const [homeworkCorrect, setHomeworkCorrect] = useState(0);
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
-  // 진행 중 카페 방문. 새로고침 뒤 카페로 들어가면 이 방문을 이어 받는다.
+  // 진행 중 카페 방문은 완료 여부 표시에만 쓴다. 새로고침 뒤 진입 화면은 항상 홈이다.
   const [activeCafeVisitId, setActiveCafeVisitId] = useState<string | null>(null);
   // 서버가 확정한 외출 장소 해금 상태. 못 읽으면 null 이고 로컬 규칙으로 내려간다.
   const [themes, setThemes] = useState<ThemeView[] | null>(null);
@@ -1414,72 +1399,6 @@ export function MoramiApp() {
   const cafeTheme = themes?.find((theme) => theme.theme_id === "cafe") ?? null;
   const amusementParkTheme = themes?.find((theme) => theme.theme_id === "amusement_park") ?? null;
 
-  /**
-   * 새로고침 복구. 서버가 들고 있는 진행 중 세션을 그대로 화면에 되돌린다.
-   *
-   * attemptCounter 복원이 특히 중요하다. 이걸 빼먹으면 재개 뒤 attempt_no 가 1부터
-   * 다시 올라가고, 서버는 (session, activity, attempt_no) 멱등키로 이미 본 번호라
-   * 판단해 새 시도를 중복 처리한다. 즉 재개 이후의 기록이 조용히 사라진다.
-   *
-   * @returns 복구해서 반복 화면으로 들어갔으면 true.
-   */
-  const restoreLearningSession = useCallback(async (activeSessionId: string) => {
-    const view = await api.getSession(activeSessionId);
-    if (view.completed_at) return false;
-
-    const index = sessions.findIndex((session) => session.id === view.curriculum_session_id);
-    if (index < 0) return false;
-
-    const drills = view.attempts.filter((attempt) => attempt.activity === "drill");
-    // 시도가 하나도 없으면 되살릴 화면이 없다. 홈에 두고 새로 고르게 한다.
-    if (drills.length === 0) return false;
-
-    const correct = Math.min(view.correct_count, masteryTarget);
-    const questionIndex = Math.min(correct, masteryTarget - 1);
-    pendingDrillRestore.current = {
-      curriculumSessionId: view.curriculum_session_id,
-      questionIndex,
-      wrongChoiceIndexes: drills
-        .filter((attempt) => !attempt.is_correct && attempt.question_index === questionIndex)
-        .map((attempt) => choiceIndexOf(attempt.answer_meta.selected_choice_id)),
-    };
-
-    learningSessionId.current = view.learning_session_id;
-    learningSessionPromise.current = Promise.resolve(view.learning_session_id);
-    previousTeachingConversationId.current = view.conversation_id ?? reloadDialogueId.current;
-    attemptCounter.current = drills.reduce((max, attempt) => Math.max(max, attempt.attempt_no), 0);
-    attemptWriteError.current = null;
-    attemptWriteQueue.current = Promise.resolve();
-
-    setSessionIndex(index);
-    // 서버가 보관한 seed 를 되돌려야 아이가 실제로 봤던 문제가 그대로 다시 만들어진다.
-    setVariantSeed(view.variant_seed);
-    setDrillIndex(questionIndex);
-    setDrillCorrect(correct);
-    setDrillAttempts(drills.length);
-    setSessionCoins(view.drill_reward_subtotal);
-    setMastered(correct >= masteryTarget);
-    setStage("drill");
-    startedAt.current = nowMs();
-    elapsedSeconds.current = 0;
-    return true;
-  }, []);
-
-  /**
-   * 잠긴 오답 복원. 문제 보기는 variantSeed 로 섞이므로, activeSession 이 복구된 seed 로
-   * 다시 만들어진 뒤에야 선택지 번호를 실제 답 문자열로 되돌릴 수 있다.
-   */
-  useEffect(() => {
-    const pending = pendingDrillRestore.current;
-    if (!pending || pending.curriculumSessionId !== activeSession.id) return;
-    pendingDrillRestore.current = null;
-    const question = activeSession.drills[pending.questionIndex % activeSession.drills.length];
-    const locked = pending.wrongChoiceIndexes
-      .map((choiceIndex) => question.answers[choiceIndex])
-      .filter((answer): answer is string => Boolean(answer) && answer !== question.correct);
-    if (locked.length > 0) setWrongDrillAnswers([...new Set(locked)]);
-  }, [activeSession, drillIndex]);
-
   useEffect(() => {
     // 진행도 API 응답을 기다리는 동안에도 로그인한 학습자가 지어 둔 이름을 먼저 복원한다.
     // 그렇지 않으면 저장된 이름이 있어도 첫 화면에 잠깐 "이 친구"가 보인다.
@@ -1491,7 +1410,7 @@ export function MoramiApp() {
 
     // 서버가 붙어 있으면 진행도의 기준은 서버다. localStorage 는 오프라인 표시용으로만 남긴다.
     if (apiEnabled && storedLearner) {
-      void api.progress().then(async (snapshot) => {
+      void api.progress().then((snapshot) => {
         setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
         setCharacterName(readCharacterName(snapshot.learner_id));
         setCompletedSessionIds(snapshot.completed_session_ids);
@@ -1501,16 +1420,9 @@ export function MoramiApp() {
         // 이름과 원문은 보내지 않고, 서버가 발급한 가명 id 로만 식별한다.
         identifyLearner(snapshot.analytics_id);
 
-        // 진행 중 세션이 남아 있으면 홈을 거치지 않고 바로 반복 화면으로 되돌아간다.
-        // 복구 전에 홈을 먼저 그리면 getSession 응답을 기다리는 동안 홈이 그대로 보인다.
-        // 복구에 실패하면 홈으로 두어, 아이가 새 개념을 고를 수 있게 한다.
-        const restored = snapshot.active_learning_session_id
-          ? await restoreLearningSession(snapshot.active_learning_session_id).catch((error: unknown) => {
-              console.warn("[mormi-api] 학습 세션 복구 실패", error);
-              return false;
-            })
-          : false;
-        if (!restored) setStage("home");
+        // 새로고침은 진행 중 문제를 자동 재개하지 않고 항상 메인에서 다시 시작한다.
+        // 서버 기록은 그대로 두고 FE의 첫 화면만 홈으로 고정한다.
+        setStage("home");
       }).catch((error: unknown) => {
         // 토큰이 만료·삭제되었으면 온보딩부터 다시 시작한다. 그 밖의 실패도 booting 에 머물 수는 없다.
         if (!(error instanceof ApiError && (error.status === 401 || error.status === 404))) {
@@ -1541,11 +1453,20 @@ export function MoramiApp() {
       // 손상된 값은 무시하고 온보딩부터 다시.
       window.requestAnimationFrame(() => setStage("onboarding"));
     }
-  }, [restoreLearningSession, refreshThemes]);
+  }, [refreshThemes]);
 
   useEffect(() => {
     if (stage === "teach") rememberDialogueScreen("home-teach");
-    else if (stage !== "cafe") rememberDialogueScreen(null);
+    else if (stage !== "cafe") {
+      rememberDialogueScreen(null);
+      if (stage === "home") {
+        const frame = window.requestAnimationFrame(() => {
+          setReloadDialogueScreen(null);
+          setReloadDialogueId(null);
+        });
+        return () => window.cancelAnimationFrame(frame);
+      }
+    }
   }, [stage]);
 
   /** 토큰이 만료·폐기됐을 때 돌아갈 자리. 화면에 남은 남의 진행도까지 함께 비운다. */
@@ -1557,9 +1478,11 @@ export function MoramiApp() {
     setCompletedSessionIds([]);
     setCoinBalance(6000);
     setActiveCafeVisitId(null);
+    setReloadDialogueScreen(null);
+    setReloadDialogueId(null);
     setStage("onboarding");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [setActiveCafeVisitId, setCharacterName, setCharacterNameOpen, setCoinBalance, setCompletedSessionIds, setLearner, setReloadDialogueId, setReloadDialogueScreen, setStage, setStarNoteArchiveOpen]);
 
   useEffect(() => {
     // api-client 는 React 밖이라 화면을 직접 못 바꾼다. 되돌릴 경로를 여기서 등록한다.
@@ -1720,7 +1643,7 @@ export function MoramiApp() {
       if (!sessionId || attemptWriteError.current) {
         throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
       }
-      const startMode = reloadDialogueScreen.current === "home-teach" ? "restart" : "resume";
+      const startMode = reloadDialogueScreen === "home-teach" ? "restart" : "resume";
       const request = teachingStartRequest.current?.sessionId === sessionId
         ? teachingStartRequest.current
         : { sessionId, intent: createDialogueStartIntent(startMode) };
@@ -1734,8 +1657,8 @@ export function MoramiApp() {
       applyTeachingConversation(nextConversation);
       previousTeachingConversationId.current = nextConversation.conversation_id;
       teachingStartRequest.current = null;
-      reloadDialogueScreen.current = null;
-      reloadDialogueId.current = null;
+      setReloadDialogueScreen(null);
+      setReloadDialogueId(null);
     } catch (error) {
       if (error instanceof ApiError) {
         // 아이 화면에는 쉬운 안내만 표시하되, 운영 진단에는 BE가 정제한
@@ -1863,6 +1786,7 @@ export function MoramiApp() {
       setSessionCoins(result.total_reward);
       setTeachRewardAmount(result.teach_reward);
       learningSessionId.current = null;
+      setDictionaryLearningSessionId(null);
       learningSessionPromise.current = null;
       localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
       localStorage.setItem("mormey-coins", String(result.wallet_balance));
@@ -1936,12 +1860,14 @@ export function MoramiApp() {
 
     // 서버 세션을 즉시 열고, 뒤따르는 drill 기록은 이 Promise 뒤에 순차로 붙인다.
     learningSessionId.current = null;
+    setDictionaryLearningSessionId(null);
     attemptCounter.current = 0;
     attemptWriteError.current = null;
     attemptWriteQueue.current = Promise.resolve();
     learningSessionPromise.current = api.startSession(sessions[nextIndex].id, nextVariantSeed)
       .then((started) => {
         learningSessionId.current = started.learning_session_id;
+        setDictionaryLearningSessionId(started.learning_session_id);
         return started.learning_session_id;
       });
     void learningSessionPromise.current.catch((error: unknown) => {
@@ -2105,7 +2031,7 @@ export function MoramiApp() {
       {stage === "booting" && (
         <section className="boot-scene" aria-busy="true" aria-live="polite">
           {/* 빠른 응답이면 아무것도 깜빡이지 않도록, 안내는 CSS 에서 잠깐 뒤에 나타난다. */}
-          <div className="boot-card"><UiIcon name="sprout" size="large" /><h2>{characterName && <>{characterSubjectName} </>}준비하고 있어!</h2><p>하던 곳으로 데려다 줄게.</p></div>
+          <div className="boot-card"><UiIcon name="sprout" size="large" /><h2>{characterName && <>{characterSubjectName} </>}준비하고 있어!</h2><p>메인 화면으로 데려다 줄게.</p></div>
         </section>
       )}
 
@@ -2122,11 +2048,11 @@ export function MoramiApp() {
         learnerId={learner.id}
         coinBalance={coinBalance}
         activeVisitId={activeCafeVisitId}
-        reloadDialogueStage={cafeStageFromRememberedScreen(reloadDialogueScreen.current)}
-        reloadConversationId={reloadDialogueId.current}
+        reloadDialogueStage={cafeStageFromRememberedScreen(reloadDialogueScreen)}
+        reloadConversationId={reloadDialogueId}
         onReloadRestarted={() => {
-          reloadDialogueScreen.current = null;
-          reloadDialogueId.current = null;
+          setReloadDialogueScreen(null);
+          setReloadDialogueId(null);
         }}
         onBack={showOutside}
         onComplete={completeCafeAndShowHome}
@@ -2335,7 +2261,7 @@ export function MoramiApp() {
 
       {dictionaryOpen && <DictionaryModal
         conversationId={stage === "teach" || stage === "teachReward" || stage === "wrap" ? mormiConversation?.conversation_id : null}
-        learningSessionId={learningSessionId.current}
+        learningSessionId={dictionaryLearningSessionId}
         expectedContentVersion={mormiConversation?.turn.dictionary_ref?.content_version}
         onClose={() => setDictionaryOpen(false)}
       />}
