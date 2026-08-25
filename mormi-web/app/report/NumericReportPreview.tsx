@@ -7,7 +7,7 @@ import type { DiagnosticReportDto, ReportSummaryDto } from "../api-client";
 import { ACTIVE_EXPRESSION_LEVELS } from "../expression-ladder";
 import { buildNumericLiveReport, type NumericPreviewDomain, type NumericPreviewStatus } from "./numeric-report-live-model";
 import type { DiagnosticSpeechState } from "./diagnostic-report-interactions";
-import { canMoveToNextWeek, canMoveToPreviousWeek, formatKoreanWeekLabel } from "./weekly-report-period";
+import { adjacentAvailableWeek, availableReportWeeks, canMoveToNextWeek, canMoveToPreviousWeek, formatKoreanWeekLabel } from "./weekly-report-period";
 
 type PreviewMode = "HOME" | "LIFE";
 type PreviewStatus = NumericPreviewStatus;
@@ -35,6 +35,7 @@ type NumericReportPreviewProps = {
   notice?: string;
   onPreviousWeek?: () => void;
   onNextWeek?: () => void;
+  onSelectWeek?: (weekStart: string) => void;
   onRetry?: () => void;
   speechByDomain?: Record<string, DiagnosticSpeechState>;
   onRequestSpeech?: (domainId: string) => void;
@@ -56,15 +57,32 @@ function WeeklyReportNav({
   onRetry,
   onPreviousWeek,
   onNextWeek,
-}: Pick<NumericReportPreviewProps, "report" | "refreshing" | "notice" | "onRetry" | "onPreviousWeek" | "onNextWeek">) {
+  onSelectWeek,
+}: Pick<NumericReportPreviewProps, "report" | "refreshing" | "notice" | "onRetry" | "onPreviousWeek" | "onNextWeek" | "onSelectWeek">) {
   if (!report) return null;
+  const availableWeeks = availableReportWeeks(report.period);
+  const displayedWeeks = availableWeeks.length > 0 ? availableWeeks : [report.period.week_start];
+  const previousWeek = adjacentAvailableWeek(report.period, -1);
+  const nextWeek = adjacentAvailableWeek(report.period, 1);
   return (
     <nav className="weekly-report-nav" aria-label="리포트 주차 선택">
-      <button type="button" aria-label="이전 주 리포트" disabled={!canMoveToPreviousWeek(report.period) || refreshing} onClick={onPreviousWeek}>‹</button>
-      <span aria-label={`${report.period.week_start}부터 ${report.period.week_end}까지`}>
-        {formatKoreanWeekLabel(report.period.week_start)}
-      </span>
-      <button type="button" aria-label="다음 주 리포트" disabled={!canMoveToNextWeek(report.period) || refreshing} onClick={onNextWeek}>›</button>
+      <button type="button" aria-label="이전 주 리포트" disabled={!canMoveToPreviousWeek(report.period) || refreshing} onClick={() => previousWeek && onSelectWeek ? onSelectWeek(previousWeek) : onPreviousWeek?.()}>‹</button>
+      <div className="weekly-report-nav__weeks" role="list" aria-label="리포트가 있는 주차">
+        {displayedWeeks.map((weekStart) => (
+          <span key={weekStart} role="listitem">
+            <button
+              type="button"
+              aria-current={weekStart === report.period.week_start ? "date" : undefined}
+              aria-label={`${formatKoreanWeekLabel(weekStart)} 리포트`}
+              disabled={refreshing || weekStart === report.period.week_start}
+              onClick={() => onSelectWeek?.(weekStart)}
+            >
+              {formatKoreanWeekLabel(weekStart)}
+            </button>
+          </span>
+        ))}
+      </div>
+      <button type="button" aria-label="다음 주 리포트" disabled={!canMoveToNextWeek(report.period) || refreshing} onClick={() => nextWeek && onSelectWeek ? onSelectWeek(nextWeek) : onNextWeek?.()}>›</button>
       {refreshing && <small aria-live="polite">새로 불러오는 중…</small>}
       {notice && <small className="weekly-report-nav__notice" role="alert">{notice}</small>}
       {notice && onRetry && <button className="weekly-report-nav__retry" type="button" onClick={onRetry}>다시 불러오기</button>}
@@ -79,6 +97,7 @@ export function NumericReportPreview({
   notice,
   onPreviousWeek,
   onNextWeek,
+  onSelectWeek,
   onRetry,
   speechByDomain,
   onRequestSpeech,
@@ -112,7 +131,7 @@ export function NumericReportPreview({
     return <main className="report-page numeric-preview-page">
       <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
       {topAccessory && <div className="local-report-admin-bar">{topAccessory}</div>}
-      <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
+      <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} onSelectWeek={onSelectWeek} />
       <article className="report-paper numeric-preview" data-report-format="a4"><section className="numeric-preview__section numeric-empty-report" role="status"><h2>이번 주에 완료한 단원이 없습니다</h2></section></article>
     </main>;
   }
@@ -180,7 +199,7 @@ export function NumericReportPreview({
   return <main className="report-page numeric-preview-page">
     <header className="report-header"><div><Link className="report-brand" href="/">모르미</Link><span>교사용 리포트</span></div><Link className="back-to-child" href="/"><span aria-hidden="true">←</span> 학습 화면</Link></header>
     {topAccessory && <div className="local-report-admin-bar">{topAccessory}</div>}
-    <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} />
+    <WeeklyReportNav report={report} refreshing={refreshing} notice={notice} onRetry={onRetry} onPreviousWeek={onPreviousWeek} onNextWeek={onNextWeek} onSelectWeek={onSelectWeek} />
     <article className="report-paper numeric-preview" data-report-format="a4">
       <header className="numeric-preview__header"><div><span>학습자</span><strong>{liveModel?.learnerName ?? "예시 학습자"}</strong></div><p className="numeric-preview__document-title">개인 진단 리포트</p><a href="#numeric-next-plan">다음 학습 제안 <span aria-hidden="true">↓</span></a></header>
       <section className="numeric-preview__section numeric-current" aria-labelledby="numeric-summary-title"><div className="numeric-section-heading"><span>01</span><h2 id="numeric-summary-title">현재 상태</h2></div><div className="numeric-current-story"><div className="numeric-current-story__mark" aria-hidden="true">↗</div><div><span>{selectedDomain.label} · {statusLabels[selectedDomain.status]}</span><strong>{selectedDomain.headline}</strong><p>{selectedDomain.changeReason}</p></div></div><div className="numeric-summary-values">{summaryValues.map(([label, value, detail]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>)}</div></section>

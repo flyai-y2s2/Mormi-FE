@@ -296,6 +296,7 @@ export type DiagnosticReportPeriodDto = {
   timezone: "Asia/Seoul";
   earliest_week_start: string;
   latest_week_start: string;
+  available_week_starts?: string[];
 };
 
 export type LadderRecommendationAction = "UPGRADE" | "MAINTAIN" | "ADJUST_DOWN" | "INSUFFICIENT_EVIDENCE";

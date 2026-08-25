@@ -37,7 +37,7 @@ import {
 } from "./diagnostic-report-interactions";
 import { localReportAdminApi, type LocalAdminLearner } from "../local-report-admin-client";
 import { LocalLearnerSearch } from "./LocalLearnerSearch";
-import { reportLandingFor, reportRequestFor } from "./local-admin-report-flow";
+import { reportLandingFor, reportRequestFor, weekStartAfterLearnerSelection } from "./local-admin-report-flow";
 import { shiftIsoWeek } from "./weekly-report-period";
 import { TeacherReportLogin } from "./TeacherReportLogin";
 
@@ -314,7 +314,11 @@ function ConnectedReportDashboard({
   }, [mode, report, selectedDomainId]);
 
   const selectLearner = (learner: LocalAdminLearner) => {
-    const weekStart = requestedWeekRef.current ?? reportRef.current?.period.week_start;
+    const weekStart = weekStartAfterLearnerSelection({
+      previousLearnerId: selectedLearnerRef.current?.learner_id ?? null,
+      nextLearnerId: learner.learner_id,
+      currentWeekStart: requestedWeekRef.current ?? reportRef.current?.period.week_start,
+    });
     reportSequenceRef.current += 1;
     reportControllerRef.current?.abort();
     cancelSpeechRequests();
@@ -480,6 +484,7 @@ function ConnectedReportDashboard({
       notice={notice}
       onPreviousWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, -1))}
       onNextWeek={() => void loadReport(shiftIsoWeek(report.period.week_start, 1))}
+      onSelectWeek={(weekStart) => void loadReport(weekStart)}
       onRetry={() => void loadReport(requestedWeekRef.current)}
       speechByDomain={speechByDomain}
       topAccessory={adminSearch}
