@@ -5,6 +5,7 @@ import test from "node:test";
 const { amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park/AmusementPark.tsx", import.meta.url), "utf8");
 const talkStage = await readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8");
+const parkPage = await readFile(new URL("../app/amusement-park/page.tsx", import.meta.url), "utf8");
 const previewPage = await readFile(new URL("../app/amusement-park-preview/page.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
 const contract = await readFile(new URL("../app/amusement-park-contract.ts", import.meta.url), "utf8");
@@ -64,9 +65,9 @@ test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 �
   assert.match(talkStage, /placeholder="내 생각을 짧게 알려줘"/);
 });
 
-test("놀이동산 이전 버튼은 실제 지도 주소로 돌아간다", () => {
-  assert.match(talkStage, /<a className="cafe-talk-back" href=\{backHref\}>/);
-  assert.match(component, /backHref="\/amusement-park\?screen=map"/);
+test("놀이동산 이전 버튼은 메인 앱 안에서 지도 상태로 돌아간다", () => {
+  assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{\(\) => onBack\(\)\}/);
+  assert.doesNotMatch(component, /backHref=|href="\/amusement-park/);
   assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
 });
 
@@ -126,13 +127,17 @@ test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 �
 test("외출의 놀이동산 카드는 themes 응답의 해금 상태로만 활성화한다", () => {
   assert.match(app, /theme\.theme_id === "amusement_park"/);
   assert.match(app, /amusementParkTheme\?\.unlocked === true/);
-  assert.match(app, /href="\/amusement-park"/);
+  assert.match(app, /onAmusementPark=\{\(\) => setStage\("amusement"\)\}/);
+  assert.match(app, /stage === "amusement" && <AmusementPark onExit=\{showOutside\} \/>/);
+  assert.doesNotMatch(app, /href="\/amusement-park"/);
   assert.match(app, /카페 미션을 모두 완료하면 열려요/);
   assert.doesNotMatch(app, /마트 가기/);
 });
 
-test("운영 URL은 /amusement-park이고 기존 preview URL은 리다이렉트한다", () => {
-  assert.match(previewPage, /redirect\("\/amusement-park"\)/);
+test("놀이동산은 카페처럼 메인 URL 안에서 열리고 옛 주소는 메인으로 돌린다", () => {
+  assert.match(app, /type Stage = [^;]*"amusement"/);
+  assert.match(parkPage, /redirect\("\/"\)/);
+  assert.match(previewPage, /redirect\("\/"\)/);
   assert.doesNotMatch(app, /amusement-park-preview/);
 });
 

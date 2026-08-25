@@ -17,6 +17,7 @@ import {
 } from "./api-client";
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
 import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices, seededChoiceIndex } from "./answer-choices";
+import { AmusementPark } from "./amusement-park/AmusementPark";
 import { CafeJourney } from "./CafeJourney";
 import { CollectedStarsModal } from "./CollectedStarsModal";
 import { DictionaryModal } from "./DictionaryCard";
@@ -54,7 +55,7 @@ import type { Problem, Session, Visual } from "./morami-content";
 
 type Expression = "calm" | "happy" | "confused" | "surprised" | "bright" | "celebrate";
 // booting: 새로고침 뒤 서버에서 진행도·진행 중 세션을 되살리는 동안의 자리. 확정되기 전엔 다른 화면을 그리지 않는다.
-type Stage = "booting" | "onboarding" | "home" | "outside" | "cafe" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
+type Stage = "booting" | "onboarding" | "home" | "outside" | "cafe" | "amusement" | "curriculum" | "drill" | "teach" | "teachReward" | "wrap" | "homework" | "complete";
 
 const expressions: Record<Expression, string> = {
   calm: "/morami/calm-cutout.png",
@@ -1197,13 +1198,14 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
  * 서버 규칙이 어긋나면 화면만 열리고 방문 생성이 403 으로 막히므로, 서버 값이 있는 한
  * 그쪽을 우선한다.
  */
-function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCafe }: {
+function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCafe, onAmusementPark }: {
   unlocked: boolean;
   cafeTheme: ThemeView | null;
   amusementParkTheme: ThemeView | null;
   /** 한 번이라도 카페에 다녀왔는지. 다녀왔으면 다시 연습하러 가는 안내로 바꾼다. */
   cafeVisited: boolean;
   onCafe: () => void;
+  onAmusementPark: () => void;
 }) {
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
   const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
@@ -1225,11 +1227,11 @@ function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCa
           <span className="destination-shade" />
           <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{cafeTheme?.title ?? "카페"} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : "모르미와 들어가기 →"}</strong></div>
         </button>
-        {parkUnlocked ? <a className="destination-card destination-card--cafe destination-card--amusement is-unlocked" href="/amusement-park">
+        {parkUnlocked ? <button type="button" className="destination-card destination-card--cafe destination-card--amusement is-unlocked" onClick={onAmusementPark}>
           <Image src="/amusement-park/park-map.png" alt="모르미와 갈 놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
           <div><small>진행</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>모르미와 출발하기 →</strong></div>
-        </a> : <article className="destination-card destination-card--cafe destination-card--amusement is-locked">
+        </button> : <article className="destination-card destination-card--cafe destination-card--amusement is-locked">
           <Image src="/amusement-park/park-map.png" alt="잠긴 놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
           <div><small>잠김</small><h2>{amusementParkTheme?.title ?? "놀이동산"} 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
@@ -2023,7 +2025,7 @@ export function MoramiApp() {
 
   return (
     <main className={`app-shell app-shell--${stage}`}>
-      {stage !== "booting" && stage !== "onboarding" && stage !== "cafe" && stage !== "teach" && <header className="topbar topbar--without-brand">
+      {stage !== "booting" && stage !== "onboarding" && stage !== "cafe" && stage !== "amusement" && stage !== "teach" && <header className="topbar topbar--without-brand">
         {/* 장소 이동은 화면이 바뀌어도 자리가 변하지 않아야 하는 전역 내비다.
             그래서 콘텐츠가 아니라 프로필과 같은 상단 줄에 둔다. */}
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
@@ -2051,7 +2053,7 @@ export function MoramiApp() {
 
       {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} onOpenStarNotes={() => setStarNoteArchiveOpen(true)} />}
 
-      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} amusementParkTheme={amusementParkTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
+      {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} amusementParkTheme={amusementParkTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} onAmusementPark={() => setStage("amusement")} />}
 
       {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
           네 스테이지가 모두 열린 연습 모드로 돌아온다. */}
@@ -2069,6 +2071,8 @@ export function MoramiApp() {
         onBack={showOutside}
         onComplete={completeCafeAndShowHome}
       />}
+
+      {stage === "amusement" && <AmusementPark onExit={showOutside} />}
 
       {stage === "curriculum" && (
         <section className="curriculum-home curriculum-home--room">

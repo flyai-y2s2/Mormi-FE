@@ -1,5 +1,5 @@
-import { AmusementPark } from "./AmusementPark";
+import { redirect } from "next/navigation";
 
 export default function AmusementParkPage() {
-  return <AmusementPark />;
+  redirect("/");
 }

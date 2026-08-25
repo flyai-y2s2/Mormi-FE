@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ApiError,
@@ -40,10 +39,11 @@ function errorMessage(error: unknown): string {
   return "서버와 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
 }
 
-function ParkMap({ visit, learnerName, onOpen }: {
+function ParkMap({ visit, learnerName, onOpen, onExit }: {
   visit: AmusementParkVisitView;
   learnerName: string;
   onOpen: (stageId: AmusementStageId, replay: boolean) => void;
+  onExit: () => void;
 }) {
   const stagesById = useMemo(() => new Map(visit.stages.map((stage) => [stage.stage_id, stage])), [visit.stages]);
   const completed = visit.stage_order.filter((stageId) => visit.stage_progress[stageId] === "completed").length;
@@ -52,7 +52,7 @@ function ParkMap({ visit, learnerName, onOpen }: {
 
   return <section className="figma-cafe figma-cafe--overview figma-park">
     <div className="figma-cafe__bar">
-      <Link className="figma-park__back" href="/">← 외출 장소</Link>
+      <button type="button" className="figma-park__back" onClick={onExit}>← 외출 장소</button>
       <strong className="figma-cafe__place">
         <Image className="figma-cafe__place-image" src="/amusement-park/ticket-elements-v2.png" alt="" width={56} height={56} aria-hidden="true" />
         모르미 놀이동산
@@ -259,7 +259,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
       onSubmit={(response) => { void answerMormi(response); }}
       onChoiceFallback={() => setChoiceFallbackVisible(true)}
       onBack={onBack}
-      backHref="/amusement-park?screen=map"
     >
       <ParkProblemVisual stage={stage} conversation={conversation} />
     </CafeTalkStage>
@@ -267,14 +266,14 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   </div>;
 }
 
-function ParkConnectionState({ message, retrying, onRetry }: { message: string; retrying: boolean; onRetry: () => void }) {
+function ParkConnectionState({ message, retrying, onRetry, onExit }: { message: string; retrying: boolean; onRetry: () => void; onExit: () => void }) {
   return <main className="park-connection-state">
     <Image src="/amusement-park/park-map.png" alt="놀이동산" fill priority />
-    <section><Image src="/morami/confused-cutout.png" alt="기다리는 모르미" width={190} height={220} unoptimized /><h1>{message}</h1><p>로컬 문제로 대신 보여주지 않고 서버의 놀이동산 상태를 다시 확인할게요.</p><div><button type="button" disabled={retrying} onClick={onRetry}>{retrying ? "다시 연결하고 있어요…" : "다시 시도"}</button><Link href="/">집으로 돌아가기</Link></div></section>
+    <section><Image src="/morami/confused-cutout.png" alt="기다리는 모르미" width={190} height={220} unoptimized /><h1>{message}</h1><p>로컬 문제로 대신 보여주지 않고 서버의 놀이동산 상태를 다시 확인할게요.</p><div><button type="button" disabled={retrying} onClick={onRetry}>{retrying ? "다시 연결하고 있어요…" : "다시 시도"}</button><button type="button" onClick={onExit}>외출 장소로 돌아가기</button></div></section>
   </main>;
 }
 
-export function AmusementPark() {
+export function AmusementPark({ onExit }: { onExit: () => void }) {
   const [visit, setVisit] = useState<AmusementParkVisitView | null>(null);
   const [activeStageId, setActiveStageId] = useState<AmusementStageId | null>(null);
   const [replayingStage, setReplayingStage] = useState(false);
@@ -308,9 +307,9 @@ export function AmusementPark() {
     return () => { cancelled = true; };
   }, []);
 
-  if (!visit) return <ParkConnectionState message={loading ? "놀이동산 미션을 불러오고 있어요…" : error} retrying={loading} onRetry={() => { void loadVisit(); }} />;
+  if (!visit) return <ParkConnectionState message={loading ? "놀이동산 미션을 불러오고 있어요…" : error} retrying={loading} onRetry={() => { void loadVisit(); }} onExit={onExit} />;
 
   const stage = activeStageId === null ? null : visit.stages.find((item) => item.stage_id === activeStageId) ?? null;
-  if (!stage) return <ParkMap visit={visit} learnerName={learnerName} onOpen={(stageId, replay) => { setReplayingStage(replay); setActiveStageId(stageId); }} />;
+  if (!stage) return <ParkMap visit={visit} learnerName={learnerName} onOpen={(stageId, replay) => { setReplayingStage(replay); setActiveStageId(stageId); }} onExit={onExit} />;
   return <MissionScene key={`${visit.visit_id}:${stage.stage_id}:${replayingStage ? "replay" : "progress"}`} visit={visit} stage={stage} replay={replayingStage} onBack={() => { setActiveStageId(null); setReplayingStage(false); }} onVisitChanged={setVisit} />;
 }

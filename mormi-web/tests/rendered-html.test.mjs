@@ -351,7 +351,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /className="teaching-back"/);
   assert.match(app, /aria-label="이전 반복학습 화면으로 돌아가기"/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
-  assert.match(app, /stage !== "cafe" && stage !== "teach"/);
+  assert.match(app, /stage !== "cafe" && stage !== "amusement" && stage !== "teach"/);
   assert.match(css, /\.teaching-playground/);
   assert.match(app, /<div className="mastery-stars" aria-label="별 5개">(?:<UiIcon name="star" size="large" \/>){5}<\/div>/);
   assert.match(css, /button\.teaching-dont-know[^}]*position:static[^}]*font-size:14px[^}]*font-weight:850/);
