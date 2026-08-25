@@ -39,6 +39,7 @@ import {
   rememberDialogueScreen,
 } from "./dialogue-restart";
 import {
+  amusementParkRequiredConceptImages,
   amusementParkRequiredConceptTitles,
   amusementParkRequiredSessionIds,
   cafeRequiredConceptTitles,
@@ -294,9 +295,25 @@ function CalendarVisual({ month, highlight, note }: { month: number; highlight: 
   return <div className="calendar-visual"><strong>{month}월</strong><div>{Array.from({ length: days }, (_, index) => <i key={index} className={index + 1 === highlight ? "is-highlight" : ""}>{index + 1}</i>)}</div>{note && <small>{note}</small>}</div>;
 }
 
+function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "money-practice" }> }) {
+  return (
+    <div className="money-practice-visual">
+      <div className="money-practice-picture">
+        {visual.badge && <span>{visual.badge}</span>}
+        <Image src={visual.image} alt={visual.imageAlt} width={520} height={360} unoptimized />
+      </div>
+      <div className="money-practice-facts">
+        {visual.facts.map((fact) => <div key={`${fact.label}-${fact.value}`}><small>{fact.label}</small><strong>{fact.value}</strong></div>)}
+        {visual.equation && <p>{visual.equation}</p>}
+      </div>
+    </div>
+  );
+}
+
 function LearningVisual({ visual, small = false }: { visual: Visual; small?: boolean }) {
   if (visual.type === "clock") return <Clock hour={visual.hour} minute={visual.minute} small={small} />;
   if (visual.type === "money") return <MoneyVisual amounts={visual.amounts} paid={visual.paid} labels={visual.labels} />;
+  if (visual.type === "money-practice") return <MoneyPracticeVisual visual={visual} />;
   if (visual.type === "ten-frame") return <div className="ten-frame-pair"><TenFrame count={visual.count} item={visual.item} />{typeof visual.secondCount === "number" && <TenFrame count={visual.secondCount} item={visual.item} />}</div>;
   if (visual.type === "groups") return <GroupsVisual groups={visual.groups} each={visual.each} mode={visual.mode} />;
   if (visual.type === "number-line") return <NumberLineVisual start={visual.start} end={visual.end} marks={visual.marks} missing={visual.missing} />;
@@ -324,6 +341,7 @@ const learningVisualTypes = new Set<Visual["type"]>([
   "equation",
   "clock",
   "money",
+  "money-practice",
   "ten-frame",
   "groups",
   "number-line",
@@ -708,6 +726,7 @@ const moneySceneCopy: Record<ProductScene, { place: string }> = {
 };
 
 function missionStory(session: Session, problem: Problem): { scene: MissionScene; place: string; title: string; action: string } {
+  if (problem.visual.type === "money-practice") return { scene: "fair", place: "놀이동산 준비 상점", title: "가격과 개수를 보고 돈을 계산해요", action: "계산 답 고르기" };
   if (problem.visual.type === "money") {
     const firstProduct = problem.visual.labels?.[0];
     const scene = firstProduct ? sceneForProduct(firstProduct) : session.subject === "money" ? "cafe" : "market";
@@ -2118,7 +2137,7 @@ export function MoramiApp() {
               </section>
               <section className="cafe-required-lessons amusement-required-lessons">
                 <div><strong><span aria-hidden="true">🎡</span> 놀이동산 필수 개념</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료</span></div>
-                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><Image className="required-lesson-image" src={amusementParkRequiredConceptImages[session.id as keyof typeof amusementParkRequiredConceptImages]} alt="" width={72} height={72} unoptimized /><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
               </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
               {showOtherConcepts && <div className="room-area-list other-concepts-list">

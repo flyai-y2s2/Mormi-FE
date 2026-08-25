@@ -16,6 +16,14 @@ export type Visual =
   | { type: "objects"; left: number; right: number; operation: "+" | "-" }
   | { type: "equation"; left: number; right: number; operation: "+" | "-" }
   | { type: "money"; amounts: number[]; paid?: number; labels?: string[] }
+  | {
+      type: "money-practice";
+      image: string;
+      imageAlt: string;
+      facts: Array<{ label: string; value: string }>;
+      equation?: string;
+      badge?: string;
+    }
   | { type: "ten-frame"; count: number; secondCount?: number; item?: "dot" | "strawberry" | "cup" | "apple" }
   | { type: "groups"; groups: number; each: number; mode: "multiply" | "share" }
   | { type: "number-line"; start: number; end: number; marks: number[]; missing?: number }

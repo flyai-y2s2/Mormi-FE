@@ -9,14 +9,17 @@ export const cafeRequiredSessionIds = [
 /**
  * 놀이동산의 세 미션 전에 복습할 기존 학습 세션.
  *
- * 새 정적 문제를 FE에서 만들지 않고 BE·AI가 이미 알고 있는 세션만 재사용한다.
+ * BE·AI가 이미 알고 있는 세션 ID를 재사용해 진행·저장 계약을 유지한다.
+ * 반복 문제와 시각 자료는 놀이동산 돈 관리 흐름에 맞게 FE에서 구성한다.
  * 놀이동산 해금 자체는 서버가 카페 완료 여부로 판정하므로, 이 목록은 준비 학습
  * 진입점이며 서버의 장소 진행 규칙을 대신하지 않는다.
  */
 export const amusementParkRequiredSessionIds = [
   "multiply-groups",
+  "multiply-addition",
   "divide-share",
   "divide-group",
+  "multiply-easy-tables",
 ] as const;
 
 /** 장소 카드에서는 교과서식 세션명보다 다음 미션에서 바로 할 행동을 보여 준다. */
@@ -29,9 +32,19 @@ export const cafeRequiredConceptTitles: Record<(typeof cafeRequiredSessionIds)[n
 };
 
 export const amusementParkRequiredConceptTitles: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
-  "multiply-groups": "같은 가격을 사람 수만큼 계산하기",
-  "divide-share": "간식값을 똑같이 나누기",
-  "divide-group": "몇 번 타면 본전인지 찾기",
+  "multiply-groups": "가격과 개수를 곱해 전체 값 구하기",
+  "multiply-addition": "같은 가격을 이어 더해 확인하기",
+  "divide-share": "간식값을 사람 수로 똑같이 나누기",
+  "divide-group": "예산으로 살 수 있는 개수 구하기",
+  "multiply-easy-tables": "여러 물건값을 계산하고 예산과 비교하기",
+};
+
+export const amusementParkRequiredConceptImages: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
+  "multiply-groups": "/life-missions/money-practice/ticket-party.png",
+  "multiply-addition": "/life-missions/money-practice/snack-repeat.png",
+  "divide-share": "/life-missions/money-practice/squishy-share.png",
+  "divide-group": "/life-missions/money-practice/keychain-budget.png",
+  "multiply-easy-tables": "/life-missions/money-practice/mixed-purchase.png",
 };
 
 export const outsideRequiredSessionIds = [

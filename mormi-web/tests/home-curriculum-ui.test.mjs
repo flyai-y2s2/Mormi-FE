@@ -14,10 +14,33 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.doesNotMatch(curriculum, /줄의 사람을 1~5명까지 정확히 세어요|두 줄 중 사람이 더 적은 쪽을 찾아요|같은 수를 여러 번 더하는 방법을 익혀요/);
   assert.match(journey, /"number-count": "사람 수 차례대로 세기"/);
   assert.match(journey, /"money-budget": "예산 안에서 고르기"/);
-  assert.match(journey, /amusementParkRequiredSessionIds = \[\s*"multiply-groups",\s*"divide-share",\s*"divide-group"/);
-  assert.match(journey, /"multiply-groups": "같은 가격을 사람 수만큼 계산하기"/);
-  assert.match(journey, /"divide-share": "간식값을 똑같이 나누기"/);
-  assert.match(journey, /"divide-group": "몇 번 타면 본전인지 찾기"/);
+  assert.match(journey, /amusementParkRequiredSessionIds = \[\s*"multiply-groups",\s*"multiply-addition",\s*"divide-share",\s*"divide-group",\s*"multiply-easy-tables"/);
+  assert.match(journey, /"multiply-groups": "가격과 개수를 곱해 전체 값 구하기"/);
+  assert.match(journey, /"multiply-addition": "같은 가격을 이어 더해 확인하기"/);
+  assert.match(journey, /"divide-share": "간식값을 사람 수로 똑같이 나누기"/);
+  assert.match(journey, /"divide-group": "예산으로 살 수 있는 개수 구하기"/);
+  assert.match(journey, /"multiply-easy-tables": "여러 물건값을 계산하고 예산과 비교하기"/);
+  assert.match(journey, /amusementParkRequiredConceptImages/);
+});
+
+test("놀이동산 준비 문제는 돈 계산용 이미지와 사실 카드로 연결된다", async () => {
+  const [app, curriculum, content] = await Promise.all([
+    readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/morami-content.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(content, /type: "money-practice"/);
+  assert.match(app, /function MoneyPracticeVisual/);
+  assert.match(app, /amusementParkRequiredConceptImages/);
+  assert.match(curriculum, /unit: "돈 계산 곱셈"/);
+  assert.match(curriculum, /unit: "돈 계산 나눗셈"/);
+  assert.match(curriculum, /unit: "돈 계산 혼합"/);
+  assert.match(curriculum, /ticket-party\.png/);
+  assert.match(curriculum, /snack-repeat\.png/);
+  assert.match(curriculum, /squishy-share\.png/);
+  assert.match(curriculum, /keychain-budget\.png/);
+  assert.match(curriculum, /mixed-purchase\.png/);
 });
 
 test("반복학습 회차마다 무작위 seed를 만들고 서버 복구용 seed와 동일하게 사용한다", async () => {

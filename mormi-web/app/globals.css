@@ -1150,6 +1150,16 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .object-group i { width:31px; height:31px; border-radius:45% 55% 50% 50%; background:radial-gradient(circle at 34% 28%,#fff4a7,#f3c84e 52%,#dea936); box-shadow:inset 0 -4px 0 rgba(163,105,25,.16); }
 .object-group.is-crossed i { opacity:.4; position:relative; }.object-group.is-crossed { background:#fff6f2; text-decoration:line-through 8px #ef8c78; }
 .money-visual { width:min(100%,650px); min-height:270px; padding:22px; display:flex; flex-direction:column; justify-content:center; gap:18px; border-radius:34px; background:linear-gradient(145deg,#effcf5,#fff7d9); }
+.money-practice-visual { width:min(100%,820px); min-height:300px; padding:18px; display:grid; grid-template-columns:minmax(230px,1.15fr) minmax(220px,.85fr); align-items:stretch; gap:16px; border-radius:34px; background:linear-gradient(145deg,#fff8e8,#eefaf3); box-shadow:inset 0 0 0 2px rgba(73,159,117,.12); }
+.money-practice-picture { min-width:0; position:relative; display:grid; place-items:center; overflow:hidden; border:3px solid rgba(255,255,255,.92); border-radius:27px; background:rgba(255,255,255,.72); box-shadow:0 8px 0 rgba(219,205,165,.42); }
+.money-practice-picture > span { padding:6px 11px; position:absolute; left:12px; top:12px; z-index:1; border-radius:999px; color:#8a5a2f; background:#fff3cf; font-size:12px; font-weight:950; }
+.money-practice-picture img { width:100%; height:245px; object-fit:contain; }
+.money-practice-facts { min-width:0; display:grid; align-content:center; gap:9px; }
+.money-practice-facts > div { min-width:0; padding:12px 14px; border-radius:19px; background:rgba(255,255,255,.88); box-shadow:0 5px 0 rgba(209,226,216,.72); }
+.money-practice-facts small,.money-practice-facts strong { display:block; }
+.money-practice-facts small { color:#718079; font-size:12px; font-weight:900; }
+.money-practice-facts strong { margin-top:2px; color:#24664d; font-size:clamp(17px,2vw,23px); line-height:1.2; overflow-wrap:anywhere; }
+.money-practice-facts p { margin:3px 0 0; padding:10px 12px; border-radius:15px; color:#715a32; background:#fff3cb; font-size:13px; font-weight:950; text-align:center; }
 .price-row { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
 .price-card { min-width:145px; min-height:145px; padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:3px solid #d9eadf; border-radius:24px; background:white; box-shadow:0 7px 0 #d7e7de; }
 .price-card > img { width:82px; height:62px; object-fit:contain; border-radius:14px; }
@@ -2685,12 +2695,27 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   box-shadow:inset 0 0 0 1px rgba(222,139,76,.18), 0 10px 30px rgba(134,86,42,.09);
 }
 .amusement-required-lessons > button { border-color:rgba(222,139,76,.18); }
+.amusement-required-lessons > button { grid-template-columns:38px 64px minmax(0,1fr) auto; }
+.amusement-required-lessons .required-lesson-image { width:64px; height:58px; padding:3px; object-fit:contain; border-radius:15px; background:linear-gradient(145deg,#fff,#fff8e8); box-shadow:0 3px 10px rgba(134,86,42,.1); }
 .amusement-required-lessons > button:hover,
 .amusement-required-lessons > button.is-next { border-color:rgba(222,139,76,.44); }
 .amusement-required-lessons > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
 .amusement-required-lessons > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
 .amusement-required-lessons > button em { color:#9c5f38; background:#fff5e9; }
 .amusement-required-lessons > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
+
+@media (max-width:760px) {
+  .money-practice-visual { min-height:0; padding:12px; grid-template-columns:1fr; gap:10px; border-radius:25px; }
+  .money-practice-picture { min-height:155px; border-radius:21px; }
+  .money-practice-picture img { height:165px; }
+  .money-practice-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+  .money-practice-facts > div { padding:9px 10px; border-radius:14px; }
+  .money-practice-facts strong { font-size:16px; }
+  .money-practice-facts p { grid-column:1/-1; }
+  .amusement-required-lessons > button { grid-template-columns:36px 50px minmax(0,1fr); padding:9px; gap:8px; }
+  .amusement-required-lessons .required-lesson-image { width:50px; height:48px; }
+  .amusement-required-lessons > button em { grid-column:3; justify-self:start; }
+}
 
 /* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
    묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
