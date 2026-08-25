@@ -41,4 +41,7 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(outside, /displayName|rename\(|와 생활 수학|와 출발하기|와 들어가기/);
   assert.match(css, /\.profile-sheet \{ width:min\(240px,calc\(100vw - 24px\)\); min-width:0;[\s\S]{0,160}right:0; left:auto;/);
   assert.match(css, /\.profile-sheet \{ width:min\(216px,calc\(100vw - 16px\)\); \}/);
+  assert.match(css, /@media\(min-width:901px\)\{[\s\S]{0,180}width:min\(1040px,100%\);[\s\S]{0,180}grid-template-columns:minmax\(480px,560px\) minmax\(280px,380px\)/);
+  assert.match(css, /\.home-room-copy-column\{width:100%;max-width:560px\}/);
+  assert.match(css, /\.home-room-copy-column>\.player-hud,\.home-room-copy\{width:100%;max-width:560px\}/);
 });

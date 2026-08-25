@@ -3058,3 +3058,14 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:560px){
   .home-room-morami .morami-frame{width:195px;height:230px}
 }
+
+/* 큰 화면에서는 성장 정보와 선택 영역을 같은 폭으로 묶어 시선이 퍼지지 않게 한다. */
+@media(min-width:901px){
+  .home-room-main{
+    width:min(1040px,100%);
+    grid-template-columns:minmax(480px,560px) minmax(280px,380px);
+    column-gap:clamp(24px,3vw,42px)
+  }
+  .home-room-copy-column{width:100%;max-width:560px}
+  .home-room-copy-column>.player-hud,.home-room-copy{width:100%;max-width:560px}
+}
