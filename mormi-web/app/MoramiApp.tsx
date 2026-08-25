@@ -1206,8 +1206,14 @@ function HomeHub({ characterName, completedSessionIds, coinBalance, onNameCharac
           <div className="home-room-copy">
             <h1>오늘은 어떤 걸 할까?</h1>
             <div className="home-main-actions">
-              <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b></button>
-              <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b></button>
+              <button className="home-action-card home-action-card--study" onClick={onCurriculum}>
+                <span className="home-action-visual home-action-visual--house" aria-hidden="true"><UiIcon name="home" size="large" /></span>
+                <b>집에서 복습하기</b>
+              </button>
+              <button className="home-action-card home-action-card--outside" onClick={onOutside}>
+                <span className="home-action-visual home-action-visual--door" aria-hidden="true"><i /></span>
+                <b>외출하기</b>
+              </button>
             </div>
           </div>
         </div>

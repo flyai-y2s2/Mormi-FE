@@ -31,7 +31,9 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(home, /<small>별노트<\/small><b>모은 별 \{stars\}개<\/b>/);
   assert.doesNotMatch(home, /<button[^>]*player-stat--level|<button[^>]*player-wallet/);
   assert.match(home, /<div className="home-room-character-column">\s*<div className="home-room-morami">/);
-  assert.match(home, /<div className="home-main-actions">\s*<button onClick=\{onCurriculum\}>[\s\S]*?<button onClick=\{onOutside\}>/);
+  assert.match(home, /<div className="home-main-actions">\s*<button className="home-action-card home-action-card--study" onClick=\{onCurriculum\}>[\s\S]*?<button className="home-action-card home-action-card--outside" onClick=\{onOutside\}>/);
+  assert.match(home, /home-action-visual--house[\s\S]*?<UiIcon name="home"/);
+  assert.match(home, /home-action-visual--door/);
   assert.doesNotMatch(home, /home-exit-door|home-room-scene-objects|exit-door-v1\.png/);
   assert.match(app, /stage !== "home" && stage !== "complete" && <button type="button" className="home-return-control" onClick=\{showHome\} aria-label="집으로 돌아가기">/);
   assert.doesNotMatch(app, /journey-nav--top|>외부<\/button>/);
@@ -48,5 +50,8 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(css, /\.home-room-copy-column\{width:100%;max-width:560px\}/);
   assert.match(css, /\.home-room-copy-column>\.player-hud,\.home-room-copy\{width:100%;max-width:560px\}/);
   assert.doesNotMatch(css, /\.home-exit-door|\.home-room-scene-objects/);
+  assert.match(css, /\.home-main-actions\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.home-action-visual--door>i\{/);
+  assert.match(css, /@media\(max-width:560px\)\{\.home-main-actions\{grid-template-columns:1fr\}/);
   assert.match(css, /\.home-return-control\{[\s\S]*?display:flex[\s\S]*?border-radius:18px/);
 });
