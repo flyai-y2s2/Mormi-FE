@@ -1160,6 +1160,17 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
   return (
     <section className="journey-hub journey-hub--home">
       <div className="home-room-main">
+        <div className="player-hud" aria-label="나의 모험 정보">
+          <div className="player-stat player-stat--level" aria-label={`레벨 ${level}, 새싹 ${level}단계`}>
+            <div className="player-level-sprouts" aria-hidden="true">
+              {Array.from({ length: Math.min(level, 4) }, (_, index) => <UiIcon key={index} name="sprout" size="small" />)}
+              {level > 4 && <em>+{level - 4}</em>}
+            </div>
+            <span><small>레벨</small><b>{level}</b></span>
+          </div>
+          <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></button>
+          <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
+        </div>
         <div className="home-room-copy-column">
           <div className="home-room-copy">
             <h1>오늘은 어떤 걸 할까?</h1>
@@ -1170,17 +1181,6 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
           </div>
         </div>
         <div className="home-room-character-column">
-          <div className="player-hud" aria-label="나의 모험 정보">
-            <div className="player-stat player-stat--level" aria-label={`레벨 ${level}, 새싹 ${level}단계`}>
-              <div className="player-level-sprouts" aria-hidden="true">
-                {Array.from({ length: Math.min(level, 4) }, (_, index) => <UiIcon key={index} name="sprout" size="small" />)}
-                {level > 4 && <em>+{level - 4}</em>}
-              </div>
-              <span><small>레벨</small><b>{level}</b></span>
-            </div>
-            <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></button>
-            <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
-          </div>
           <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
         </div>
       </div>

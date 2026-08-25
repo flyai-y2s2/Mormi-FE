@@ -247,6 +247,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-morami\{grid-column:2;grid-row:2;/);
   assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-morami\{grid-column:1;grid-row:3\}/);
   assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:1\/3/);
+  assert.match(css, /\.home-room-main>\.player-hud\{[^}]*grid-column:1\/3;grid-row:1/);
+  assert.match(css, /\.home-room-copy h1\{[^}]*font-size:clamp\(29px,3\.2vw,40px\)/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
   assert.match(stageVisual, /10000: "\/cafe-money\/10000\.png"/);

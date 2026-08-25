@@ -17,6 +17,8 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(home, /카페가 열렸어요!/);
   assert.match(home, /Math\.min\(level, 4\)/);
   assert.match(home, /level > 4/);
+  assert.match(home, /<div className="home-room-main">\s*<div className="player-hud"/);
+  assert.match(home, /<div className="home-room-character-column">\s*<div className="home-room-morami">/);
   assert.match(app, /stage !== "home" && stage !== "complete" && <nav/);
   assert.match(app, /<div className="top-actions">[\s\S]{0,220}\{!learningStage && <ProfileMenu/);
   assert.doesNotMatch(app, /효과음 끄기|효과음 켜기/);
