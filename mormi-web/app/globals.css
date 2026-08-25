@@ -1688,8 +1688,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .figma-cafe-action{
   border:0;color:#29241f;background:#b8e0b2;box-shadow:none;font-weight:500;
 }
-/* 네 스테이지를 다 깬 뒤 지도에서 바로 집으로 갈 수 있게 두는 버튼. */
-.figma-cafe-map__heading>.figma-cafe-action{min-height:52px;margin-top:16px;padding:0 26px;font-size:18px}
 .figma-cafe-feedback{padding:0;background:transparent}
 .figma-cafe-queue::before{background:#ebf2ff}
 .figma-cafe-queue__choice button{border:0;background:#f0e5cc;box-shadow:none}

@@ -182,3 +182,18 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(visual, /disabled=\{mormiSelected \|\| !choice \|\| sending\}/);
 });
+
+test("카페 스테이지 선택 화면은 놀이동산과 같은 카드 중심 구조를 사용한다", async () => {
+  const [journey, park, css] = await Promise.all([
+    readFile(new URL("../app/CafeJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/amusement-park/AmusementPark.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(journey, /<main className="figma-cafe-map">/);
+  assert.match(park, /<main className="figma-cafe-map figma-park-map">/);
+  assert.match(journey, /figma-cafe-map__progress/);
+  assert.match(journey, /figma-cafe-map__stones/);
+  assert.doesNotMatch(journey, /figma-cafe-map__heading>[\s\S]{0,900}<button className="figma-cafe-action"/);
+  assert.doesNotMatch(css, /\.figma-cafe-map__heading>\.figma-cafe-action/);
+});

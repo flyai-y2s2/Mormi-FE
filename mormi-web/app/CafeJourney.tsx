@@ -632,7 +632,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
               <span aria-hidden="true"><i style={{ width: `${(journeyProgress / stationCopy.length) * 100}%` }} /></span>
               <b>{journeyProgress} / {stationCopy.length} 완료</b>
             </div>
-            {allStationsCleared && <button className="figma-cafe-action" onClick={() => { void goHomeWithMormi(); }}>{displayName}와 집으로</button>}
           </header>
           <div className="figma-cafe-map__stones" aria-label="카페 스테이지 선택">
             {stationCopy.map((station, index) => (
