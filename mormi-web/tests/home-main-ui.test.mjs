@@ -10,6 +10,9 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   const homeStart = app.indexOf("function HomeHub");
   const homeEnd = app.indexOf("function OutsideHub");
   const home = app.slice(homeStart, homeEnd);
+  const outsideStart = homeEnd;
+  const outsideEnd = app.indexOf("export function MoramiApp");
+  const outside = app.slice(outsideStart, outsideEnd);
 
   assert.doesNotMatch(home, /모르미의 생활 수학/);
   assert.doesNotMatch(home, /오늘의 퀘스트/);
@@ -32,4 +35,7 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(app, /효과음 끄기|효과음 켜기/);
   assert.doesNotMatch(app, /className="star-note-archive-link"/);
   assert.match(collectedStarsModal, />별노트 모아보기<\/button>/);
+  assert.match(outside, /<h2>카페 가기<\/h2>/);
+  assert.match(outside, /<h2>놀이동산 가기<\/h2>/);
+  assert.doesNotMatch(outside, /displayName|rename\(|와 생활 수학|와 출발하기|와 들어가기/);
 });

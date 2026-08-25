@@ -1247,7 +1247,6 @@ function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCa
   onCafe: () => void;
   onAmusementPark: () => void;
 }) {
-  const { displayName, rename } = useCharacterName();
   const isUnlocked = cafeTheme?.unlocked ?? unlocked;
   const requiredCount = cafeTheme?.required_session_ids.length ?? cafeRequiredSessionIds.length;
   const remainingCount = cafeTheme?.remaining_session_ids.length ?? null;
@@ -1260,22 +1259,22 @@ function OutsideHub({ unlocked, cafeTheme, amusementParkTheme, cafeVisited, onCa
     : "놀이동산을 준비하고 있어요";
   return (
     <section className="journey-hub journey-hub--outside">
-      <div className="outside-scene-head"><div><p className="eyebrow"><UiIcon name="sprout" size="small" /> {displayName}와 생활 수학</p><h1>우리 같이 어디 갈까?</h1></div></div>
+      <div className="outside-scene-head"><div><h1>우리 같이 어디 갈까?</h1></div></div>
       <div className="outside-morami-talk"><Morami expression={isUnlocked ? "happy" : "confused"} size="small" /><p>{!isUnlocked ? "집에서 카페에 필요한 개념을 모두 끝내면 같이 나갈 수 있어!" : cafeVisited ? "저번에 도와줘서 고마워! 이번에도 또 같이 가주라!" : "나 카페 혼자 가는 건 처음이라 무서운데, 같이 가 주라!"}</p></div>
       <div className="destination-grid">
         <button className={`destination-card destination-card--cafe ${isUnlocked ? "is-unlocked" : "is-locked"}`} disabled={!isUnlocked} onClick={onCafe}>
-          <Image src="/scenes/cafe-bakery-cute-v4.png" alt={`${displayName}와 갈 카페`} width={1000} height={720} priority unoptimized />
+          <Image src="/scenes/cafe-bakery-cute-v4.png" alt="카페" width={1000} height={720} priority unoptimized />
           <span className="destination-shade" />
-          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>{rename(cafeTheme?.title ?? "카페")} 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : `${displayName}와 들어가기 →`}</strong></div>
+          <div><small>{isUnlocked ? "진행" : "잠김"}</small><h2>카페 가기</h2><p>{isUnlocked ? "줄을 서고, 메뉴를 골라 계산해요" : lockedNote}</p><strong>{!isUnlocked ? "집에서 복습하기 →" : cafeVisited ? "다시 연습하러 가기 →" : "들어가기 →"}</strong></div>
         </button>
         {parkUnlocked ? <button type="button" className="destination-card destination-card--cafe destination-card--amusement is-unlocked" onClick={onAmusementPark}>
-          <Image src="/amusement-park/park-map.png" alt={`${displayName}와 갈 놀이동산`} width={800} height={600} unoptimized />
+          <Image src="/amusement-park/park-map.png" alt="놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
-          <div><small>진행</small><h2>{rename(amusementParkTheme?.title ?? "놀이동산")} 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>{displayName}와 출발하기 →</strong></div>
+          <div><small>진행</small><h2>놀이동산 가기</h2><p>표를 사고, 간식을 나누고, 자유이용권을 골라요</p><strong>출발하기 →</strong></div>
         </button> : <article className="destination-card destination-card--cafe destination-card--amusement is-locked">
           <Image src="/amusement-park/park-map.png" alt="잠긴 놀이동산" width={800} height={600} unoptimized />
           <span className="destination-shade" />
-          <div><small>잠김</small><h2>{rename(amusementParkTheme?.title ?? "놀이동산")} 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
+          <div><small>잠김</small><h2>놀이동산 가기</h2><p>{parkLockedNote}</p><strong>카페 먼저 완료하기</strong></div>
         </article>}
       </div>
     </section>

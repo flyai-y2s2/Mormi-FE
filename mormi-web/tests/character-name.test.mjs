@@ -44,10 +44,8 @@ test("로그인 복원 중에도 저장한 캐릭터 이름을 먼저 표시한�
   assert.match(app, /\{characterName && <>\{characterSubjectName\} <\/>\}준비하고 있어!/);
 });
 
-test("서버 대사와 카페·놀이동산 화면은 공통 캐릭터 이름을 사용한다", () => {
+test("서버 대사와 카페·놀이동산 학습 화면은 공통 캐릭터 이름을 사용한다", () => {
   assert.match(names, /text\.replaceAll\("모르미", displayName\)/);
-  assert.match(app, /rename\(cafeTheme\?\.title \?\? "카페"\)/);
-  assert.match(app, /rename\(amusementParkTheme\?\.title \?\? "놀이동산"\)/);
   assert.match(talk, /rename\(line \|\| fallbackLine\)/);
   assert.match(talk, /<b>\{displayName\}<\/b>/);
   assert.match(journey, /\{displayName\} 카페/);
