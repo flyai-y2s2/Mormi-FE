@@ -1211,7 +1211,9 @@ function HomeHub({ characterName, completedSessionIds, coinBalance, onNameCharac
                 <b>집에서 복습하기</b>
               </button>
               <button className="home-action-card home-action-card--outside" onClick={onOutside}>
-                <span className="home-action-visual home-action-visual--door" aria-hidden="true"><i /></span>
+                <span className="home-action-visual home-action-visual--door" aria-hidden="true">
+                  <Image src="/home/exit-door-3d-v2.png" alt="" width={1254} height={1254} unoptimized />
+                </span>
                 <b>외출하기</b>
               </button>
             </div>
