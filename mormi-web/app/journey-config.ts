@@ -32,7 +32,7 @@ export const cafeRequiredConceptTitles: Record<(typeof cafeRequiredSessionIds)[n
 
 export const amusementParkRequiredConceptTitles: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
   "multiply-groups": "가격과 개수를 곱해요",
-  "divide-share": "간식값을 똑같이 나눠요",
+  "divide-share": "물건값을 똑같이 나눠요",
   "divide-group": "예산으로 살 수 있는 개수를 찾아요",
   "multiply-easy-tables": "여러 물건값과 예산을 비교해요",
 };

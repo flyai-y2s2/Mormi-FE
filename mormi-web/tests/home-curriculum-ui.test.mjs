@@ -22,7 +22,7 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(journey, /amusementParkRequiredSessionIds = \[\s*"multiply-groups",\s*"divide-share",\s*"divide-group",\s*"multiply-easy-tables"/);
   assert.doesNotMatch(journey.slice(journey.indexOf("amusementParkRequiredSessionIds"), journey.indexOf("outsideRequiredSessionIds")), /multiply-addition/);
   assert.match(journey, /"multiply-groups": "가격과 개수를 곱해요"/);
-  assert.match(journey, /"divide-share": "간식값을 똑같이 나눠요"/);
+  assert.match(journey, /"divide-share": "물건값을 똑같이 나눠요"/);
   assert.match(journey, /"divide-group": "예산으로 살 수 있는 개수를 찾아요"/);
   assert.match(journey, /"multiply-easy-tables": "여러 물건값과 예산을 비교해요"/);
   assert.doesNotMatch(journey, /amusementParkRequiredConceptImages/);

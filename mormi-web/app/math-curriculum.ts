@@ -206,7 +206,7 @@ const addedSessions: Session[] = [
     transfer: [p("상자 6개에 공이 4개씩 있어. 모두?", ["24개", "10개", "20개"], "24개", { type: "groups", groups: 6, each: 4, mode: "multiply" }), p("한 줄에 8명씩 7줄이면?", ["56명", "54명", "64명"], "56명", { type: "groups", groups: 7, each: 8, mode: "multiply" })],
   }),
   lesson({
-    id: "divide-share", subject: "division", unit: "돈 계산 나눗셈", title: "간식값을 똑같이 나눠요", level: 1,
+    id: "divide-share", subject: "division", unit: "돈 계산 나눗셈", title: "물건값을 똑같이 나눠요", level: 1,
     memoryTitle: ["전체 값을 사람 수로 나누면", "한 사람이 낼 돈이 보여!"], rule: ["전체 값을", "사람 수로", "똑같이 나누면", "한 명의 몫이야!"], key: "사람 수로", keyOptions: ["사람 수로", "간식 수로만", "가장 큰 수로"], distractor: "한 사람이 모두", hint: "함께 낼 전체 금액을 사람 수로 나누어 봐.", misconception: "전체 간식값을 한 사람의 몫으로 답함", mistake: "9,000원을 3명이 나누어 내도 한 명이 9,000원을 다 내야 하지?",
     drills: [
       p("말랑이 묶음 9,000원을 3명이 똑같이 내면 한 명당 얼마일까?", ["3,000원", "6,000원", "4,500원"], "3,000원", moneyPractice("말랑이 묶음과 나눔 접시", "같이 사기", [{ label: "전체 값", value: "9,000원" }, { label: "함께 낼 사람", value: "3명" }], "9,000원 ÷ 3명", [{ image: "/life-missions/money-practice/squishy-share.png", label: "말랑이", count: 1 }])),
