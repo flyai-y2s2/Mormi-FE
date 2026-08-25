@@ -301,6 +301,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(css, /× 다시 생각/);
   assert.match(css, /grid-template-columns: repeat\(4, 1fr\)/);
   assert.match(app, /orderedNumericChoicesWithSeededCorrect\(ensuredAnswers, problem\.correct, seed\)/);
+  assert.match(app, /Array\.from\(new Set\(\[\.\.\.problem\.answers, problem\.correct\]\)\)/);
+  assert.doesNotMatch(app, /const otherAnswers = ensuredAnswers\.filter/);
   assert.match(app, /shuffledCountingValues\(variantSeed \+ sessionIndex \* 59\)/);
   assert.match(app, /const variationSeed = countingValues \? countingValues\[index\] - 1 : seed/);
   assert.match(app, /const answerChoiceSeed = answerChoiceSeeds\[index\] \?\? seed/);

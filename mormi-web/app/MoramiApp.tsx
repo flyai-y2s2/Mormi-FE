@@ -16,7 +16,7 @@ import {
   type ThemeView,
 } from "./api-client";
 import { toAuthFailure, type AuthField, type AuthFailure } from "./auth-errors";
-import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices, seededChoiceIndex } from "./answer-choices";
+import { orderedNumericChoicesWithSeededCorrect, orderNumericChoices } from "./answer-choices";
 import { AmusementPark } from "./amusement-park/AmusementPark";
 import { CafeJourney } from "./CafeJourney";
 import {
@@ -438,7 +438,9 @@ function ensureFourAnswers(problem: Problem) {
   if (comparisonChoices.includes(problem.correct) && problem.answers.some((answer) => comparisonChoices.includes(answer))) {
     return comparisonChoices;
   }
-  const answers = Array.from(new Set([problem.correct, ...problem.answers]));
+  // 콘텐츠가 정한 보기 순서는 그대로 둔다. 정답을 맨 앞에 강제로 넣으면
+  // 숫자가 아닌 보기까지 매번 다시 섞어야 하므로 아이가 순서를 읽기 어렵다.
+  const answers = Array.from(new Set([...problem.answers, problem.correct]));
   for (const candidate of fourAnswerCandidates(problem)) {
     if (answers.length >= 4) break;
     if (!answers.includes(candidate)) answers.push(candidate);
@@ -627,11 +629,9 @@ function shuffleProblemAnswers(problem: Problem, seed: number): Problem {
   const ensuredAnswers = ensureFourAnswers(problem);
   const orderedNumbers = orderedNumericChoicesWithSeededCorrect(ensuredAnswers, problem.correct, seed);
   if (orderedNumbers) return { ...problem, answers: orderedNumbers };
-  const otherAnswers = ensuredAnswers.filter((answer) => answer !== problem.correct);
-  const answers = shuffleWords(otherAnswers, seed + 101);
-  const correctPosition = seededChoiceIndex(seed, answers.length + 1);
-  answers.splice(correctPosition, 0, problem.correct);
-  return { ...problem, answers };
+  // 도형·방향·문장처럼 의미 순서가 있는 보기는 전체 셔플하지 않는다.
+  // 숫자 보기는 위 helper가 오름차순을 유지하면서 정답의 위치만 seed로 바꾼다.
+  return { ...problem, answers: ensuredAnswers };
 }
 
 function randomVariantSeed() {

@@ -88,7 +88,8 @@ test("반복학습 회차마다 무작위 seed를 만들고 서버 복구용 see
   assert.match(app, /const nextVariantSeed = randomVariantSeed\(\)/);
   assert.match(app, /setVariantSeed\(nextVariantSeed\)/);
   assert.match(app, /api\.startSession\(sessions\[nextIndex\]\.id, nextVariantSeed\)/);
-  assert.match(app, /seededChoiceIndex\(seed, answers\.length \+ 1\)/);
+  assert.match(app, /orderedNumericChoicesWithSeededCorrect\(ensuredAnswers, problem\.correct, seed\)/);
+  assert.doesNotMatch(app, /const otherAnswers = ensuredAnswers\.filter/);
 });
 
 test("반복학습의 각 문제는 독립 난수로 정답 위치를 정한다", async () => {

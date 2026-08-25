@@ -32,6 +32,6 @@ test("금액 형식과 낮은 수의 음수 방지를 유지한다", () => {
   );
 });
 
-test("숫자가 아닌 보기는 기존 셔플 경로로 넘긴다", () => {
+test("숫자가 아닌 보기는 숫자 위치 생성 대상에서 제외한다", () => {
   assert.equal(orderedNumericChoicesWithSeededCorrect(["원", "삼각형", "사각형", "오각형"], "원", 1), null);
 });
