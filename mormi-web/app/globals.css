@@ -2589,7 +2589,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .profile-avatar { width:40px; height:40px; flex:0 0 40px; display:grid; place-items:center; border-radius:14px; color:#fff; background:linear-gradient(145deg,#7fd9b2,#2f9f77); box-shadow:inset 0 -3px 0 rgba(30,105,78,.22); font-size:18px; font-weight:950; }
 .profile-caret { width:9px; height:9px; border-right:2.5px solid #6b8579; border-bottom:2.5px solid #6b8579; transform:translateY(-3px) rotate(45deg); transition:transform .18s; }
 .profile-trigger.is-open .profile-caret { transform:translateY(1px) rotate(-135deg); }
-.profile-sheet { min-width:216px; padding:7px; position:absolute; left:0; top:calc(100% + 9px); display:grid; gap:3px; border:1px solid rgba(57,79,70,.1); border-radius:20px; background:#fff; box-shadow:0 18px 44px rgba(54,74,65,.2); }
+.profile-sheet { width:min(240px,calc(100vw - 24px)); min-width:0; padding:7px; position:absolute; right:0; left:auto; top:calc(100% + 9px); display:grid; gap:3px; border:1px solid rgba(57,79,70,.1); border-radius:20px; background:#fff; box-shadow:0 18px 44px rgba(54,74,65,.2); }
 .profile-item { width:100%; min-height:48px; padding:0 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; border:0; border-radius:14px; color:#35544a; background:transparent; cursor:pointer; font-size:15px; font-weight:900; text-align:left; }
 .profile-item:hover:not(:disabled) { background:#eef8f2; }
 .profile-item:disabled { color:#9aa8a1; cursor:default; }
@@ -2600,7 +2600,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .profile-trigger { min-height:46px; padding:5px 12px 5px 5px; gap:8px; }
   .profile-trigger b { max-width:88px; font-size:13px; }
   .profile-avatar { width:36px; height:36px; flex-basis:36px; font-size:16px; }
-  .profile-sheet { min-width:190px; }
+  .profile-sheet { width:min(216px,calc(100vw - 16px)); }
 }
 
 /* 한 화면에 담기. 아이가 누르는 요소의 높이는 그대로 두고 사이 여백만 줄인다.
