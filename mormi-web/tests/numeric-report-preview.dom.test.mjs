@@ -307,6 +307,86 @@ test("server-renders the canonical comparison message for unavailable speech evi
   assert.doesNotMatch(html, /서버가 반환한 다른 안내/);
 });
 
+test("shows the selected unit speech comparison analysis in AI change summary", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const html = server.renderToString(React.createElement(NumericReportPreview, {
+    report: completeDiagnosticReportExample,
+    speechByDomain: {
+      "money-count": {
+        state: "ready",
+        evidence: {
+          available: true,
+          domain_id: "money-count",
+          verified_elements: ["counting_order"],
+          past: { evidence_id: "past", utterance: "점 3개야", occurred_at: "2026-08-18T09:00:00+09:00", expression_level: "L4" },
+          recent: { evidence_id: "recent", utterance: "하나 둘 셋 3개", occurred_at: "2026-08-25T09:00:00+09:00", expression_level: "L4" },
+          change_summary: "답만 말하던 모습에서 수를 세는 순서를 표현하는 모습으로 변화했습니다.",
+        },
+      },
+    },
+  }));
+  const dom = setDom(html);
+  try {
+    assert.equal(
+      dom.container.querySelector(".numeric-domain-insight strong").textContent,
+      "답만 말하던 모습에서 수를 세는 순서를 표현하는 모습으로 변화했습니다.",
+    );
+  } finally {
+    dom.cleanup();
+  }
+});
+
+test("never substitutes the report-wide narrative for a selected unit speech analysis", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const cases = [
+    [undefined, "과거·최근 발화를 확인하고 있습니다."],
+    [{ state: "loading" }, "과거·최근 발화를 비교하고 있습니다."],
+    [{ state: "error", message: "서버 오류" }, "발화 비교 분석을 불러오지 못했습니다."],
+    [{ state: "ready", evidence: { available: false, domain_id: "money-count", verified_elements: [], message: "기록 부족" } }, "비교할 발화 기록이 더 필요합니다."],
+  ];
+
+  for (const [speech, expected] of cases) {
+    const speechByDomain = speech ? { "money-count": speech } : undefined;
+    const html = server.renderToString(React.createElement(NumericReportPreview, {
+      report: completeDiagnosticReportExample,
+      speechByDomain,
+    }));
+    const dom = setDom(html);
+    try {
+      assert.equal(dom.container.querySelector(".numeric-domain-insight strong").textContent, expected);
+    } finally {
+      dom.cleanup();
+    }
+  }
+});
+
+test("requests the selected unit speech analysis without opening the evidence disclosure", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const requested = [];
+  const props = {
+    report: completeDiagnosticReportExample,
+    onRequestSpeech: (domainId) => requested.push(domainId),
+  };
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, props)));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    let root;
+    await act(async () => { root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, props)); });
+    assert.deepEqual(requested, ["money-count"]);
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("renders LIFE-only content with the compact HOME empty message", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),

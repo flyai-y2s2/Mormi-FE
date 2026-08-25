@@ -98,7 +98,7 @@ export function NumericReportPreview({
   const selectedDomain = domains.find((domain) => domain.id === selectedDomainId) ?? domains[0];
   const selectedDomainKey = selectedDomain?.id;
   useEffect(() => {
-    if (!selectedDomainKey || !evidenceDetailsRef.current?.open || lastAutoRequestedDomainRef.current === selectedDomainKey) return;
+    if (!selectedDomainKey || lastAutoRequestedDomainRef.current === selectedDomainKey) return;
     lastAutoRequestedDomainRef.current = selectedDomainKey;
     onRequestSpeech?.(selectedDomainKey);
   }, [onRequestSpeech, selectedDomainKey]);
@@ -138,6 +138,17 @@ export function NumericReportPreview({
     ? "아이의 답을 한 번 기록한 뒤 알맞은 시작 단계를 정합니다."
     : `${selectedDomain.ladderStart}에서 아이가 자신의 말로 답해보도록 기다립니다.`;
   const speech = speechByDomain?.[selectedDomain.id];
+  const speechChangeSummary = !report
+    ? selectedDomain.thinkingChange
+    : speech?.state === "ready" && speech.evidence.available && speech.evidence.change_summary
+      ? speech.evidence.change_summary
+      : speech?.state === "loading"
+        ? "과거·최근 발화를 비교하고 있습니다."
+        : speech?.state === "error"
+          ? "발화 비교 분석을 불러오지 못했습니다."
+          : speech?.state === "ready"
+            ? "비교할 발화 기록이 더 필요합니다."
+            : "과거·최근 발화를 확인하고 있습니다.";
   const ladderAnalysis = selectedDomain.ladderAnalysis;
   const approvalState = ladderAnalysis ? ladderApprovalState[ladderAnalysis.analysisId] : undefined;
   const ladderApplied = Boolean(ladderAnalysis?.approved || approvalState === "approved");
@@ -186,7 +197,7 @@ export function NumericReportPreview({
       </section>
       <section className="numeric-preview__section" aria-labelledby="numeric-domain-title">
         <div className="numeric-section-heading"><span>03</span><h2 id="numeric-domain-title">AI가 본 변화</h2></div>
-        <div className="numeric-domain-detail" aria-label={`${selectedDomain.label} 상세`}><div className="numeric-domain-insight"><span>AI가 본 변화</span><strong>{selectedDomain.thinkingChange}</strong></div><details ref={evidenceDetailsRef} className="numeric-evidence" onToggle={(event) => {
+        <div className="numeric-domain-detail" aria-label={`${selectedDomain.label} 상세`}><div className="numeric-domain-insight"><span>AI가 본 변화</span><strong>{speechChangeSummary}</strong></div><details ref={evidenceDetailsRef} className="numeric-evidence" onToggle={(event) => {
           if (!event.currentTarget.open) {
             lastAutoRequestedDomainRef.current = null;
             return;
