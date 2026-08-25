@@ -2936,6 +2936,24 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:820px){.signup-role-options{grid-template-columns:1fr}.signup-role-options button{min-height:135px}.teacher-portal__header{grid-template-columns:1fr auto}.teacher-portal__header>div{display:none}.teacher-cohort-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-code-issuer{grid-template-columns:1fr}.teacher-report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.signup-role-scene,.educator-signup-scene{padding:12px}.signup-role-card,.educator-signup-card{padding:25px 17px;border-radius:25px}.teacher-portal__header{padding:12px 14px;gap:10px}.teacher-portal__brand{font-size:18px}.teacher-portal__header button{padding:0 10px;font-size:12px}.teacher-page{width:min(100% - 24px,1180px);padding-top:32px}.teacher-create-cohort>div{grid-template-columns:1fr}.teacher-cohort-grid{grid-template-columns:1fr}.teacher-report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-task-list article{grid-template-columns:1fr}.teacher-task-list article>strong{width:max-content}}
 
+/* 메인 홈 간소화: 설명 문구 없이 두 동선과 성장 정보만 보여준다. */
+.home-main-actions button{grid-template-rows:1fr}
+.home-main-actions button>span{grid-row:1;align-self:center}
+.home-main-actions b{align-self:center}
+.player-level-sprouts{min-width:56px;display:flex;align-items:center;justify-content:center}
+.player-level-sprouts .ui-icon{--icon-size:29px;margin-left:-12px;filter:drop-shadow(0 3px 4px rgba(33,104,73,.18))}
+.player-level-sprouts .ui-icon:first-child{margin-left:0}
+.player-level-sprouts em{min-width:24px;margin-left:-5px;padding:3px 6px;border-radius:999px;color:#216a4c;background:#e3f6eb;font-size:10px;font-style:normal;font-weight:950;text-align:center}
+.collected-stars-close:focus-visible,.collected-stars-done:focus-visible,.collected-stars-notes:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
+.collected-stars-actions{width:min(590px,100%);margin:17px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:0 0 auto}
+.collected-stars-actions button{width:100%;min-height:54px;margin:0;border:0;border-radius:17px;cursor:pointer;font:inherit;font-size:17px;font-weight:950}
+.collected-stars-notes{color:#fff;background:#4cab7d;box-shadow:0 6px 0 #32845e}
+.collected-stars-actions .collected-stars-done{width:100%;margin:0}
+@media(max-width:520px){
+  .player-level-sprouts{min-width:48px}.player-level-sprouts .ui-icon{--icon-size:25px;margin-left:-11px}
+  .collected-stars-actions{grid-template-columns:1fr;gap:10px}
+}
+
 /* 부팅(새로고침 복구) 화면. 홈·온보딩과 같은 방 배경 위에 안내만 잠깐 뒤에 띄운다. */
 .app-shell--booting { background:#f6f1e9 url('/scenes/home-room-cute-v3.png') center/cover fixed; }
 .app-shell--booting::before { content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(90deg,rgba(255,250,238,.28),rgba(255,250,238,.06)); }

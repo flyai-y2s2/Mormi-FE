@@ -39,15 +39,18 @@ test("인증 실패와 BE 연결 실패는 아이가 이해할 수 있는 재시
   assert.doesNotMatch(starNoteListErrorMessage(new ApiError(503, "network_error", "raw")), /raw/);
 });
 
-test("별노트 모아보기는 BE 응답 필드를 렌더링하고 정적·AI fallback을 두지 않는다", async () => {
-  const [modal, app, apiClient] = await Promise.all([
+test("별노트 모아보기는 모은 별에서 열고 BE 응답 필드를 렌더링하며 정적·AI fallback을 두지 않는다", async () => {
+  const [modal, collectedStarsModal, app, apiClient] = await Promise.all([
     readFile(new URL("../app/StarNoteArchiveModal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/CollectedStarsModal.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api-client.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(app, /<StarNoteArchiveModal learnerId=\{learner\.id\}/);
-  assert.match(app, /aria-haspopup="dialog"[^>]*>[\s\S]{0,100}별노트/);
+  assert.match(app, /onOpenStarNotes=\{\(\) => setStarNoteArchiveOpen\(true\)\}/);
+  assert.match(collectedStarsModal, /onOpenStarNotes/);
+  assert.match(collectedStarsModal, />별노트 모아보기<\/button>/);
   assert.match(app, /returnToAuthScreen[\s\S]{0,180}setStarNoteArchiveOpen\(false\)/);
   assert.match(modal, /note\.note_id/);
   assert.match(modal, /note\.text/);

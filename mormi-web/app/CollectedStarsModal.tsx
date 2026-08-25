@@ -7,9 +7,10 @@ import { collectedStarConcepts } from "./collected-stars";
 type CollectedStarsModalProps = {
   completedSessionIds: string[];
   onClose: () => void;
+  onOpenStarNotes: () => void;
 };
 
-export function CollectedStarsModal({ completedSessionIds, onClose }: CollectedStarsModalProps) {
+export function CollectedStarsModal({ completedSessionIds, onClose, onOpenStarNotes }: CollectedStarsModalProps) {
   const modalRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const concepts = useMemo(() => collectedStarConcepts(completedSessionIds), [completedSessionIds]);
@@ -86,7 +87,10 @@ export function CollectedStarsModal({ completedSessionIds, onClose }: CollectedS
           </div>
         )}
 
-        <button className="collected-stars-done" type="button" onClick={onClose}>다 봤어요!</button>
+        <div className="collected-stars-actions">
+          <button className="collected-stars-notes" type="button" onClick={() => { onClose(); onOpenStarNotes(); }}>별노트 모아보기</button>
+          <button className="collected-stars-done" type="button" onClick={onClose}>다 봤어요!</button>
+        </div>
       </section>
     </div>
   );

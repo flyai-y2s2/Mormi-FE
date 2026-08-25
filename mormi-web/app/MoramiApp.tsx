@@ -1140,7 +1140,7 @@ function ProfileMenu({ name, loggingOut, onLogout }: {
   );
 }
 
-function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void }) {
+function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum, onOutside, onOpenStarNotes }: { completedSessionIds: string[]; coinBalance: number; onOpenSession: (index: number) => void; onCurriculum: () => void; onOutside: () => void; onOpenStarNotes: () => void }) {
   const [starsOpen, setStarsOpen] = useState(false);
   const requiredSessions = cafeRequiredSessionIds.map((id) => sessions.find((session) => session.id === id)).filter((session): session is Session => Boolean(session));
   const done = requiredSessions.filter((session) => completedSessionIds.includes(session.id)).length;
@@ -1154,18 +1154,22 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
       <div className="home-room-main">
         <div className="home-room-copy-column">
           <div className="home-room-copy">
-            <p className="eyebrow">모르미의 생활 수학</p>
             <h1>오늘은 어떤 걸 할까?</h1>
-            <div className="daily-quest"><span>오늘의 퀘스트</span><b><UiIcon name="key" size="small" /> 카페 열쇠 조각 모으기</b><strong>{done}/{requiredSessions.length}</strong></div>
             <div className="home-main-actions">
-              <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b><small>개념을 익히고 별 3개를 받아요</small></button>
-              <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b><small>{unlocked ? "카페가 열렸어요!" : `카페 준비 ${done}/${requiredSessions.length}`}</small></button>
+              <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b></button>
+              <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b></button>
             </div>
           </div>
         </div>
         <div className="home-room-character-column">
           <div className="player-hud" aria-label="나의 모험 정보">
-            <div className="player-stat player-stat--level"><UiIcon name="sprout" size="large" /><span><small>레벨</small><b>{level}</b></span></div>
+            <div className="player-stat player-stat--level" aria-label={`레벨 ${level}, 새싹 ${level}단계`}>
+              <div className="player-level-sprouts" aria-hidden="true">
+                {Array.from({ length: Math.min(level, 4) }, (_, index) => <UiIcon key={index} name="sprout" size="small" />)}
+                {level > 4 && <em>+{level - 4}</em>}
+              </div>
+              <span><small>레벨</small><b>{level}</b></span>
+            </div>
             <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>모은 별</small><b>{stars}개</b></span></button>
             <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="모르미 새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
           </div>
@@ -1173,7 +1177,7 @@ function HomeHub({ completedSessionIds, coinBalance, onOpenSession, onCurriculum
         </div>
       </div>
       {!unlocked && nextSession && <button className="home-next-lesson" onClick={() => onOpenSession(sessions.findIndex((session) => session.id === nextSession.id))}><span>카페까지 {requiredSessions.length - done}개 남았어요</span><b>다음 필수 개념: {nextSession.title} →</b></button>}
-      {starsOpen && <CollectedStarsModal completedSessionIds={completedSessionIds} onClose={() => setStarsOpen(false)} />}
+      {starsOpen && <CollectedStarsModal completedSessionIds={completedSessionIds} onClose={() => setStarsOpen(false)} onOpenStarNotes={onOpenStarNotes} />}
     </section>
   );
 }
@@ -1278,7 +1282,7 @@ export function MoramiApp() {
   const [expression, setExpression] = useState<Expression>("happy");
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
   const [showOtherConcepts, setShowOtherConcepts] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
+  const soundOn = true;
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const [starNoteArchiveOpen, setStarNoteArchiveOpen] = useState(false);
   const [drillIndex, setDrillIndex] = useState(0);
@@ -2005,10 +2009,6 @@ export function MoramiApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function toggleSound() {
-    setSoundOn((enabled) => !enabled);
-  }
-
   const completedAfterLesson = completedSessionIds.includes(activeSession.id) ? completedSessionIds : [...completedSessionIds, activeSession.id];
   const cafeUnlockedAfterLesson = isCafeUnlocked(completedAfterLesson);
   const cafeReadyCountAfterLesson = cafeRequiredSessionIds.filter((id) => completedAfterLesson.includes(id)).length;
@@ -2021,15 +2021,13 @@ export function MoramiApp() {
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
         </div> : <div className="topbar-lead">
-          <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />
-          {stage !== "complete" && <nav className="journey-nav journey-nav--top" aria-label="장소 이동">
+          {stage !== "home" && stage !== "complete" && <nav className="journey-nav journey-nav--top" aria-label="장소 이동">
             <button type="button" className={stage === "outside" ? "" : "is-active"} onClick={showHome}><UiIcon name="home" size="small" />집</button>
             <button type="button" className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button>
           </nav>}
         </div>}
         <div className="top-actions">
-          {stage === "home" && <button className="star-note-archive-link" type="button" onClick={() => setStarNoteArchiveOpen(true)} aria-haspopup="dialog"><UiIcon name="star" size="small" />별노트</button>}
-          <button className={`round-control ${soundOn ? "is-sound-on" : ""}`} onClick={toggleSound} aria-label={soundOn ? "효과음 끄기" : "효과음 켜기"}><UiIcon name={soundOn ? "sound" : "mute"} size="small" /></button>
+          {!learningStage && <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />}
           {learningStage && <button className="curriculum-link" onClick={showHome}>집으로</button>}
         </div>
       </header>}
@@ -2043,7 +2041,7 @@ export function MoramiApp() {
 
       {stage === "onboarding" && <Onboarding onSignup={handleSignup} onLogin={handleLogin} />}
 
-      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} />}
+      {stage === "home" && <HomeHub completedSessionIds={completedSessionIds} coinBalance={coinBalance} onOpenSession={openSession} onCurriculum={showCurriculum} onOutside={showOutside} onOpenStarNotes={() => setStarNoteArchiveOpen(true)} />}
 
       {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} amusementParkTheme={amusementParkTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} />}
 

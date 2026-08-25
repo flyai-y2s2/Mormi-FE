@@ -384,7 +384,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // topbar 의 좌우 기준선이 화면마다 다르면 상단에 둔 탭이 옮겨져 보인다.
   assert.match(css, /\.app-shell--outside \.topbar[^{]*\{[^}]*max-width:none/);
   // 반복 중에는 프로필을 띄우지 않는다. 로그아웃이 눌리면 시도 기록이 끊긴 채 세션이 남는다.
-  assert.match(app, /learningStage \?[\s\S]{0,400}<ProfileMenu/);
+  assert.match(app, /<div className="top-actions">[\s\S]{0,220}\{!learningStage && <ProfileMenu/);
   // 로그인 화면은 형식 검사를 걸지 않는다. 규칙이 바뀌면 예전 기준으로 만든 아이디가
   // 서버에 닿기도 전에 막혀, 멀쩡한 계정으로 못 들어오게 된다.
   assert.match(app, /function submitLogin\(\) \{\r?\n {4}\/\//);
@@ -433,7 +433,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /drill-wallet/);
   assert.match(app, /원을 얻었어!/);
   assert.doesNotMatch(app, /useGameMusic|배경 음악과 효과음/);
-  assert.match(app, /aria-label=\{soundOn \? "효과음 끄기" : "효과음 켜기"\}/);
+  assert.doesNotMatch(app, /aria-label=\{soundOn \? "효과음 끄기" : "효과음 켜기"\}/);
   assert.match(app, /if \(soundOn\) playCoinRewardSound\(reward\)/);
   assert.match(app, /cafe-required-lessons/);
   assert.match(app, /otherConceptSessions/);
