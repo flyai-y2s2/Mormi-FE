@@ -1382,7 +1382,9 @@ export function MoramiApp() {
   const startedAt = useRef(0);
   const elapsedSeconds = useRef(0);
   const teachThreadRef = useRef<HTMLDivElement>(null);
-  const finishInProgress = useRef(false);
+  // AI 완료 응답과 홈 이동이 거의 동시에 들어와도 같은 완료 요청을 함께 기다린다.
+  // 단순 boolean 으로 막으면 두 번째 호출이 먼저 반환해 오래된 진행도를 읽을 수 있다.
+  const finishRequest = useRef<Promise<void> | null>(null);
   // AI 가 가르치기 완료를 확정한 즉시 BE 완료 기록은 저장하되,
   // 별노트와 보상 화면은 아이가 기존 다음 버튼을 눌렀을 때만 연다.
   const completedLearningStage = useRef<"teachReward" | "complete" | null>(null);
@@ -1674,7 +1676,11 @@ export function MoramiApp() {
       if (soundOn) playLearningChime();
       // 완료 표시의 기준은 AI 대화 상태가 아니라 BE 진행도다. 별노트의
       // '다음으로'를 기다리지 않고 여기서 서버 진행도를 먼저 확정한다.
-      void finish(false, { navigate: false, turn: nextTurn });
+      void finish(false, {
+        navigate: false,
+        turn: nextTurn,
+        conversationId: nextConversation.conversation_id,
+      });
     }
   }
 
@@ -1687,8 +1693,11 @@ export function MoramiApp() {
     try {
       const sessionId = await learningSessionPromise.current;
       await attemptWriteQueue.current;
-      if (!sessionId || attemptWriteError.current) {
-        throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
+      if (!sessionId) {
+        throw new Error("반복 학습 세션을 찾지 못했습니다.");
+      }
+      if (attemptWriteError.current) {
+        console.warn("[mormi-api] 일부 반복 학습 기록이 누락됐지만 가르치기를 계속합니다.");
       }
       const startMode = reloadDialogueScreen === "home-teach" ? "restart" : "resume";
       const request = teachingStartRequest.current?.sessionId === sessionId
@@ -1809,7 +1818,7 @@ export function MoramiApp() {
 
   async function finish(
     transfer = homeworkSolved,
-    options: { navigate?: boolean; turn?: MormiTurn | null } = {},
+    options: { navigate?: boolean; turn?: MormiTurn | null; conversationId?: string } = {},
   ) {
     const navigate = options.navigate ?? true;
     if (navigate) finishNavigationRequested.current = true;
@@ -1817,23 +1826,48 @@ export function MoramiApp() {
       if (navigate) setStage(completedLearningStage.current);
       return;
     }
-    if (finishInProgress.current) return;
-    finishInProgress.current = true;
+    if (finishRequest.current) {
+      await finishRequest.current;
+      if (navigate && completedLearningStage.current) setStage(completedLearningStage.current);
+      return;
+    }
     const completionTurn = options.turn ?? teachingTurn;
-    setTeachError("");
-    setTeachSending(true);
-    try {
+    const request = (async () => {
+      setTeachError("");
+      setTeachSending(true);
+      try {
       const sessionId = await learningSessionPromise.current;
       await attemptWriteQueue.current;
-      if (!sessionId || attemptWriteError.current) {
-        throw attemptWriteError.current ?? new Error("반복 학습 기록을 저장하지 못했습니다.");
+      if (!sessionId) {
+        throw new Error("반복 학습 세션을 찾지 못했습니다.");
       }
-      const result = await api.completeSession(sessionId, {
+      // 개별 문제 기록은 관찰용 데이터다. 일시적인 attempt 전송 실패가 있어도
+      // 아이가 끝낸 가르치기와 세션 완료까지 막으면 진행도가 영원히 미완료로 남는다.
+      // BE의 complete는 멱등하므로 최종 완료는 독립적으로 재시도한다.
+      if (attemptWriteError.current) {
+        console.warn("[mormi-api] 일부 반복 학습 기록이 누락됐지만 세션 완료를 계속합니다.");
+      }
+      const completionRequest = {
+        conversation_id: options.conversationId ?? mormiConversation?.conversation_id,
         transfer_solved: transfer,
         timed_out: false,
         scaffold_level: scaffoldLevel(completionTurn),
         elapsed_seconds: elapsedSeconds.current,
-      });
+      };
+      let result: Awaited<ReturnType<typeof api.completeSession>> | null = null;
+      let completionError: unknown = null;
+      for (let attempt = 0; attempt < 3 && !result; attempt += 1) {
+        try {
+          result = await api.completeSession(sessionId, completionRequest);
+        } catch (error) {
+          completionError = error;
+          if (error instanceof ApiError && error.status < 500 && error.status !== 429) throw error;
+          if (attempt < 2) {
+            await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+          }
+        }
+      }
+      if (!result) throw completionError ?? new Error("학습 완료를 저장하지 못했습니다.");
       const next = result.completed_session_ids;
       setCompletedSessionIds(next);
       setCoinBalance(result.wallet_balance);
@@ -1869,19 +1903,25 @@ export function MoramiApp() {
       const nextStage = result.teach_reward > 0 ? "teachReward" : "complete";
       completedLearningStage.current = nextStage;
       if (finishNavigationRequested.current) setStage(nextStage);
-    } catch (error) {
-      console.error("[mormi-api] 세션 완료 실패", error);
-      setTeachError("학습 결과를 저장하지 못했어요. 다시 시도해 주세요.");
-      finishInProgress.current = false;
+      } catch (error) {
+        console.error("[mormi-api] 세션 완료 실패", error);
+        setTeachError("학습 결과를 저장하지 못했어요. 다시 시도해 주세요.");
+      } finally {
+        setTeachSending(false);
+      }
+    })();
+    finishRequest.current = request;
+    try {
+      await request;
     } finally {
-      setTeachSending(false);
+      if (finishRequest.current === request) finishRequest.current = null;
     }
   }
 
   function openSession(nextIndex: number) {
     const nextVariantSeed = randomVariantSeed();
     const nextAnswerChoiceSeeds = randomAnswerChoiceSeeds(masteryTarget);
-    finishInProgress.current = false;
+    finishRequest.current = null;
     completedLearningStage.current = null;
     finishNavigationRequested.current = false;
     setSessionIndex(nextIndex);
@@ -2038,10 +2078,29 @@ export function MoramiApp() {
     setCharacterNameOpen(false);
   }
 
+  async function syncHomeProgress() {
+    // 완료 저장이 이미 진행 중이면 끝까지 기다린 뒤 서버 진행도를 읽는다.
+    // 이 순서가 없으면 complete와 progress가 경합해 이전 2/4 상태가 다시 표시된다.
+    if (teachingComplete && !completedLearningStage.current) {
+      await finish(false, { navigate: false, turn: teachingTurn });
+    }
+    if (!apiEnabled) return;
+    try {
+      const snapshot = await api.progress();
+      setCompletedSessionIds(snapshot.completed_session_ids);
+      setCoinBalance(snapshot.wallet_balance);
+    } catch (error) {
+      console.warn("[mormi-api] 홈 진행도 동기화 실패", error);
+    }
+  }
+
   function showHome() {
     captureMormeyEvent("home_opened");
     setStage("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // 완료 화면에서 바로 집으로 나가도 마지막 세션 저장을 한 번 더 보장한다.
+    // complete는 서버 멱등 API라 중복 호출되어도 보상과 진행도는 한 번만 반영된다.
+    void syncHomeProgress();
   }
 
   function showOutside() {
