@@ -117,12 +117,13 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
   assert.match(talkPanel, /box-shadow:\s*none/);
 });
 
-test("놀이동산 문제 묶음은 작은 폭으로 화면 아래 입력창까지 붙여 배치한다", () => {
+test("놀이동산 문제 묶음과 상단 버튼은 화면 가운데에 모아 배치한다", () => {
   const flow = css.match(/\.park-cafe-talk \.cafe-talk-flow\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.match(flow, /padding: 92px 18px 18px;/);
-  assert.match(flow, /justify-content: flex-end;/);
+  assert.match(flow, /justify-content: center;/);
   assert.match(flow, /gap: 9px;/);
   assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar,[\s\S]*?width: min\(540px, calc\(100% - 20px\)\);/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar\s*\{[^}]*width: min\(460px, calc\(100% - 40px\)\);/);
   assert.match(css, /\.park-cafe-talk \.park-problem__element\s*\{[^}]*height: clamp\(104px, 15vh, 148px\);/);
   assert.match(css, /\.park-cafe-talk \.cafe-talk-answer \.cafe-ai-followup input,[\s\S]*?min-height: 54px;/);
 });
