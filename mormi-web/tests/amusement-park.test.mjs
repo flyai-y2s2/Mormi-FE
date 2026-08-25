@@ -98,12 +98,18 @@ test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 �
     "ticket-booth.png",
     "churros-split.png",
     "ride-pass.png",
+    "ticket-booth-morami-v2.png",
+    "churros-split-morami-v2.png",
+    "ride-pass-morami-v2.png",
     "ticket-elements-v2.png",
     "churros-elements-v2.png",
     "pass-elements-v2.png",
   ]) {
     await access(new URL(`../public/amusement-park/${file}`, import.meta.url));
   }
+  assert.match(contract, /ticket-booth-morami-v2\.png/);
+  assert.match(contract, /churros-split-morami-v2\.png/);
+  assert.match(contract, /ride-pass-morami-v2\.png/);
 });
 
 test("외출의 놀이동산 카드는 themes 응답의 해금 상태로만 활성화한다", () => {

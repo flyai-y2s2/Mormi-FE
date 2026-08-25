@@ -9,15 +9,15 @@ export const amusementStageVisuals: Record<AmusementStageId, {
   element_image_url: string;
 }> = {
   ticket: {
-    image_url: "/amusement-park/ticket-booth.png",
+    image_url: "/amusement-park/ticket-booth-morami-v2.png",
     element_image_url: "/amusement-park/ticket-elements-v2.png",
   },
   snack_split: {
-    image_url: "/amusement-park/churros-split.png",
+    image_url: "/amusement-park/churros-split-morami-v2.png",
     element_image_url: "/amusement-park/churros-elements-v2.png",
   },
   pass_break_even: {
-    image_url: "/amusement-park/ride-pass.png",
+    image_url: "/amusement-park/ride-pass-morami-v2.png",
     element_image_url: "/amusement-park/pass-elements-v2.png",
   },
 };
