@@ -2,20 +2,20 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const { amusementAnswerFields, amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
+const { amusementStageVisuals } = await import("../app/amusement-park-contract.ts");
 const component = await readFile(new URL("../app/amusement-park/AmusementPark.tsx", import.meta.url), "utf8");
 const talkStage = await readFile(new URL("../app/CafeTalkStage.tsx", import.meta.url), "utf8");
 const previewPage = await readFile(new URL("../app/amusement-park-preview/page.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
 const contract = await readFile(new URL("../app/amusement-park-contract.ts", import.meta.url), "utf8");
+const apiClient = await readFile(new URL("../app/api-client.ts", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-test("놀이동산 FE에는 서버 문제 fixture 대신 표시 자산과 파생값 입력 계약만 남는다", () => {
+test("놀이동산 FE에는 교육 콘텐츠 없이 표시 자산만 남는다", () => {
   assert.deepEqual(Object.keys(amusementStageVisuals), ["ticket", "snack_split", "pass_break_even"]);
-  assert.deepEqual(amusementAnswerFields.ticket.map((field) => field.key), ["total_price"]);
-  assert.deepEqual(amusementAnswerFields.snack_split.map((field) => field.key), ["per_person"]);
-  assert.deepEqual(amusementAnswerFields.pass_break_even.map((field) => field.key), ["break_even_rides", "benefit_from_rides"]);
-  assert.doesNotMatch(contract, /amusementParkPreview|verified_facts|ticket_price:\s*3000|snack_total:\s*9000/);
+  assert.doesNotMatch(contract, /amusementParkPreview|amusementAnswerFields|verified_facts|ticket_price|snack_total/);
+  assert.match(component, /conversation\?\.turn\.visual\.data\.facts/);
+  assert.doesNotMatch(component, /stage\.facts/);
 });
 
 test("방문 시작·AI 대화 판정·최신 진행 재조회·완료를 모두 BE에 맡긴다", () => {
@@ -27,6 +27,7 @@ test("방문 시작·AI 대화 판정·최신 진행 재조회·완료를 모두
   assert.match(component, /visit\.stage_progress\[stageId\]/);
   assert.match(component, /next\.stage_progress\?\.completed/);
   assert.doesNotMatch(component, /api\.submitAmusementParkStage|amusementAnswerFields\[stage\.stage_id\]/);
+  assert.doesNotMatch(apiClient, /submitAmusementParkStage|amusement-park-visits\/\$\{visitId\}\/stages/);
   assert.doesNotMatch(component, /ticket_price|party_count|snack_total|payer_count|single_ride_price|day_pass_price/);
   assert.doesNotMatch(component, /answers:\s*derivedAnswers/);
   assert.doesNotMatch(component, /setCompleted|amusementParkPreview|FE 계약 미리보기|서버 저장 없는/);
