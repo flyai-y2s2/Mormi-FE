@@ -1154,6 +1154,11 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .money-practice-picture { min-width:0; position:relative; display:grid; place-items:center; overflow:hidden; border:3px solid rgba(255,255,255,.92); border-radius:27px; background:rgba(255,255,255,.72); box-shadow:0 8px 0 rgba(219,205,165,.42); }
 .money-practice-picture > span { padding:6px 11px; position:absolute; left:12px; top:12px; z-index:1; border-radius:999px; color:#8a5a2f; background:#fff3cf; font-size:12px; font-weight:950; }
 .money-practice-picture img { width:100%; height:245px; object-fit:contain; }
+.money-practice-items { width:100%; min-height:245px; padding:44px 14px 14px; display:flex; align-items:center; justify-content:center; gap:12px; }
+.money-practice-items > div { min-width:0; flex:1 1 0; display:grid; grid-template-columns:1fr auto; align-items:center; padding:10px; border:2px solid #e0eee6; border-radius:20px; background:rgba(255,255,255,.9); box-shadow:0 6px 0 #dceadf; }
+.money-practice-items img { grid-column:1/-1; width:100%; height:140px; object-fit:contain; border-radius:13px; }
+.money-practice-items strong { min-width:0; overflow:hidden; color:#355f4f; font-size:14px; font-weight:950; text-overflow:ellipsis; white-space:nowrap; }
+.money-practice-items small { padding:3px 7px; border-radius:999px; color:#8a5a2f; background:#fff0c7; font-size:13px; font-weight:950; }
 .money-practice-facts { min-width:0; display:grid; align-content:center; gap:9px; }
 .money-practice-facts > div { min-width:0; padding:12px 14px; border-radius:19px; background:rgba(255,255,255,.88); box-shadow:0 5px 0 rgba(209,226,216,.72); }
 .money-practice-facts small,.money-practice-facts strong { display:block; }
@@ -2708,6 +2713,11 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .money-practice-visual { min-height:0; padding:12px; grid-template-columns:1fr; gap:10px; border-radius:25px; }
   .money-practice-picture { min-height:155px; border-radius:21px; }
   .money-practice-picture img { height:165px; }
+  .money-practice-items { min-height:165px; padding:38px 7px 8px; gap:6px; }
+  .money-practice-items > div { padding:7px; border-radius:15px; }
+  .money-practice-items img { height:88px; }
+  .money-practice-items strong { font-size:11px; }
+  .money-practice-items small { padding:2px 5px; font-size:11px; }
   .money-practice-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
   .money-practice-facts > div { padding:9px 10px; border-radius:14px; }
   .money-practice-facts strong { font-size:16px; }

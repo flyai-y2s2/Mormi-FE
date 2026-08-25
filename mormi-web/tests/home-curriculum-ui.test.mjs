@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { sessions } from "../app/math-curriculum.ts";
+
 test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순서를 사용한다", async () => {
   const [app, journey] = await Promise.all([
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
@@ -41,6 +43,30 @@ test("놀이동산 준비 문제는 돈 계산용 이미지와 사실 카드로 
   assert.match(curriculum, /squishy-share\.png/);
   assert.match(curriculum, /keychain-budget\.png/);
   assert.match(curriculum, /mixed-purchase\.png/);
+});
+
+test("놀이동산 준비 세션의 각 문제는 서로 다른 물건 사진 구성을 사용한다", () => {
+  const requiredSessionIds = [
+    "multiply-groups",
+    "multiply-addition",
+    "divide-share",
+    "divide-group",
+    "multiply-easy-tables",
+  ];
+
+  for (const sessionId of requiredSessionIds) {
+    const session = sessions.find((entry) => entry.id === sessionId);
+    assert.ok(session, `${sessionId} 세션이 있어야 한다`);
+
+    const signatures = session.drills.map((problem) => {
+      assert.equal(problem.visual.type, "money-practice");
+      if (problem.visual.type !== "money-practice") return "";
+      assert.ok(problem.visual.items?.length, `${sessionId}의 모든 문제에 물건 사진이 있어야 한다`);
+      return problem.visual.items?.map((item) => `${item.image}:${item.count}`).join("|") ?? "";
+    });
+
+    assert.equal(new Set(signatures).size, signatures.length, `${sessionId} 안에서 같은 사진 구성을 재사용하면 안 된다`);
+  }
 });
 
 test("반복학습 회차마다 무작위 seed를 만들고 서버 복구용 seed와 동일하게 사용한다", async () => {

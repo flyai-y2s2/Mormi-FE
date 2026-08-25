@@ -20,6 +20,7 @@ export type Visual =
       type: "money-practice";
       image: string;
       imageAlt: string;
+      items?: Array<{ image: string; label: string; count: number }>;
       facts: Array<{ label: string; value: string }>;
       equation?: string;
       badge?: string;
