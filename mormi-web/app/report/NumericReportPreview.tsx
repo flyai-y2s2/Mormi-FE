@@ -138,11 +138,17 @@ export function NumericReportPreview({
     ? "아이의 답을 한 번 기록한 뒤 알맞은 시작 단계를 정합니다."
     : `${selectedDomain.ladderStart}에서 아이가 자신의 말로 답해보도록 기다립니다.`;
   const speech = speechByDomain?.[selectedDomain.id];
-  const speechChangeSummary = speech?.state === "ready"
-    && speech.evidence.available
-    && speech.evidence.change_summary
-    ? speech.evidence.change_summary
-    : selectedDomain.thinkingChange;
+  const speechChangeSummary = !report
+    ? selectedDomain.thinkingChange
+    : speech?.state === "ready" && speech.evidence.available && speech.evidence.change_summary
+      ? speech.evidence.change_summary
+      : speech?.state === "loading"
+        ? "과거·최근 발화를 비교하고 있습니다."
+        : speech?.state === "error"
+          ? "발화 비교 분석을 불러오지 못했습니다."
+          : speech?.state === "ready"
+            ? "비교할 발화 기록이 더 필요합니다."
+            : "과거·최근 발화를 확인하고 있습니다.";
   const ladderAnalysis = selectedDomain.ladderAnalysis;
   const approvalState = ladderAnalysis ? ladderApprovalState[ladderAnalysis.analysisId] : undefined;
   const ladderApplied = Boolean(ladderAnalysis?.approved || approvalState === "approved");

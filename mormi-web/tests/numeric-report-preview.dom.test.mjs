@@ -338,6 +338,32 @@ test("shows the selected unit speech comparison analysis in AI change summary", 
   }
 });
 
+test("never substitutes the report-wide narrative for a selected unit speech analysis", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
+  ]);
+  const cases = [
+    [undefined, "과거·최근 발화를 확인하고 있습니다."],
+    [{ state: "loading" }, "과거·최근 발화를 비교하고 있습니다."],
+    [{ state: "error", message: "서버 오류" }, "발화 비교 분석을 불러오지 못했습니다."],
+    [{ state: "ready", evidence: { available: false, domain_id: "money-count", verified_elements: [], message: "기록 부족" } }, "비교할 발화 기록이 더 필요합니다."],
+  ];
+
+  for (const [speech, expected] of cases) {
+    const speechByDomain = speech ? { "money-count": speech } : undefined;
+    const html = server.renderToString(React.createElement(NumericReportPreview, {
+      report: completeDiagnosticReportExample,
+      speechByDomain,
+    }));
+    const dom = setDom(html);
+    try {
+      assert.equal(dom.container.querySelector(".numeric-domain-insight strong").textContent, expected);
+    } finally {
+      dom.cleanup();
+    }
+  }
+});
+
 test("requests the selected unit speech analysis without opening the evidence disclosure", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),
