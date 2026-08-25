@@ -37,3 +37,15 @@ export function reportRequestFor({
     ? { source: "authenticated", weekStart }
     : { source: "local-admin", learnerId: selectedLearnerId, weekStart };
 }
+
+export function weekStartAfterLearnerSelection({
+  previousLearnerId,
+  nextLearnerId,
+  currentWeekStart,
+}: {
+  previousLearnerId: number | null;
+  nextLearnerId: number;
+  currentWeekStart?: string;
+}): string | undefined {
+  return previousLearnerId === nextLearnerId ? currentWeekStart : undefined;
+}

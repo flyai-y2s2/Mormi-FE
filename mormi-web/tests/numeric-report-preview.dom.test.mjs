@@ -235,6 +235,50 @@ test("offers bounded week navigation and omits an empty LIFE tab", async () => {
   }
 });
 
+test("accumulates report weeks and selects a week with data directly", async () => {
+  const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
+    loadPreview(),
+    import("../app/report/complete-report-example.ts"),
+    import("react"),
+    import("react-dom/server"),
+  ]);
+  const report = {
+    ...completeDiagnosticReportExample,
+    period: {
+      ...completeDiagnosticReportExample.period,
+      week_start: "2026-08-17",
+      week_end: "2026-08-23",
+      available_week_starts: ["2026-08-03", "2026-08-17"],
+    },
+  };
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview, { report })));
+  const { hydrateRoot } = await import("react-dom/client");
+  const { act } = React;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const selected = [];
+
+  try {
+    let root;
+    await act(async () => {
+      root = hydrateRoot(dom.container, React.createElement(NumericReportPreview, {
+        report,
+        onSelectWeek: (weekStart) => selected.push(weekStart),
+      }));
+    });
+    const weekButtons = [...dom.container.querySelectorAll('.weekly-report-nav__weeks button')];
+    assert.deepEqual(weekButtons.map((button) => button.textContent), ["8월 1주차", "8월 3주차"]);
+    assert.equal(weekButtons[1].getAttribute("aria-current"), "date");
+
+    await act(async () => {
+      weekButtons[0].dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true }));
+    });
+    assert.deepEqual(selected, ["2026-08-03"]);
+    await act(async () => { root.unmount(); });
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("renders a valid empty week without dereferencing a missing domain", async () => {
   const [{ NumericReportPreview }, { completeDiagnosticReportExample }, React, server] = await Promise.all([
     loadPreview(), import("../app/report/complete-report-example.ts"), import("react"), import("react-dom/server"),

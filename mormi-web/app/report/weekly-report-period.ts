@@ -11,8 +11,26 @@ export function formatKoreanWeekLabel(weekStart: string): string {
   return `${month}월 ${Math.ceil(day / 7)}주차`;
 }
 
+export function availableReportWeeks(period: DiagnosticReportPeriodDto): string[] {
+  return [...new Set(period.available_week_starts ?? [])].sort();
+}
+
+export function adjacentAvailableWeek(
+  period: DiagnosticReportPeriodDto,
+  delta: -1 | 1,
+): string | undefined {
+  const weeks = availableReportWeeks(period);
+  const currentIndex = weeks.indexOf(period.week_start);
+  if (currentIndex < 0) return undefined;
+  return weeks[currentIndex + delta];
+}
+
 export const canMoveToPreviousWeek = (period: DiagnosticReportPeriodDto) =>
-  period.week_start > period.earliest_week_start;
+  period.available_week_starts
+    ? adjacentAvailableWeek(period, -1) !== undefined
+    : period.week_start > period.earliest_week_start;
 
 export const canMoveToNextWeek = (period: DiagnosticReportPeriodDto) =>
-  period.week_start < period.latest_week_start;
+  period.available_week_starts
+    ? adjacentAvailableWeek(period, 1) !== undefined
+    : period.week_start < period.latest_week_start;

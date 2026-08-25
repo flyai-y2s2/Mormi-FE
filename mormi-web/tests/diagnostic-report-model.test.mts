@@ -30,6 +30,8 @@ import {
   speechStateAfterResult,
 } from "../app/report/diagnostic-report-interactions.ts";
 import {
+  adjacentAvailableWeek,
+  availableReportWeeks,
   canMoveToNextWeek,
   canMoveToPreviousWeek,
   formatKoreanWeekLabel,
@@ -49,6 +51,18 @@ test("weekly report navigation respects server bounds", () => {
   };
   assert.equal(canMoveToPreviousWeek(period), true);
   assert.equal(canMoveToNextWeek(period), false);
+});
+
+test("weekly report navigation uses only weeks that contain report data", () => {
+  const period = {
+    week_start: "2026-08-17", week_end: "2026-08-23", timezone: "Asia/Seoul" as const,
+    earliest_week_start: "2026-08-03", latest_week_start: "2026-08-17",
+    available_week_starts: ["2026-08-03", "2026-08-17", "2026-08-03"],
+  };
+
+  assert.deepEqual(availableReportWeeks(period), ["2026-08-03", "2026-08-17"]);
+  assert.equal(adjacentAvailableWeek(period, -1), "2026-08-03");
+  assert.equal(adjacentAvailableWeek(period, 1), undefined);
 });
 
 test("complete example mode only activates for the explicit query flag", () => {

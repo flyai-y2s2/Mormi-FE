@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { reportLandingFor, reportRequestFor } from "../app/report/local-admin-report-flow.ts";
+import { reportLandingFor, reportRequestFor, weekStartAfterLearnerSelection } from "../app/report/local-admin-report-flow.ts";
 
 test("shows local-admin search instead of requiring learner login", () => {
   assert.equal(reportLandingFor({ localAdminEnabled: true, hasStoredLearner: false }), "local-admin-search");
@@ -47,4 +47,17 @@ test("selects the authenticated diagnostic source without a selected learner", (
     source: "authenticated",
     weekStart: undefined,
   });
+});
+
+test("changing learners opens that learner's latest available report week", () => {
+  assert.equal(weekStartAfterLearnerSelection({
+    previousLearnerId: 19,
+    nextLearnerId: 20,
+    currentWeekStart: "2026-08-17",
+  }), undefined);
+  assert.equal(weekStartAfterLearnerSelection({
+    previousLearnerId: 19,
+    nextLearnerId: 19,
+    currentWeekStart: "2026-08-17",
+  }), "2026-08-17");
 });
