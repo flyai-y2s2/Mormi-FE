@@ -56,7 +56,7 @@ function ParkMap({ visit, learnerName, onOpen, onExit }: {
     <div className="figma-cafe__bar">
       <button type="button" className="figma-park__back" onClick={onExit}>← 외출 장소</button>
       <strong className="figma-cafe__place">
-        <Image className="figma-cafe__place-image" src="/amusement-park/ticket-elements-v2.png" alt="" width={56} height={56} aria-hidden="true" />
+        <Image className="figma-cafe__place-image" src="/amusement-park/ticket-elements-clean.png" alt="" width={56} height={56} aria-hidden="true" />
         {displayName} 놀이동산
       </strong>
       <div className="figma-cafe__steps" aria-label="놀이동산 진행 단계">

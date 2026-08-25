@@ -284,22 +284,30 @@ function CalendarVisual({ month, highlight, note }: { month: number; highlight: 
   return <div className="calendar-visual"><strong>{month}월</strong><div>{Array.from({ length: days }, (_, index) => <i key={index} className={index + 1 === highlight ? "is-highlight" : ""}>{index + 1}</i>)}</div>{note && <small>{note}</small>}</div>;
 }
 
+function moneyPracticeItemPrice(visual: Extract<Visual, { type: "money-practice" }>, index: number) {
+  const amount = visual.facts[index]?.value.match(/\d[\d,]*원/)?.[0];
+  if (!amount) return undefined;
+
+  return (visual.items?.length ?? 0) > 1 ? `개당 ${amount}` : amount;
+}
+
 function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "money-practice" }> }) {
-  const singleItemPrice = visual.items?.length === 1 ? visual.facts.find((fact) => fact.value.includes("원"))?.value : undefined;
-  const singleItemCount = visual.items?.length === 1 ? visual.facts.find((fact) => !fact.value.includes("원") && /\d/.test(fact.value))?.value : undefined;
 
   return (
     <figure className="money-practice-visual" aria-label={visual.imageAlt}>
       {visual.items?.length ? (
         <div className="money-practice-items">
-          {visual.items.map((item) => (
-            <div key={`${item.image}-${item.label}-${item.count}`}>
-              <Image src={item.image} alt="" width={210} height={160} unoptimized />
-              {singleItemPrice && <span className="money-practice-item-price">{singleItemPrice}</span>}
-              <strong>{item.label}</strong>
-              {(singleItemCount || item.count > 1) && <small>{singleItemCount ?? `${item.count}개`}</small>}
-            </div>
-          ))}
+          {visual.items.map((item, index) => {
+            const itemPrice = moneyPracticeItemPrice(visual, index);
+            return (
+              <div key={`${item.image}-${item.label}-${item.count}`}>
+                <Image src={item.image} alt="" width={210} height={160} unoptimized />
+                {itemPrice && <span className="money-practice-item-price">{itemPrice}</span>}
+                <strong>{item.label}</strong>
+                <small>{item.count}개</small>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <Image src={visual.image} alt="" width={520} height={360} unoptimized />

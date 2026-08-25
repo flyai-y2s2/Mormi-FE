@@ -10,7 +10,7 @@ export const amusementStageVisuals: Record<AmusementStageId, {
 }> = {
   ticket: {
     image_url: "/amusement-park/ticket-booth-morami-v2.png",
-    element_image_url: "/amusement-park/ticket-elements-v2.png",
+    element_image_url: "/amusement-park/ticket-elements-clean.png",
   },
   snack_split: {
     image_url: "/amusement-park/churros-split-morami-v2.png",

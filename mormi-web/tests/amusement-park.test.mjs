@@ -131,7 +131,7 @@ test("놀이동산 배경과 별도 계산 요소 이미지가 프로젝트에 �
     "ticket-booth-morami-v2.png",
     "churros-split-morami-v2.png",
     "ride-pass-morami-v2.png",
-    "ticket-elements-v2.png",
+    "ticket-elements-clean.png",
     "churros-elements-v2.png",
     "pass-elements-v2.png",
   ]) {
