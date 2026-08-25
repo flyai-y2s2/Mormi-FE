@@ -2105,7 +2105,7 @@ export function MoramiApp() {
       {stage === "booting" && (
         <section className="boot-scene" aria-busy="true" aria-live="polite">
           {/* 빠른 응답이면 아무것도 깜빡이지 않도록, 안내는 CSS 에서 잠깐 뒤에 나타난다. */}
-          <div className="boot-card"><UiIcon name="sprout" size="large" /><h2>{characterSubjectName} 준비하고 있어!</h2><p>하던 곳으로 데려다 줄게.</p></div>
+          <div className="boot-card"><UiIcon name="sprout" size="large" /><h2>{characterName && <>{characterSubjectName} </>}준비하고 있어!</h2><p>하던 곳으로 데려다 줄게.</p></div>
         </section>
       )}
 

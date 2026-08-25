@@ -20,7 +20,8 @@ test("server-renders the progress bootstrap before the I AM 쌤 onboarding", asy
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /이 친구가(?:<!-- -->)? 준비하고 있어!/);
+  assert.match(html, /준비하고 있어!/);
+  assert.doesNotMatch(html, /이 친구가/);
   assert.match(html, /하던 곳으로 데려다 줄게\./);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });

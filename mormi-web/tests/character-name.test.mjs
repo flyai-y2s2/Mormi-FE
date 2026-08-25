@@ -41,6 +41,7 @@ test("로그인 복원 중에도 저장한 캐릭터 이름을 먼저 표시한�
   assert.match(app, /const storedCharacterName = readCharacterName\(storedLearner\.id\)/);
   assert.match(app, /requestAnimationFrame\(\(\) => setCharacterName\(storedCharacterName\)\)/);
   assert.match(app, /if \(apiEnabled && storedLearner\)/);
+  assert.match(app, /\{characterName && <>\{characterSubjectName\} <\/>\}준비하고 있어!/);
 });
 
 test("서버 대사와 카페·놀이동산 화면은 공통 캐릭터 이름을 사용한다", () => {
