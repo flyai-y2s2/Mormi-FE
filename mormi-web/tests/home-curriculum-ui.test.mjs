@@ -55,7 +55,8 @@ test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 
   assert.match(curriculum, /ticket-elements-clean\.png/);
   assert.match(curriculum, /snack-repeat\.png/);
   assert.match(curriculum, /squishy-share\.png/);
-  assert.match(curriculum, /keychain-budget\.png/);
+  assert.match(curriculum, /keychain-single\.png/);
+  assert.doesNotMatch(curriculum, /keychain-budget\.png/);
   assert.match(curriculum, /mixed-purchase\.png/);
 });
 
