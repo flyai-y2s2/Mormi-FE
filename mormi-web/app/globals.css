@@ -3070,3 +3070,60 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .home-room-copy-column{width:100%;max-width:560px}
   .home-room-copy-column>.player-hud,.home-room-copy{width:100%;max-width:560px}
 }
+
+/* 집 안의 문을 직접 눌러 외출한다. 텍스트는 실제 버튼으로 유지한다. */
+.home-room-scene-objects{
+  width:100%;min-height:360px;display:grid;
+  grid-template-columns:minmax(120px,150px) minmax(0,1fr);
+  align-items:end;justify-items:center;gap:clamp(0px,1vw,12px)
+}
+.home-exit-door{
+  width:min(100%,150px);padding:0 0 46px;position:relative;isolation:isolate;
+  border:0;background:transparent;color:#285b4b;cursor:pointer;perspective:800px
+}
+.home-exit-door::before{
+  content:"";height:24px;position:absolute;z-index:-1;left:16%;right:16%;bottom:38px;
+  border-radius:50%;background:rgba(57,114,90,.18);filter:blur(12px);
+  transform:scale(.82);transition:transform .24s ease,opacity .24s ease
+}
+.home-exit-door img{
+  width:100%;height:auto;display:block;filter:drop-shadow(0 12px 12px rgba(74,101,83,.14));
+  transform-origin:18% 92%;transition:transform .25s cubic-bezier(.2,.8,.2,1),filter .25s ease
+}
+.home-exit-door>span{
+  min-width:118px;min-height:42px;padding:8px 14px;position:absolute;left:50%;bottom:0;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:3px solid rgba(106,201,159,.78);border-radius:999px;color:#285b4b;background:rgba(255,255,255,.94);
+  box-shadow:0 7px 0 rgba(183,224,207,.84),0 12px 24px rgba(55,95,79,.12);
+  font-size:clamp(.9rem,1.15vw,1.05rem);font-weight:900;white-space:nowrap;
+  opacity:0;transform:translate(-50%,10px) scale(.94);transition:opacity .2s ease,transform .2s ease
+}
+.home-exit-door.is-ready>span{border-color:rgba(89,192,145,.92)}
+.home-exit-door:is(:hover, :focus-visible) img{
+  transform:translateY(-7px) rotateY(-8deg) scale(1.035);
+  filter:drop-shadow(0 18px 15px rgba(59,105,84,.2))
+}
+.home-exit-door:is(:hover, :focus-visible)::before{opacity:.72;transform:scale(1.04)}
+.home-exit-door:is(:hover, :focus-visible)>span{opacity:1;transform:translate(-50%,0) scale(1)}
+.home-exit-door:focus-visible{outline:4px solid rgba(255,204,78,.86);outline-offset:7px;border-radius:34px}
+.home-room-scene-objects .home-room-morami .morami-frame{width:min(20vw,225px);height:min(38vh,330px)}
+
+@media (hover: none), (pointer: coarse){
+  .home-exit-door>span{opacity:1;transform:translate(-50%,0) scale(1)}
+}
+@media(max-width:760px){
+  .home-room-scene-objects{min-height:270px;position:relative;display:block}
+  .home-exit-door{width:112px;position:absolute;left:-22px;bottom:16px}
+  .home-room-scene-objects .home-room-morami{position:absolute;right:-18px;bottom:0}
+  .home-room-scene-objects .home-room-morami .morami-frame{width:142px;height:195px}
+}
+@media(max-width:560px){
+  .home-room-scene-objects{width:min(350px,100%);min-height:250px;margin-inline:auto}
+  .home-exit-door{width:116px;left:9%;bottom:12px}
+  .home-room-scene-objects .home-room-morami{right:7%}
+  .home-room-scene-objects .home-room-morami .morami-frame{width:154px;height:205px}
+}
+@media(prefers-reduced-motion:reduce){
+  .home-exit-door img,.home-exit-door::before,.home-exit-door>span{transition:none}
+  .home-exit-door:is(:hover, :focus-visible) img{transform:none}
+}

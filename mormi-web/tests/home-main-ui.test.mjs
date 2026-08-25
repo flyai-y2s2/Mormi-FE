@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () => {
@@ -30,7 +30,13 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(home, /<button type="button" className="player-stat player-stat--star"[\s\S]{0,240}aria-haspopup="dialog"/);
   assert.match(home, /<small>별노트<\/small><b>모은 별 \{stars\}개<\/b>/);
   assert.doesNotMatch(home, /<button[^>]*player-stat--level|<button[^>]*player-wallet/);
-  assert.match(home, /<div className="home-room-character-column">\s*<div className="home-room-morami">/);
+  assert.match(home, /<div className="home-room-character-column">\s*<div className="home-room-scene-objects">/);
+  assert.match(home, /className=\{`home-exit-door \$\{unlocked \? "is-ready" : "is-locked"\}`\}/);
+  assert.match(home, /onClick=\{onOutside\}\s*aria-label="외출 장소 보기"/);
+  assert.match(home, /src="\/home\/exit-door-v1\.png"/);
+  assert.match(home, /<div className="home-main-actions">\s*<button onClick=\{onCurriculum\}>[\s\S]*?<\/button>\s*<\/div>/);
+  assert.doesNotMatch(home, /<button onClick=\{onOutside\}>/);
+  await access(new URL("../public/home/exit-door-v1.png", import.meta.url));
   assert.match(app, /stage !== "home" && stage !== "complete" && <nav/);
   assert.match(app, /<div className="top-actions">[\s\S]{0,220}\{!learningStage && <ProfileMenu/);
   assert.doesNotMatch(app, /효과음 끄기|효과음 켜기/);
@@ -44,4 +50,6 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(css, /@media\(min-width:901px\)\{[\s\S]{0,180}width:min\(1040px,100%\);[\s\S]{0,180}grid-template-columns:minmax\(480px,560px\) minmax\(280px,380px\)/);
   assert.match(css, /\.home-room-copy-column\{width:100%;max-width:560px\}/);
   assert.match(css, /\.home-room-copy-column>\.player-hud,\.home-room-copy\{width:100%;max-width:560px\}/);
+  assert.match(css, /\.home-exit-door:is\(:hover, :focus-visible\) img\s*\{[\s\S]*?rotateY\(-8deg\)/);
+  assert.match(css, /@media\s*\(hover:\s*none\),\s*\(pointer:\s*coarse\)\s*\{[\s\S]*?\.home-exit-door>span\s*\{[\s\S]*?opacity:1/);
 });
