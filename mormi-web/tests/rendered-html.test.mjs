@@ -425,7 +425,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
   assert.match(app, /const notes = \[659\.25, 783\.99, 1046\.5\]/);
-  assert.match(app, /nextTurn\.status === "completed" && soundOn\) playLearningChime\(\)/);
+  assert.match(app, /nextTurn\.status === "completed"[\s\S]*?if \(soundOn\) playLearningChime\(\)/);
   assert.doesNotMatch(app, /speechSynthesis|SpeechSynthesisUtterance/);
   assert.match(curriculum, /export const masteryTarget = 5/);
   assert.match(app, /wrongDrillAnswers/);

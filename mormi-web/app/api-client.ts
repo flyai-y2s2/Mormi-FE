@@ -146,6 +146,7 @@ export type AttemptResult = {
 export type CompleteResult = {
   learning_session_id: string;
   practice_result_id: string;
+  completed_at: string;
   drill_reward: number;
   teach_reward: number;
   total_reward: number;

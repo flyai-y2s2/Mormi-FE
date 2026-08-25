@@ -1383,6 +1383,10 @@ export function MoramiApp() {
   const elapsedSeconds = useRef(0);
   const teachThreadRef = useRef<HTMLDivElement>(null);
   const finishInProgress = useRef(false);
+  // AI 가 가르치기 완료를 확정한 즉시 BE 완료 기록은 저장하되,
+  // 별노트와 보상 화면은 아이가 기존 다음 버튼을 눌렀을 때만 연다.
+  const completedLearningStage = useRef<"teachReward" | "complete" | null>(null);
+  const finishNavigationRequested = useRef(false);
 
   const childName = learner.name;
   const characterDisplayName = characterName || "이 친구";
@@ -1541,7 +1545,8 @@ export function MoramiApp() {
     thread.scrollTo({ top: thread.scrollHeight, behavior: "smooth" });
   }, [stage, teachingTurn?.turn_id, teachSending]);
 
-  const saveReport = useCallback((transfer: boolean) => {
+  const saveReport = useCallback((transfer: boolean, turnOverride?: MormiTurn | null) => {
+    const reportTurn = turnOverride ?? teachingTurn;
     const report = {
       date: new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" }).format(new Date()),
       repetitions: drillAttempts,
@@ -1553,7 +1558,7 @@ export function MoramiApp() {
       masteryTarget,
       misconception: activeSession.misconception,
       learnedLine: simpleLearnedLine(activeSession),
-      synchronized: teachingTurn?.pedagogy?.hint_level !== "H0",
+      synchronized: reportTurn?.pedagogy?.hint_level !== "H0",
       transfer,
       ladder: solvedAtLevel ?? 0,
       timedOut: false,
@@ -1570,7 +1575,7 @@ export function MoramiApp() {
     } catch {
       localStorage.setItem("morami-report-history", JSON.stringify([report]));
     }
-  }, [activeSession, drillAttempts, learner, sessionCoins, solvedAtLevel, teachRewardAmount, teachingTurn?.pedagogy?.hint_level]);
+  }, [activeSession, drillAttempts, learner, sessionCoins, solvedAtLevel, teachRewardAmount, teachingTurn]);
 
   /** 반복 문제 시도는 세션 생성 뒤 한 건씩 순서대로 전송한다. */
   function postDrillAttempt(answer: string, isCorrect: boolean) {
@@ -1664,7 +1669,12 @@ export function MoramiApp() {
     } else if (nextTurn.note_update) {
       setTeachingNote(nextTurn.note_update);
     }
-    if (nextTurn.status === "completed" && soundOn) playLearningChime();
+    if (nextTurn.status === "completed") {
+      if (soundOn) playLearningChime();
+      // 완료 표시의 기준은 AI 대화 상태가 아니라 BE 진행도다. 별노트의
+      // '다음으로'를 기다리지 않고 여기서 서버 진행도를 먼저 확정한다.
+      void finish(false, { navigate: false, turn: nextTurn });
+    }
   }
 
   async function beginTeaching() {
@@ -1798,9 +1808,19 @@ export function MoramiApp() {
     }
   }
 
-  async function finish(transfer = homeworkSolved) {
+  async function finish(
+    transfer = homeworkSolved,
+    options: { navigate?: boolean; turn?: MormiTurn | null } = {},
+  ) {
+    const navigate = options.navigate ?? true;
+    if (navigate) finishNavigationRequested.current = true;
+    if (completedLearningStage.current) {
+      if (navigate) setStage(completedLearningStage.current);
+      return;
+    }
     if (finishInProgress.current) return;
     finishInProgress.current = true;
+    const completionTurn = options.turn ?? teachingTurn;
     setTeachError("");
     setTeachSending(true);
     try {
@@ -1812,7 +1832,7 @@ export function MoramiApp() {
       const result = await api.completeSession(sessionId, {
         transfer_solved: transfer,
         timed_out: false,
-        scaffold_level: scaffoldLevel(teachingTurn),
+        scaffold_level: scaffoldLevel(completionTurn),
         elapsed_seconds: elapsedSeconds.current,
       });
       const next = result.completed_session_ids;
@@ -1827,13 +1847,13 @@ export function MoramiApp() {
       learningSessionPromise.current = null;
       localStorage.setItem("morami-completed-sessions", JSON.stringify(next));
       localStorage.setItem("mormey-coins", String(result.wallet_balance));
-      saveReport(transfer);
+      saveReport(transfer, completionTurn);
 
       captureMormeyEvent("session_completed", {
         session_id: activeSession.id,
         elapsed_seconds: elapsedSeconds.current,
         drill_attempts: drillAttempts,
-        scaffold_level: scaffoldLevel(teachingTurn),
+        scaffold_level: scaffoldLevel(completionTurn),
         completed_at_home: true,
       });
       if (!isCafeUnlocked(completedSessionIds) && isCafeUnlocked(next)) {
@@ -1843,13 +1863,13 @@ export function MoramiApp() {
         captureMormeyEvent("teach_reward_earned", {
           session_id: activeSession.id,
           reward: result.teach_reward,
-          scaffold_level: scaffoldLevel(teachingTurn),
+          scaffold_level: scaffoldLevel(completionTurn),
         });
         if (soundOn) playCoinRewardSound(200);
-        setStage("teachReward");
-      } else {
-        setStage("complete");
       }
+      const nextStage = result.teach_reward > 0 ? "teachReward" : "complete";
+      completedLearningStage.current = nextStage;
+      if (finishNavigationRequested.current) setStage(nextStage);
     } catch (error) {
       console.error("[mormi-api] 세션 완료 실패", error);
       setTeachError("학습 결과를 저장하지 못했어요. 다시 시도해 주세요.");
@@ -1863,6 +1883,8 @@ export function MoramiApp() {
     const nextVariantSeed = randomVariantSeed();
     const nextAnswerChoiceSeeds = randomAnswerChoiceSeeds(masteryTarget);
     finishInProgress.current = false;
+    completedLearningStage.current = null;
+    finishNavigationRequested.current = false;
     setSessionIndex(nextIndex);
     setVariantSeed(nextVariantSeed);
     setAnswerChoiceSeeds(nextAnswerChoiceSeeds);
