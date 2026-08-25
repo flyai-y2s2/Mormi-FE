@@ -95,6 +95,7 @@ test("놀이동산 지도와 완료 장면은 카페 공통 화면 틀을 사용
 
 test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러를 건다", () => {
   const talkWash = css.match(/\.park-cafe-talk__wash\s*\{([^}]*)\}/)?.[1] ?? "";
+  const talkPanel = css.match(/\.park-cafe-talk > \.cafe-talk\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.match(css, /\.figma-park\{\s*background:#f7f1e7 url\('\/amusement-park\/park-map\.png'\)/);
   assert.doesNotMatch(css, /\.figma-park\{\s*background:linear-gradient\(/);
   assert.match(css, /\.figma-park-map\{background:rgba\(255,251,243,\.88\);backdrop-filter:blur\(8px\)\}/);
@@ -107,6 +108,10 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
   assert.doesNotMatch(talkWash, /border(?:-radius)?:/);
   assert.doesNotMatch(talkWash, /box-shadow:/);
   assert.doesNotMatch(talkWash, /inset:\s*0/);
+  assert.match(talkPanel, /width:\s*100%/);
+  assert.match(talkPanel, /border:\s*0/);
+  assert.match(talkPanel, /border-radius:\s*0/);
+  assert.match(talkPanel, /box-shadow:\s*none/);
 });
 
 test("BE·AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
