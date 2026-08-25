@@ -18,6 +18,7 @@ import {
   type MormiConversation,
 } from "./mormi-dialogue";
 import { StarNote } from "./StarNote";
+import { useCharacterName } from "./CharacterName";
 
 type CafeStep = "overview" | "queue" | "menu" | "sum" | "change" | "done";
 
@@ -92,6 +93,7 @@ function isCafeProgressStage(stage: string): stage is CafeProgressStage {
 }
 
 export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDialogueStage, reloadConversationId, onReloadRestarted, onBack, onComplete }: Props) {
+  const { displayName, rename } = useCharacterName();
   const [step, setStep] = useState<CafeStep>("overview");
   const [journeyProgress, setJourneyProgress] = useState(0);
   const [queueScene, setQueueScene] = useState<QueueScene>("dialogue");
@@ -610,7 +612,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
             height={56}
             aria-hidden="true"
           />
-          모르미 카페
+          {displayName} 카페
         </strong>
         <div className="figma-cafe__steps" aria-label="카페 진행 단계">
           {cafeStations.map((station, index) => <span key={station} className={index <= stationIndex ? "is-active" : ""}><i>{index < journeyProgress ? "✓" : index + 1}</i>{station}</span>)}
@@ -621,7 +623,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         <main className="figma-cafe-map">
           <header className="figma-cafe-map__heading">
             <span>{allStationsCleared ? "CAFE PRACTICE" : "CAFE QUEST"}</span>
-            <h1>{allStationsCleared ? "카페를 다 배웠어요!" : "모르미와 카페에 왔어요!"}</h1>
+            <h1>{allStationsCleared ? "카페를 다 배웠어요!" : `${displayName}와 카페에 왔어요!`}</h1>
             <p>{allStationsCleared
               ? "연습하고 싶은 스테이지를 골라 몇 번이든 다시 해 봐요."
               : "스테이지를 하나씩 완료하고 주문에 성공해 봐요."}</p>
@@ -630,7 +632,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
               <span aria-hidden="true"><i style={{ width: `${(journeyProgress / stationCopy.length) * 100}%` }} /></span>
               <b>{journeyProgress} / {stationCopy.length} 완료</b>
             </div>
-            {allStationsCleared && <button className="figma-cafe-action" onClick={() => { void goHomeWithMormi(); }}>모르미와 집으로</button>}
+            {allStationsCleared && <button className="figma-cafe-action" onClick={() => { void goHomeWithMormi(); }}>{displayName}와 집으로</button>}
           </header>
           <div className="figma-cafe-map__stones" aria-label="카페 스테이지 선택">
             {stationCopy.map((station, index) => (
@@ -672,7 +674,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         <main className="figma-cafe-panel figma-cafe-queue-story" data-figma-node="74:4">
           {queueScene === "note" && (
             <section className="queue-note-scene">
-              <Image src="/morami/bright-cutout.png" alt="별노트를 쓰는 모르미" width={310} height={340} unoptimized />
+              <Image src="/morami/bright-cutout.png" alt={`별노트를 쓰는 ${displayName}`} width={310} height={340} unoptimized />
               <StarNote text={cafeConversations.queue?.turn.note_update?.text} />
             </section>
           )}
@@ -697,7 +699,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
 
           {/* 노트 장면은 그림 대신 별노트를 보여 주므로 마무리 문구를 아래에 그대로 둔다. */}
           {queueScene === "note" && <section className="queue-story-dialogue">
-            <b>모르미</b>
+            <b>{displayName}</b>
             <p>{`${queueCounts.left < queueCounts.right ? "왼쪽" : "오른쪽"} 줄이 더 짧으니까 거기에 서는 게 좋구나! 가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다!`}</p>
             <button className="queue-story-next" onClick={finishQueueStory}>다음으로</button>
           </section>}
@@ -814,17 +816,17 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           highlight="주문했어!"
           noteCount={noteCount("queue", "menu", "calculate", "change")}
           currentMoney={coinBalance}
-          actionLabel="모르미와 집으로"
+          actionLabel={`${displayName}와 집으로`}
           onAction={() => { void goHomeWithMormi(); }}
           secondaryActionLabel="스테이지 더 연습하기"
           onSecondaryAction={returnToMap}
         />
       )}
-      {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{dialogueError}</p>}
+      {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{rename(dialogueError)}</p>}
       {problemContextError && <div className="cafe-problem-recovery" role="alert"><p>화면과 문제 정보가 달라졌어요. 새 문제를 불러와 주세요.</p><button type="button" onClick={() => retryCafeProblem(problemContextError)}>문제 다시 불러오기</button></div>}
       {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
         <div className="cafe-budget-modal">
-          <Image src="/morami/confused-cutout.png" alt="다시 골라 달라고 부탁하는 모르미" width={150} height={150} unoptimized />
+          <Image src="/morami/confused-cutout.png" alt={`다시 골라 달라고 부탁하는 ${displayName}`} width={150} height={150} unoptimized />
           <h2>예산을 넘었어요. 다른 메뉴를 골라 봐!</h2>
           <button type="button" onClick={() => setBudgetModalOpen(false)}>확인</button>
         </div>

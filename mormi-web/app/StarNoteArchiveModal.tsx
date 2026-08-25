@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type StarNoteListItem } from "./api-client";
 import { mergeStarNoteItems, starNoteListErrorMessage } from "./star-note-list";
+import { useCharacterName } from "./CharacterName";
 
 type StarNoteArchiveModalProps = {
   learnerId: number;
@@ -19,6 +20,7 @@ function noteDate(value: string) {
 }
 
 export function StarNoteArchiveModal({ learnerId, onClose }: StarNoteArchiveModalProps) {
+  const { displayName } = useCharacterName();
   const modalRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const requestRef = useRef<AbortController | null>(null);
@@ -129,9 +131,9 @@ export function StarNoteArchiveModal({ learnerId, onClose }: StarNoteArchiveModa
         <header>
           <Image src="/ui/mormi-star.png" alt="" width={82} height={82} unoptimized />
           <div>
-            <p>모르미가 기억해 둔 이야기</p>
+            <p>{displayName}가 기억해 둔 이야기</p>
             <h2 id="star-note-archive-title">별노트 모아보기</h2>
-            <span id="star-note-archive-description">내가 모르미에게 알려 준 내용을 다시 볼 수 있어요.</span>
+            <span id="star-note-archive-description">내가 {displayName}에게 알려 준 내용을 다시 볼 수 있어요.</span>
           </div>
           <button className="star-note-archive-refresh" type="button" onClick={() => void loadFirstPage()} disabled={status === "loading"}>새로고침</button>
         </header>
@@ -145,16 +147,16 @@ export function StarNoteArchiveModal({ learnerId, onClose }: StarNoteArchiveModa
 
         {status === "empty" && (
           <div className="star-note-archive-state">
-            <Image src="/morami/bright-cutout.png" alt="응원하는 모르미" width={170} height={180} unoptimized />
+            <Image src="/morami/bright-cutout.png" alt={`응원하는 ${displayName}`} width={170} height={180} unoptimized />
             <h3>아직 저장된 별노트가 없어요.</h3>
-            <p>모르미에게 개념을 가르쳐 주면 별노트가 여기에 모여요.</p>
+            <p>{displayName}에게 개념을 가르쳐 주면 별노트가 여기에 모여요.</p>
             <button type="button" onClick={onClose}>학습하러 돌아가기</button>
           </div>
         )}
 
         {status === "error" && (
           <div className="star-note-archive-state star-note-archive-state--error" role="alert">
-            <Image src="/morami/confused-cutout.png" alt="고민하는 모르미" width={150} height={160} unoptimized />
+            <Image src="/morami/confused-cutout.png" alt={`고민하는 ${displayName}`} width={150} height={160} unoptimized />
             <h3>{errorMessage}</h3>
             <button type="button" onClick={() => void loadFirstPage()}>다시 불러오기</button>
             <button type="button" className="star-note-archive-return" onClick={onClose}>학습 화면으로 돌아가기</button>

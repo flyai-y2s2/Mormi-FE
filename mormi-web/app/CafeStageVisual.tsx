@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { menuChoiceById, menuDisplayName, menuImage } from "./cafe-menu";
 import type { MormiConversation } from "./mormi-dialogue";
+import { useCharacterName } from "./CharacterName";
 
 /**
  * 스테이지의 문제 그림. 모르미가 보낸 TurnContract 의 visual 계약을 그대로 그린다.
@@ -62,6 +63,7 @@ export function CafeStageVisual({
   onMenuChoice?: (choiceId: string) => void;
   sending?: boolean;
 }) {
+  const { displayName: characterName } = useCharacterName();
   if (!conversation || conversation.turn.state_version === 0) return <>{fallback ?? null}</>;
   const { type, data } = conversation.turn.visual;
 
@@ -92,12 +94,12 @@ export function CafeStageVisual({
               className={["cafe-talk-card", "is-menu-choice", mormiSelected ? "is-mormi" : "", childSelected ? "is-child" : ""].filter(Boolean).join(" ")}
               disabled={mormiSelected || !choice || sending}
               onClick={() => { if (choice && !mormiSelected) onMenuChoice?.(choice.id); }}
-              aria-label={mormiSelected ? `${displayName}, 모르미가 고른 메뉴` : `${displayName} ${won(item.price)}원 선택`}
+              aria-label={mormiSelected ? `${displayName}, ${characterName}가 고른 메뉴` : `${displayName} ${won(item.price)}원 선택`}
             >
               <Image src={menuImage(item.id, item.image_url)} alt="" width={170} height={105} unoptimized />
               <b>{displayName}</b>
               <strong>{won(item.price)}원</strong>
-              {mormiSelected && <small>모르미가 골랐어요</small>}
+              {mormiSelected && <small>{characterName}가 골랐어요</small>}
               {childSelected && <small>내가 골랐어요</small>}
             </button>;
           })}
@@ -119,11 +121,11 @@ export function CafeStageVisual({
               <strong>{won(data.left)}원</strong>
             </article>
           : leftItem
-            ? <MenuCard item={leftItem} badge="모르미가 고른 메뉴" />
-            : <PriceCard label="모르미 메뉴" amount={data.left} />}
+            ? <MenuCard item={leftItem} badge={`${characterName}가 고른 메뉴`} />
+            : <PriceCard label={`${characterName} 메뉴`} amount={data.left} />}
         <b aria-hidden="true">{subtraction ? "−" : "＋"}</b>
         {rightItem
-          ? <MenuCard item={rightItem} badge={subtraction ? "모르미가 주문한 메뉴" : "내가 고른 메뉴"} />
+          ? <MenuCard item={rightItem} badge={subtraction ? `${characterName}가 주문한 메뉴` : "내가 고른 메뉴"} />
           : <PriceCard label={subtraction ? "메뉴 값" : "내 메뉴"} amount={data.right} />}
         <b aria-hidden="true">=</b>
         <span className="cafe-talk-equation__answer" aria-label="아직 모르는 값">?</span>
@@ -132,7 +134,7 @@ export function CafeStageVisual({
   }
 
   if (type === "success") {
-    return <p className="cafe-talk-success">★ 모르미가 다 배웠어요!</p>;
+    return <p className="cafe-talk-success">★ {characterName}가 다 배웠어요!</p>;
   }
 
   return <>{fallback ?? null}</>;

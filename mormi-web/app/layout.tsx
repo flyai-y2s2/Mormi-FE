@@ -8,18 +8,18 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = incomingHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
   return {
-    title: "모르미 수학 | 내가 가르쳐 줄게!",
-    description: "수 감각부터 생활 수학까지, 아이가 모르미를 가르치며 익히는 36개 과정",
+    title: "I AM 쌤 | 내가 가르쳐 줄게!",
+    description: "수 감각부터 생활 수학까지, 아이가 가르치며 익히는 생활 수학 과정",
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
-      title: "내가 가르쳐 줄게! — 모르미 수학",
+      title: "내가 가르쳐 줄게! — I AM 쌤",
       description: "학년보다 이해 단계에 맞춰 이어가는 느린학습자 생활 수학",
       type: "website",
-      images: [{ url: `${origin}/og.png`, width: 1733, height: 908, alt: "모르미 생활 수학 학습 앱" }],
+      images: [{ url: `${origin}/og.png`, width: 1733, height: 908, alt: "I AM 쌤 생활 수학 학습 앱" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "내가 가르쳐 줄게! — 모르미 수학",
+      title: "내가 가르쳐 줄게! — I AM 쌤",
       description: "학년보다 이해 단계에 맞춰 이어가는 느린학습자 생활 수학",
       images: [`${origin}/og.png`],
     },

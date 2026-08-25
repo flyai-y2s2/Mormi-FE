@@ -41,9 +41,9 @@ function RoleChooser({ onChoose }: { onChoose: (role: SignupRole) => void }) {
       <Image src="/ui/iam-sam.png" alt="I AM 쌤" width={1920} height={819} sizes="(max-width: 560px) 240px, 330px" priority />
       <p className="eyebrow">처음 오셨나요?</p>
       <h1 id="signup-role-title">어떤 모습으로 함께할까요?</h1>
-      <p>학생은 모르미와 수학을 배우고, 선생님은 학급과 학습 기록을 관리해요.</p>
+      <p>학생은 캐릭터에게 수학을 가르치고, 선생님은 학급과 학습 기록을 관리해요.</p>
       <div className="signup-role-options">
-        <button type="button" onClick={() => onChoose("learner")}><span aria-hidden="true">🌱</span><b>나는 학생</b><small>모르미와 수학 시작하기</small></button>
+        <button type="button" onClick={() => onChoose("learner")}><span aria-hidden="true">🌱</span><b>나는 학생</b><small>생활 수학 시작하기</small></button>
         <button type="button" onClick={() => onChoose("educator")}><span aria-hidden="true">🏫</span><b>나는 선생님</b><small>학급 만들고 살펴보기</small></button>
       </div>
       <Link className="onboarding-back" href="/">‹ 첫 화면으로</Link>
@@ -108,16 +108,16 @@ function LearnerSignup({ onBack }: { onBack: () => void }) {
 
   const steps = <div className="onboarding-steps" aria-hidden="true"><i className="is-active" /><i className={step === 2 ? "is-active" : ""} /></div>;
   return <main className="signup-form-scene onboarding-scene onboarding-scene--name">
-    <div className="onboarding-morami"><Image src="/morami/happy-cutout.png" alt="웃고 있는 모르미" width={430} height={500} priority /></div>
+    <div className="onboarding-morami"><Image src="/morami/happy-cutout.png" alt="웃고 있는 캐릭터" width={430} height={500} priority /></div>
     {step === 1 ? <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); next(); }}>
-      {steps}<span>모르미 · 1/2</span><h1>너를 뭐라고 부를까?</h1><p>이름이랑 선생님이 준 참여 번호를 알려줘.</p>
+      {steps}<span>가입 · 1/2</span><h1>너를 뭐라고 부를까?</h1><p>이름이랑 선생님이 준 참여 번호를 알려줘.</p>
       <AuthInput id="signup-name" label="이름" value={name} error={fieldErrors.name} onChange={(event) => { setName(event.target.value.slice(0, 12)); clear("name"); }} placeholder="이름을 적어 주세요" autoComplete="name" />
       <AuthInput id="signup-code" label="참여 번호" hint="선생님이 알려줬어요" value={researchCode} error={fieldErrors.researchCode} onChange={(event) => { setResearchCode(event.target.value.toUpperCase().replace(/[^A-Z0-9._-]/g, "").slice(0, 40)); clear("researchCode"); }} placeholder="예: MORMI-A03" autoComplete="off" />
       {formError && <p className="onboarding-error" role="alert">{formError}</p>}
       <button className="primary-button" type="submit">다음 <span className="button-arrow" /></button>
       <button type="button" className="onboarding-back" onClick={onBack}>‹ 역할 다시 고르기</button>
     </form> : <form className="onboarding-greeting onboarding-name-card" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-      {steps}<span>모르미 · 2/2</span><h1>이제 열쇠를 만들자!</h1><p>다음에 올 때 이 아이디와 비밀번호로 들어오면 돼.</p>
+      {steps}<span>가입 · 2/2</span><h1>이제 열쇠를 만들자!</h1><p>다음에 올 때 이 아이디와 비밀번호로 들어오면 돼.</p>
       <AuthInput id="signup-login-id" label="아이디" hint="영어와 숫자로 4~20자" value={loginId} error={fieldErrors.loginId} onChange={(event) => { setLoginId(event.target.value.trim()); clear("loginId"); }} placeholder="예: minjun01" autoComplete="username" />
       <AuthInput id="signup-password" label="비밀번호" hint="8자 이상" value={password} error={fieldErrors.password} action={<PasswordReveal visible={reveal} onToggle={() => setReveal((value) => !value)} />} type={reveal ? "text" : "password"} onChange={(event) => { setPassword(event.target.value); clear("password"); }} placeholder="잊어버리지 않을 비밀번호" autoComplete="new-password" />
       {formError && <p className="onboarding-error" role="alert">{formError}</p>}

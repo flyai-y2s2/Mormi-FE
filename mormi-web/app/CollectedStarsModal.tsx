@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
 import { collectedStarConcepts } from "./collected-stars";
+import { useCharacterName } from "./CharacterName";
 
 type CollectedStarsModalProps = {
   completedSessionIds: string[];
@@ -11,6 +12,7 @@ type CollectedStarsModalProps = {
 };
 
 export function CollectedStarsModal({ completedSessionIds, onClose, onOpenStarNotes }: CollectedStarsModalProps) {
+  const { displayName } = useCharacterName();
   const modalRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const concepts = useMemo(() => collectedStarConcepts(completedSessionIds), [completedSessionIds]);
@@ -67,7 +69,7 @@ export function CollectedStarsModal({ completedSessionIds, onClose, onOpenStarNo
 
         {concepts.length === 0 ? (
           <div className="collected-stars-empty">
-            <Image src="/morami/bright-cutout.png" alt="응원하는 모르미" width={180} height={190} unoptimized />
+            <Image src="/morami/bright-cutout.png" alt={`응원하는 ${displayName}`} width={180} height={190} unoptimized />
             <h3>아직 모은 별이 없어요.</h3>
             <p>첫 개념을 완료하면 배운 내용과 별 3개가 여기에 모여요!</p>
           </div>

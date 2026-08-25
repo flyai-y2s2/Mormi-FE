@@ -26,7 +26,7 @@ test("집과 카페 모두 동일한 서버 사전 API와 공통 모달을 사�
 
 test("반복학습 완료 뒤 가르치기를 시작하면 사전이 자동으로 열린다", () => {
   assert.match(app, /function beginTeachingWithDictionary\(\) \{\s*setDictionaryOpen\(true\);\s*void beginTeaching\(\);\s*\}/);
-  assert.match(app, /onClick=\{beginTeachingWithDictionary\}>모르미 가르치기/);
+  assert.match(app, /onClick=\{beginTeachingWithDictionary\}>\{characterDisplayName\} 가르치기/);
   assert.doesNotMatch(app, /먼저 사전 보기/);
 });
 

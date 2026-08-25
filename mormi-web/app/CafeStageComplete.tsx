@@ -41,7 +41,7 @@ export function CafeStageComplete({
         <Image
           className="cafe-stage-complete__morami"
           src="/morami/celebrate-cutout.png"
-          alt="스테이지 완료를 기뻐하는 모르미"
+          alt="스테이지 완료를 기뻐하는 캐릭터"
           width={430}
           height={500}
           priority

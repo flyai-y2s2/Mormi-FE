@@ -15,6 +15,7 @@ import { CafeStageComplete } from "../CafeStageComplete";
 import { CafeTalkStage, type CafeDialogueResponse } from "../CafeTalkStage";
 import { amusementDialogueErrorMessage } from "../dialogue-errors";
 import { givenNameFromFullName } from "../korean-name";
+import { useCharacterName } from "../CharacterName";
 import {
   startAmusementParkDialogue,
   submitMormiResponseThroughBe,
@@ -45,6 +46,7 @@ function ParkMap({ visit, learnerName, onOpen, onExit }: {
   onOpen: (stageId: AmusementStageId, replay: boolean) => void;
   onExit: () => void;
 }) {
+  const { displayName } = useCharacterName();
   const stagesById = useMemo(() => new Map(visit.stages.map((stage) => [stage.stage_id, stage])), [visit.stages]);
   const completed = visit.stage_order.filter((stageId) => visit.stage_progress[stageId] === "completed").length;
 
@@ -55,7 +57,7 @@ function ParkMap({ visit, learnerName, onOpen, onExit }: {
       <button type="button" className="figma-park__back" onClick={onExit}>← 외출 장소</button>
       <strong className="figma-cafe__place">
         <Image className="figma-cafe__place-image" src="/amusement-park/ticket-elements-v2.png" alt="" width={56} height={56} aria-hidden="true" />
-        모르미 놀이동산
+        {displayName} 놀이동산
       </strong>
       <div className="figma-cafe__steps" aria-label="놀이동산 진행 단계">
         {visit.stage_order.map((stageId, index) => <span key={stageId} className={visit.stage_progress[stageId] !== "locked" ? "is-active" : ""}><i>{visit.stage_progress[stageId] === "completed" ? "✓" : index + 1}</i>{stagesById.get(stageId)?.title}</span>)}
@@ -138,6 +140,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   onBack: () => void;
   onVisitChanged: (visit: AmusementParkVisitView) => void;
 }) {
+  const { subjectName, rename } = useCharacterName();
   const [complete, setComplete] = useState(false);
   const [conversation, setConversation] = useState<MormiConversation>();
   const [inputText, setInputText] = useState("");
@@ -248,7 +251,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
     <CafeTalkStage
       conversation={conversation}
       line={conversation?.turn.mormi.text}
-      fallbackLine={sending ? "모르미가 문제를 살펴보고 있어요…" : "문제를 불러오지 못했어요. 다시 시작해 주세요."}
+      fallbackLine={sending ? `${subjectName} 문제를 살펴보고 있어요…` : "문제를 불러오지 못했어요. 다시 시작해 주세요."}
       inputText={inputText}
       sending={sending}
       helpVisible={helpVisible}
@@ -262,14 +265,15 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
     >
       <ParkProblemVisual stage={stage} conversation={conversation} />
     </CafeTalkStage>
-    {dialogueError && <div className="park-dialogue-error" role="alert"><span>{dialogueError}</span><button type="button" disabled={sending} onClick={() => { void openDialogue("restart"); }}>대화 다시 시작</button></div>}
+    {dialogueError && <div className="park-dialogue-error" role="alert"><span>{rename(dialogueError)}</span><button type="button" disabled={sending} onClick={() => { void openDialogue("restart"); }}>대화 다시 시작</button></div>}
   </div>;
 }
 
 function ParkConnectionState({ message, retrying, onRetry, onExit }: { message: string; retrying: boolean; onRetry: () => void; onExit: () => void }) {
+  const { displayName } = useCharacterName();
   return <main className="park-connection-state">
     <Image src="/amusement-park/park-map.png" alt="놀이동산" fill priority />
-    <section><Image src="/morami/confused-cutout.png" alt="기다리는 모르미" width={190} height={220} unoptimized /><h1>{message}</h1><p>로컬 문제로 대신 보여주지 않고 서버의 놀이동산 상태를 다시 확인할게요.</p><div><button type="button" disabled={retrying} onClick={onRetry}>{retrying ? "다시 연결하고 있어요…" : "다시 시도"}</button><button type="button" onClick={onExit}>외출 장소로 돌아가기</button></div></section>
+    <section><Image src="/morami/confused-cutout.png" alt={`기다리는 ${displayName}`} width={190} height={220} unoptimized /><h1>{message}</h1><p>로컬 문제로 대신 보여주지 않고 서버의 놀이동산 상태를 다시 확인할게요.</p><div><button type="button" disabled={retrying} onClick={onRetry}>{retrying ? "다시 연결하고 있어요…" : "다시 시도"}</button><button type="button" onClick={onExit}>외출 장소로 돌아가기</button></div></section>
   </main>;
 }
 

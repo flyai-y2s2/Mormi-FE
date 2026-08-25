@@ -61,7 +61,7 @@ test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 �
   assert.match(talkStage, /<aside className="cafe-talk-answer">/);
   assert.match(component, /deferChoices/);
   assert.match(component, /choiceFallbackVisible=\{choiceFallbackVisible\}/);
-  assert.match(talkStage, /모르미에게 내 말로 알려주기/);
+  assert.match(talkStage, /\{displayName\}에게 내 말로 알려주기/);
   assert.match(talkStage, /placeholder="내 생각을 짧게 알려줘"/);
 });
 

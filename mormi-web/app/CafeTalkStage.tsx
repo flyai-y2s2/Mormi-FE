@@ -6,6 +6,7 @@ import { choiceIdForTypedAnswer } from "./cafe-choice-input";
 import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiResponseType } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { useCharacterName } from "./CharacterName";
 
 /**
  * 카페의 네 스테이지가 함께 쓰는 대화 화면.
@@ -57,6 +58,7 @@ export function CafeTalkStage({
   /** 스테이지별 문제 그림. 남는 세로 공간을 전부 가져간다. */
   children: ReactNode;
 }) {
+  const { displayName, rename } = useCharacterName();
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const inputKind = conversation?.turn.input.kind;
   const canRequestHelp = Boolean(
@@ -76,11 +78,11 @@ export function CafeTalkStage({
 
       <section className="cafe-talk-flow">
         <section className="cafe-talk-bubble">
-          <Image className="cafe-talk-morami" src={chatImage} alt="궁금해하는 모르미" width={300} height={360} unoptimized />
+          <Image className="cafe-talk-morami" src={chatImage} alt={`궁금해하는 ${displayName}`} width={300} height={360} unoptimized />
           <div className="cafe-talk-bubble__text">
-            <b>모르미</b>
-            <p>{line || fallbackLine}</p>
-            {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>모르미가 도움 카드를 찾고 있어요…</span></div>}
+            <b>{displayName}</b>
+            <p>{rename(line || fallbackLine)}</p>
+            {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>{displayName}가 도움 카드를 찾고 있어요…</span></div>}
             <MormiHelpCard card={helpVisible ? conversation?.turn.help_card ?? null : null} />
             {canRequestHelp && (
               <button
@@ -134,6 +136,7 @@ export function CafeDialogueControls({
   onSubmit: (response: CafeDialogueResponse) => void;
   onChoiceFallback?: () => void;
 }) {
+  const { displayName } = useCharacterName();
   if (!conversation || conversation.turn.state_version === 0 || conversation.turn.status === "completed") return null;
   const { turn } = conversation;
   const inputKind = turn.input.kind;
@@ -168,7 +171,7 @@ export function CafeDialogueControls({
       if (!inputText.trim() || sending) return;
       onSubmit({ type: "text", text: inputText.trim() });
     }}>
-      <label>모르미에게 이어서 알려주기
+      <label>{displayName}에게 이어서 알려주기
         <input value={inputText} onChange={(event) => onInput(event.target.value)} placeholder={turn.input.placeholder || "짧게 알려줘"} />
       </label>
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
@@ -184,7 +187,7 @@ export function CafeDialogueControls({
       }
       onSubmit({ type: "choice", choice_ids: [choiceId] });
     }}>
-      <label>모르미에게 내 말로 알려주기
+      <label>{displayName}에게 내 말로 알려주기
         <input value={inputText} maxLength={160} onChange={(event) => onInput(event.target.value)} placeholder="내 생각을 짧게 알려줘" />
       </label>
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "알려주기"}</button>

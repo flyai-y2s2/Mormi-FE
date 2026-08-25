@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { helpBodyIsRepeatedByVisual } from "./help-card";
 import type { MormiChoice, MormiTurn } from "./mormi-dialogue";
+import { useCharacterName } from "./CharacterName";
 
 type HelpCard = NonNullable<MormiTurn["help_card"]>;
 
@@ -21,6 +22,7 @@ function formatValue(value: unknown) {
 }
 
 function HelpVisual({ card }: { card: HelpCard }) {
+  const { displayName } = useCharacterName();
   const data = card.visual_data ?? {};
   const type = card.visual_type;
 
@@ -83,7 +85,7 @@ function HelpVisual({ card }: { card: HelpCard }) {
     if (budget === null || price === null) return null;
     const ratio = Math.min(100, Math.max(0, price / Math.max(1, budget) * 100));
     return <div className="mormi-help-budget">
-      <div><span>모르미 메뉴</span><strong>{price.toLocaleString("ko-KR")}원</strong></div>
+      <div><span>{displayName} 메뉴</span><strong>{price.toLocaleString("ko-KR")}원</strong></div>
       <div className="mormi-help-budget__track"><i style={{ width: `${ratio}%` }} /></div>
       <small>예산 {budget.toLocaleString("ko-KR")}원</small>
     </div>;
@@ -103,7 +105,7 @@ function HelpVisual({ card }: { card: HelpCard }) {
 
   if (type === "cafe_menu_focus") {
     const menu = textValue(data.mormi_menu);
-    return menu && <div className="mormi-help-menu"><strong>{menu}</strong><small>모르미가 고른 메뉴</small></div>;
+    return menu && <div className="mormi-help-menu"><strong>{menu}</strong><small>{displayName}가 고른 메뉴</small></div>;
   }
 
   if (type === "joint_reading_card") {

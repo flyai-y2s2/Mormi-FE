@@ -14,13 +14,13 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the progress bootstrap before the Morami onboarding", async () => {
+test("server-renders the progress bootstrap before the I AM 쌤 onboarding", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /모르미가 준비하고 있어!/);
+  assert.match(html, /이 친구가(?:<!-- -->)? 준비하고 있어!/);
   assert.match(html, /하던 곳으로 데려다 줄게\./);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
 });
@@ -36,8 +36,7 @@ test("uses the I AM teacher brand across onboarding and signup", async () => {
     assert.match(source, /alt="I AM 쌤"/);
     assert.doesNotMatch(source, /\/ui\/igeonaega-logo\.png/);
   }
-  assert.match(app, /안녕, 나 모르미야!/);
-  assert.match(app, /오늘 물어보고 싶은 게 많아!/);
+  assert.doesNotMatch(app, /안녕, 나 모르미야!|오늘 물어보고 싶은 게 많아!/);
   assert.match(app, /로그인하기/);
   assert.match(app, /처음 왔어요/);
   assert.match(app, /onboarding-greeting__actions/);
@@ -315,12 +314,12 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /teaching-problem--\$\{teachingProblem\.visual\.type\}/);
   assert.match(app, /function formatTeachingDisplayText\(text: string\)/);
   assert.match(app, /text\.replace\(\/\[□▢\]\/g, teachingBlank\)/);
-  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
+  assert.match(app, /\{serverMormiText && <div><b>\{characterDisplayName\}<\/b><p>\{formatTeachingDisplayText\(namedText\(serverMormiText\)\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
   assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachHelpVisible && teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
   assert.match(app, /\{hasServerMessagePanel && !teachingComplete && \(/);
-  assert.match(app, /\{serverMormiText && <div><b>모르미<\/b><p>\{formatTeachingDisplayText\(serverMormiText\)\}<\/p><\/div>\}/);
+  assert.match(app, /\{serverMormiText && <div><b>\{characterDisplayName\}<\/b><p>\{formatTeachingDisplayText\(namedText\(serverMormiText\)\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
   assert.match(app, /turn\.visual\.data\.problem/);
   assert.doesNotMatch(app, /모르미가 헷갈린 문제/);
@@ -330,8 +329,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /<i \/>\{mark\}<\/span>/);
   assert.match(app, /extraLifeProblem/);
   assert.match(app, /내 생각을 먼저 써 봐요/);
-  assert.match(app, /먼저 직접 써서 모르미에게 알려 줘요/);
-  assert.match(app, /보기에서 골라 모르미에게 알려 줘요/);
+  assert.match(app, /먼저 직접 써서 \$\{displayName\}에게 알려 줘요/);
+  assert.match(app, /보기에서 골라 \$\{displayName\}에게 알려 줘요/);
   assert.match(app, /mission-morami/);
   assert.match(app, /● 동그라미/);
   assert.doesNotMatch(app, /className="teaching-levels"/);
@@ -414,7 +413,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, />나가기 <span className="button-arrow" \/><\/button>/);
   assert.doesNotMatch(app, /열린 카페로 나가기|전체 수학 과정/);
   // 모은 돈은 전용 코인 이미지로 보여 준다. 이모지도, 글자 배지(won-mark)도 쓰지 않는다.
-  assert.match(app, /<Image src="\/ui\/mormi-coin\.png" alt="모르미 새싹 코인"/);
+  assert.match(app, /<Image src="\/ui\/mormi-coin\.png" alt="새싹 코인"/);
   assert.doesNotMatch(app, /won-mark/);
   assert.doesNotMatch(css, /report-icon--arrow[^}]*translateY/);
   assert.match(app, /playLearningChime/);
