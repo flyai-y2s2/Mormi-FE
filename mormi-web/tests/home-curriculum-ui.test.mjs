@@ -25,7 +25,7 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(journey, /amusementParkRequiredConceptImages/);
 });
 
-test("놀이동산 준비 문제는 돈 계산용 이미지와 사실 카드로 연결된다", async () => {
+test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 카드로 연결된다", async () => {
   const [app, curriculum, content] = await Promise.all([
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/math-curriculum.ts", import.meta.url), "utf8"),
@@ -34,6 +34,9 @@ test("놀이동산 준비 문제는 돈 계산용 이미지와 사실 카드로 
 
   assert.match(content, /type: "money-practice"/);
   assert.match(app, /function MoneyPracticeVisual/);
+  const visual = app.slice(app.indexOf("function MoneyPracticeVisual"), app.indexOf("function LearningVisual"));
+  assert.match(visual, /<figure className="money-practice-visual"/);
+  assert.doesNotMatch(visual, /visual\.badge|visual\.facts|visual\.equation|money-practice-facts/);
   assert.match(app, /amusementParkRequiredConceptImages/);
   assert.match(curriculum, /unit: "돈 계산 곱셈"/);
   assert.match(curriculum, /unit: "돈 계산 나눗셈"/);

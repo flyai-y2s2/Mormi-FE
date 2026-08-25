@@ -287,28 +287,21 @@ function CalendarVisual({ month, highlight, note }: { month: number; highlight: 
 
 function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "money-practice" }> }) {
   return (
-    <div className="money-practice-visual">
-      <div className="money-practice-picture">
-        {visual.badge && <span>{visual.badge}</span>}
-        {visual.items?.length ? (
-          <div className="money-practice-items" role="img" aria-label={visual.imageAlt}>
-            {visual.items.map((item) => (
-              <div key={`${item.image}-${item.label}-${item.count}`}>
-                <Image src={item.image} alt="" width={210} height={160} unoptimized />
-                <strong>{item.label}</strong>
-                <small>× {item.count}</small>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Image src={visual.image} alt={visual.imageAlt} width={520} height={360} unoptimized />
-        )}
-      </div>
-      <div className="money-practice-facts">
-        {visual.facts.map((fact) => <div key={`${fact.label}-${fact.value}`}><small>{fact.label}</small><strong>{fact.value}</strong></div>)}
-        {visual.equation && <p>{visual.equation}</p>}
-      </div>
-    </div>
+    <figure className="money-practice-visual" aria-label={visual.imageAlt}>
+      {visual.items?.length ? (
+        <div className="money-practice-items">
+          {visual.items.map((item) => (
+            <div key={`${item.image}-${item.label}-${item.count}`}>
+              <Image src={item.image} alt="" width={210} height={160} unoptimized />
+              <strong>{item.label}</strong>
+              {item.count > 1 && <small>{item.count}개</small>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Image src={visual.image} alt="" width={520} height={360} unoptimized />
+      )}
+    </figure>
   );
 }
 
