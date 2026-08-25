@@ -259,6 +259,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
       onSubmit={(response) => { void answerMormi(response); }}
       onChoiceFallback={() => setChoiceFallbackVisible(true)}
       onBack={onBack}
+      backHref="/amusement-park?screen=map"
     >
       <ParkProblemVisual stage={stage} conversation={conversation} />
     </CafeTalkStage>

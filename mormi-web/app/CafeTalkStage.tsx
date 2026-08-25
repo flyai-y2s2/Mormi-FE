@@ -39,6 +39,7 @@ export function CafeTalkStage({
   onSubmit,
   onChoiceFallback,
   onBack,
+  backHref,
   children,
 }: {
   conversation: MormiConversation | undefined;
@@ -54,6 +55,8 @@ export function CafeTalkStage({
   onSubmit: (response: CafeDialogueResponse) => void;
   onChoiceFallback?: () => void;
   onBack: () => void;
+  /** 별도 화면에서 연 대화는 실제 주소로 돌아가 새로고침 뒤에도 복귀를 보장한다. */
+  backHref?: string;
   /** 스테이지별 문제 그림. 남는 세로 공간을 전부 가져간다. */
   children: ReactNode;
 }) {
@@ -70,7 +73,9 @@ export function CafeTalkStage({
   return (
     <main className="figma-cafe-panel cafe-talk">
       <div className="cafe-talk-toolbar">
-        <button type="button" className="cafe-talk-back" onClick={() => onBack()}><span aria-hidden="true">←</span> 이전으로</button>
+        {backHref
+          ? <a className="cafe-talk-back" href={backHref}><span aria-hidden="true">←</span> 이전으로</a>
+          : <button type="button" className="cafe-talk-back" onClick={() => onBack()}><span aria-hidden="true">←</span> 이전으로</button>}
         {conversation?.conversation_id && <button type="button" className="cafe-talk-note" aria-label="궁금해 사전 열기" onClick={() => setDictionaryOpen(true)}><span className="ui-icon ui-icon--book ui-icon--small" aria-hidden="true"><i /></span> 궁금해 사전</button>}
       </div>
 

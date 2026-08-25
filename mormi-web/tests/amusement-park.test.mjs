@@ -64,8 +64,9 @@ test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 �
   assert.match(talkStage, /placeholder="내 생각을 짧게 알려줘"/);
 });
 
-test("놀이동산 이전 버튼은 일반 버튼으로 지도 상태에 돌아간다", () => {
-  assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{\(\) => onBack\(\)\}/);
+test("놀이동산 이전 버튼은 실제 지도 주소로 돌아간다", () => {
+  assert.match(talkStage, /<a className="cafe-talk-back" href=\{backHref\}>/);
+  assert.match(component, /backHref="\/amusement-park\?screen=map"/);
   assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
 });
 
