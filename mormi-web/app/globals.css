@@ -509,10 +509,18 @@
 
 .park-cafe-talk__wash {
   position: fixed;
-  inset: 0;
+  width: min(704px, calc(100% - 32px));
+  top: 104px;
+  bottom: 18px;
+  left: 50%;
   z-index: 1;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 34px;
   backdrop-filter: blur(8px);
-  background: rgba(255, 251, 244, .78);
+  background: rgba(255, 251, 244, .46);
+  box-shadow: 0 20px 55px rgba(68, 52, 39, .12);
+  pointer-events: none;
 }
 
 .park-cafe-talk .cafe-talk-toolbar,
@@ -2073,8 +2081,9 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 
 /* 카페 스테이지 선택: 카드 묶음을 화면 가운데에 놓고, 잠김·진행·완료를 한눈에 구분한다. */
 .figma-park{
-  background:linear-gradient(rgba(255,250,242,.86),rgba(255,248,235,.92)),url('/amusement-park/park-map.png') center/cover fixed;
+  background:#f7f1e7 url('/amusement-park/park-map.png') center/cover fixed;
 }
+.figma-park-map{background:rgba(255,251,243,.88);backdrop-filter:blur(8px)}
 .figma-cafe__bar>.figma-park__back{
   min-height:58px;padding:0 22px;display:flex;align-items:center;justify-content:center;
   border:0;border-radius:18px;color:#3f352f;background:#fff8ec;box-shadow:0 6px 0 #dcc8a7;

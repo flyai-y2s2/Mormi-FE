@@ -85,6 +85,16 @@ test("놀이동산 지도와 완료 장면은 카페 공통 화면 틀을 사용
   assert.match(component, /figma-cafe figma-cafe--done figma-park/);
 });
 
+test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러를 건다", () => {
+  const talkWash = css.match(/\.park-cafe-talk__wash\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(css, /\.figma-park\{\s*background:#f7f1e7 url\('\/amusement-park\/park-map\.png'\)/);
+  assert.doesNotMatch(css, /\.figma-park\{\s*background:linear-gradient\(/);
+  assert.match(css, /\.figma-park-map\{background:rgba\(255,251,243,\.88\);backdrop-filter:blur\(8px\)\}/);
+  assert.match(talkWash, /width: min\(704px, calc\(100% - 32px\)\);/);
+  assert.match(talkWash, /backdrop-filter: blur\(8px\);/);
+  assert.doesNotMatch(talkWash, /inset:\s*0/);
+});
+
 test("BE·AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
   const errors = await readFile(new URL("../app/dialogue-errors.ts", import.meta.url), "utf8");
   assert.match(errors, /amusementDialogueErrorMessage/);
