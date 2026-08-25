@@ -152,7 +152,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   const [noteText, setNoteText] = useState<string>();
   const requestInFlight = useRef(false);
   const stageIndex = visit.stage_order.indexOf(stage.stage_id);
-  const visual = amusementStageVisuals[stage.stage_id];
 
   const finishStage = useCallback(async () => {
     try {
@@ -246,7 +245,7 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   </section>;
 
   return <div className="park-cafe-talk">
-    <Image className="park-cafe-talk__background" src={visual.image_url} alt="" fill priority />
+    <Image className="park-cafe-talk__background" src="/amusement-park/park-map.png" alt="" fill priority />
     <div className="park-cafe-talk__wash" />
     <CafeTalkStage
       conversation={conversation}

@@ -509,16 +509,17 @@
 
 .park-cafe-talk__wash {
   position: fixed;
-  width: min(704px, calc(100% - 32px));
-  top: 104px;
-  bottom: 18px;
+  width: min(648px, calc(100% - 24px));
+  height: min(900px, calc(100svh - 24px));
+  top: 50%;
+  bottom: auto;
   left: 50%;
   z-index: 1;
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 255, 255, .7);
-  border-radius: 34px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, .68);
+  border-radius: 30px;
   backdrop-filter: blur(8px);
-  background: rgba(255, 251, 244, .46);
+  background: rgba(255, 251, 244, .42);
   box-shadow: 0 20px 55px rgba(68, 52, 39, .12);
   pointer-events: none;
 }

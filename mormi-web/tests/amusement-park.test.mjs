@@ -91,7 +91,10 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
   assert.match(css, /\.figma-park\{\s*background:#f7f1e7 url\('\/amusement-park\/park-map\.png'\)/);
   assert.doesNotMatch(css, /\.figma-park\{\s*background:linear-gradient\(/);
   assert.match(css, /\.figma-park-map\{background:rgba\(255,251,243,\.88\);backdrop-filter:blur\(8px\)\}/);
-  assert.match(talkWash, /width: min\(704px, calc\(100% - 32px\)\);/);
+  assert.match(component, /className="park-cafe-talk__background" src="\/amusement-park\/park-map\.png"/);
+  assert.doesNotMatch(component, /className="park-cafe-talk__background" src=\{visual\.image_url\}/);
+  assert.match(talkWash, /width: min\(648px, calc\(100% - 24px\)\);/);
+  assert.match(talkWash, /height: min\(900px, calc\(100svh - 24px\)\);/);
   assert.match(talkWash, /backdrop-filter: blur\(8px\);/);
   assert.doesNotMatch(talkWash, /inset:\s*0/);
 });
