@@ -1213,7 +1213,7 @@ function HomeHub({ characterName, completedSessionIds, coinBalance, onNameCharac
         <div className="home-room-character-column">
           <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
           {characterName
-            ? <button type="button" className="home-character-name" onClick={onNameCharacter} aria-label={`${characterName} 이름 바꾸기`}><small>내 친구</small><strong>{characterName}</strong><span>이름 바꾸기</span></button>
+            ? <button type="button" className="home-character-name" onClick={onNameCharacter} aria-label={`${characterName} 이름 바꾸기`}><small>이름</small><strong>{characterName}</strong><span>이름 바꾸기</span></button>
             : <button type="button" className="home-character-name home-character-name--empty" onClick={onNameCharacter}>이름 지어주기 <span className="button-arrow" /></button>}
         </div>
       </div>
@@ -1481,8 +1481,16 @@ export function MoramiApp() {
   }, [activeSession, drillIndex]);
 
   useEffect(() => {
+    // 진행도 API 응답을 기다리는 동안에도 로그인한 학습자가 지어 둔 이름을 먼저 복원한다.
+    // 그렇지 않으면 저장된 이름이 있어도 첫 화면에 잠깐 "이 친구"가 보인다.
+    const storedLearner = readStoredLearner();
+    if (storedLearner?.id) {
+      const storedCharacterName = readCharacterName(storedLearner.id);
+      window.requestAnimationFrame(() => setCharacterName(storedCharacterName));
+    }
+
     // 서버가 붙어 있으면 진행도의 기준은 서버다. localStorage 는 오프라인 표시용으로만 남긴다.
-    if (apiEnabled && readStoredLearner()) {
+    if (apiEnabled && storedLearner) {
       void api.progress().then(async (snapshot) => {
         setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
         setCharacterName(readCharacterName(snapshot.learner_id));

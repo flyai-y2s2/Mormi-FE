@@ -29,9 +29,18 @@ test("첫 화면은 I AM 쌤 로고와 두 진입 버튼만 표시한다", () =>
 
 test("메인 캐릭터 아래에는 저장 이름 또는 이름 지어주기 버튼이 나온다", () => {
   assert.match(app, /characterName\s*\?\s*<button[^>]*className="home-character-name"/);
+  assert.match(app, /<small>이름<\/small><strong>\{characterName\}<\/strong>/);
+  assert.doesNotMatch(app, /<small>내 친구<\/small>/);
   assert.match(app, /home-character-name--empty/);
   assert.match(app, />이름 지어주기/);
   assert.match(app, /<CharacterNameModal initialName=\{characterName\}/);
+});
+
+test("로그인 복원 중에도 저장한 캐릭터 이름을 먼저 표시한다", () => {
+  assert.match(app, /const storedLearner = readStoredLearner\(\);/);
+  assert.match(app, /const storedCharacterName = readCharacterName\(storedLearner\.id\)/);
+  assert.match(app, /requestAnimationFrame\(\(\) => setCharacterName\(storedCharacterName\)\)/);
+  assert.match(app, /if \(apiEnabled && storedLearner\)/);
 });
 
 test("서버 대사와 카페·놀이동산 화면은 공통 캐릭터 이름을 사용한다", () => {
