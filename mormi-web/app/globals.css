@@ -2671,8 +2671,11 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .required-lessons-list[hidden] { display:none; }
 
 .required-lessons-list > button {
-  min-height:80px; padding:12px 14px; gap:13px;
+  width:100%; min-height:80px; padding:12px 14px;
+  display:grid; grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:center; gap:13px;
   border:1px solid rgba(62,159,114,.16); border-radius:18px;
+  color:#29463b; background:#fff; cursor:pointer; text-align:left;
   box-shadow:0 1px 0 rgba(39,105,76,.05), 0 4px 12px rgba(39,105,76,.06);
   transition:transform .15s, box-shadow .15s, border-color .15s;
 }
