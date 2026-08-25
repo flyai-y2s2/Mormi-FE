@@ -644,6 +644,12 @@ function randomVariantSeed() {
   return (value[0] % 2_000_000_000) + 1;
 }
 
+function randomAnswerChoiceSeeds(count: number) {
+  const values = new Uint32Array(Math.max(0, count));
+  globalThis.crypto.getRandomValues(values);
+  return Array.from(values, (value) => (value % 2_000_000_000) + 1);
+}
+
 function extraLifeProblem(session: Session, seed: number): Problem {
   const n = Math.abs(seed % 4) + 2;
   if (session.subject === "number") return { prompt: "과일 바구니에 담긴 사과는 모두 몇 개일까?", answers: [String(n + 3), String(n + 2), String(n + 4)], correct: String(n + 3), visual: { type: "ten-frame", count: n + 3, item: "apple" } };
@@ -1297,6 +1303,7 @@ export function MoramiApp() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [sessionIndex, setSessionIndex] = useState(0);
   const [variantSeed, setVariantSeed] = useState(1);
+  const [answerChoiceSeeds, setAnswerChoiceSeeds] = useState(() => Array.from({ length: masteryTarget }, (_, index) => index + 1));
   const activeSession = useMemo(() => {
     const base = sessions[sessionIndex];
     const countingValues = base.id === "number-count"
@@ -1313,10 +1320,11 @@ export function MoramiApp() {
         const cycle = Math.floor(index / base.drills.length);
         const seed = variantSeed + index * 11 + cycle * 130;
         const variationSeed = countingValues ? countingValues[index] - 1 : seed;
-        return shuffleProblemAnswers(varyProblem(problem, variationSeed), seed);
+        const answerChoiceSeed = answerChoiceSeeds[index] ?? seed;
+        return shuffleProblemAnswers(varyProblem(problem, variationSeed), answerChoiceSeed);
       }),
     };
-  }, [sessionIndex, variantSeed]);
+  }, [answerChoiceSeeds, sessionIndex, variantSeed]);
   // "onboarding" 으로 시작하면 로그인된 아이도 새로고침마다 온보딩이 잠깐 보인다.
   // 진행도를 읽을 때까지 booting 에 머물고, 로그인 상태면 아래 부팅 effect 가 홈으로 보낸다.
   const [stage, setStage] = useState<Stage>("booting");
@@ -1836,9 +1844,11 @@ export function MoramiApp() {
 
   function openSession(nextIndex: number) {
     const nextVariantSeed = randomVariantSeed();
+    const nextAnswerChoiceSeeds = randomAnswerChoiceSeeds(masteryTarget);
     finishInProgress.current = false;
     setSessionIndex(nextIndex);
     setVariantSeed(nextVariantSeed);
+    setAnswerChoiceSeeds(nextAnswerChoiceSeeds);
     setStage("drill");
     setExpression("calm");
     setDialogue("");

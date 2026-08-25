@@ -301,7 +301,9 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /orderedNumericChoicesWithSeededCorrect\(ensuredAnswers, problem\.correct, seed\)/);
   assert.match(app, /shuffledCountingValues\(variantSeed \+ sessionIndex \* 59\)/);
   assert.match(app, /const variationSeed = countingValues \? countingValues\[index\] - 1 : seed/);
-  assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), seed\)/);
+  assert.match(app, /const answerChoiceSeed = answerChoiceSeeds\[index\] \?\? seed/);
+  assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), answerChoiceSeed\)/);
+  assert.match(app, /randomAnswerChoiceSeeds\(masteryTarget\)/);
   assert.match(app, /Array\.from\(\{ length: masteryTarget \}/);
   assert.match(app, /teachingProblemFromTurn\(teachingTurn, currentDrill\)/);
   assert.match(app, /teachingProblemFromTurn/);

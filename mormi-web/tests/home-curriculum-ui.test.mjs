@@ -78,3 +78,15 @@ test("반복학습 회차마다 무작위 seed를 만들고 서버 복구용 see
   assert.match(app, /api\.startSession\(sessions\[nextIndex\]\.id, nextVariantSeed\)/);
   assert.match(app, /seededChoiceIndex\(seed, answers\.length \+ 1\)/);
 });
+
+test("반복학습의 각 문제는 독립 난수로 정답 위치를 정한다", async () => {
+  const app = await readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /function randomAnswerChoiceSeeds\(count: number\)/);
+  assert.match(app, /globalThis\.crypto\.getRandomValues\(values\)/);
+  assert.match(app, /const nextAnswerChoiceSeeds = randomAnswerChoiceSeeds\(masteryTarget\)/);
+  assert.match(app, /setAnswerChoiceSeeds\(nextAnswerChoiceSeeds\)/);
+  assert.match(app, /const answerChoiceSeed = answerChoiceSeeds\[index\] \?\? seed/);
+  assert.match(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), answerChoiceSeed\)/);
+  assert.doesNotMatch(app, /shuffleProblemAnswers\(varyProblem\(problem, variationSeed\), seed\)/);
+});
