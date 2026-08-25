@@ -14,8 +14,8 @@ const park = source("app/amusement-park/AmusementPark.tsx");
 test("캐릭터 이름은 로그인한 학습자별 브라우저 키에 저장된다", () => {
   assert.match(names, /CHARACTER_NAME_KEY_PREFIX/);
   assert.match(names, /`\$\{CHARACTER_NAME_KEY_PREFIX\}:\$\{learnerId\}`/);
-  assert.match(app, /setCharacterName\(readCharacterName\(profile\.id\)\)/);
-  assert.match(app, /setCharacterName\(readCharacterName\(snapshot\.learner_id\)\)/);
+  assert.match(app, /const storedCharacterName = readCharacterName\(profile\.id\)/);
+  assert.match(app, /const restoredCharacterName = readCharacterName\(snapshot\.learner_id\)/);
   assert.match(app, /storeCharacterName\(learner\.id, name\)/);
 });
 
@@ -34,6 +34,18 @@ test("메인 캐릭터 아래에는 저장 이름 또는 이름 지어주기 버
   assert.match(app, /home-character-name--empty/);
   assert.match(app, />이름 지어주기/);
   assert.match(app, /<CharacterNameModal initialName=\{characterName\}/);
+});
+
+test("이름이 없는 학습자는 로그인 직후 캐릭터 소개 뒤 이름을 짓는다", () => {
+  assert.match(app, /const storedCharacterName = readCharacterName\(profile\.id\)/);
+  assert.match(app, /setCharacterNameOpen\(!storedCharacterName\)/);
+  assert.match(app, /if \(!restoredCharacterName\) setCharacterNameOpen\(true\)/);
+  assert.match(names, /useState<"introduction" \| "name">\(initialName \? "name" : "introduction"\)/);
+  assert.match(names, /나 배우고 싶은데 어떻게 해야 할지 모르겠어/);
+  assert.match(names, /내 이름부터 정해 줄래\?/);
+  assert.match(names, />좋아, 이름 지어 줄게/);
+  assert.match(names, /onClick=\{\(\) => setStep\("name"\)\}/);
+  assert.match(names, />나를 뭐라고 부를까\?</);
 });
 
 test("로그인 복원 중에도 저장한 캐릭터 이름을 먼저 표시한다", () => {

@@ -77,6 +77,7 @@ export function CharacterNameModal({ initialName, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(initialName);
+  const [step, setStep] = useState<"introduction" | "name">(initialName ? "name" : "introduction");
   const normalized = normalizeCharacterName(draft);
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -86,24 +87,34 @@ export function CharacterNameModal({ initialName, onSave, onClose }: {
 
   return (
     <div className="character-name-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <form className="character-name-modal" role="dialog" aria-modal="true" aria-labelledby="character-name-title" onSubmit={submit}>
+      <form className={`character-name-modal character-name-modal--${step}`} role="dialog" aria-modal="true" aria-labelledby="character-name-title" onSubmit={submit}>
         <button className="character-name-close" type="button" aria-label="닫기" onClick={onClose}>×</button>
-        <Image src="/morami/happy-cutout.png" alt="이름을 기다리는 캐릭터" width={190} height={210} unoptimized />
-        <div>
-          <p>우리만의 친구</p>
-          <h2 id="character-name-title">이 친구의 이름을 지어 줘!</h2>
-          <label htmlFor="character-name-input">이름</label>
-          <input
-            id="character-name-input"
-            value={draft}
-            maxLength={CHARACTER_NAME_MAX_LENGTH}
-            autoComplete="off"
-            placeholder="예: 모아"
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <small>{normalized.length}/{CHARACTER_NAME_MAX_LENGTH}자</small>
-          <button className="primary-button" type="submit" disabled={!normalized}>이 이름으로 부르기 <span className="button-arrow" /></button>
-        </div>
+        {step === "introduction" ? <>
+          <Image src="/morami/confused-cutout.png" alt="배우고 싶어 하는 캐릭터" width={190} height={210} unoptimized />
+          <div className="character-name-introduction">
+            <p>처음 만난 우리</p>
+            <h2 id="character-name-title">안녕! 만나서 반가워.</h2>
+            <div className="character-name-speech">나 배우고 싶은데 어떻게 해야 할지 모르겠어.<br />내 이름부터 정해 줄래?</div>
+            <button className="primary-button" type="button" onClick={() => setStep("name")}>좋아, 이름 지어 줄게 <span className="button-arrow" /></button>
+          </div>
+        </> : <>
+          <Image src="/morami/happy-cutout.png" alt="이름을 기다리는 캐릭터" width={190} height={210} unoptimized />
+          <div>
+            <p>{initialName ? "이름 바꾸기" : "우리만의 친구"}</p>
+            <h2 id="character-name-title">나를 뭐라고 부를까?</h2>
+            <label htmlFor="character-name-input">이름</label>
+            <input
+              id="character-name-input"
+              value={draft}
+              maxLength={CHARACTER_NAME_MAX_LENGTH}
+              autoComplete="off"
+              placeholder="예: 모아"
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <small>{normalized.length}/{CHARACTER_NAME_MAX_LENGTH}자</small>
+            <button className="primary-button" type="submit" disabled={!normalized}>이 이름으로 부르기 <span className="button-arrow" /></button>
+          </div>
+        </>}
       </form>
     </div>
   );

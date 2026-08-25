@@ -1441,7 +1441,9 @@ export function MoramiApp() {
     if (apiEnabled && storedLearner) {
       void api.progress().then((snapshot) => {
         setLearner({ id: snapshot.learner_id, name: snapshot.display_name });
-        setCharacterName(readCharacterName(snapshot.learner_id));
+        const restoredCharacterName = readCharacterName(snapshot.learner_id);
+        setCharacterName(restoredCharacterName);
+        if (!restoredCharacterName) setCharacterNameOpen(true);
         setCompletedSessionIds(snapshot.completed_session_ids);
         setCoinBalance(snapshot.wallet_balance);
         setActiveCafeVisitId(snapshot.active_cafe_visit_id ?? null);
@@ -1474,7 +1476,9 @@ export function MoramiApp() {
         setCoinBalance(Number.isFinite(savedCoins) ? savedCoins : 6000);
         if (savedLearner?.id && savedLearner.name) {
           setLearner(savedLearner);
-          setCharacterName(readCharacterName(savedLearner.id));
+          const restoredCharacterName = readCharacterName(savedLearner.id);
+          setCharacterName(restoredCharacterName);
+          if (!restoredCharacterName) setCharacterNameOpen(true);
         }
         setStage(onboarded && savedLearner?.id && savedLearner.name ? "home" : "onboarding");
       });
@@ -1928,7 +1932,9 @@ export function MoramiApp() {
     const profile = { id: auth.id, name: auth.display_name };
     storeSession(auth.access_token, { ...profile, researchCode: auth.research_code, analyticsId: auth.analytics_id });
     setLearner(profile);
-    setCharacterName(readCharacterName(profile.id));
+    const storedCharacterName = readCharacterName(profile.id);
+    setCharacterName(storedCharacterName);
+    setCharacterNameOpen(!storedCharacterName);
     identifyLearner(auth.analytics_id);
     setStage("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
