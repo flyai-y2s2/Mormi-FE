@@ -442,6 +442,13 @@ test("renders the four ladder analysis states and only offers approval for a rea
     assert.match(html, new RegExp(copy));
     assert.match(html, new RegExp(`L2.*${recommended_level}`));
     assert.equal(html.includes("이 단계로 적용"), hasButton);
+    const dom = setDom(html);
+    try {
+      assert.match(dom.container.querySelector("#numeric-next-plan").textContent, new RegExp(copy));
+      assert.equal(dom.container.querySelector(".numeric-ladder-analysis"), null);
+    } finally {
+      dom.cleanup();
+    }
   }
 });
 
@@ -512,7 +519,7 @@ test("approves a ladder level change once and shows its applied state without a 
     const button = [...dom.container.querySelectorAll("button")].find((item) => item.textContent === "이 단계로 적용");
     await act(async () => { button.dispatchEvent(new dom.container.ownerDocument.defaultView.MouseEvent("click", { bubbles: true })); });
     assert.deepEqual(approvals, [["analysis-approve", 3]]);
-    assert.match(dom.container.querySelector(".numeric-ladder-analysis").textContent, /적용 완료/);
+    assert.match(dom.container.querySelector("#numeric-next-plan").textContent, /적용 완료/);
     assert.equal(dom.container.querySelector('[role="dialog"]'), null, "승인은 기존 화면 안에서 처리하고 별도 팝업을 만들지 않는다");
     await act(async () => { root.unmount(); });
   } finally {
