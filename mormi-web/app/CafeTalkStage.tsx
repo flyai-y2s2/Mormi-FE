@@ -72,7 +72,7 @@ export function CafeTalkStage({
   return (
     <main className="figma-cafe-panel cafe-talk">
       <div className="cafe-talk-toolbar">
-        <button type="button" className="cafe-talk-back" onClick={() => onBack()}><span aria-hidden="true">←</span> 이전으로</button>
+        <button type="button" className="cafe-talk-back" onClick={onBack}><span aria-hidden="true">←</span> 이전으로</button>
         {conversation?.conversation_id && <button type="button" className="cafe-talk-note" aria-label="궁금해 사전 열기" onClick={() => setDictionaryOpen(true)}><span className="ui-icon ui-icon--book ui-icon--small" aria-hidden="true"><i /></span> 궁금해 사전</button>}
       </div>
 

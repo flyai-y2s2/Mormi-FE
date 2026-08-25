@@ -66,9 +66,16 @@ test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 �
 });
 
 test("놀이동산 이전 버튼은 메인 앱 안에서 지도 상태로 돌아간다", () => {
-  assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{\(\) => onBack\(\)\}/);
+  assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{onBack\}/);
   assert.doesNotMatch(component, /backHref=|href="\/amusement-park/);
   assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
+});
+
+test("이전·궁금해 사전 버튼은 놀이동산과 카페의 가운데 학습 패널 안에 정렬한다", () => {
+  assert.match(talkStage, /cafe-talk-toolbar[\s\S]*cafe-talk-back[\s\S]*cafe-talk-note[\s\S]*cafe-talk-flow/);
+  assert.match(css, /\.cafe-talk-toolbar\{\s*width:min\(600px,calc\(100% - 56px\)\)/);
+  assert.match(css, /\.cafe-talk-toolbar\{[^}]*left:50%[^}]*transform:translateX\(-50%\)/);
+  assert.doesNotMatch(css, /\.park-cafe-talk \.cafe-talk-toolbar\s*\{\s*position:\s*absolute/);
 });
 
 test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
