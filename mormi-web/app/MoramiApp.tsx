@@ -39,7 +39,6 @@ import {
   rememberDialogueScreen,
 } from "./dialogue-restart";
 import {
-  amusementParkRequiredConceptImages,
   amusementParkRequiredConceptTitles,
   amusementParkRequiredSessionIds,
   cafeRequiredConceptTitles,
@@ -2106,7 +2105,7 @@ export function MoramiApp() {
               <section className="cafe-required-lessons amusement-required-lessons">
                 <div><strong><span aria-hidden="true">🎡</span> 놀이동산 필수 개념</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료 <button type="button" className="required-lessons-toggle" onClick={() => setShowAmusementConcepts((current) => !current)} aria-expanded={showAmusementConcepts} aria-controls="amusement-required-concepts">{showAmusementConcepts ? "접기" : "펼치기"}<i aria-hidden="true">{showAmusementConcepts ? "⌃" : "⌄"}</i></button></span></div>
                 <div id="amusement-required-concepts" className="required-lessons-list" hidden={!showAmusementConcepts}>
-                  {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><Image className="required-lesson-image" src={amusementParkRequiredConceptImages[session.id as keyof typeof amusementParkRequiredConceptImages]} alt="" width={72} height={72} unoptimized /><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                  {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
                 </div>
               </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>

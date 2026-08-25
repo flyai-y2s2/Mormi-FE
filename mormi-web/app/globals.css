@@ -2712,8 +2712,6 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   box-shadow:inset 0 0 0 1px rgba(222,139,76,.18), 0 10px 30px rgba(134,86,42,.09);
 }
 .amusement-required-lessons .required-lessons-list > button { border-color:rgba(222,139,76,.18); }
-.amusement-required-lessons .required-lessons-list > button { grid-template-columns:38px 64px minmax(0,1fr) auto; }
-.amusement-required-lessons .required-lesson-image { width:64px; height:58px; padding:3px; object-fit:contain; border-radius:15px; background:linear-gradient(145deg,#fff,#fff8e8); box-shadow:0 3px 10px rgba(134,86,42,.1); }
 .amusement-required-lessons .required-lessons-list > button:hover,
 .amusement-required-lessons .required-lessons-list > button.is-next { border-color:rgba(222,139,76,.44); }
 .amusement-required-lessons .required-lessons-list > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
@@ -2729,9 +2727,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .money-practice-item-price { min-height:28px; padding:3px 8px; border-width:2px; font-size:12px; }
   .money-practice-items strong { font-size:11px; }
   .money-practice-items small { min-width:38px; min-height:38px; right:0; top:0; padding:3px 6px; border-width:2px; font-size:13px; }
-  .amusement-required-lessons .required-lessons-list > button { grid-template-columns:36px 50px minmax(0,1fr); padding:9px; gap:8px; }
-  .amusement-required-lessons .required-lesson-image { width:50px; height:48px; }
-  .amusement-required-lessons .required-lessons-list > button em { grid-column:3; justify-self:start; }
+  .amusement-required-lessons .required-lessons-list > button { padding:9px; gap:8px; }
 }
 
 /* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야

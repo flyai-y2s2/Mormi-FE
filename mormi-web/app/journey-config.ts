@@ -37,13 +37,6 @@ export const amusementParkRequiredConceptTitles: Record<(typeof amusementParkReq
   "multiply-easy-tables": "여러 물건값과 예산을 비교해요",
 };
 
-export const amusementParkRequiredConceptImages: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
-  "multiply-groups": "/life-missions/money-practice/ticket-party.png",
-  "divide-share": "/life-missions/money-practice/squishy-share.png",
-  "divide-group": "/life-missions/money-practice/keychain-budget.png",
-  "multiply-easy-tables": "/life-missions/money-practice/mixed-purchase.png",
-};
-
 export const outsideRequiredSessionIds = [
   ...cafeRequiredSessionIds,
   ...amusementParkRequiredSessionIds,

@@ -25,7 +25,8 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(journey, /"divide-share": "간식값을 똑같이 나눠요"/);
   assert.match(journey, /"divide-group": "예산으로 살 수 있는 개수를 찾아요"/);
   assert.match(journey, /"multiply-easy-tables": "여러 물건값과 예산을 비교해요"/);
-  assert.match(journey, /amusementParkRequiredConceptImages/);
+  assert.doesNotMatch(journey, /amusementParkRequiredConceptImages/);
+  assert.doesNotMatch(curriculum, /required-lesson-image/);
   assert.match(curriculum, /className="required-lessons-toggle"/);
   assert.match(curriculum, /aria-controls="cafe-required-concepts"/);
   assert.match(curriculum, /aria-controls="amusement-required-concepts"/);
@@ -45,7 +46,7 @@ test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 
   assert.match(visual, /singleItemPrice/);
   assert.match(visual, /singleItemCount/);
   assert.match(visual, /money-practice-item-price/);
-  assert.match(app, /amusementParkRequiredConceptImages/);
+  assert.doesNotMatch(app, /amusementParkRequiredConceptImages/);
   assert.match(curriculum, /unit: "돈 계산 곱셈"/);
   assert.match(curriculum, /unit: "돈 계산 나눗셈"/);
   assert.match(curriculum, /unit: "돈 계산 혼합"/);
