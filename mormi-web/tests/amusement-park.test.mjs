@@ -103,6 +103,9 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
   assert.match(talkWash, /width: min\(648px, calc\(100% - 24px\)\);/);
   assert.match(talkWash, /height: min\(900px, calc\(100svh - 24px\)\);/);
   assert.match(talkWash, /backdrop-filter: blur\(8px\);/);
+  assert.match(talkWash, /mask-image: radial-gradient/);
+  assert.doesNotMatch(talkWash, /border(?:-radius)?:/);
+  assert.doesNotMatch(talkWash, /box-shadow:/);
   assert.doesNotMatch(talkWash, /inset:\s*0/);
 });
 

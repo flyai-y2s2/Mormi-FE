@@ -516,11 +516,10 @@
   left: 50%;
   z-index: 1;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(255, 255, 255, .68);
-  border-radius: 30px;
   backdrop-filter: blur(8px);
-  background: rgba(255, 251, 244, .42);
-  box-shadow: 0 20px 55px rgba(68, 52, 39, .12);
+  background: rgba(255, 251, 244, .34);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, #000 62%, transparent 100%);
   pointer-events: none;
 }
 
