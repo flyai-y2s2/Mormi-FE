@@ -37,7 +37,8 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(home, /<div className="home-main-actions">\s*<button onClick=\{onCurriculum\}>[\s\S]*?<\/button>\s*<\/div>/);
   assert.doesNotMatch(home, /<button onClick=\{onOutside\}>/);
   await access(new URL("../public/home/exit-door-v1.png", import.meta.url));
-  assert.match(app, /stage !== "home" && stage !== "complete" && <nav/);
+  assert.match(app, /stage !== "home" && stage !== "complete" && <button type="button" className="home-return-control" onClick=\{showHome\} aria-label="집으로 돌아가기">/);
+  assert.doesNotMatch(app, /journey-nav--top|>외부<\/button>/);
   assert.match(app, /<div className="top-actions">[\s\S]{0,220}\{!learningStage && <ProfileMenu/);
   assert.doesNotMatch(app, /효과음 끄기|효과음 켜기/);
   assert.doesNotMatch(app, /className="star-note-archive-link"/);
@@ -52,4 +53,5 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(css, /\.home-room-copy-column>\.player-hud,\.home-room-copy\{width:100%;max-width:560px\}/);
   assert.match(css, /\.home-exit-door:is\(:hover, :focus-visible\) img\s*\{[\s\S]*?rotateY\(-8deg\)/);
   assert.match(css, /@media\s*\(hover:\s*none\),\s*\(pointer:\s*coarse\)\s*\{[\s\S]*?\.home-exit-door>span\s*\{[\s\S]*?opacity:1/);
+  assert.match(css, /\.home-return-control\{[\s\S]*?display:flex[\s\S]*?border-radius:18px/);
 });

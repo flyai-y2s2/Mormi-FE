@@ -379,11 +379,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /const childName = learner\.name/);
   assert.match(app, /mormey-learner/);
   assert.match(app, /너를 뭐라고 부를까/);
-  // 장소 이동 탭은 앱 전체에 하나만, 상단 줄에 둔다. 화면마다 따로 그리면 장소를
-  // 옮길 때 탭이 함께 움직여 흐름이 끊긴다.
-  const navClasses = app.match(/className="journey-nav[^"]*"/g) || [];
-  assert.equal(navClasses.length, 1);
-  assert.match(navClasses[0], /journey-nav--top/);
+  // 외출은 홈의 문에서만 시작한다. 다른 화면의 상단에는 집으로 돌아가는 단일 행동만 둔다.
+  assert.doesNotMatch(app, /journey-nav--top/);
+  const homeReturnControls = app.match(/className="home-return-control"/g) || [];
+  assert.equal(homeReturnControls.length, 1);
+  assert.match(app, /className="home-return-control"[\s\S]{0,180}<UiIcon name="home"[\s\S]{0,100}집으로 돌아가기/);
   // topbar 의 좌우 기준선이 화면마다 다르면 상단에 둔 탭이 옮겨져 보인다.
   assert.match(css, /\.app-shell--outside \.topbar[^{]*\{[^}]*max-width:none/);
   // 반복 중에는 프로필을 띄우지 않는다. 로그아웃이 눌리면 시도 기록이 끊긴 채 세션이 남는다.

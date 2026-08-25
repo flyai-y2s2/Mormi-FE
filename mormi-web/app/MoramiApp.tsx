@@ -2043,15 +2043,13 @@ export function MoramiApp() {
     <CharacterNameProvider name={characterName}>
     <main className={`app-shell app-shell--${stage}`}>
       {stage !== "booting" && stage !== "onboarding" && stage !== "cafe" && stage !== "amusement" && stage !== "teach" && <header className="topbar topbar--without-brand">
-        {/* 장소 이동은 화면이 바뀌어도 자리가 변하지 않아야 하는 전역 내비다.
-            그래서 콘텐츠가 아니라 프로필과 같은 상단 줄에 둔다. */}
+        {/* 외출은 홈의 문에서 시작한다. 다른 화면에서는 집으로 돌아가는 길만 보여준다. */}
         {learningStage ? <div className="progress-dots" aria-label={`학습 ${currentStep + 1}단계`}>
           {stageLabels.slice(0, 3).map((label, index) => <span key={label} className={index <= currentStep ? "is-active" : ""}><i />{label}</span>)}
         </div> : <div className="topbar-lead">
-          {stage !== "home" && stage !== "complete" && <nav className="journey-nav journey-nav--top" aria-label="장소 이동">
-            <button type="button" className={stage === "outside" ? "" : "is-active"} onClick={showHome}><UiIcon name="home" size="small" />집</button>
-            <button type="button" className={stage === "outside" ? "is-active" : ""} onClick={showOutside}><UiIcon name="cafe" size="small" />외부</button>
-          </nav>}
+          {stage !== "home" && stage !== "complete" && <button type="button" className="home-return-control" onClick={showHome} aria-label="집으로 돌아가기">
+            <UiIcon name="home" size="medium" /><span>집으로 돌아가기</span>
+          </button>}
         </div>}
         <div className="top-actions">
           {!learningStage && <ProfileMenu name={childName} loggingOut={loggingOut} onLogout={() => { void handleLogout(); }} />}

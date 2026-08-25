@@ -2631,12 +2631,23 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .topbar-lead { display:flex; align-items:center; gap:14px; justify-self:start; }
 .journey-nav--top { position:static; margin:0; transform:none; background:rgba(255,255,255,.82); }
 .journey-nav--top button { min-width:82px; min-height:42px; }
+.home-return-control{
+  min-height:52px;padding:5px 18px 5px 8px;display:flex;align-items:center;gap:9px;
+  border:2px solid #c5e5d6;border-radius:18px;color:#315f4d;background:rgba(255,255,255,.9);
+  box-shadow:0 6px 0 #cce7da,0 12px 24px rgba(49,85,68,.1);cursor:pointer;
+  font:inherit;font-size:15px;font-weight:950;white-space:nowrap;transition:transform .16s ease,box-shadow .16s ease
+}
+.home-return-control .ui-icon{--icon-size:40px;filter:none}
+.home-return-control:hover{transform:translateY(-2px);box-shadow:0 8px 0 #cce7da,0 15px 27px rgba(49,85,68,.13)}
+.home-return-control:focus-visible{outline:4px solid #7c63c7;outline-offset:3px}
 /* 탭이 상단으로 갔으므로 콘텐츠는 제목부터 시작한다. */
 .journey-hub--outside { padding-top:6px; }
 .curriculum-home--room { padding-top:8px; }
 @media (max-width:560px) {
   .topbar-lead { gap:8px; }
   .journey-nav--top button { min-width:64px; min-height:36px; font-size:13px; }
+  .home-return-control{min-height:46px;padding:4px 13px 4px 6px;border-radius:16px;font-size:13px}
+  .home-return-control .ui-icon{--icon-size:35px}
 }
 
 /* 장소 이동 탭이 상단 줄에 있으므로 topbar 의 좌우 기준선이 화면마다 달라지면 안 된다.
