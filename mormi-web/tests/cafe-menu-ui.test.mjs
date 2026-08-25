@@ -171,9 +171,13 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(journey, /conversation=\{cafeConversations\.change\}[\s\S]{0,350}deferChoices[\s\S]{0,200}changeChoiceFallbackKey/);
   assert.match(talk, /cafe-talk-bubble__text[\s\S]*onClick=\{\(\) => onSubmit\(\{ type: "no_response" \}\)\}/);
   assert.match(talk, /cafe-talk-bubble__text[\s\S]*helpLoading && <div className="cafe-help-loading"/);
-  assert.match(talk, /<MormiHelpCard card=\{helpVisible \? conversation\?\.turn\.help_card \?\? null : null\}/);
+  assert.match(talk, /const helpCard = visibleHelpCard\(conversation\?\.turn\)/);
+  assert.match(talk, /<MormiHelpCard card=\{helpCard\}/);
   assert.doesNotMatch(talk, /cafe-ai-dont-know/);
-  assert.match(home, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
+  assert.match(home, /const teachingHelpCard = visibleHelpCard\(teachingTurn\)/);
+  assert.match(home, /<MormiHelpCard card=\{teachingHelpCard\}/);
+  assert.doesNotMatch(talk, /helpVisible/);
+  assert.doesNotMatch(home, /teachHelpVisible/);
   assert.doesNotMatch(talk, /<MormiTaskAnchor/);
   assert.doesNotMatch(home, /<MormiTaskAnchor/);
 

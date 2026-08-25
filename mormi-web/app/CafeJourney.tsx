@@ -109,7 +109,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
-  const [helpVisibleStages, setHelpVisibleStages] = useState<Partial<Record<CafeStage, boolean>>>({});
   const [helpLoadingStage, setHelpLoadingStage] = useState<CafeStage | null>(null);
   const [queueChoiceFallbackKey, setQueueChoiceFallbackKey] = useState<string | null>(null);
   const [changeChoiceFallbackKey, setChangeChoiceFallbackKey] = useState<string | null>(null);
@@ -247,7 +246,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setCafeConversations((current) => ({ ...current, [stage]: undefined }));
     setDialogueError("");
     setDialogueInputs((current) => ({ ...current, [stage]: "" }));
-    setHelpVisibleStages((current) => ({ ...current, [stage]: false }));
     setHelpLoadingStage(null);
     setProblemContextError(null);
     if (stage === "queue") setQueueChoiceFallbackKey(null);
@@ -504,10 +502,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       if (stage === "queue") setQueueChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
       else setChangeChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
     }
-    if (requestsHelp) {
-      if (next) setHelpVisibleStages((current) => ({ ...current, [stage]: true }));
-      setHelpLoadingStage((current) => current === stage ? null : current);
-    }
+    if (requestsHelp) setHelpLoadingStage((current) => current === stage ? null : current);
     setDialogueInput(stage, "");
   }
 
@@ -653,7 +648,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           fallbackLine={fallbackLines.queue}
           inputText={dialogueInputs.queue ?? ""}
           sending={dialogueSending}
-          helpVisible={Boolean(helpVisibleStages.queue)}
           helpLoading={helpLoadingStage === "queue"}
           deferChoices
           choiceFallbackVisible={queueChoiceFallbackKey === conversationInputKey(cafeConversations.queue)}
@@ -712,7 +706,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           fallbackLine={fallbackLines.menu}
           inputText={dialogueInputs.menu ?? ""}
           sending={dialogueSending}
-          helpVisible={Boolean(helpVisibleStages.menu)}
           helpLoading={helpLoadingStage === "menu"}
           onInput={(value) => setDialogueInput("menu", value)}
           onSubmit={(response) => { void answerMormi("menu", response); }}
@@ -733,7 +726,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           fallbackLine={fallbackLines.calculate}
           inputText={dialogueInputs.calculate ?? ""}
           sending={dialogueSending}
-          helpVisible={Boolean(helpVisibleStages.calculate)}
           helpLoading={helpLoadingStage === "calculate"}
           onInput={(value) => setDialogueInput("calculate", value)}
           onSubmit={(response) => { void answerMormi("calculate", response); }}
@@ -774,7 +766,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           fallbackLine={fallbackLines.change}
           inputText={dialogueInputs.change ?? ""}
           sending={dialogueSending}
-          helpVisible={Boolean(helpVisibleStages.change)}
           helpLoading={helpLoadingStage === "change"}
           deferChoices
           choiceFallbackVisible={changeChoiceFallbackKey === conversationInputKey(cafeConversations.change)}

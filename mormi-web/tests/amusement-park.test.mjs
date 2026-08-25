@@ -44,7 +44,8 @@ test("서버 오류 때 로컬 문제를 대신 보여주지 않고 재시도 �
 
 test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공통 UI로 렌더링한다", () => {
   assert.match(component, /<CafeTalkStage/);
-  assert.match(component, /helpVisible=\{helpVisible\}/);
+  assert.doesNotMatch(component, /helpVisible/);
+  assert.match(talkStage, /const helpCard = visibleHelpCard\(conversation\?\.turn\)/);
   assert.match(component, /helpLoading=\{helpLoading\}/);
   assert.match(component, /response\.type === "no_response"/);
   assert.match(component, /amusement_park_transfer/);

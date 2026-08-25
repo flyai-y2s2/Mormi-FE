@@ -185,15 +185,17 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /← \{step === "overview" \? "외출 장소" : "돌아가기"\}/);
   assert.doesNotMatch(cafe, /changeHintLevel/);
   assert.doesNotMatch(cafe, /모르미가 같이 생각해 볼게/);
-  assert.match(talkStage, /<MormiHelpCard card=\{helpVisible \? conversation\?\.turn\.help_card \?\? null : null\}/);
-  assert.match(app, /<MormiHelpCard card=\{teachHelpVisible \? teachingTurn\?\.help_card \?\? null : null\}/);
+  assert.match(talkStage, /const helpCard = visibleHelpCard\(conversation\?\.turn\)/);
+  assert.match(talkStage, /<MormiHelpCard card=\{helpCard\}/);
+  assert.match(app, /const teachingHelpCard = visibleHelpCard\(teachingTurn\)/);
+  assert.match(app, /<MormiHelpCard card=\{teachingHelpCard\}/);
   // 같이 읽기 문장과 다음 버튼은 문제 카드 밖으로 흩어지지 않고 하나의
   // 모델링 카드 안에서 읽힌다. 태블릿에서도 CTA가 화면 전체 폭으로 늘어나지 않는다.
   assert.match(app, /className="model-teaching__reading"/);
   assert.match(css, /\.model-teaching \{[^}]*border:4px solid #e4f1ea[^}]*background:rgba\(255,255,255,\.95\)/);
   assert.match(css, /\.model-teaching \.send-teach-button \{[^}]*width:min\(240px,100%\)/);
   // task_anchor 는 계약과 테스트 도구에는 남기되 실제 학습 화면에서는 질문을
-  // 그대로 반복하므로 렌더링하지 않는다. 도움 카드는 no_response 이후에만 연다.
+  // 그대로 반복하므로 렌더링하지 않는다. 도움 카드는 최신 서버 턴을 따른다.
   assert.doesNotMatch(talkStage, /<MormiTaskAnchor/);
   assert.doesNotMatch(app, /<MormiTaskAnchor/);
   assert.match(dialogueUi, /anchor\.completed_items\.map/);
@@ -324,7 +326,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(app, /\{serverMormiText && <div><b>\{characterDisplayName\}<\/b><p>\{formatTeachingDisplayText\(namedText\(serverMormiText\)\)\}<\/p><\/div>\}/);
   assert.match(app, /teachSending \? "확인 중…" : "완료"/);
   assert.match(app, /const serverMormiText = teachingTurn\?\.mormi\.text\?\.trim\(\) \?\? ""/);
-  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachHelpVisible && teachingTurn\?\.help_card\?\.visible\) \|\| Boolean\(teachError\)/);
+  assert.match(app, /const hasServerMessagePanel = Boolean\(serverMormiText\) \|\| Boolean\(teachingHelpCard\) \|\| Boolean\(teachError\)/);
   assert.match(app, /\{hasServerMessagePanel && !teachingComplete && \(/);
   assert.match(app, /\{serverMormiText && <div><b>\{characterDisplayName\}<\/b><p>\{formatTeachingDisplayText\(namedText\(serverMormiText\)\)\}<\/p><\/div>\}/);
   assert.match(app, /productImage\(labels\[index\]\)/);
@@ -372,7 +374,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /\.figma-cafe--queue \.queue-story-dialogue \.queue-story-next::after\{[^}]*border-left-color:#fff/);
   assert.match(css, /\.today-badges > span \{/);
   assert.match(css, /\.note-content h2 em \{ color:#4f438f;[^}]*font-weight:700/);
-  assert.match(app, /teachingTurn\?\.help_card\?\.visible/);
+  assert.match(app, /const teachingHelpCard = visibleHelpCard\(teachingTurn\)/);
   // 도움 카드와 입력 문구는 AI 계약을 그대로 사용하며 FE가 별도 질문을 만들지 않는다.
   assert.doesNotMatch(app, /생각과 이유를 직접 알려줘|보기에서 하나를 골라 알려줘|도움 카드와 같이 해보자/);
   assert.match(dialogueContract, /retention_policy\?: "no_raw" \| "30_days" \| "90_days" \| "permanent"/);

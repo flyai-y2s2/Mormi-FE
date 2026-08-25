@@ -146,7 +146,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   const [inputText, setInputText] = useState("");
   const [dialogueError, setDialogueError] = useState("");
   const [sending, setSending] = useState(false);
-  const [helpVisible, setHelpVisible] = useState(false);
   const [helpLoading, setHelpLoading] = useState(false);
   const [choiceFallbackVisible, setChoiceFallbackVisible] = useState(false);
   const [noteText, setNoteText] = useState<string>();
@@ -177,7 +176,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
     requestInFlight.current = true;
     setSending(true);
     setDialogueError("");
-    setHelpVisible(false);
     try {
       const request = (mode: "restart" | "resume") => startAmusementParkDialogue(visit.visit_id, {
         scenario_id: amusementScenarioByStage[stage.stage_id],
@@ -216,7 +214,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
         ...response,
       });
       applyConversation(next);
-      if (requestsHelp) setHelpVisible(true);
       setInputText("");
     } catch (error) {
       setDialogueError(amusementDialogueErrorMessage(error, "답을 보내지 못했어요. 같은 답으로 다시 시도해 주세요."));
@@ -253,7 +250,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
       fallbackLine={sending ? `${subjectName} 문제를 살펴보고 있어요…` : "문제를 불러오지 못했어요. 다시 시작해 주세요."}
       inputText={inputText}
       sending={sending}
-      helpVisible={helpVisible}
       helpLoading={helpLoading}
       deferChoices
       choiceFallbackVisible={choiceFallbackVisible}

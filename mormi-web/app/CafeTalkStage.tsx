@@ -6,6 +6,7 @@ import { choiceIdForTypedAnswer } from "./cafe-choice-input";
 import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiResponseType } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
+import { visibleHelpCard } from "./help-card";
 import { useCharacterName } from "./CharacterName";
 
 /**
@@ -32,7 +33,6 @@ export function CafeTalkStage({
   fallbackLine,
   inputText,
   sending,
-  helpVisible,
   helpLoading,
   deferChoices = false,
   choiceFallbackVisible = false,
@@ -47,7 +47,6 @@ export function CafeTalkStage({
   fallbackLine: string;
   inputText: string;
   sending: boolean;
-  helpVisible: boolean;
   helpLoading: boolean;
   deferChoices?: boolean;
   choiceFallbackVisible?: boolean;
@@ -61,6 +60,7 @@ export function CafeTalkStage({
   const { displayName, rename } = useCharacterName();
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const inputKind = conversation?.turn.input.kind;
+  const helpCard = visibleHelpCard(conversation?.turn);
   const canRequestHelp = Boolean(
     conversation
     && conversation.turn.state_version > 0
@@ -83,7 +83,7 @@ export function CafeTalkStage({
             <b>{displayName}</b>
             <p>{rename(line || fallbackLine)}</p>
             {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>{displayName}가 도움 카드를 찾고 있어요…</span></div>}
-            <MormiHelpCard card={helpVisible ? conversation?.turn.help_card ?? null : null} />
+            <MormiHelpCard card={helpCard} />
             {canRequestHelp && (
               <button
                 type="button"
