@@ -2007,9 +2007,10 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .ui-icon--lock::after{content:"";width:42%;height:42%;position:absolute;left:29%;top:4%;border:4px solid #8d78bd;border-bottom:0;border-radius:50% 50% 0 0}
 .ui-icon--lock i{width:4px;height:10px;position:absolute;left:calc(50% - 2px);bottom:17%;z-index:2;border-radius:3px;background:#fff}
 .journey-nav button{display:flex;align-items:center;justify-content:center;gap:7px}.journey-nav button .ui-icon{filter:none}.journey-nav button.is-active .ui-icon--asset>img{filter:drop-shadow(0 3px 3px rgba(0,0,0,.18))}
-.player-hud{width:100%;padding:8px 12px;position:static;display:grid;grid-template-columns:minmax(130px,.8fr) minmax(230px,1.45fr) minmax(190px,1.05fr);align-items:center;gap:8px;border:1px solid rgba(63,92,78,.13);border-radius:24px;background:rgba(255,253,248,.9);box-shadow:0 10px 28px rgba(52,73,63,.09)}
-.player-hud>.player-stat,.player-hud>.player-wallet{min-width:0;min-height:62px;padding:7px 12px;display:flex;align-items:center;gap:9px;border:0;border-radius:0;box-shadow:none}
-.player-hud>.player-stat--level,.player-hud>.player-wallet{background:transparent}.player-hud>.player-stat--level{border-right:1px solid #dce8e1}.player-hud>.player-wallet{border-right:1px solid #e6e1cb}
+.player-hud{width:100%;padding:0;position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,.55fr);align-items:stretch;gap:12px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.player-status-summary{min-width:0;min-height:70px;padding:8px 12px;display:grid;grid-template-columns:minmax(120px,.8fr) minmax(200px,1.35fr);align-items:center;border:1px solid rgba(63,92,78,.13);border-radius:24px;background:rgba(255,252,244,.9);box-shadow:0 10px 28px rgba(52,73,63,.09)}
+.player-hud .player-stat,.player-hud .player-wallet{min-width:0;min-height:54px;padding:6px 10px;display:flex;align-items:center;gap:9px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.player-status-summary>.player-stat--level{border-right:1px solid #dce8e1}
 .player-hud>.player-stat--star{min-height:58px;justify-content:center;border:2px solid #efd675;border-radius:17px;background:#fff8da;box-shadow:0 4px 0 #e4c65e}
 .player-hud .player-stat>span,.player-hud .player-wallet>span{min-width:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;color:#43574e;background:transparent}
 .player-hud small{color:#718178;font-size:10px;font-weight:900;line-height:1.2;white-space:nowrap;word-break:keep-all}.player-hud b{padding:0;color:#28483b;background:transparent;font-size:21px;line-height:1.1;white-space:nowrap;word-break:keep-all}.player-hud>.player-stat--star small{color:#8b6d18}.player-hud>.player-stat--star b{color:#715412;font-size:17px}
@@ -2021,7 +2022,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 
 /* 성장 정보는 왼쪽 선택 영역의 제목 바로 위에 두고, 오른쪽 칸은 모르미만 사용한다. */
 .home-room-main{grid-template-rows:1fr;align-items:center;column-gap:clamp(24px,3vw,48px);row-gap:0}
-.home-room-copy-column{grid-column:1;grid-row:1;gap:14px}
+.home-room-copy-column{grid-column:1;grid-row:1;gap:18px}
 .home-room-copy-column>.player-hud{width:100%;justify-self:stretch}
 .home-room-character-column{height:auto;min-height:0;padding-top:0;grid-column:2;grid-row:1;display:grid;place-items:end center}
 .home-room-copy h1{margin-bottom:22px;font-size:clamp(29px,3.2vw,40px);letter-spacing:-2.2px}
@@ -2036,11 +2037,12 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:760px){
   .journey-hub--home{padding:12px 14px 94px}
   .home-room-main{min-height:auto;padding-top:0;display:grid;grid-template-columns:minmax(0,440px) minmax(150px,180px);justify-content:center;align-items:center;gap:18px}
-  .home-room-copy-column{width:100%;height:auto;min-height:0;margin:0;grid-column:1;grid-row:1;gap:9px;transform:none}
+  .home-room-copy-column{width:100%;height:auto;min-height:0;margin:0;grid-column:1;grid-row:1;gap:12px;transform:none}
   .home-room-character-column{grid-column:2;grid-row:1;display:grid}
-  .player-hud{width:100%;margin:0;grid-template-columns:minmax(104px,.82fr) minmax(190px,1.4fr) minmax(160px,1.05fr);gap:5px;padding:7px 9px;border-radius:21px}
-  .player-hud>.player-wallet{grid-column:auto;justify-content:center}
-  .player-hud>.player-stat,.player-hud>.player-wallet{min-height:60px;padding:6px 8px;gap:6px}.player-hud>.player-stat--star{border-radius:15px}.player-hud .ui-icon--large{--icon-size:31px}.player-wallet>img{width:42px;height:42px;flex-basis:42px}.player-hud b{font-size:17px}.player-hud .player-stat--star b{font-size:14px}.player-hud .player-wallet strong{font-size:19px}
+  .player-hud{width:100%;margin:0;grid-template-columns:minmax(0,1fr) minmax(125px,.52fr);gap:7px}
+  .player-status-summary{grid-template-columns:minmax(88px,.72fr) minmax(145px,1.28fr);padding:6px 7px;border-radius:19px}
+  .player-status-summary>.player-wallet{justify-content:center}
+  .player-hud .player-stat,.player-hud .player-wallet{min-height:56px;padding:5px 6px;gap:5px}.player-hud>.player-stat--star{border-radius:15px}.player-hud .ui-icon--large{--icon-size:31px}.player-wallet>img{width:42px;height:42px;flex-basis:42px}.player-hud b{font-size:17px}.player-hud .player-stat--star b{font-size:14px}.player-hud .player-wallet strong{font-size:18px}
   .home-room-copy-column .home-room-copy{height:auto;margin-top:0}.home-room-copy h1{font-size:27px;letter-spacing:-1.5px}.home-room-morami{align-self:center;transform:none}.home-room-morami .morami-frame{width:180px;height:230px}.home-main-actions button>span .ui-icon{--icon-size:43px}
 }
 @media(max-width:560px){
@@ -2049,7 +2051,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .home-room-character-column{grid-column:1;grid-row:2}.home-room-morami .morami-frame{width:230px;height:270px}
 }
 @media(max-width:430px){
-  .player-hud{grid-template-columns:1fr 1fr}.player-hud>.player-wallet{grid-column:auto;min-height:62px;justify-content:center;border-right:0}.player-hud>.player-stat--star{grid-column:1/3;min-height:58px}.player-wallet>img{width:45px;height:45px;flex-basis:45px}.player-hud .player-wallet strong{font-size:20px}.journey-hub--home{padding-top:10px}
+  .player-hud{grid-template-columns:1fr}.player-status-summary{grid-template-columns:1fr 1.35fr}.player-hud>.player-stat--star{grid-column:1;min-height:58px}.player-wallet>img{width:45px;height:45px;flex-basis:45px}.player-hud .player-wallet strong{font-size:20px}.journey-hub--home{padding-top:10px}
   .journey-nav button{min-width:84px;font-size:12px}.journey-nav button .ui-icon{--icon-size:21px}
   .figma-cafe__steps span{min-width:0}.figma-cafe__steps span:not(:last-child)::after{width:6px}.figma-cafe-map__stones>button{min-width:0}
 }

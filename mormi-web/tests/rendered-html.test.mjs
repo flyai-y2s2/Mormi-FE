@@ -239,13 +239,13 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(app, /생활에 필요한 개념부터 배워요|밖에서도 자연스럽게 사용할 수 있도록 반복학습으로 준비해요/);
   assert.match(app, /저번에 도와줘서 고마워! 이번에도 또 같이 가주라!/);
   assert.doesNotMatch(app, /카페 가는 거 이제 자신 있어! 또 연습하러 가자!/);
-  // 태블릿에서는 모험 정보 세 카드를 한 줄에 둔다. 2열용 span 이 남으면
-  // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
-  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
+  // 레벨·돈은 하나의 정보 카드로 묶고 별노트만 별도 버튼으로 둔다.
+  assert.match(css, /\.player-hud\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(170px,.55fr\)[^}]*background:transparent/);
+  assert.match(css, /\.player-status-summary\{[^}]*grid-template-columns:minmax\(120px,.8fr\) minmax\(200px,1.35fr\)[^}]*background:rgba\(255,252,244,.9\)/);
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-main\{[^}]*grid-template-columns:minmax\(0,440px\) minmax\(150px,180px\)[^}]*\}/);
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-column:1;grid-row:1[^}]*\}[\s\S]*?\.home-room-character-column\{grid-column:2;grid-row:1;display:grid\}/);
   assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-character-column\{grid-column:1;grid-row:2\}/);
-  assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-stat--star\{grid-column:1\/3/);
+  assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud\{grid-template-columns:1fr\}[\s\S]*?\.player-hud>\.player-stat--star\{grid-column:1/);
   assert.match(css, /\.home-room-copy-column>\.player-hud\{width:100%;justify-self:stretch\}/);
   assert.match(css, /\.home-room-copy h1\{[^}]*font-size:clamp\(29px,3\.2vw,40px\)/);
   assert.match(journey, /cafe-money\/100\.png/);
