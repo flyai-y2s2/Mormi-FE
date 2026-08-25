@@ -1550,7 +1550,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .onboarding-morami { align-self:end; }.onboarding-morami::before { display:none; }.onboarding-morami .morami-frame { width:min(38vw,480px); height:min(70vh,620px); }
 .onboarding-greeting { width:min(650px,100%); max-width:650px; padding:32px 36px; position:relative; z-index:4; border:4px solid #a9ddc5; border-radius:34px 34px 34px 8px; background:rgba(255,255,255,.94); box-shadow:0 24px 60px rgba(48,70,60,.2); }
 .onboarding-greeting::before { content:""; width:28px; height:28px; position:absolute; left:-16px; bottom:42px; transform:rotate(45deg); border-left:4px solid #a9ddc5; border-bottom:4px solid #a9ddc5; background:#fff; }
-.onboarding-brand { width:min(360px,80%); height:auto; margin:-30px auto -15px; display:block; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(31,91,62,.12)); }
+.onboarding-brand { width:min(300px,72%); height:auto; margin:-12px auto 8px; display:block; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(31,91,62,.12)); }
 .onboarding-greeting > span { color:#2f8f6c; font-weight:950; }.onboarding-greeting h1 { margin:8px 0 8px; font-size:clamp(42px,6vw,74px); letter-spacing:-4px; }.onboarding-greeting p { margin:0 0 24px; color:#65766e; font-size:18px; }
 .onboarding-greeting__actions { width:min(100%,560px); display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr); align-items:stretch; gap:14px; }
 .onboarding-greeting__actions .primary-button { width:100%; min-height:76px; padding:0 28px; font-size:22px; }
@@ -1605,7 +1605,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .curriculum-path-row > button { width:100%; }
 
 @media (max-width: 760px) {
-  .scene-balance { right:12px; top:76px; min-width:102px; padding:7px 10px; font-size:12px; }.onboarding-scene { padding:36px 16px 20px; display:flex; flex-direction:column; justify-content:end; }.onboarding-morami .morami-frame { width:250px; height:320px; }.onboarding-greeting { margin-top:-55px; padding:23px 20px; text-align:left; }.onboarding-brand { width:min(250px,86%); margin:-22px auto -11px; }.onboarding-greeting h1 { font-size:38px; }.onboarding-greeting__actions { grid-template-columns:1fr; gap:11px; }.onboarding-greeting__actions .primary-button,.onboarding-greeting__actions .onboarding-secondary { min-height:64px; font-size:18px; }.promise-panel { padding:24px 15px; }.promise-panel h1 { font-size:34px; }.promise-steps { grid-template-columns:1fr; }.promise-steps article { min-height:0; padding:14px; display:grid; grid-template-columns:42px 1fr; text-align:left; }.promise-steps i { margin:0; }.promise-steps h2 { font-size:17px; }.promise-cta { align-items:flex-start; flex-direction:column; justify-content:center; }
+  .scene-balance { right:12px; top:76px; min-width:102px; padding:7px 10px; font-size:12px; }.onboarding-scene { padding:36px 16px 20px; display:flex; flex-direction:column; justify-content:end; }.onboarding-morami .morami-frame { width:250px; height:320px; }.onboarding-greeting { margin-top:-55px; padding:23px 20px; text-align:left; }.onboarding-brand { width:min(210px,76%); margin:-4px auto 8px; }.onboarding-greeting h1 { font-size:28px; }.onboarding-greeting__actions { grid-template-columns:1fr; gap:11px; }.onboarding-greeting__actions .primary-button,.onboarding-greeting__actions .onboarding-secondary { min-height:64px; font-size:18px; }.promise-panel { padding:24px 15px; }.promise-panel h1 { font-size:34px; }.promise-steps { grid-template-columns:1fr; }.promise-steps article { min-height:0; padding:14px; display:grid; grid-template-columns:42px 1fr; text-align:left; }.promise-steps i { margin:0; }.promise-steps h2 { font-size:17px; }.promise-cta { align-items:flex-start; flex-direction:column; justify-content:center; }
   .journey-hub--home { padding:55px 14px 90px; }.home-room-main { min-height:calc(100svh - 160px); display:flex; flex-direction:column-reverse; justify-content:center; gap:0; }.home-room-morami .morami-frame { width:230px; height:270px; }.home-room-copy { width:100%; margin-top:-35px; padding:23px 16px; position:relative; z-index:3; }.home-room-copy h1 { margin-bottom:15px; font-size:35px; }.home-main-actions button { min-height:82px; padding:12px; grid-template-columns:44px 1fr; }.home-main-actions b { font-size:17px; }.home-next-lesson { width:calc(100% - 28px); min-width:0; bottom:14px; }
   .player-hud { right:10px; top:73px; }.player-hud > * { padding:6px 7px; font-size:10px; }.daily-quest { grid-template-columns:auto 1fr auto; }.daily-quest b { font-size:11px; }
   .curriculum-home--room { padding-top:64px; }.room-list-heading { padding:20px 17px; }.room-list-heading h1 { font-size:29px; }.room-area-list > button { grid-template-columns:42px 1fr auto; padding:10px; }.room-area-list i { width:38px; height:38px; }.room-area-list span small { display:none; }.room-area-list em { display:block; font-size:11px; }.room-area-list em b { display:none; }.cafe-required-banner { align-items:flex-start; }
@@ -1631,9 +1631,9 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 /* Final title-size overrides */
-.onboarding-greeting h1{font-size:clamp(34px,4.4vw,54px);letter-spacing:-3px}
+.onboarding-greeting h1{font-size:clamp(28px,3vw,38px);letter-spacing:-2px}
 .home-room-copy h1{margin-bottom:24px;font-size:clamp(34px,4.2vw,52px);letter-spacing:-3px}
-@media(max-width:760px){.onboarding-greeting h1{font-size:32px;letter-spacing:-2px}.home-room-copy h1{font-size:30px;letter-spacing:-2px}}
+@media(max-width:760px){.onboarding-greeting h1{font-size:28px;letter-spacing:-1.5px}.home-room-copy h1{font-size:30px;letter-spacing:-2px}}
 
 /* Figma fidelity pass: the café photo is context, the exercise canvas stays unchanged. */
 .figma-cafe{

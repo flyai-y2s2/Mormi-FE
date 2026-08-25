@@ -38,7 +38,7 @@ function PasswordReveal({ visible, onToggle }: { visible: boolean; onToggle: () 
 function RoleChooser({ onChoose }: { onChoose: (role: SignupRole) => void }) {
   return <main className="signup-role-scene">
     <section className="signup-role-card" aria-labelledby="signup-role-title">
-      <Image src="/ui/igeonaega-logo.png" alt="이제 거꾸로, 내가 가르칠게. 이거, 내가!" width={520} height={292} priority />
+      <Image src="/ui/iam-sam.png" alt="I AM 쌤" width={1920} height={819} sizes="(max-width: 560px) 240px, 330px" priority />
       <p className="eyebrow">처음 오셨나요?</p>
       <h1 id="signup-role-title">어떤 모습으로 함께할까요?</h1>
       <p>학생은 모르미와 수학을 배우고, 선생님은 학급과 학습 기록을 관리해요.</p>

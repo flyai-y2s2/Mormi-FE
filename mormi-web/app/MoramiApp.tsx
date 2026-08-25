@@ -1059,15 +1059,15 @@ function Onboarding({ onSignup, onLogin }: {
       <div className="onboarding-greeting">
         <Image
           className="onboarding-brand"
-          src="/ui/igeonaega-logo.png"
-          alt="이제 거꾸로, 내가 가르칠게. 이거, 내가!"
-          width={1000}
-          height={562}
-          sizes="(max-width: 760px) 250px, 360px"
+          src="/ui/iam-sam.png"
+          alt="I AM 쌤"
+          width={1920}
+          height={819}
+          sizes="(max-width: 760px) 210px, 300px"
           priority
         />
         <h1>안녕, 나 모르미야!</h1>
-        <p>우리 집에서 준비하고 같이 카페에 가자.</p>
+        <p>오늘 물어보고 싶은 게 많아!</p>
         {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}
         <div className="onboarding-greeting__actions">
           <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>

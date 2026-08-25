@@ -14,23 +14,33 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the Morami onboarding", async () => {
+test("server-renders the progress bootstrap before the Morami onboarding", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /안녕,/);
-  assert.match(html, /나 모르미야!/);
-  assert.match(html, /igeonaega-logo\.png/);
-  assert.match(html, /이제 거꾸로, 내가 가르칠게\. 이거, 내가!/);
-  // 첫 화면에서 가입과 로그인이 모두 열려 있어야 한다. 기기를 바꾼 아이가
-  // 가입 흐름을 끝까지 밟은 뒤에야 로그인을 찾게 되면 새 계정이 만들어진다.
-  // 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이므로 기본 버튼은 로그인이 쓴다.
-  assert.match(html, /로그인하기/);
-  assert.match(html, /처음 왔어요/);
-  assert.match(html, /onboarding-greeting__actions/);
+  assert.match(html, /모르미가 준비하고 있어!/);
+  assert.match(html, /하던 곳으로 데려다 줄게\./);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
+});
+
+test("uses the I AM teacher brand across onboarding and signup", async () => {
+  const [app, signup] = await Promise.all([
+    readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/signup/SignupExperience.tsx", import.meta.url), "utf8"),
+  ]);
+
+  for (const source of [app, signup]) {
+    assert.match(source, /\/ui\/iam-sam\.png/);
+    assert.match(source, /alt="I AM 쌤"/);
+    assert.doesNotMatch(source, /\/ui\/igeonaega-logo\.png/);
+  }
+  assert.match(app, /안녕, 나 모르미야!/);
+  assert.match(app, /오늘 물어보고 싶은 게 많아!/);
+  assert.match(app, /로그인하기/);
+  assert.match(app, /처음 왔어요/);
+  assert.match(app, /onboarding-greeting__actions/);
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {
@@ -65,11 +75,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(curriculum, /const fillSentence = \[fillBefore, "\(.+\)", fillAfter\]/);
   // 반복학습용 정적 문항에도 대화 API와 같은 카피 품질 계약을 적용한다.
   assert.doesNotMatch(curriculum, /어떤 방법이 맞을까|퍼진 넓이|느낌으로|눈대중|한눈에 대충|색만 보기|크기만 보기/);
-  assert.match(app, /useState<Stage>\("onboarding"\)/);
+  assert.match(app, /useState<Stage>\("booting"\)/);
   assert.match(app, /onboarding-secondary onboarding-secondary--button[\s\S]{0,200}>처음 시작하는 거예요/);
   assert.match(css, /\.onboarding-greeting \{[^}]*width:min\(650px,100%\)/);
-  assert.match(css, /\.onboarding-brand \{[^}]*width:min\(360px,80%\)[^}]*height:auto/);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.onboarding-brand \{[^}]*width:min\(250px,86%\)/);
+  assert.match(css, /\.onboarding-brand \{[^}]*width:min\(300px,72%\)[^}]*height:auto/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.onboarding-brand \{[^}]*width:min\(210px,76%\)/);
   assert.match(css, /\.onboarding-greeting__actions \{[^}]*grid-template-columns:minmax\(0,1\.35fr\) minmax\(0,\.9fr\)/);
   assert.match(css, /\.onboarding-greeting__actions \.onboarding-secondary \{[^}]*min-height:76px[^}]*font-size:18px/);
   assert.match(css, /\.onboarding-name-card \.onboarding-secondary--button \{[^}]*min-height:64px[^}]*font-size:17px[^}]*text-decoration:none/);
