@@ -75,7 +75,7 @@ test("이전·궁금해 사전 버튼은 놀이동산과 카페의 가운데 학
   assert.match(talkStage, /cafe-talk-toolbar[\s\S]*cafe-talk-back[\s\S]*cafe-talk-note[\s\S]*cafe-talk-flow/);
   assert.match(css, /\.cafe-talk-toolbar\{\s*width:min\(600px,calc\(100% - 56px\)\)/);
   assert.match(css, /\.cafe-talk-toolbar\{[^}]*left:50%[^}]*transform:translateX\(-50%\)/);
-  assert.doesNotMatch(css, /\.park-cafe-talk \.cafe-talk-toolbar\s*\{\s*position:\s*absolute/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar\s*\{[^}]*position:\s*absolute/);
 });
 
 test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
@@ -101,17 +101,29 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
   assert.match(css, /\.figma-park-map\{background:rgba\(255,251,243,\.88\);backdrop-filter:blur\(8px\)\}/);
   assert.match(component, /className="park-cafe-talk__background" src="\/amusement-park\/park-map\.png"/);
   assert.doesNotMatch(component, /className="park-cafe-talk__background" src=\{visual\.image_url\}/);
-  assert.match(talkWash, /width: min\(648px, calc\(100% - 24px\)\);/);
-  assert.match(talkWash, /height: min\(900px, calc\(100svh - 24px\)\);/);
-  assert.match(talkWash, /backdrop-filter: blur\(8px\);/);
+  assert.match(talkWash, /width: min\(576px, calc\(100% - 20px\)\);/);
+  assert.match(talkWash, /height: min\(620px, calc\(100svh - 76px\)\);/);
+  assert.match(talkWash, /bottom: 0;/);
+  assert.match(talkWash, /backdrop-filter: blur\(6px\);/);
   assert.match(talkWash, /mask-image: radial-gradient/);
   assert.doesNotMatch(talkWash, /border(?:-radius)?:/);
   assert.doesNotMatch(talkWash, /box-shadow:/);
   assert.doesNotMatch(talkWash, /inset:\s*0/);
   assert.match(talkPanel, /width:\s*100%/);
+  assert.match(talkPanel, /padding:\s*0/);
   assert.match(talkPanel, /border:\s*0/);
   assert.match(talkPanel, /border-radius:\s*0/);
   assert.match(talkPanel, /box-shadow:\s*none/);
+});
+
+test("놀이동산 문제 묶음은 작은 폭으로 화면 아래 입력창까지 붙여 배치한다", () => {
+  const flow = css.match(/\.park-cafe-talk \.cafe-talk-flow\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(flow, /padding: 92px 18px 18px;/);
+  assert.match(flow, /justify-content: flex-end;/);
+  assert.match(flow, /gap: 9px;/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar,[\s\S]*?width: min\(540px, calc\(100% - 20px\)\);/);
+  assert.match(css, /\.park-cafe-talk \.park-problem__element\s*\{[^}]*height: clamp\(104px, 15vh, 148px\);/);
+  assert.match(css, /\.park-cafe-talk \.cafe-talk-answer \.cafe-ai-followup input,[\s\S]*?min-height: 54px;/);
 });
 
 test("BE·AI가 놀이동산 계약을 거부해도 홈 반복학습 오류 문구를 노출하지 않는다", async () => {
