@@ -1920,14 +1920,8 @@ export function MoramiApp() {
     setActiveCafeVisitId(snapshot.active_cafe_visit_id ?? null);
     refreshThemes();
 
-    // 다른 기기에서 풀던 세션이 남아 있으면 그 화면까지 되돌린다.
-    if (snapshot.active_learning_session_id) {
-      await restoreLearningSession(snapshot.active_learning_session_id)
-        .catch((error: unknown) => {
-          console.warn("[mormi-api] 학습 세션 복구 실패", error);
-          return false;
-        });
-    }
+    // 로그인은 항상 집에서 시작한다. 서버의 진행 중 세션은 기록으로만 유지하고,
+    // 아이가 로그인하자마자 이전 문제 화면으로 강제 이동시키지 않는다.
   }
 
   async function handleSignup(name: string, researchCode: string, loginId: string, password: string) {
