@@ -1214,22 +1214,12 @@ function HomeHub({ characterName, completedSessionIds, coinBalance, onNameCharac
             <h1>오늘은 어떤 걸 할까?</h1>
             <div className="home-main-actions">
               <button onClick={onCurriculum}><span><UiIcon name="home" size="large" /></span><b>집에서 복습하기</b></button>
+              <button onClick={onOutside}><span><UiIcon name={unlocked ? "cafe" : "lock"} size="large" /></span><b>외출하기</b></button>
             </div>
           </div>
         </div>
         <div className="home-room-character-column">
-          <div className="home-room-scene-objects">
-            <button
-              type="button"
-              className={`home-exit-door ${unlocked ? "is-ready" : "is-locked"}`}
-              onClick={onOutside}
-              aria-label="외출 장소 보기"
-            >
-              <Image src="/home/exit-door-v1.png" alt="" width={1024} height={1536} unoptimized />
-              <span><UiIcon name={unlocked ? "cafe" : "lock"} size="small" />외출하기</span>
-            </button>
-            <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
-          </div>
+          <div className="home-room-morami"><Morami expression={unlocked ? "celebrate" : "bright"} /></div>
           {characterName
             ? <button type="button" className="home-character-name" onClick={onNameCharacter} aria-label={`${characterName} 이름 바꾸기`}><small>이름</small><strong>{characterName}</strong><span>이름 바꾸기</span></button>
             : <button type="button" className="home-character-name home-character-name--empty" onClick={onNameCharacter}>이름 지어주기 <span className="button-arrow" /></button>}
