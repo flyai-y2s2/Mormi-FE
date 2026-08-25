@@ -3023,6 +3023,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 /* 홈 캐릭터 이름표: 이름이 없을 때만 명확한 행동 버튼, 있으면 조용한 이름표로 보인다. */
 .home-room-copy-column{gap:clamp(20px,2.4vw,30px)}
 .home-room-character-column{grid-template-rows:minmax(0,1fr) auto!important;align-content:end;justify-items:center}
+.home-room-morami .morami-frame{width:min(30vw,360px);height:min(46vh,430px)}
 .home-character-name{
   min-width:190px;min-height:64px;margin:-10px 0 13px;padding:10px 20px;z-index:3;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:16px;
   border:2px solid #b6dfca;border-radius:22px;color:#29513f;background:rgba(255,255,255,.95);box-shadow:0 7px 0 #cce7da,0 14px 25px rgba(48,75,61,.12);cursor:pointer;font:inherit;text-align:left
@@ -3042,6 +3043,10 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   .onboarding-scene.onboarding-scene--welcome{min-height:100svh;padding:20px;display:grid;place-items:center}
   .onboarding-welcome-card{margin:0;padding:34px 20px;text-align:center}.onboarding-welcome-card .onboarding-brand{width:min(330px,90%);margin-bottom:27px}
   .home-room-copy-column{gap:16px}
+  .home-room-morami .morami-frame{width:155px;height:205px}
   .home-character-name{min-width:175px;margin-top:-16px}
   .character-name-backdrop{align-items:end;padding:8px}.character-name-modal{padding:27px 18px 30px;grid-template-columns:1fr;gap:0;border-radius:30px}.character-name-modal>img{width:125px;height:132px;margin:-8px auto 0}.character-name-modal h2{margin-bottom:18px;text-align:center}.character-name-modal p{text-align:center}
+}
+@media(max-width:560px){
+  .home-room-morami .morami-frame{width:195px;height:230px}
 }
