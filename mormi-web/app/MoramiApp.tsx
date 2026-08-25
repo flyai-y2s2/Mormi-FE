@@ -286,6 +286,9 @@ function CalendarVisual({ month, highlight, note }: { month: number; highlight: 
 }
 
 function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "money-practice" }> }) {
+  const singleItemPrice = visual.items?.length === 1 ? visual.facts.find((fact) => fact.value.includes("원"))?.value : undefined;
+  const singleItemCount = visual.items?.length === 1 ? visual.facts.find((fact) => !fact.value.includes("원") && /\d/.test(fact.value))?.value : undefined;
+
   return (
     <figure className="money-practice-visual" aria-label={visual.imageAlt}>
       {visual.items?.length ? (
@@ -293,8 +296,9 @@ function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "mone
           {visual.items.map((item) => (
             <div key={`${item.image}-${item.label}-${item.count}`}>
               <Image src={item.image} alt="" width={210} height={160} unoptimized />
+              {singleItemPrice && <span className="money-practice-item-price">{singleItemPrice}</span>}
               <strong>{item.label}</strong>
-              {item.count > 1 && <small>{item.count}개</small>}
+              {(singleItemCount || item.count > 1) && <small>{singleItemCount ?? `${item.count}개`}</small>}
             </div>
           ))}
         </div>
@@ -1331,6 +1335,8 @@ export function MoramiApp() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [expression, setExpression] = useState<Expression>("happy");
   const [dialogue, setDialogue] = useState(sessions[0].memoryDialogue);
+  const [showCafeConcepts, setShowCafeConcepts] = useState(false);
+  const [showAmusementConcepts, setShowAmusementConcepts] = useState(false);
   const [showOtherConcepts, setShowOtherConcepts] = useState(false);
   const soundOn = true;
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
@@ -2092,12 +2098,16 @@ export function MoramiApp() {
             <>
               <div className="room-list-heading room-list-heading--curriculum"><h1>집에서 복습하기</h1></div>
               <section className="cafe-required-lessons">
-                <div><strong><UiIcon name="cafe" size="small" /> 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료</span></div>
-                {cafeConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{cafeRequiredConceptTitles[session.id as keyof typeof cafeRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                <div><strong><UiIcon name="cafe" size="small" /> 카페 필수 개념</strong><span>{cafeConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{cafeConceptSessions.length} 완료 <button type="button" className="required-lessons-toggle" onClick={() => setShowCafeConcepts((current) => !current)} aria-expanded={showCafeConcepts} aria-controls="cafe-required-concepts">{showCafeConcepts ? "접기" : "펼치기"}<i aria-hidden="true">{showCafeConcepts ? "⌃" : "⌄"}</i></button></span></div>
+                <div id="cafe-required-concepts" className="required-lessons-list" hidden={!showCafeConcepts}>
+                  {cafeConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : cafeConceptSessions.indexOf(session) + 1}</i><span><b>{cafeRequiredConceptTitles[session.id as keyof typeof cafeRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                </div>
               </section>
               <section className="cafe-required-lessons amusement-required-lessons">
-                <div><strong><span aria-hidden="true">🎡</span> 놀이동산 필수 개념</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료</span></div>
-                {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><Image className="required-lesson-image" src={amusementParkRequiredConceptImages[session.id as keyof typeof amusementParkRequiredConceptImages]} alt="" width={72} height={72} unoptimized /><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                <div><strong><span aria-hidden="true">🎡</span> 놀이동산 필수 개념</strong><span>{amusementParkConceptSessions.filter((session) => completedSessionIds.includes(session.id)).length}/{amusementParkConceptSessions.length} 완료 <button type="button" className="required-lessons-toggle" onClick={() => setShowAmusementConcepts((current) => !current)} aria-expanded={showAmusementConcepts} aria-controls="amusement-required-concepts">{showAmusementConcepts ? "접기" : "펼치기"}<i aria-hidden="true">{showAmusementConcepts ? "⌃" : "⌄"}</i></button></span></div>
+                <div id="amusement-required-concepts" className="required-lessons-list" hidden={!showAmusementConcepts}>
+                  {amusementParkConceptSessions.map((session) => <button key={session.id} className={`${completedSessionIds.includes(session.id) ? "is-complete" : ""}${session.id === nextAmusementConceptId ? " is-next" : ""}`.trim()} onClick={() => openSession(sessions.findIndex((candidate) => candidate.id === session.id))}><i>{completedSessionIds.includes(session.id) ? "✓" : amusementParkConceptSessions.indexOf(session) + 1}</i><Image className="required-lesson-image" src={amusementParkRequiredConceptImages[session.id as keyof typeof amusementParkRequiredConceptImages]} alt="" width={72} height={72} unoptimized /><span><b>{amusementParkRequiredConceptTitles[session.id as keyof typeof amusementParkRequiredConceptTitles]}</b></span><em>{completedSessionIds.includes(session.id) ? "완료" : "연습하기"}</em></button>)}
+                </div>
               </section>
               <button className="other-concepts-toggle" onClick={() => setShowOtherConcepts((current) => !current)} aria-expanded={showOtherConcepts}>{showOtherConcepts ? "다른 개념 접기" : `다른 개념 더보기 (${otherConceptSessions.length})`}<span>{showOtherConcepts ? "⌃" : "⌄"}</span></button>
               {showOtherConcepts && <div className="room-area-list other-concepts-list">

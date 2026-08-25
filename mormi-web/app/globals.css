@@ -1152,8 +1152,9 @@ button:focus-visible, a:focus-visible { outline: 4px solid rgba(66, 165, 128, 0.
 .money-practice-items { width:100%; min-height:220px; display:flex; align-items:center; justify-content:center; gap:18px; }
 .money-practice-items > div { min-width:0; max-width:210px; flex:1 1 0; position:relative; display:grid; justify-items:center; gap:3px; }
 .money-practice-items img { width:100%; height:170px; object-fit:contain; border-radius:18px; }
+.money-practice-item-price { min-height:36px; padding:5px 12px; position:absolute; left:2px; top:2px; display:grid; place-items:center; border:3px solid #fff; border-radius:999px; color:#2d7257; background:#fff7d8; box-shadow:0 4px 10px rgba(47,103,82,.18); font-size:17px; font-weight:950; }
 .money-practice-items strong { max-width:100%; overflow:hidden; color:#355f4f; font-size:15px; font-weight:950; text-overflow:ellipsis; white-space:nowrap; }
-.money-practice-items small { min-width:38px; min-height:38px; padding:4px 8px; position:absolute; right:2px; top:2px; display:grid; place-items:center; border:3px solid #fff; border-radius:999px; color:#fff; background:#5ead82; box-shadow:0 4px 10px rgba(47,103,82,.18); font-size:13px; font-weight:950; }
+.money-practice-items small { min-width:50px; min-height:50px; padding:5px 10px; position:absolute; right:2px; top:2px; display:grid; place-items:center; border:3px solid #fff; border-radius:999px; color:#fff; background:#5ead82; box-shadow:0 4px 10px rgba(47,103,82,.18); font-size:18px; font-weight:950; }
 .price-row { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; }
 .price-card { min-width:145px; min-height:145px; padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:3px solid #d9eadf; border-radius:24px; background:white; box-shadow:0 7px 0 #d7e7de; }
 .price-card > img { width:82px; height:62px; object-fit:contain; border-radius:14px; }
@@ -1599,7 +1600,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .player-hud { padding:7px; position:absolute; right:38px; top:20px; z-index:25; display:flex; align-items:center; gap:5px; border:2px solid rgba(66,91,79,.1); border-radius:18px; background:rgba(255,255,255,.92); box-shadow:0 10px 28px rgba(48,67,58,.15); }.player-hud > * { min-height:34px; padding:7px 11px; display:flex; align-items:center; border-radius:12px; font-size:12px; }.player-hud span { color:#fff; background:#4ca87e; font-weight:950; }.player-hud b { color:#8b681d; background:#fff4c7; }.player-hud strong { color:#475951; background:#eef4f1; }.daily-quest { margin:-10px 0 20px; padding:10px 13px; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; border:2px solid #edc85f; border-radius:17px; color:#66521c; background:linear-gradient(90deg,#fff3b9,#fff9df); }.daily-quest span { padding:4px 7px; border-radius:8px; color:#fff; background:#d79b2d; font-size:10px; font-weight:950; }.daily-quest b { font-size:13px; }.daily-quest strong { min-width:42px; text-align:center; }
 
 .curriculum-home--room { max-width:1000px; min-height:calc(100svh - 88px); padding-top:46px; position:relative; }.room-list-heading { margin-bottom:18px; padding:25px 30px; border-radius:28px; background:rgba(255,252,245,.93); box-shadow:0 15px 42px rgba(51,70,60,.14); }.room-list-heading h1 { margin:2px 0 5px; font-size:38px; letter-spacing:-2px; }.room-list-heading > p:last-child { margin:0; color:#697970; }.room-area-list { display:grid; gap:10px; }.room-area-list > button { min-height:88px; padding:12px 18px; display:grid; grid-template-columns:50px 1fr auto; align-items:center; gap:14px; border:2px solid rgba(68,89,79,.1); border-left:8px solid var(--area-color); border-radius:22px; color:#294239; background:rgba(255,255,255,.94); box-shadow:0 10px 26px rgba(52,72,62,.1); cursor:pointer; text-align:left; }.room-area-list i { width:46px; height:46px; display:grid; place-items:center; border-radius:15px; color:#fff; background:var(--area-color); font-style:normal; font-weight:950; }.room-area-list span b,.room-area-list span small,.room-area-list span mark { display:block; }.room-area-list span b { font-size:19px; }.room-area-list span small { color:#7a8981; font-size:11px; }.room-area-list span mark { width:max-content; margin-top:5px; padding:4px 8px; border-radius:999px; color:#1d684d; background:#dff6e9; font-size:10px; font-weight:950; }.room-area-list em { display:flex; align-items:center; gap:12px; color:var(--area-color); font-style:normal; font-weight:950; }.room-area-list em b { font-size:28px; }.area-detail--room { max-width:860px; }.cafe-required-banner { margin:12px 0; padding:14px 17px; display:flex; align-items:center; gap:13px; border:3px solid #75c69f; border-radius:20px; color:#285d48; background:#e8faf1; box-shadow:0 8px 22px rgba(45,112,83,.1); }.cafe-required-banner > span { font-size:30px; }.cafe-required-banner b { font-size:15px; }.cafe-required-banner p { margin:2px 0 0; font-size:12px; }.cafe-course-mark { width:max-content; margin:6px 0 0; padding:5px 9px; display:block; color:#176044; background:#dff6e9; border:1px solid #7cc8a3; font-size:10px; }.math-course-list button:has(.cafe-course-mark) { border:3px solid #73c69e; background:#f3fff8; }.math-course-list button:has(.cafe-course-mark) > i { background:#dff6e9; }
-.cafe-required-lessons { margin:14px 0 20px; padding:14px; display:grid; gap:8px; border:4px solid #64bb91; border-radius:26px; background:rgba(239,255,247,.96); box-shadow:0 14px 36px rgba(39,105,76,.15); }.cafe-required-lessons > div:first-child { padding:2px 5px 7px; display:flex; align-items:center; justify-content:space-between; }.cafe-required-lessons > div:first-child strong { font-size:20px; }.cafe-required-lessons > div:first-child span { color:#267455; font-size:13px; font-weight:950; }.cafe-required-lessons > button { min-height:78px; padding:10px 12px; display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:11px; border:3px solid #73c69e; border-radius:18px; color:#29463b; background:#fff; cursor:pointer; text-align:left; }.cafe-required-lessons > button > i { width:40px; height:40px; display:grid; place-items:center; border-radius:13px; color:#237150; background:#dff6e9; font-style:normal; font-weight:950; }.cafe-required-lessons > button span b,.cafe-required-lessons > button span small { display:block; }.cafe-required-lessons > button span b { font-size:16px; }.cafe-required-lessons > button span small { color:#7a8981; font-size:10px; }.cafe-required-lessons > button em { color:#267455; font-size:12px; font-style:normal; font-weight:950; }.cafe-required-lessons > button.is-complete > i { color:#fff; background:#3e9f72; }
+.cafe-required-lessons { margin:14px 0 20px; padding:14px; display:grid; gap:8px; border:4px solid #64bb91; border-radius:26px; background:rgba(239,255,247,.96); box-shadow:0 14px 36px rgba(39,105,76,.15); }.cafe-required-lessons > div:first-child { padding:2px 5px 7px; display:flex; align-items:center; justify-content:space-between; }.cafe-required-lessons > div:first-child strong { font-size:20px; }.cafe-required-lessons > div:first-child span { color:#267455; font-size:13px; font-weight:950; }
 .other-concepts-toggle{width:100%;min-height:62px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;border:3px solid #fff;border-radius:19px;color:#617169;background:rgba(255,255,255,.84);box-shadow:0 6px 0 #d7ddd8;font-size:15px;font-weight:950}.other-concepts-toggle span{font-size:22px}.other-concepts-list{margin-top:16px}.other-concepts-list>button{opacity:.92}
 .curriculum-path-list { position:relative; gap:0; }.curriculum-path-list::before { content:""; width:5px; position:absolute; left:17px; top:32px; bottom:28px; border-radius:5px; background:linear-gradient(#77cba4,#f0cd69,#8d75d4); }.curriculum-path-row { padding:0 0 12px 42px; position:relative; }.curriculum-path-row::before { content:""; width:17px; height:17px; position:absolute; left:11px; top:43px; z-index:2; border:4px solid #fff; border-radius:50%; background:var(--area-color); box-shadow:0 0 0 3px color-mix(in srgb,var(--area-color) 30%,transparent); }.curriculum-path-row.is-cafe-quest::before { width:23px; height:23px; left:8px; top:40px; background:#f2ba3e; box-shadow:0 0 0 5px rgba(242,186,62,.22); animation:keyPulse 1.5s ease-in-out infinite alternate; }.curriculum-unit-marker { min-height:34px; display:flex; align-items:center; justify-content:space-between; }.curriculum-unit-marker span { color:#3e5b4f; font-size:17px; font-weight:950; }.curriculum-unit-marker i { padding:4px 7px; border-radius:7px; color:#76877f; background:rgba(255,255,255,.75); font-size:9px; font-style:normal; font-weight:900; }.curriculum-path-row.is-cafe-quest > button { border:4px solid #f0c555; background:linear-gradient(105deg,#fffdf2,#f3fff8); box-shadow:0 8px 0 #e6cc7b,0 14px 30px rgba(69,96,82,.12); }.curriculum-path-row.is-cafe-quest > button > i { color:#76510c; background:#ffe991; }.curriculum-path-row.is-cafe-quest .cafe-course-mark { color:#5f480e; border-color:#e6bd4d; background:#fff2ad; }@keyframes keyPulse { to { transform:scale(1.18); } }
 
@@ -2615,7 +2616,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
    나중에 어디를 되돌려야 하는지 알기 어려워진다. */
 .journey-hub--outside .destination-card { min-height:396px; }
 .journey-hub--outside .outside-scene-head h1 { font-size:39px; }
-.cafe-required-lessons > button { min-height:70px; }
+.required-lessons-list > button { min-height:70px; }
 .room-list-heading { margin-bottom:6px; }
 .cafe-required-lessons { margin-bottom:6px; }
 
@@ -2663,65 +2664,72 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 .cafe-required-lessons > div:first-child { padding:1px 6px 8px; }
 .cafe-required-lessons > div:first-child strong { font-size:18px; }
+.cafe-required-lessons > div:first-child > span { display:flex; align-items:center; gap:9px; }
+.required-lessons-toggle { min-height:36px; padding:6px 11px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(62,159,114,.25); border-radius:999px; color:#267455; background:rgba(255,255,255,.72); cursor:pointer; font:inherit; font-size:12px; font-weight:950; }
+.required-lessons-toggle i { font-style:normal; font-size:15px; line-height:1; }
+.required-lessons-list { display:grid; gap:8px; }
+.required-lessons-list[hidden] { display:none; }
 
-.cafe-required-lessons > button {
+.required-lessons-list > button {
   min-height:80px; padding:12px 14px; gap:13px;
   border:1px solid rgba(62,159,114,.16); border-radius:18px;
   box-shadow:0 1px 0 rgba(39,105,76,.05), 0 4px 12px rgba(39,105,76,.06);
   transition:transform .15s, box-shadow .15s, border-color .15s;
 }
-.cafe-required-lessons > button:hover {
+.required-lessons-list > button:hover {
   transform:translateY(-2px);
   border-color:rgba(62,159,114,.34);
   box-shadow:0 2px 0 rgba(39,105,76,.06), 0 10px 22px rgba(39,105,76,.13);
 }
-.cafe-required-lessons > button:active { transform:translateY(0); }
+.required-lessons-list > button:active { transform:translateY(0); }
 
 /* 설명이 10px 이라 읽히지 않았다. 아이가 읽는 글자다. */
-.cafe-required-lessons > button span b { font-size:17px; letter-spacing:-.4px; }
-.cafe-required-lessons > button span small { margin-top:2px; color:#798b82; font-size:12px; line-height:1.4; }
+.required-lessons-list > button span b { font-size:17px; letter-spacing:-.4px; }
+.required-lessons-list > button span small { margin-top:2px; color:#798b82; font-size:12px; line-height:1.4; }
 
 /* 번호는 중립적으로, 완료는 초록으로 채워 끝난 것이 도드라지게 한다. */
-.cafe-required-lessons > button > i { width:38px; height:38px; border-radius:12px; color:#5b8271; background:#eff5f1; box-shadow:inset 0 0 0 1px rgba(62,159,114,.14); font-size:16px; }
-.cafe-required-lessons > button.is-complete > i { color:#fff; background:linear-gradient(160deg,#5cb98d,#33936a); box-shadow:0 3px 8px rgba(43,132,95,.28); }
+.required-lessons-list > button > i { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; color:#5b8271; background:#eff5f1; box-shadow:inset 0 0 0 1px rgba(62,159,114,.14); font-size:16px; font-style:normal; font-weight:950; }
+.required-lessons-list > button span b,.required-lessons-list > button span small { display:block; }
+.required-lessons-list > button.is-complete > i { color:#fff; background:linear-gradient(160deg,#5cb98d,#33936a); box-shadow:0 3px 8px rgba(43,132,95,.28); }
 
 /* 오른쪽 글자만 있으면 누를 수 있는 것으로 안 보인다. 알약으로 바꾼다. */
-.cafe-required-lessons > button em { padding:7px 13px; border-radius:999px; color:#2c7a5b; background:#eef7f2; font-size:12.5px; }
-.cafe-required-lessons > button.is-complete em { color:#8fa79b; background:transparent; }
+.required-lessons-list > button em { padding:7px 13px; border-radius:999px; color:#2c7a5b; background:#eef7f2; font-size:12.5px; font-style:normal; font-weight:950; }
+.required-lessons-list > button.is-complete em { color:#8fa79b; background:transparent; }
 
 /* 다음에 할 하나만 강조한다. 다섯 줄이 같은 무게면 어디를 눌러야 할지 알 수 없다. */
-.cafe-required-lessons > button.is-next {
+.required-lessons-list > button.is-next {
   border-color:rgba(62,159,114,.46);
   box-shadow:0 2px 0 rgba(39,105,76,.07), 0 10px 24px rgba(39,105,76,.15);
 }
-.cafe-required-lessons > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
-.cafe-required-lessons > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
+.required-lessons-list > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
+.required-lessons-list > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
 
 /* 놀이동산 준비 세션은 같은 반복학습 컴포넌트를 사용하되 장소만 색으로 구분한다. */
 .amusement-required-lessons {
   background:linear-gradient(180deg,#fff6df,#fff0d9);
   box-shadow:inset 0 0 0 1px rgba(222,139,76,.18), 0 10px 30px rgba(134,86,42,.09);
 }
-.amusement-required-lessons > button { border-color:rgba(222,139,76,.18); }
-.amusement-required-lessons > button { grid-template-columns:38px 64px minmax(0,1fr) auto; }
+.amusement-required-lessons .required-lessons-list > button { border-color:rgba(222,139,76,.18); }
+.amusement-required-lessons .required-lessons-list > button { grid-template-columns:38px 64px minmax(0,1fr) auto; }
 .amusement-required-lessons .required-lesson-image { width:64px; height:58px; padding:3px; object-fit:contain; border-radius:15px; background:linear-gradient(145deg,#fff,#fff8e8); box-shadow:0 3px 10px rgba(134,86,42,.1); }
-.amusement-required-lessons > button:hover,
-.amusement-required-lessons > button.is-next { border-color:rgba(222,139,76,.44); }
-.amusement-required-lessons > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
-.amusement-required-lessons > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
-.amusement-required-lessons > button em { color:#9c5f38; background:#fff5e9; }
-.amusement-required-lessons > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
+.amusement-required-lessons .required-lessons-list > button:hover,
+.amusement-required-lessons .required-lessons-list > button.is-next { border-color:rgba(222,139,76,.44); }
+.amusement-required-lessons .required-lessons-list > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
+.amusement-required-lessons .required-lessons-list > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
+.amusement-required-lessons .required-lessons-list > button em { color:#9c5f38; background:#fff5e9; }
+.amusement-required-lessons .required-lessons-list > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
 
 @media (max-width:760px) {
   .money-practice-visual { min-height:170px; padding:8px 10px 12px; border-radius:24px; }
   .money-practice-visual > img { height:170px; }
   .money-practice-items { min-height:155px; gap:6px; }
   .money-practice-items img { height:112px; }
+  .money-practice-item-price { min-height:28px; padding:3px 8px; border-width:2px; font-size:12px; }
   .money-practice-items strong { font-size:11px; }
-  .money-practice-items small { min-width:30px; min-height:30px; right:0; top:0; padding:2px 5px; border-width:2px; font-size:11px; }
-  .amusement-required-lessons > button { grid-template-columns:36px 50px minmax(0,1fr); padding:9px; gap:8px; }
+  .money-practice-items small { min-width:38px; min-height:38px; right:0; top:0; padding:3px 6px; border-width:2px; font-size:13px; }
+  .amusement-required-lessons .required-lessons-list > button { grid-template-columns:36px 50px minmax(0,1fr); padding:9px; gap:8px; }
   .amusement-required-lessons .required-lesson-image { width:50px; height:48px; }
-  .amusement-required-lessons > button em { grid-column:3; justify-self:start; }
+  .amusement-required-lessons .required-lessons-list > button em { grid-column:3; justify-self:start; }
 }
 
 /* 간격 리듬. 큰 덩어리 사이(제목박스·목록·더보기)를 안쪽 여백보다 넓게 잡아야
@@ -2733,7 +2741,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .cafe-required-lessons { margin-bottom:14px; }
 .cafe-required-lessons > div:first-child { padding:2px 6px 11px; }
 /* 남은 번호가 거의 안 보였다. 완료(초록)와는 구분하되 존재감은 준다. */
-.cafe-required-lessons > button > i { color:#4a7263; background:#e6efe9; box-shadow:inset 0 0 0 1px rgba(62,159,114,.2); }
+.required-lessons-list > button > i { color:#4a7263; background:#e6efe9; box-shadow:inset 0 0 0 1px rgba(62,159,114,.2); }
 .curriculum-home--room { padding-bottom:14px; }
 
 /* 항목 폭이 918px 이라 제목(왼쪽 끝)과 버튼(오른쪽 끝) 사이가 600px 넘게 비었다.

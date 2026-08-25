@@ -16,7 +16,6 @@ export const cafeRequiredSessionIds = [
  */
 export const amusementParkRequiredSessionIds = [
   "multiply-groups",
-  "multiply-addition",
   "divide-share",
   "divide-group",
   "multiply-easy-tables",
@@ -24,24 +23,22 @@ export const amusementParkRequiredSessionIds = [
 
 /** 장소 카드에서는 교과서식 세션명보다 다음 미션에서 바로 할 행동을 보여 준다. */
 export const cafeRequiredConceptTitles: Record<(typeof cafeRequiredSessionIds)[number], string> = {
-  "number-count": "사람 수 차례대로 세기",
-  "number-compare": "더 적은 줄 찾기",
-  "money-count": "돈의 값 합쳐 세기",
-  "money-price": "두 메뉴값 더하기",
+  "number-count": "수 세기",
+  "number-compare": "수 비교하기",
+  "money-count": "돈 세기",
+  "money-price": "물건값 더하기",
   "money-budget": "예산 안에서 고르기",
 };
 
 export const amusementParkRequiredConceptTitles: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
-  "multiply-groups": "가격과 개수를 곱해 전체 값 구하기",
-  "multiply-addition": "같은 가격을 이어 더해 확인하기",
-  "divide-share": "간식값을 사람 수로 똑같이 나누기",
-  "divide-group": "예산으로 살 수 있는 개수 구하기",
-  "multiply-easy-tables": "여러 물건값을 계산하고 예산과 비교하기",
+  "multiply-groups": "가격과 개수를 곱해요",
+  "divide-share": "간식값을 똑같이 나눠요",
+  "divide-group": "예산으로 살 수 있는 개수를 찾아요",
+  "multiply-easy-tables": "여러 물건값과 예산을 비교해요",
 };
 
 export const amusementParkRequiredConceptImages: Record<(typeof amusementParkRequiredSessionIds)[number], string> = {
   "multiply-groups": "/life-missions/money-practice/ticket-party.png",
-  "multiply-addition": "/life-missions/money-practice/snack-repeat.png",
   "divide-share": "/life-missions/money-practice/squishy-share.png",
   "divide-group": "/life-missions/money-practice/keychain-budget.png",
   "multiply-easy-tables": "/life-missions/money-practice/mixed-purchase.png",

@@ -14,15 +14,21 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(curriculum, /room-list-heading room-list-heading--curriculum"><h1>집에서 복습하기<\/h1>/);
   assert.doesNotMatch(curriculum, /생활에 필요한 개념부터 배워요|밖에서도 자연스럽게 사용할 수 있도록 반복학습으로 준비해요/);
   assert.doesNotMatch(curriculum, /줄의 사람을 1~5명까지 정확히 세어요|두 줄 중 사람이 더 적은 쪽을 찾아요|같은 수를 여러 번 더하는 방법을 익혀요/);
-  assert.match(journey, /"number-count": "사람 수 차례대로 세기"/);
+  assert.match(journey, /"number-count": "수 세기"/);
+  assert.match(journey, /"number-compare": "수 비교하기"/);
+  assert.match(journey, /"money-count": "돈 세기"/);
+  assert.match(journey, /"money-price": "물건값 더하기"/);
   assert.match(journey, /"money-budget": "예산 안에서 고르기"/);
-  assert.match(journey, /amusementParkRequiredSessionIds = \[\s*"multiply-groups",\s*"multiply-addition",\s*"divide-share",\s*"divide-group",\s*"multiply-easy-tables"/);
-  assert.match(journey, /"multiply-groups": "가격과 개수를 곱해 전체 값 구하기"/);
-  assert.match(journey, /"multiply-addition": "같은 가격을 이어 더해 확인하기"/);
-  assert.match(journey, /"divide-share": "간식값을 사람 수로 똑같이 나누기"/);
-  assert.match(journey, /"divide-group": "예산으로 살 수 있는 개수 구하기"/);
-  assert.match(journey, /"multiply-easy-tables": "여러 물건값을 계산하고 예산과 비교하기"/);
+  assert.match(journey, /amusementParkRequiredSessionIds = \[\s*"multiply-groups",\s*"divide-share",\s*"divide-group",\s*"multiply-easy-tables"/);
+  assert.doesNotMatch(journey.slice(journey.indexOf("amusementParkRequiredSessionIds"), journey.indexOf("outsideRequiredSessionIds")), /multiply-addition/);
+  assert.match(journey, /"multiply-groups": "가격과 개수를 곱해요"/);
+  assert.match(journey, /"divide-share": "간식값을 똑같이 나눠요"/);
+  assert.match(journey, /"divide-group": "예산으로 살 수 있는 개수를 찾아요"/);
+  assert.match(journey, /"multiply-easy-tables": "여러 물건값과 예산을 비교해요"/);
   assert.match(journey, /amusementParkRequiredConceptImages/);
+  assert.match(curriculum, /className="required-lessons-toggle"/);
+  assert.match(curriculum, /aria-controls="cafe-required-concepts"/);
+  assert.match(curriculum, /aria-controls="amusement-required-concepts"/);
 });
 
 test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 카드로 연결된다", async () => {
@@ -36,7 +42,9 @@ test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 
   assert.match(app, /function MoneyPracticeVisual/);
   const visual = app.slice(app.indexOf("function MoneyPracticeVisual"), app.indexOf("function LearningVisual"));
   assert.match(visual, /<figure className="money-practice-visual"/);
-  assert.doesNotMatch(visual, /visual\.badge|visual\.facts|visual\.equation|money-practice-facts/);
+  assert.match(visual, /singleItemPrice/);
+  assert.match(visual, /singleItemCount/);
+  assert.match(visual, /money-practice-item-price/);
   assert.match(app, /amusementParkRequiredConceptImages/);
   assert.match(curriculum, /unit: "돈 계산 곱셈"/);
   assert.match(curriculum, /unit: "돈 계산 나눗셈"/);
