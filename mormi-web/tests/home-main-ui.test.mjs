@@ -17,7 +17,8 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(home, /카페가 열렸어요!/);
   assert.match(home, /Math\.min\(level, 4\)/);
   assert.match(home, /level > 4/);
-  assert.match(home, /<div className="home-room-main">\s*<div className="player-hud"/);
+  assert.match(home, /<div className="home-room-main">\s*<div className="home-room-copy-column">\s*<div className="player-hud"/);
+  assert.match(home, /<div className="player-hud"[\s\S]*?<\/button>\s*<\/div>\s*<div className="home-room-copy">\s*<h1>오늘은 어떤 걸 할까\?<\/h1>/);
   assert.match(home, /<div className="player-stat player-stat--level"/);
   assert.match(home, /<div className="player-wallet">/);
   assert.match(home, /<button type="button" className="player-stat player-stat--star"[\s\S]{0,240}aria-haspopup="dialog"/);

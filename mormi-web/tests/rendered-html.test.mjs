@@ -243,11 +243,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 오른쪽이 비고 HUD가 두 줄로 커져 아래 모르미가 화면 밖으로 밀린다.
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.player-hud>\.player-wallet\{grid-column:auto;justify-content:center\}/);
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-main\{[^}]*grid-template-columns:minmax\(0,440px\) minmax\(150px,180px\)[^}]*\}/);
-  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-column:1;grid-row:2[^}]*\}[\s\S]*?\.home-room-character-column\{display:contents\}[\s\S]*?\.player-hud\{[^}]*grid-column:1\/3;grid-row:1/);
-  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-morami\{grid-column:2;grid-row:2;/);
-  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-morami\{grid-column:1;grid-row:3\}/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?\.home-room-copy-column\{[^}]*grid-column:1;grid-row:1[^}]*\}[\s\S]*?\.home-room-character-column\{grid-column:2;grid-row:1;display:grid\}/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.home-room-main\{grid-template-columns:1fr\}[\s\S]*?\.home-room-character-column\{grid-column:1;grid-row:2\}/);
   assert.match(css, /@media\(max-width:430px\)[\s\S]*?\.player-hud>\.player-stat--star\{grid-column:1\/3/);
-  assert.match(css, /\.home-room-main>\.player-hud\{[^}]*grid-column:1\/3;grid-row:1/);
+  assert.match(css, /\.home-room-copy-column>\.player-hud\{width:100%;justify-self:stretch\}/);
   assert.match(css, /\.home-room-copy h1\{[^}]*font-size:clamp\(29px,3\.2vw,40px\)/);
   assert.match(journey, /cafe-money\/100\.png/);
   assert.match(journey, /cafe-money\/5000\.png/);
