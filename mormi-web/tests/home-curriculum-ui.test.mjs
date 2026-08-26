@@ -32,9 +32,11 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(curriculum, /aria-controls="cafe-required-concepts"/);
   assert.match(curriculum, /aria-controls="amusement-required-concepts"/);
   assert.match(styles, /\.required-lessons-list > button\.is-next > i \{ color:#2c7a5b; background:transparent; box-shadow:none; \}/);
-  assert.match(styles, /\.required-lessons-list > button\.is-next em \{ color:#2c7a5b; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.required-lessons-list > button\.is-next em \{ border-color:#2f8f68; color:#fff; background:linear-gradient\(160deg,#57bd92,#2f9a70\);/);
+  assert.match(styles, /\.required-lessons-list > button\.is-complete em \{ padding:0; border:0; border-radius:0; color:#8fa79b; background:transparent; box-shadow:none; \}/);
   assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-next > i \{ color:#9c5f38; background:transparent; box-shadow:none; \}/);
-  assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-next em \{ color:#9c5f38; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-next em \{ border-color:#cf6c3d; color:#fff; background:linear-gradient\(160deg,#eea460,#d97746\);/);
+  assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-complete em \{\s*padding:0;\s*border:0;\s*border-radius:0;/);
 });
 
 test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 카드로 연결된다", async () => {
