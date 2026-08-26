@@ -19,11 +19,13 @@ test("캐릭터 이름은 로그인한 학습자별 브라우저 키에 저장�
   assert.match(app, /storeCharacterName\(learner\.id, name\)/);
 });
 
-test("첫 화면은 I AM 쌤 로고와 두 진입 버튼만 표시한다", () => {
+test("첫 화면은 I AM 쌤 로고와 학생·선생님 진입 버튼만 표시한다", () => {
   const welcome = app.slice(app.indexOf('<section className="onboarding-scene onboarding-scene--welcome">'), app.indexOf("function ProfileMenu"));
   assert.match(welcome, /src="\/ui\/iam-sam\.png"/);
   assert.match(welcome, />로그인하기/);
   assert.match(welcome, />처음 왔어요/);
+  assert.match(welcome, /onboarding-teacher-entry/);
+  assert.match(welcome, /> 선생님으로 들어가기/);
   assert.doesNotMatch(welcome, /<Morami|안녕, 나 모르미야|오늘 물어보고 싶은 게 많아/);
 });
 

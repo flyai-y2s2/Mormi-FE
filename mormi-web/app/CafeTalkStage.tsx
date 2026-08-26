@@ -71,46 +71,48 @@ export function CafeTalkStage({
   );
   return (
     <main className="figma-cafe-panel cafe-talk">
-      <div className="cafe-talk-toolbar">
-        <button type="button" className="cafe-talk-back" onClick={onBack}><span aria-hidden="true">←</span> 이전으로</button>
-        {conversation?.conversation_id && <button type="button" className="cafe-talk-note" aria-label="궁금해 사전 열기" onClick={() => setDictionaryOpen(true)}><span className="ui-icon ui-icon--book ui-icon--small" aria-hidden="true"><i /></span> 궁금해 사전</button>}
-      </div>
+      <section className="learning-focus-panel">
+        <div className="cafe-talk-toolbar">
+          <button type="button" className="cafe-talk-back" onClick={onBack}><span aria-hidden="true">←</span> 이전으로</button>
+          {conversation?.conversation_id && <button type="button" className="cafe-talk-note" aria-label="궁금해 사전 열기" onClick={() => setDictionaryOpen(true)}><span className="ui-icon ui-icon--book ui-icon--small" aria-hidden="true"><i /></span> 궁금해 사전</button>}
+        </div>
 
-      <section className="cafe-talk-flow">
-        <section className="cafe-talk-bubble">
-          <Image className="cafe-talk-morami" src={chatImage} alt={`궁금해하는 ${displayName}`} width={300} height={360} unoptimized />
-          <div className="cafe-talk-bubble__text">
-            <b>{displayName}</b>
-            <p>{rename(line || fallbackLine)}</p>
-            {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>{displayName}가 도움 카드를 찾고 있어요…</span></div>}
-            <MormiHelpCard card={helpCard} />
-            {canRequestHelp && (
-              <button
-                type="button"
-                className={`cafe-talk-dont-know${helpLoading ? " is-loading" : ""}`}
-                disabled={sending || helpLoading}
-                aria-busy={helpLoading}
-                onClick={() => onSubmit({ type: "no_response" })}
-              >
-                {helpLoading ? "도움 찾는 중…" : "잘 모르겠어"}
-              </button>
-            )}
-          </div>
+        <section className="cafe-talk-flow">
+          <section className="cafe-talk-bubble">
+            <Image className="cafe-talk-morami" src={chatImage} alt={`궁금해하는 ${displayName}`} width={300} height={360} unoptimized />
+            <div className="cafe-talk-bubble__text">
+              <b>{displayName}</b>
+              <p>{rename(line || fallbackLine)}</p>
+              {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>{displayName}가 도움 카드를 찾고 있어요…</span></div>}
+              <MormiHelpCard card={helpCard} />
+              {canRequestHelp && (
+                <button
+                  type="button"
+                  className={`cafe-talk-dont-know${helpLoading ? " is-loading" : ""}`}
+                  disabled={sending || helpLoading}
+                  aria-busy={helpLoading}
+                  onClick={() => onSubmit({ type: "no_response" })}
+                >
+                  {helpLoading ? "도움 찾는 중…" : "잘 모르겠어"}
+                </button>
+              )}
+            </div>
+          </section>
+          {/* 문제 문구는 모르미 대화에서 이미 물어본다. 그림 위에 같은 질문을 또 두지 않는다. */}
+          <div className="cafe-talk-stage">{children}</div>
+          <aside className="cafe-talk-answer">
+            <CafeDialogueControls
+              conversation={conversation}
+              inputText={inputText}
+              sending={sending}
+              deferChoices={deferChoices}
+              choiceFallbackVisible={choiceFallbackVisible}
+              onInput={onInput}
+              onSubmit={onSubmit}
+              onChoiceFallback={onChoiceFallback}
+            />
+          </aside>
         </section>
-        {/* 문제 문구는 모르미 대화에서 이미 물어본다. 그림 위에 같은 질문을 또 두지 않는다. */}
-        <div className="cafe-talk-stage">{children}</div>
-        <aside className="cafe-talk-answer">
-          <CafeDialogueControls
-            conversation={conversation}
-            inputText={inputText}
-            sending={sending}
-            deferChoices={deferChoices}
-            choiceFallbackVisible={choiceFallbackVisible}
-            onInput={onInput}
-            onSubmit={onSubmit}
-            onChoiceFallback={onChoiceFallback}
-          />
-        </aside>
       </section>
       {dictionaryOpen && conversation?.conversation_id && <DictionaryModal conversationId={conversation.conversation_id} onClose={() => setDictionaryOpen(false)} />}
     </main>

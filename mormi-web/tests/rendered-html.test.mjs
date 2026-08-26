@@ -40,7 +40,9 @@ test("uses the I AM teacher brand across onboarding and signup", async () => {
   assert.doesNotMatch(app, /안녕, 나 모르미야!|오늘 물어보고 싶은 게 많아!/);
   assert.match(app, /로그인하기/);
   assert.match(app, /처음 왔어요/);
+  assert.match(app, /선생님으로 들어가기/);
   assert.match(app, /onboarding-greeting__actions/);
+  assert.match(app, /onboarding-teacher-entry/);
 });
 
 test("keeps four official areas and 36 playable sessions in the curriculum", async () => {

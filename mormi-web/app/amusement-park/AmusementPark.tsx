@@ -243,7 +243,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
 
   return <div className="park-cafe-talk">
     <Image className="park-cafe-talk__background" src="/amusement-park/park-map.png" alt="" fill priority />
-    <div className="park-cafe-talk__wash" />
     <CafeTalkStage
       conversation={conversation}
       line={conversation?.turn.mormi.text}

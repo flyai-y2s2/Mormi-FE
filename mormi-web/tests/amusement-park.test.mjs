@@ -95,21 +95,21 @@ test("놀이동산 지도와 완료 장면은 카페 공통 화면 틀을 사용
 });
 
 test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러를 건다", () => {
-  const talkWash = css.match(/\.park-cafe-talk__wash\s*\{([^}]*)\}/)?.[1] ?? "";
+  const focusPanel = css.match(/\.learning-focus-panel\s*\{([^}]*)\}/)?.[1] ?? "";
   const talkPanel = css.match(/\.park-cafe-talk > \.cafe-talk\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.match(css, /\.figma-park\{\s*background:#f7f1e7 url\('\/amusement-park\/park-map\.png'\)/);
   assert.doesNotMatch(css, /\.figma-park\{\s*background:linear-gradient\(/);
   assert.match(css, /\.figma-park-map\{background:rgba\(255,251,243,\.88\);backdrop-filter:blur\(8px\)\}/);
   assert.match(component, /className="park-cafe-talk__background" src="\/amusement-park\/park-map\.png"/);
   assert.doesNotMatch(component, /className="park-cafe-talk__background" src=\{visual\.image_url\}/);
-  assert.match(talkWash, /width: min\(576px, calc\(100% - 20px\)\);/);
-  assert.match(talkWash, /height: min\(620px, calc\(100svh - 76px\)\);/);
-  assert.match(talkWash, /bottom: 0;/);
-  assert.match(talkWash, /backdrop-filter: blur\(6px\);/);
-  assert.match(talkWash, /mask-image: radial-gradient/);
-  assert.doesNotMatch(talkWash, /border(?:-radius)?:/);
-  assert.doesNotMatch(talkWash, /box-shadow:/);
-  assert.doesNotMatch(talkWash, /inset:\s*0/);
+  assert.match(talkStage, /className="learning-focus-panel"/);
+  assert.doesNotMatch(component, /park-cafe-talk__wash/);
+  assert.doesNotMatch(css, /\.park-cafe-talk__wash\s*\{/);
+  assert.match(focusPanel, /width:min\(860px,calc\(100% - 24px\)\)/);
+  assert.match(focusPanel, /backdrop-filter:blur\(8px\)/);
+  assert.match(focusPanel, /border:0/);
+  assert.match(focusPanel, /box-shadow:none/);
+  assert.doesNotMatch(focusPanel, /inset:\s*0/);
   assert.match(talkPanel, /width:\s*100%/);
   assert.match(talkPanel, /padding:\s*0/);
   assert.match(talkPanel, /border:\s*0/);
@@ -119,7 +119,7 @@ test("놀이동산 배경은 선명하게 두고 중앙 콘텐츠에만 블러�
 
 test("놀이동산 문제 묶음과 상단 버튼은 화면 가운데에 모아 배치한다", () => {
   const flow = css.match(/\.park-cafe-talk \.cafe-talk-flow\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(flow, /padding: 92px 18px 18px;/);
+  assert.match(flow, /padding: 112px 18px 18px;/);
   assert.match(flow, /justify-content: center;/);
   assert.match(flow, /gap: 9px;/);
   assert.match(css, /\.park-cafe-talk \.cafe-talk-toolbar,[\s\S]*?width: min\(540px, calc\(100% - 20px\)\);/);

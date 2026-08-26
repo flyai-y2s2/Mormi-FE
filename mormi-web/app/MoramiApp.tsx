@@ -1122,6 +1122,9 @@ function Onboarding({ onSignup, onLogin }: {
           <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>
           <button type="button" className="onboarding-secondary" onClick={() => window.location.assign("/signup")}>처음 왔어요</button>
         </div>
+        <button type="button" className="onboarding-teacher-entry" onClick={() => goTo("login")}>
+          <span aria-hidden="true">🏫</span> 선생님으로 들어가기
+        </button>
       </div>
     </section>
   );
@@ -2261,11 +2264,12 @@ export function MoramiApp() {
 
       {stage === "teach" && (
         <section className="chat-scene teaching-scene">
-          <div className="chat-title teaching-toolbar">
-            <button className="teaching-back" onClick={() => { setStage("drill"); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="이전 반복학습 화면으로 돌아가기"><span>←</span> 이전으로</button>
-            <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)} aria-label="궁금해 사전 열기"><UiIcon name="book" size="small" /> 궁금해 사전</button>
-          </div>
-          <div className="chat-window teaching-stage">
+          <section className="learning-focus-panel learning-focus-panel--teaching">
+            <div className="chat-title teaching-toolbar">
+              <button className="teaching-back" onClick={() => { setStage("drill"); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="이전 반복학습 화면으로 돌아가기"><span>←</span> 이전으로</button>
+              <button className="dictionary-pill" onClick={() => setDictionaryOpen(true)} aria-label="궁금해 사전 열기"><UiIcon name="book" size="small" /> 궁금해 사전</button>
+            </div>
+            <div className="chat-window teaching-stage">
             {/* 아이는 모르미의 질문을 먼저 읽고 그 다음에 문제를 본다: 말풍선이 위, 문제와 답이 아래. */}
             {hasServerMessagePanel && !teachingComplete && (
               <div className="teaching-talk">
@@ -2330,7 +2334,8 @@ export function MoramiApp() {
                 </div>
               )}
             </div>
-          </div>
+            </div>
+          </section>
         </section>
       )}
 
