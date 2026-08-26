@@ -2804,13 +2804,13 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .required-lessons-list > button span b { font-size:17px; letter-spacing:-.4px; }
 .required-lessons-list > button span small { margin-top:2px; color:#798b82; font-size:12px; line-height:1.4; }
 
-/* 번호는 중립적으로, 완료는 초록으로 채워 끝난 것이 도드라지게 한다. */
-.required-lessons-list > button > i { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; color:#5b8271; background:#eff5f1; box-shadow:inset 0 0 0 1px rgba(62,159,114,.14); font-size:16px; font-style:normal; font-weight:950; }
+/* 미완료 번호와 동작은 채우지 않고, 완료 상태만 색으로 구분한다. */
+.required-lessons-list > button > i { width:38px; height:38px; display:grid; place-items:center; border:1px solid rgba(62,159,114,.25); border-radius:12px; color:#5b8271; background:transparent; box-shadow:none; font-size:16px; font-style:normal; font-weight:950; }
 .required-lessons-list > button span b,.required-lessons-list > button span small { display:block; }
 .required-lessons-list > button.is-complete > i { color:#fff; background:linear-gradient(160deg,#5cb98d,#33936a); box-shadow:0 3px 8px rgba(43,132,95,.28); }
 
 /* 오른쪽 글자만 있으면 누를 수 있는 것으로 안 보인다. 알약으로 바꾼다. */
-.required-lessons-list > button em { padding:7px 13px; border-radius:999px; color:#2c7a5b; background:#eef7f2; font-size:12.5px; font-style:normal; font-weight:950; }
+.required-lessons-list > button em { padding:7px 13px; border:1px solid rgba(62,159,114,.25); border-radius:999px; color:#2c7a5b; background:transparent; font-size:12.5px; font-style:normal; font-weight:950; }
 .required-lessons-list > button.is-complete em { color:#8fa79b; background:transparent; }
 
 /* 다음에 할 하나만 강조한다. 다섯 줄이 같은 무게면 어디를 눌러야 할지 알 수 없다. */
@@ -2818,8 +2818,8 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   border-color:rgba(62,159,114,.46);
   box-shadow:0 2px 0 rgba(39,105,76,.07), 0 10px 24px rgba(39,105,76,.15);
 }
-.required-lessons-list > button.is-next > i { color:#fff; background:linear-gradient(160deg,#8bd9b1,#4bab80); box-shadow:0 3px 8px rgba(51,147,106,.26); }
-.required-lessons-list > button.is-next em { color:#fff; background:linear-gradient(160deg,#57bd92,#2f9a70); box-shadow:0 3px 9px rgba(47,154,112,.3); }
+.required-lessons-list > button.is-next > i { color:#2c7a5b; background:transparent; box-shadow:none; }
+.required-lessons-list > button.is-next em { color:#2c7a5b; background:transparent; box-shadow:none; }
 
 /* 놀이동산 준비 세션은 같은 반복학습 컴포넌트를 사용하되 장소만 색으로 구분한다. */
 .amusement-required-lessons {
@@ -2829,20 +2829,20 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .amusement-required-lessons .required-lessons-list > button { border-color:rgba(222,139,76,.18); }
 .amusement-required-lessons .required-lessons-list > button:hover,
 .amusement-required-lessons .required-lessons-list > button.is-next { border-color:rgba(222,139,76,.44); }
-.amusement-required-lessons .required-lessons-list > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
+.amusement-required-lessons .required-lessons-list > button > i { border-color:rgba(222,139,76,.32); color:#98613e; background:transparent; box-shadow:none; }
 .amusement-required-lessons .required-lessons-list > button.is-complete > i {
   color:#fff;
   background:linear-gradient(160deg,#f0aa63,#d97947);
   box-shadow:0 3px 8px rgba(196,103,55,.25);
 }
-.amusement-required-lessons .required-lessons-list > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
-.amusement-required-lessons .required-lessons-list > button em { color:#9c5f38; background:#fff5e9; }
+.amusement-required-lessons .required-lessons-list > button.is-next > i { color:#9c5f38; background:transparent; box-shadow:none; }
+.amusement-required-lessons .required-lessons-list > button em { border-color:rgba(222,139,76,.32); color:#9c5f38; background:transparent; }
 .amusement-required-lessons .required-lessons-list > button.is-complete em {
   color:#b29580;
   background:transparent;
   box-shadow:none;
 }
-.amusement-required-lessons .required-lessons-list > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
+.amusement-required-lessons .required-lessons-list > button.is-next em { color:#9c5f38; background:transparent; box-shadow:none; }
 
 @media (max-width:760px) {
   .money-practice-visual { min-height:170px; padding:8px 10px 12px; border-radius:24px; }

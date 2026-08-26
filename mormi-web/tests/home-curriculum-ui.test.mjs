@@ -5,9 +5,10 @@ import test from "node:test";
 import { sessions } from "../app/math-curriculum.ts";
 
 test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순서를 사용한다", async () => {
-  const [app, journey] = await Promise.all([
+  const [app, journey, styles] = await Promise.all([
     readFile(new URL("../app/MoramiApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/journey-config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   const curriculum = app.slice(app.indexOf('{stage === "curriculum"'), app.indexOf('{stage === "drill"'));
 
@@ -30,6 +31,10 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.match(curriculum, /className="required-lessons-toggle"/);
   assert.match(curriculum, /aria-controls="cafe-required-concepts"/);
   assert.match(curriculum, /aria-controls="amusement-required-concepts"/);
+  assert.match(styles, /\.required-lessons-list > button\.is-next > i \{ color:#2c7a5b; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.required-lessons-list > button\.is-next em \{ color:#2c7a5b; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-next > i \{ color:#9c5f38; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.amusement-required-lessons \.required-lessons-list > button\.is-next em \{ color:#9c5f38; background:transparent; box-shadow:none; \}/);
 });
 
 test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 카드로 연결된다", async () => {
