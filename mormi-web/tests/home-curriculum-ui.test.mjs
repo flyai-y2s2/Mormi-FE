@@ -29,8 +29,14 @@ test("집 반복학습은 간결한 제목과 장소 미션에 맞는 개념 순
   assert.doesNotMatch(journey, /amusementParkRequiredConceptImages/);
   assert.doesNotMatch(curriculum, /required-lesson-image/);
   assert.match(curriculum, /className="required-lessons-toggle"/);
+  assert.equal(curriculum.match(/className="required-lessons-chevron"/g)?.length, 3);
+  assert.doesNotMatch(curriculum, /⌃|⌄/);
   assert.match(curriculum, /aria-controls="cafe-required-concepts"/);
   assert.match(curriculum, /aria-controls="amusement-required-concepts"/);
+  assert.match(styles, /\.required-lessons-chevron \{\s*width:9px; height:9px; display:block;/);
+  assert.match(styles, /\[aria-expanded="true"\] > \.required-lessons-chevron \{ transform:translateY\(2px\) rotate\(225deg\); \}/);
+  assert.match(styles, /\.curriculum-home--room \{ max-width:820px; \}/);
+  assert.match(styles, /\.other-concepts-toggle \{ width:min\(440px,100%\); min-height:48px; margin:14px auto 0;/);
   assert.match(styles, /\.required-lessons-list > button\.is-next > i \{ color:#2c7a5b; background:transparent; box-shadow:none; \}/);
   assert.match(styles, /\.required-lessons-list > button\.is-next em \{ border-color:#2f8f68; color:#fff; background:linear-gradient\(160deg,#57bd92,#2f9a70\);/);
   assert.match(styles, /\.required-lessons-list > button\.is-complete em \{ padding:0; border:0; border-radius:0; color:#8fa79b; background:transparent; box-shadow:none; \}/);

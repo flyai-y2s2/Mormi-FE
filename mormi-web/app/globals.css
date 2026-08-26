@@ -2862,21 +2862,41 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
    묶음이 제대로 읽힌다. 바깥이 6~8px, 안쪽이 13~15px 이라 반대로 되어 있었다. */
 .room-list-heading { margin-bottom:18px; padding:11px 26px; }
 .room-list-heading h1 { margin:0 0 2px; font-size:29px; }
-.room-list-heading--curriculum{padding:20px 28px}
-.room-list-heading--curriculum h1{margin:0;font-size:clamp(34px,5vw,46px);letter-spacing:-2px}
-.cafe-required-lessons { margin-bottom:14px; }
-.cafe-required-lessons > div:first-child { padding:2px 6px 11px; }
+.room-list-heading--curriculum { margin-bottom:14px; padding:15px 22px; border-radius:24px; }
+.room-list-heading--curriculum h1 { margin:0; font-size:clamp(30px,4vw,38px); letter-spacing:-1.5px; }
+.cafe-required-lessons { margin-bottom:12px; padding:10px 12px; border-radius:22px; }
+.cafe-required-lessons > div:first-child { min-height:52px; padding:0 4px; gap:12px; }
+.cafe-required-lessons > div:first-child strong { font-size:17px; }
+.cafe-required-lessons > div:first-child > span { flex:0 0 auto; gap:8px; }
+.required-lessons-toggle { min-height:34px; padding:5px 10px; gap:8px; }
+.required-lessons-chevron {
+  width:9px; height:9px; display:block; flex:0 0 auto;
+  border-right:2px solid currentColor; border-bottom:2px solid currentColor;
+  transform:translateY(-2px) rotate(45deg); transform-origin:center;
+  transition:transform .18s ease;
+}
+[aria-expanded="true"] > .required-lessons-chevron { transform:translateY(2px) rotate(225deg); }
 /* 남은 번호가 거의 안 보였다. 완료(초록)와는 구분하되 존재감은 준다. */
 .required-lessons-list > button > i { color:#4a7263; background:#e6efe9; box-shadow:inset 0 0 0 1px rgba(62,159,114,.2); }
 .curriculum-home--room { padding-bottom:14px; }
 
 /* 항목 폭이 918px 이라 제목(왼쪽 끝)과 버튼(오른쪽 끝) 사이가 600px 넘게 비었다.
    시선이 좌우로 크게 튀어 목록이 읽히지 않는다. 폭을 줄여 한 줄이 한눈에 들어오게 한다. */
-.curriculum-home--room { max-width:880px; }
+.curriculum-home--room { max-width:820px; }
 
 /* 목록과 같은 시각 언어로 맞춘다. 회색 두께 그림자(0 6px 0)만 홀로 튀고 있었다. */
-.other-concepts-toggle { border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
+.other-concepts-toggle { width:min(440px,100%); min-height:48px; margin:14px auto 0; padding:0 18px; border:1px solid rgba(62,159,114,.14); background:rgba(255,255,255,.92); box-shadow:0 4px 12px rgba(39,105,76,.07); }
 .other-concepts-toggle:hover { border-color:rgba(62,159,114,.3); box-shadow:0 8px 18px rgba(39,105,76,.11); }
+
+@media (max-width:600px) {
+  .room-list-heading--curriculum { padding:13px 18px; }
+  .room-list-heading--curriculum h1 { font-size:29px; }
+  .cafe-required-lessons { padding:8px 10px; }
+  .cafe-required-lessons > div:first-child { min-height:48px; }
+  .cafe-required-lessons > div:first-child strong { font-size:15px; }
+  .cafe-required-lessons > div:first-child > span { gap:6px; font-size:11px; }
+  .required-lessons-toggle { min-height:32px; padding:4px 9px; font-size:11px; }
+}
 
 /* Visual diagnostic preview: headline first, evidence on demand, action last. */
 .numeric-preview{padding:30px 38px 40px;background:linear-gradient(180deg,#fff 0,#fcfdfc 100%)}
