@@ -52,6 +52,7 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(css, /\.home-exit-door|\.home-room-scene-objects/);
   assert.match(css, /\.home-main-actions\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /\.home-action-visual--door>img\{/);
+  assert.match(css, /span\.home-action-visual--door\{width:146px;height:146px;min-height:146px;[\s\S]{0,120}border-radius:50%/);
   assert.match(css, /@media\(max-width:560px\)\{\.home-main-actions\{grid-template-columns:1fr\}/);
   assert.match(css, /\.home-return-control\{[\s\S]*?display:flex[\s\S]*?border-radius:18px/);
 });
