@@ -2830,8 +2830,18 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 .amusement-required-lessons .required-lessons-list > button:hover,
 .amusement-required-lessons .required-lessons-list > button.is-next { border-color:rgba(222,139,76,.44); }
 .amusement-required-lessons .required-lessons-list > button > i { color:#98613e; background:#fff4e7; box-shadow:inset 0 0 0 1px rgba(222,139,76,.2); }
+.amusement-required-lessons .required-lessons-list > button.is-complete > i {
+  color:#fff;
+  background:linear-gradient(160deg,#f0aa63,#d97947);
+  box-shadow:0 3px 8px rgba(196,103,55,.25);
+}
 .amusement-required-lessons .required-lessons-list > button.is-next > i { background:linear-gradient(160deg,#f3b56f,#dc7c4c); }
 .amusement-required-lessons .required-lessons-list > button em { color:#9c5f38; background:#fff5e9; }
+.amusement-required-lessons .required-lessons-list > button.is-complete em {
+  color:#b29580;
+  background:transparent;
+  box-shadow:none;
+}
 .amusement-required-lessons .required-lessons-list > button.is-next em { background:linear-gradient(160deg,#eea460,#d97746); box-shadow:0 3px 9px rgba(196,103,55,.26); }
 
 @media (max-width:760px) {
