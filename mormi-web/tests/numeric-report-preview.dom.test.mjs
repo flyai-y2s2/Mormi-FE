@@ -122,6 +122,26 @@ test("places the unit selector under unit results and keeps AI change focused on
   }
 });
 
+test("keeps the weekly summary prominent and moves the compact unit status into unit results", async () => {
+  const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
+  const dom = setDom(server.renderToString(React.createElement(NumericReportPreview)));
+  try {
+    const currentSection = dom.container.querySelector('[aria-labelledby="numeric-summary-title"]');
+    const resultsSection = dom.container.querySelector('[aria-labelledby="numeric-trend-title"]');
+    const selector = resultsSection.querySelector(".numeric-status-selector");
+    const unitStatus = resultsSection.querySelector(".numeric-current-story--unit");
+    const comparison = resultsSection.querySelector(".numeric-session-comparison");
+
+    assert.equal(currentSection.querySelector(".numeric-current-story"), null, "현재 상태에는 주간 요약 카드만 남겨야 한다");
+    assert.ok(currentSection.querySelector(".numeric-summary-values--prominent"), "주간 요약 카드는 조금 더 강조해야 한다");
+    assert.ok(unitStatus, "선택 단원 상태는 단원별 결과 안에 있어야 한다");
+    assert.ok(selector.compareDocumentPosition(unitStatus) & 4, "단원 상태는 단원 선택 바로 뒤에 와야 한다");
+    assert.ok(unitStatus.compareDocumentPosition(comparison) & 4, "단원 상태 다음에 수치 비교가 이어져야 한다");
+  } finally {
+    dom.cleanup();
+  }
+});
+
 test("gives all ladder levels equal width while encoding share only as height", async () => {
   const [{ NumericReportPreview }, React, server] = await Promise.all([loadPreview(), import("react"), import("react-dom/server")]);
   const dom = setDom(server.renderToString(React.createElement(NumericReportPreview)));
