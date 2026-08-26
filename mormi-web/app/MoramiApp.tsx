@@ -1117,14 +1117,12 @@ function Onboarding({ onSignup, onLogin }: {
           sizes="(max-width: 760px) 210px, 300px"
           priority
         />
+        <p className="onboarding-slogan">이번에는 내가 선생님</p>
         {/* 가입은 아이당 한 번뿐이고 그 뒤로는 늘 로그인이다. 기본 버튼을 로그인에 준다. */}
         <div className="onboarding-greeting__actions">
           <button className="primary-button" onClick={() => goTo("login")}>로그인하기 <span className="button-arrow" /></button>
           <button type="button" className="onboarding-secondary" onClick={() => window.location.assign("/signup")}>처음 왔어요</button>
         </div>
-        <button type="button" className="onboarding-teacher-entry" onClick={() => goTo("login")}>
-          <span aria-hidden="true">🏫</span> 선생님으로 들어가기
-        </button>
       </div>
     </section>
   );
