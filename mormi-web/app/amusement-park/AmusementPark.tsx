@@ -273,8 +273,10 @@ function ParkConnectionState({ message, retrying, onRetry, onExit }: { message: 
 
 export function AmusementPark({ onExit }: { onExit: () => void }) {
   const [visit, setVisit] = useState<AmusementParkVisitView | null>(null);
-  const [activeStageId, setActiveStageId] = useState<AmusementStageId | null>(null);
-  const [replayingStage, setReplayingStage] = useState(false);
+  const [screen, setScreen] = useState<
+    | { view: "map" }
+    | { view: "mission"; stageId: AmusementStageId; replay: boolean }
+  >({ view: "map" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const learnerName = useSyncExternalStore(
@@ -305,9 +307,33 @@ export function AmusementPark({ onExit }: { onExit: () => void }) {
     return () => { cancelled = true; };
   }, []);
 
+  const returnToMap = useCallback(() => setScreen({ view: "map" }), []);
+  const openStage = useCallback((stageId: AmusementStageId, replay: boolean) => {
+    setScreen({ view: "mission", stageId, replay });
+  }, []);
+
   if (!visit) return <ParkConnectionState message={loading ? "놀이동산 미션을 불러오고 있어요…" : error} retrying={loading} onRetry={() => { void loadVisit(); }} onExit={onExit} />;
 
-  const stage = activeStageId === null ? null : visit.stages.find((item) => item.stage_id === activeStageId) ?? null;
-  if (!stage) return <ParkMap visit={visit} learnerName={learnerName} onOpen={(stageId, replay) => { setReplayingStage(replay); setActiveStageId(stageId); }} onExit={onExit} />;
-  return <MissionScene key={`${visit.visit_id}:${stage.stage_id}:${replayingStage ? "replay" : "progress"}`} visit={visit} stage={stage} replay={replayingStage} onBack={() => { setActiveStageId(null); setReplayingStage(false); }} onVisitChanged={setVisit} />;
+  if (screen.view === "map") {
+    return <ParkMap
+      visit={visit}
+      learnerName={learnerName}
+      onOpen={openStage}
+      onExit={onExit}
+    />;
+  }
+
+  const stage = visit.stages.find((item) => item.stage_id === screen.stageId);
+  if (!stage) {
+    return <ParkMap visit={visit} learnerName={learnerName} onOpen={openStage} onExit={onExit} />;
+  }
+
+  return <MissionScene
+    key={`${visit.visit_id}:${stage.stage_id}:${screen.replay ? "replay" : "progress"}`}
+    visit={visit}
+    stage={stage}
+    replay={screen.replay}
+    onBack={returnToMap}
+    onVisitChanged={setVisit}
+  />;
 }

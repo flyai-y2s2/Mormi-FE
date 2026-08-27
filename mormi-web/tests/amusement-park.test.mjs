@@ -69,7 +69,11 @@ test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 �
 test("놀이동산 이전 버튼은 메인 앱 안에서 지도 상태로 돌아간다", () => {
   assert.match(talkStage, /<button type="button" className="cafe-talk-back" onClick=\{onBack\}/);
   assert.doesNotMatch(component, /backHref=|href="\/amusement-park/);
-  assert.match(component, /onBack=\{\(\) => \{ setActiveStageId\(null\); setReplayingStage\(false\); \}\}/);
+  assert.match(component, /const returnToMap = useCallback\(\(\) => setScreen\(\{ view: "map" \}\), \[\]\);/);
+  assert.match(component, /onBack=\{returnToMap\}/);
+  assert.match(component, /setScreen\(\{ view: "mission", stageId, replay \}\);/);
+  assert.match(component, /onOpen=\{openStage\}/);
+  assert.doesNotMatch(component, /activeStageId|replayingStage/);
 });
 
 test("이전·궁금해 사전 버튼은 놀이동산과 카페의 가운데 학습 패널 안에 정렬한다", () => {
