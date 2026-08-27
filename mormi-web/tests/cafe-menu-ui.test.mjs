@@ -164,11 +164,10 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(journey, /const budgets = \[7000, 8000\] as const/);
 
   assert.match(talk, /const centralMenuPicker = inputKind === "choices" && turn\.input\.config\.component === "cafe_menu_picker"/);
-  assert.match(talk, /const delayedChoices = deferChoices && inputKind === "choices" && !centralMenuPicker/);
-  assert.match(talk, /choiceIdForTypedAnswer\(inputText, turn\.input\.choices\)/);
-  assert.match(talk, /\(!delayedChoices \|\| choiceFallbackVisible\)/);
-  assert.match(journey, /deferChoices[\s\S]{0,300}choiceFallbackVisible=\{queueChoiceFallbackKey === conversationInputKey\(cafeConversations\.queue\)\}/);
-  assert.match(journey, /conversation=\{cafeConversations\.change\}[\s\S]{0,350}deferChoices[\s\S]{0,200}changeChoiceFallbackKey/);
+  assert.doesNotMatch(talk, /delayedChoices|deferChoices|choiceFallbackVisible|choiceIdForTypedAnswer/);
+  assert.doesNotMatch(journey, /queueChoiceFallbackKey|changeChoiceFallbackKey|conversationInputKey|onChoiceFallback/);
+  assert.match(talk, /\(inputKind === "choices" \|\| inputKind === "fill"\) && !centralMenuPicker/);
+  assert.match(talk, /choice_ids: \[choice\.id\]/);
   assert.match(talk, /cafe-talk-bubble__text[\s\S]*onClick=\{\(\) => onSubmit\(\{ type: "no_response" \}\)\}/);
   assert.match(talk, /cafe-talk-bubble__text[\s\S]*helpLoading && <div className="cafe-help-loading"/);
   assert.match(talk, /const helpCard = visibleHelpCard\(conversation\?\.turn\)/);

@@ -5,9 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type StarNoteListItem } from "./api-client";
 import { mergeStarNoteItems, starNoteListErrorMessage } from "./star-note-list";
 import { useCharacterName } from "./CharacterName";
+import { starNoteAttributionLabel } from "./StarNote";
 
 type StarNoteArchiveModalProps = {
   learnerId: number;
+  learnerName: string;
   onClose: () => void;
 };
 
@@ -19,7 +21,7 @@ function noteDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(date);
 }
 
-export function StarNoteArchiveModal({ learnerId, onClose }: StarNoteArchiveModalProps) {
+export function StarNoteArchiveModal({ learnerId, learnerName, onClose }: StarNoteArchiveModalProps) {
   const { displayName } = useCharacterName();
   const modalRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -169,7 +171,7 @@ export function StarNoteArchiveModal({ learnerId, onClose }: StarNoteArchiveModa
               {notes.map((note) => (
                 <article key={note.note_id} data-note-id={note.note_id} className="star-note-archive-card" role="listitem">
                   <div className="star-note-archive-card__meta">
-                    <span>{note.attribution_label}</span>
+                    <span>{starNoteAttributionLabel(learnerName, note.attribution) ?? note.attribution_label}</span>
                     <time dateTime={note.created_at} title={note.created_at}>{noteDate(note.created_at)}</time>
                   </div>
                   <p>{note.text}</p>

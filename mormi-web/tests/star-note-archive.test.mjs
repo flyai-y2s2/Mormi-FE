@@ -47,14 +47,14 @@ test("별노트 모아보기는 모은 별에서 열고 BE 응답 필드를 렌�
     readFile(new URL("../app/api-client.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(app, /<StarNoteArchiveModal learnerId=\{learner\.id\}/);
+  assert.match(app, /<StarNoteArchiveModal learnerId=\{learner\.id\} learnerName=\{childName\}/);
   assert.match(app, /onOpenStarNotes=\{\(\) => setStarNoteArchiveOpen\(true\)\}/);
   assert.match(collectedStarsModal, /onOpenStarNotes/);
   assert.match(collectedStarsModal, />별노트 모아보기<\/button>/);
   assert.match(app, /returnToAuthScreen[\s\S]{0,180}setStarNoteArchiveOpen\(false\)/);
   assert.match(modal, /note\.note_id/);
   assert.match(modal, /note\.text/);
-  assert.match(modal, /note\.attribution_label/);
+  assert.match(modal, /starNoteAttributionLabel\(learnerName, note\.attribution\) \?\? note\.attribution_label/);
   assert.match(modal, /note\.skill_id/);
   assert.match(modal, /note\.created_at/);
   assert.match(modal, /response\.next_cursor/);

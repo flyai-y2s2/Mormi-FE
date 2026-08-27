@@ -144,10 +144,11 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(css, /\.cafe-talk-toolbar\{[^}]*left:50%[^}]*transform:translateX\(-50%\)/);
   assert.match(css, /\.cafe-talk-bubble p\{[^}]*font-size:clamp\(17px,1\.55vw,20px\)/);
   // 반복학습과 카페는 서로 다른 별노트 마크업을 만들지 않고 같은 컴포넌트를 쓴다.
-  assert.match(app, /<StarNote text=\{teachingNote\.text\} \/>/);
-  assert.match(cafe, /queue-note-scene[\s\S]{0,500}<StarNote text=\{cafeConversations\.queue\?\.turn\.note_update\?\.text\} \/>/);
+  assert.match(app, /<StarNote text=\{teachingNote\.text\} attribution=\{teachingNote\.attribution\} learnerName=\{childName\} \/>/);
+  assert.match(cafe, /queue-note-scene[\s\S]{0,700}<StarNote[\s\S]{0,250}attribution=\{cafeConversations\.queue\?\.turn\.note_update\?\.attribution\}[\s\S]{0,120}learnerName=\{learnerName\}/);
   assert.match(starNote, /className=\{`star-note \$\{className\}`\.trim\(\)\}/);
   assert.match(starNote, /note-ring[^>]*>별<br \/>노<br \/>트/);
+  assert.match(starNote, /함께 공부함/);
   // 별노트 전용 폰트는 첫 화면에서 미리 받고, 로드 전에는 고딕 대체 글꼴을
   // 잠깐 그리지 않는다. 그래야 별노트 진입 시 글꼴이 뒤늦게 바뀌지 않는다.
   assert.match(layout, /rel="preload" href="\/fonts\/nanum-child-hope\.ttf" as="font" type="font\/ttf"/);
@@ -214,6 +215,10 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.doesNotMatch(aiTest, /home_addition_teach/);
   assert.match(aiTest, /curriculum_session_id: "money-price"/);
   assert.match(aiTest, /queue_context: \{ left_count: 3, right_count: 5 \}/);
+  assert.match(aiTest, /id: "amusement_ticket_multiply"/);
+  assert.match(aiTest, /id: "amusement_snack_divide"/);
+  assert.match(aiTest, /id: "amusement_pass_compare"/);
+  assert.match(aiTest, /conversation\.turn\.input\.choices\.find\(\(choice\) => choice\.id === id\)\?\.label/);
   assert.match(cafe, /stageNumber=\{1\}/);
   assert.match(cafe, /setCalculationScene\("thanks"\)/);
   assert.match(cafe, /setChangeScene\("thanks"\)/);

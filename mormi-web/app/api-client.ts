@@ -685,11 +685,15 @@ export async function apiRequest<T>(
     let fields: Record<string, string> | undefined;
     try {
       const body = await response.json() as {
-        code?: string; message?: string; fields?: Record<string, string>;
+        code?: string;
+        message?: string;
+        fields?: Record<string, string>;
+        detail?: string | { code?: string; message?: string; fields?: Record<string, string> };
       };
-      code = body.code || code;
-      message = body.message || message;
-      fields = body.fields;
+      const detail = typeof body.detail === "object" && body.detail !== null ? body.detail : null;
+      code = detail?.code || body.code || code;
+      message = detail?.message || (typeof body.detail === "string" ? body.detail : null) || body.message || message;
+      fields = detail?.fields || body.fields;
     } catch { /* 본문이 없을 수 있다 */ }
     // 세션을 먼저 정리하되 예외는 그대로 올린다. 여기서 삼키면 호출부가 빈 응답을
     // 정상값으로 알고 계속 진행해 더 알기 어려운 오류로 번진다.

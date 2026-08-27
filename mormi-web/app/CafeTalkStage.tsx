@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState, type ReactNode } from "react";
-import { choiceIdForTypedAnswer } from "./cafe-choice-input";
 import { DictionaryModal } from "./DictionaryCard";
 import type { MormiConversation, MormiResponseType } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
@@ -34,11 +33,8 @@ export function CafeTalkStage({
   inputText,
   sending,
   helpLoading,
-  deferChoices = false,
-  choiceFallbackVisible = false,
   onInput,
   onSubmit,
-  onChoiceFallback,
   onBack,
   children,
 }: {
@@ -48,11 +44,8 @@ export function CafeTalkStage({
   inputText: string;
   sending: boolean;
   helpLoading: boolean;
-  deferChoices?: boolean;
-  choiceFallbackVisible?: boolean;
   onInput: (value: string) => void;
   onSubmit: (response: CafeDialogueResponse) => void;
-  onChoiceFallback?: () => void;
   onBack: () => void;
   /** 스테이지별 문제 그림. 남는 세로 공간을 전부 가져간다. */
   children: ReactNode;
@@ -105,11 +98,8 @@ export function CafeTalkStage({
               conversation={conversation}
               inputText={inputText}
               sending={sending}
-              deferChoices={deferChoices}
-              choiceFallbackVisible={choiceFallbackVisible}
               onInput={onInput}
               onSubmit={onSubmit}
-              onChoiceFallback={onChoiceFallback}
             />
           </aside>
         </section>
@@ -123,28 +113,20 @@ export function CafeDialogueControls({
   conversation,
   inputText,
   sending,
-  deferChoices = false,
-  choiceFallbackVisible = false,
   onInput,
   onSubmit,
-  onChoiceFallback,
 }: {
   conversation: MormiConversation | undefined;
   inputText: string;
   sending: boolean;
-  deferChoices?: boolean;
-  choiceFallbackVisible?: boolean;
   onInput: (value: string) => void;
   onSubmit: (response: CafeDialogueResponse) => void;
-  onChoiceFallback?: () => void;
 }) {
   const { displayName } = useCharacterName();
   if (!conversation || conversation.turn.state_version === 0 || conversation.turn.status === "completed") return null;
   const { turn } = conversation;
   const inputKind = turn.input.kind;
   const centralMenuPicker = inputKind === "choices" && turn.input.config.component === "cafe_menu_picker";
-  const delayedChoices = deferChoices && inputKind === "choices" && !centralMenuPicker;
-  const typedChoiceAttempt = delayedChoices && !choiceFallbackVisible;
   const completionValues = turn.input.config.completion_values;
   const actionValues = completionValues && typeof completionValues === "object" && !Array.isArray(completionValues)
     ? completionValues as Record<string, string | number | boolean | string[]>
@@ -178,23 +160,7 @@ export function CafeDialogueControls({
       </label>
       <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "전하는 중…" : turn.input.submit_label || "알려주기"}</button>
     </form>}
-    {typedChoiceAttempt && <form onSubmit={(event) => {
-      event.preventDefault();
-      if (!inputText.trim() || sending) return;
-      const choiceId = choiceIdForTypedAnswer(inputText, turn.input.choices);
-      if (!choiceId) {
-        onInput("");
-        onChoiceFallback?.();
-        return;
-      }
-      onSubmit({ type: "choice", choice_ids: [choiceId] });
-    }}>
-      <label>{displayName}에게 내 말로 알려주기
-        <input value={inputText} maxLength={160} onChange={(event) => onInput(event.target.value)} placeholder="내 생각을 짧게 알려줘" />
-      </label>
-      <button type="submit" disabled={!inputText.trim() || sending}>{sending ? "확인 중…" : "알려주기"}</button>
-    </form>}
-    {(inputKind === "choices" || inputKind === "fill") && !centralMenuPicker && (!delayedChoices || choiceFallbackVisible) && <div className="cafe-ai-choices">
+    {(inputKind === "choices" || inputKind === "fill") && !centralMenuPicker && <div className="cafe-ai-choices">
       {turn.input.choices.filter((choice) => !choice.disabled).map((choice) => <button key={choice.id} disabled={sending} onClick={() => onSubmit({ type: inputKind === "fill" ? "fill" : "choice", choice_ids: [choice.id] })}><MormiChoiceContent choice={choice} /></button>)}
     </div>}
     {(inputKind === "count" || inputKind === "equation") && <form onSubmit={(event) => {

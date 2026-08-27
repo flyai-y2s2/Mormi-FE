@@ -147,7 +147,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   const [dialogueError, setDialogueError] = useState("");
   const [sending, setSending] = useState(false);
   const [helpLoading, setHelpLoading] = useState(false);
-  const [choiceFallbackVisible, setChoiceFallbackVisible] = useState(false);
   const [noteText, setNoteText] = useState<string>();
   const requestInFlight = useRef(false);
   const stageIndex = visit.stage_order.indexOf(stage.stage_id);
@@ -165,7 +164,6 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   }, [onVisitChanged, visit.visit_id]);
 
   const applyConversation = useCallback((next: MormiConversation) => {
-    setChoiceFallbackVisible(false);
     setConversation(next);
     if (next.turn.note_update?.text) setNoteText(next.turn.note_update.text);
     if (next.stage_progress?.completed) void finishStage();
@@ -250,11 +248,8 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
       inputText={inputText}
       sending={sending}
       helpLoading={helpLoading}
-      deferChoices
-      choiceFallbackVisible={choiceFallbackVisible}
       onInput={setInputText}
       onSubmit={(response) => { void answerMormi(response); }}
-      onChoiceFallback={() => setChoiceFallbackVisible(true)}
       onBack={onBack}
     >
       <ParkProblemVisual stage={stage} conversation={conversation} />
