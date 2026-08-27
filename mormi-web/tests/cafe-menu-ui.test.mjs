@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuDisplayName, menuPairTotal, validateMenuSelectionContext } from "../app/cafe-menu.ts";
+import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuChoiceForItem, menuDisplayName, menuPairTotal, validateMenuSelectionContext } from "../app/cafe-menu.ts";
 import { choiceIdForTypedAnswer } from "../app/cafe-choice-input.ts";
 
 test("connects the clicked menu to the server choice by exact id", () => {
@@ -16,6 +16,21 @@ test("connects the clicked menu to the server choice by exact id", () => {
   assert.equal(menuChoiceById("milk", choices)?.id, "milk");
   assert.equal(menuChoiceById("cookie", choices), undefined);
   assert.equal(menuChoiceById("missing", choices), undefined);
+});
+
+test("connects V2 menu cards to opaque server choices by exact name and price", () => {
+  const choices = [
+    { id: "menu.00", label: "커피 3,000원" },
+    { id: "menu.01", label: "우유 2,000원" },
+    { id: "menu.02", label: "딸기주스 4,000원" },
+    { id: "menu.05", label: "샌드위치 5,000원", disabled: true },
+  ];
+
+  assert.equal(menuChoiceForItem(menu[0], choices)?.id, "menu.00");
+  assert.equal(menuChoiceForItem(menu[1], choices)?.id, "menu.01");
+  assert.equal(menuChoiceForItem(menu[2], choices)?.id, "menu.02");
+  assert.equal(menuChoiceForItem(menu[5], choices), undefined);
+  assert.equal(menuChoiceForItem({ ...menu[0], price: 9999 }, choices), undefined);
 });
 
 test("renames americano only on screen and keeps budget math canonical", () => {
@@ -151,10 +166,10 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(visual, /menuChoiceById\(item\.id, conversation\.turn\.input\.choices\)/);
-  assert.match(visual, /onMenuChoice\?\.\(choice\.id\)/);
+  assert.match(visual, /menuChoiceForItem\(item, conversation\.turn\.input\.choices\)/);
+  assert.match(visual, /onMenuChoice\?\.\(item\.id, choice\.id\)/);
   assert.match(journey, /choice_ids: \[choice\.id\]/);
-  assert.match(journey, /validateMenuSelectionContext\(context, conversation\.turn\.visual\.data, choice\.id\)/);
+  assert.match(journey, /validateMenuSelectionContext\(context, conversation\.turn\.visual\.data, menuId\)/);
   assert.match(journey, /validation\.total > validation\.budget[\s\S]{0,500}setBudgetModalOpen\(true\)/);
   assert.match(journey, /cafeProblemContextMatches\(stage, conversation\.scenario_context, conversation\.turn\.visual\)/);
   assert.match(journey, /isCafeProblemContractError\(error\)/);
