@@ -2354,7 +2354,9 @@ export function MoramiApp() {
           <div className="character-column"><Morami expression={expression} /></div>
           <div className="content-column">
             <SpeechBubble><p>{dialogue}</p></SpeechBubble>
-            {hasTeachingNote && teachingNote && <StarNote text={teachingNote.text} />}
+            {hasTeachingNote && teachingNote && (
+              <StarNote text={teachingNote.text} attribution={teachingNote.attribution} learnerName={childName} />
+            )}
             {teachError && <p role="alert">{teachError}</p>}
             <button className="primary-button" onClick={beginHomework} disabled={teachSending}>집에서 오늘 학습 마치기 <span className="button-arrow" /></button>
           </div>
@@ -2391,7 +2393,7 @@ export function MoramiApp() {
         expectedContentVersion={mormiConversation?.turn.dictionary_ref?.content_version}
         onClose={() => setDictionaryOpen(false)}
       />}
-      {starNoteArchiveOpen && <StarNoteArchiveModal learnerId={learner.id} onClose={() => setStarNoteArchiveOpen(false)} />}
+      {starNoteArchiveOpen && <StarNoteArchiveModal learnerId={learner.id} learnerName={childName} onClose={() => setStarNoteArchiveOpen(false)} />}
       {characterNameOpen && <CharacterNameModal initialName={characterName} onSave={saveCharacterName} onClose={() => setCharacterNameOpen(false)} />}
     </main>
     </CharacterNameProvider>

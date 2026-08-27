@@ -106,6 +106,20 @@ test("422 의 fields 가 ApiError 에 실려 온다", async () => {
   });
 });
 
+test("FastAPI의 중첩 detail 코드와 메시지를 ApiError로 보존한다", async () => {
+  withSession();
+  setUnauthorizedHandler(null);
+  nextResponse = respond(409, {
+    detail: { code: "stale_turn", message: "질문이 바뀌었어요.", state_version: 2 },
+  });
+
+  await assert.rejects(() => apiRequest("/v1/dialogue"), (error) => {
+    assert.equal(error.code, "stale_turn");
+    assert.equal(error.message, "질문이 바뀌었어요.");
+    return true;
+  });
+});
+
 test("204 는 본문 없이 통과한다", async () => {
   withSession();
   setUnauthorizedHandler(null);

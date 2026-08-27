@@ -40,6 +40,7 @@ export type StartMormiConversation = {
   scene: MormiScene;
   scenario_id: string;
   learning_session_id?: string;
+  conversation_round?: number;
   practice_result_id?: string;
   practice_summary?: MormiPracticeSummary;
   cafe_context?: MormiCafeContext;
@@ -215,10 +216,19 @@ async function requestMormi<T>(url: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
-  const data = await response.json().catch(() => null) as { error?: string; detail?: unknown } | null;
+  const data = await response.json().catch(() => null) as {
+    error?: string;
+    code?: string;
+    message?: string;
+    detail?: string | { code?: string; message?: string };
+  } | null;
   if (!response.ok) {
-    const detail = typeof data?.detail === "string" ? data.detail : "모르미 대화 서버에 연결하지 못했어요.";
-    throw new MormiDialogueError(detail, response.status, data?.error);
+    const nested = typeof data?.detail === "object" && data.detail !== null ? data.detail : null;
+    const message = nested?.message
+      || (typeof data?.detail === "string" ? data.detail : null)
+      || data?.message
+      || "모르미 대화 서버에 연결하지 못했어요.";
+    throw new MormiDialogueError(message, response.status, nested?.code || data?.code || data?.error);
   }
   return data as T;
 }

@@ -55,15 +55,15 @@ test("AI 놀이동산 대화의 도움 요청·전이·별노트를 카페 공�
   assert.doesNotMatch(component, /help.*=.*["'`]같은 돈|noteText.*=.*["'`]같은 돈/i);
 });
 
-test("과거 설명하기 UI처럼 객관식보다 텍스트 설명을 먼저 받는다", () => {
+test("AI가 choices를 내리면 채팅 입력 대신 선택지를 바로 보여준다", () => {
   assert.match(component, /<ParkProblemVisual stage=\{stage\} conversation=\{conversation\} \/>/);
   assert.doesNotMatch(component, /ParkAnswerPanel|showDialogueControls|park-learning-board/);
   assert.doesNotMatch(css, /\.park-answer-panel|\.park-learning-board/);
   assert.match(talkStage, /<aside className="cafe-talk-answer">/);
-  assert.match(component, /deferChoices/);
-  assert.match(component, /choiceFallbackVisible=\{choiceFallbackVisible\}/);
-  assert.match(talkStage, /\{displayName\}에게 내 말로 알려주기/);
-  assert.match(talkStage, /placeholder="내 생각을 짧게 알려줘"/);
+  assert.doesNotMatch(component, /deferChoices|choiceFallbackVisible|onChoiceFallback/);
+  assert.doesNotMatch(talkStage, /deferChoices|choiceFallbackVisible|choiceIdForTypedAnswer/);
+  assert.match(talkStage, /\(inputKind === "choices" \|\| inputKind === "fill"\) && !centralMenuPicker/);
+  assert.match(talkStage, /choice_ids: \[choice\.id\]/);
 });
 
 test("놀이동산 이전 버튼은 메인 앱 안에서 지도 상태로 돌아간다", () => {

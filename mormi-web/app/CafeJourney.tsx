@@ -83,11 +83,6 @@ function randomQueueCounts() {
   return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
 }
 
-function conversationInputKey(conversation: MormiConversation | undefined) {
-  if (!conversation) return "";
-  return `${conversation.turn.task_index}:${conversation.turn.input.target_slots.join("|")}`;
-}
-
 function isCafeProgressStage(stage: string): stage is CafeProgressStage {
   return ["queue", "menu", "calculate", "change", "complete"].includes(stage);
 }
@@ -110,8 +105,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
   const [helpLoadingStage, setHelpLoadingStage] = useState<CafeStage | null>(null);
-  const [queueChoiceFallbackKey, setQueueChoiceFallbackKey] = useState<string | null>(null);
-  const [changeChoiceFallbackKey, setChangeChoiceFallbackKey] = useState<string | null>(null);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [problemContextError, setProblemContextError] = useState<CafeStage | null>(null);
   const dialogueRequestInFlight = useRef(false);
@@ -248,11 +241,9 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setDialogueInputs((current) => ({ ...current, [stage]: "" }));
     setHelpLoadingStage(null);
     setProblemContextError(null);
-    if (stage === "queue") setQueueChoiceFallbackKey(null);
     if (stage === "calculate") setCalculationScene("dialogue");
     if (stage === "change") {
       setChangeScene("dialogue");
-      setChangeChoiceFallbackKey(null);
     }
     delete cafeTalks.current[stage];
     validatedStages.current[stage] = false;
@@ -489,19 +480,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   async function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
     const requestsHelp = response.type === "no_response";
     if (requestsHelp) setHelpLoadingStage(stage);
-    const previous = cafeTalks.current[stage];
-    const next = await sendCafeResponse(stage, response);
-    if (stage === "queue" || stage === "change") {
-      const previousKey = conversationInputKey(previous);
-      const nextKey = conversationInputKey(next ?? undefined);
-      const shouldRevealChoices = Boolean(
-        next
-        && next.turn.input.kind === "choices"
-        && (requestsHelp || (response.type === "choice" && previousKey === nextKey)),
-      );
-      if (stage === "queue") setQueueChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
-      else setChangeChoiceFallbackKey(shouldRevealChoices ? nextKey : null);
-    }
+    await sendCafeResponse(stage, response);
     if (requestsHelp) setHelpLoadingStage((current) => current === stage ? null : current);
     setDialogueInput(stage, "");
   }
@@ -649,11 +628,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           inputText={dialogueInputs.queue ?? ""}
           sending={dialogueSending}
           helpLoading={helpLoadingStage === "queue"}
-          deferChoices
-          choiceFallbackVisible={queueChoiceFallbackKey === conversationInputKey(cafeConversations.queue)}
           onInput={(value) => setDialogueInput("queue", value)}
           onSubmit={(response) => { void answerMormi("queue", response); }}
-          onChoiceFallback={() => setQueueChoiceFallbackKey(conversationInputKey(cafeConversations.queue))}
           onBack={returnToMap}
         >
           <CafeStageVisual
@@ -668,7 +644,11 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           {queueScene === "note" && (
             <section className="queue-note-scene">
               <Image src="/morami/bright-cutout.png" alt={`별노트를 쓰는 ${displayName}`} width={310} height={340} unoptimized />
-              <StarNote text={cafeConversations.queue?.turn.note_update?.text} />
+              <StarNote
+                text={cafeConversations.queue?.turn.note_update?.text}
+                attribution={cafeConversations.queue?.turn.note_update?.attribution}
+                learnerName={learnerName}
+              />
             </section>
           )}
           {queueScene === "thanks" && (
@@ -767,11 +747,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           inputText={dialogueInputs.change ?? ""}
           sending={dialogueSending}
           helpLoading={helpLoadingStage === "change"}
-          deferChoices
-          choiceFallbackVisible={changeChoiceFallbackKey === conversationInputKey(cafeConversations.change)}
           onInput={(value) => setDialogueInput("change", value)}
           onSubmit={(response) => { void answerMormi("change", response); }}
-          onChoiceFallback={() => setChangeChoiceFallbackKey(conversationInputKey(cafeConversations.change))}
           onBack={returnToMap}
         >
           <CafeStageVisual conversation={cafeConversations.change} />

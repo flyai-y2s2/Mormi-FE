@@ -29,6 +29,9 @@ const scenarios = [
   { id: "cafe_budget_menu", scene: "cafe", label: "카페 · 예산 메뉴", note: "모르미 메뉴 + 아이 메뉴" },
   { id: "cafe_menu_total", scene: "cafe", label: "카페 · 메뉴 합계", note: "선택 후 두 가격 덧셈" },
   { id: "cafe_change", scene: "cafe", label: "카페 · 거스름돈", note: "10,000원에서 모르미 메뉴 가격 빼기" },
+  { id: "amusement_ticket_multiply", scene: "amusement_park", label: "놀이동산 · 매표소", note: "입장권 한 장 값 × 함께 갈 사람 수" },
+  { id: "amusement_snack_divide", scene: "amusement_park", label: "놀이동산 · 간식 가게", note: "전체 간식값 ÷ 함께 낼 사람 수" },
+  { id: "amusement_pass_compare", scene: "amusement_park", label: "놀이동산 · 자유이용권", note: "1회권과 자유이용권의 본전 횟수 비교" },
 ] as const;
 
 type Scenario = (typeof scenarios)[number];
@@ -67,21 +70,32 @@ function startPayload(scenario: Scenario): StartMormiConversation {
       },
     };
   }
+  const learning_session_id = `local-${scenario.id}-${Date.now()}`;
+  if (scenario.scene === "amusement_park") {
+    return { ...common, scene: "amusement_park", learning_session_id, conversation_round: 1 };
+  }
   if (scenario.id === "cafe_queue") {
-    return { ...common, scene: "cafe", queue_context: { left_count: 3, right_count: 5 } };
+    return { ...common, scene: "cafe", learning_session_id, conversation_round: 1, queue_context: { left_count: 3, right_count: 5 } };
   }
   const cafe_context = {
     menu_items: [...menu],
     mormi_menu_id: "strawberry-juice",
     ...(scenario.id === "cafe_budget_menu" ? { budget: 9000 } : {}),
   };
-  return { ...common, scene: "cafe", cafe_context };
+  return { ...common, scene: "cafe", learning_session_id, conversation_round: 1, cafe_context };
 }
 
-function childSummary(input: SubmitMormiResponse) {
+function childSummary(input: SubmitMormiResponse, conversation: MormiConversation) {
   if (input.text) return input.text;
-  if (input.choice_ids?.length) return input.choice_ids.join(", ");
-  if (input.values) return Object.entries(input.values).map(([key, value]) => `${key}: ${value}`).join(", ");
+  if (input.choice_ids?.length) {
+    const labels = input.choice_ids.map((id) => conversation.turn.input.choices.find((choice) => choice.id === id)?.label || id);
+    return labels.join(", ");
+  }
+  if (input.values) {
+    const label = conversation.turn.input.submit_label
+      || (typeof conversation.turn.input.config.text === "string" ? conversation.turn.input.config.text : null);
+    return label || "모르미와 같이 해보기";
+  }
   return "도움이 필요해";
 }
 
@@ -99,6 +113,15 @@ function Visual({ conversation }: { conversation: MormiConversation }) {
   if (["vertical_equation", "cafe_calculation", "money_calculation"].includes(type)) {
     const operator = data.operation === "subtraction" ? "−" : "+";
     return <div className="ai-test-equation"><strong>{Number(data.left || 0).toLocaleString("ko-KR")}</strong><b>{operator}</b><strong>{Number(data.right || 0).toLocaleString("ko-KR")}</strong><b>=</b><strong>?</strong></div>;
+  }
+  if (["amusement_park", "amusement_park_transfer", "amusement_equation", "amusement_transfer_equation", "amusement_joint_solution", "amusement_transfer_solution"].includes(type)) {
+    const stageImage = conversation.turn.scenario_id === "amusement_ticket_multiply"
+      ? "/amusement-park/ticket-elements-clean.png"
+      : conversation.turn.scenario_id === "amusement_snack_divide"
+        ? "/amusement-park/churros-elements-v2.png"
+        : "/amusement-park/pass-elements-v2.png";
+    const facts = Array.isArray(data.facts) ? data.facts as Array<{ label?: string; value?: string | number; unit?: string }> : [];
+    return <div className="ai-test-park"><Image src={stageImage} alt="놀이동산 문제" width={260} height={180} unoptimized /><div>{facts.map((fact, index) => <p key={`${fact.label}-${index}`}><span>{fact.label || "문제 정보"}</span><b>{String(fact.value ?? "")}{fact.unit || ""}</b></p>)}</div></div>;
   }
   if (type === "success") return <div className="ai-test-success">★ 모르미가 배움을 마쳤어요!</div>;
   return <pre className="ai-test-json">{JSON.stringify({ type, data }, null, 2)}</pre>;
@@ -167,7 +190,7 @@ export function AiDialogueTest() {
     if (!conversation || busy) return;
     setBusy(true);
     setError("");
-    const child = childSummary(input);
+    const child = childSummary(input, conversation);
     setMessages((current) => [...current, { role: "child", text: child }]);
     try {
       const next = await submitMormiResponse(conversation.conversation_id, input);
