@@ -12,7 +12,14 @@ export type CafeMenuItem = (typeof menu)[number];
 
 export type CafeMenuChoice = {
   id: string;
+  label?: string;
   disabled?: boolean | null;
+};
+
+type MenuChoiceItem = {
+  id?: unknown;
+  name?: unknown;
+  price?: unknown;
 };
 
 type MenuContractItem = { id: string; price: number };
@@ -128,10 +135,27 @@ export function calculationDialogueLine(line: string | undefined) {
   return line.replace(/^네가 알려줘서 알겠어\.\s*나\s*/, "메뉴를 골랐구나! 이제 ");
 }
 
-/** 중앙 메뉴 카드와 서버 선택지를 ID로만 연결한다. 배열 순서는 사용하지 않는다. */
-export function menuChoiceById<T extends CafeMenuChoice>(menuId: unknown, choices: readonly T[]) {
-  if (typeof menuId !== "string") return undefined;
-  return choices.find((choice) => choice.id === menuId && !choice.disabled);
+/** 서버가 발급한 opaque 선택지 ID를 그대로 다시 찾는다. */
+export function menuChoiceById<T extends CafeMenuChoice>(choiceId: unknown, choices: readonly T[]) {
+  if (typeof choiceId !== "string") return undefined;
+  return choices.find((choice) => choice.id === choiceId && !choice.disabled);
+}
+
+/**
+ * 중앙 메뉴 카드와 서버 선택지를 연결한다.
+ *
+ * legacy 대화는 choice.id가 메뉴 ID였지만 V2는 menu.00 같은 opaque ID를 쓴다.
+ * 배열 위치로 추측하지 않고, 화면에 표시된 서버 메뉴의 이름·가격과 서버 선택지
+ * 라벨이 정확히 일치할 때만 그 opaque ID를 사용한다.
+ */
+export function menuChoiceForItem<T extends CafeMenuChoice>(item: MenuChoiceItem, choices: readonly T[]) {
+  if (typeof item.id !== "string") return undefined;
+  const legacyChoice = menuChoiceById(item.id, choices);
+  if (legacyChoice) return legacyChoice;
+  if (typeof item.name !== "string" || typeof item.price !== "number") return undefined;
+  const expectedLabel = `${item.name} ${item.price.toLocaleString("ko-KR")}원`;
+  const matches = choices.filter((choice) => !choice.disabled && choice.label === expectedLabel);
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 export function menuPairTotal(mormiMenuId: string, childMenuId: string) {

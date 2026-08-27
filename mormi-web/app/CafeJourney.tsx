@@ -492,10 +492,10 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     })).size;
   }
 
-  /** 중앙 사진 카드의 메뉴 ID를 현재 서버 선택지 ID와 직접 연결한다. */
-  function answerMenuChoice(stage: "menu" | "calculate", menuId: string) {
+  /** 중앙 사진 카드의 메뉴 ID를 검증하고 서버의 opaque 선택지 ID를 제출한다. */
+  function answerMenuChoice(stage: "menu" | "calculate", menuId: string, choiceId: string) {
     const conversation = cafeTalks.current[stage];
-    const choice = conversation && menuChoiceById(menuId, conversation.turn.input.choices);
+    const choice = conversation && menuChoiceById(choiceId, conversation.turn.input.choices);
     if (!choice) {
       setDialogueError("지금 선택할 수 있는 메뉴가 아니에요. 다시 골라 주세요.");
       return;
@@ -503,7 +503,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
 
     if (stage === "menu") {
       const context = conversation.scenario_context?.cafe_context;
-      const validation = validateMenuSelectionContext(context, conversation.turn.visual.data, choice.id);
+      const validation = validateMenuSelectionContext(context, conversation.turn.visual.data, menuId);
       if (!validation.valid) {
         if (validation.reason === "duplicate") {
           setDialogueError("모르미가 고른 메뉴 말고 다른 메뉴를 골라 주세요.");
@@ -694,7 +694,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           <CafeStageVisual
             conversation={cafeConversations.menu}
             sending={dialogueSending}
-            onMenuChoice={(choiceId) => answerMenuChoice("menu", choiceId)}
+            onMenuChoice={(menuId, choiceId) => answerMenuChoice("menu", menuId, choiceId)}
           />
         </CafeTalkStage>
       )}
@@ -714,7 +714,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           <CafeStageVisual
             conversation={cafeConversations.calculate}
             sending={dialogueSending}
-            onMenuChoice={(choiceId) => answerMenuChoice("calculate", choiceId)}
+            onMenuChoice={(menuId, choiceId) => answerMenuChoice("calculate", menuId, choiceId)}
           />
         </CafeTalkStage>
       )}

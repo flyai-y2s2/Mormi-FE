@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { menuChoiceById, menuDisplayName, menuImage } from "./cafe-menu";
+import { menuChoiceForItem, menuDisplayName, menuImage } from "./cafe-menu";
 import type { MormiConversation } from "./mormi-dialogue";
 import { useCharacterName } from "./CharacterName";
 
@@ -60,7 +60,7 @@ export function CafeStageVisual({
   /** 첫 턴이 오기 전에 보여 줄 그림. 화면이 이미 뽑아 둔 문제를 그린다. */
   fallback?: ReactNode;
   /** 서버가 내려준 choice.id를 그대로 돌려준다. 메뉴 배열 위치로 추정하지 않는다. */
-  onMenuChoice?: (choiceId: string) => void;
+  onMenuChoice?: (menuId: string, choiceId: string) => void;
   sending?: boolean;
 }) {
   const { displayName: characterName } = useCharacterName();
@@ -83,7 +83,7 @@ export function CafeStageVisual({
         {budget !== null && <p className="cafe-talk-menu__budget">오늘 쓸 수 있는 돈 <b>{won(budget)}원</b></p>}
         <div className="cafe-talk-menu__grid">
           {items.map((item) => {
-            const choice = menuChoiceById(item.id, conversation.turn.input.choices);
+            const choice = menuChoiceForItem(item, conversation.turn.input.choices);
             const mormiSelected = item.id === mormiPick?.id;
             const childSelected = item.id === childPick?.id;
             const displayName = menuDisplayName(item.id, item.name);
@@ -93,7 +93,11 @@ export function CafeStageVisual({
               data-choice-id={choice?.id}
               className={["cafe-talk-card", "is-menu-choice", mormiSelected ? "is-mormi" : "", childSelected ? "is-child" : ""].filter(Boolean).join(" ")}
               disabled={mormiSelected || !choice || sending}
-              onClick={() => { if (choice && !mormiSelected) onMenuChoice?.(choice.id); }}
+              onClick={() => {
+                if (choice && !mormiSelected && typeof item.id === "string") {
+                  onMenuChoice?.(item.id, choice.id);
+                }
+              }}
               aria-label={mormiSelected ? `${displayName}, ${characterName}가 고른 메뉴` : `${displayName} ${won(item.price)}원 선택`}
             >
               <Image src={menuImage(item.id, item.image_url)} alt="" width={170} height={105} unoptimized />
