@@ -60,6 +60,11 @@ function randomQueueCounts() {
   return Math.random() < 0.5 ? { left: 2, right: 1 } : { left: 1, right: 2 };
 }
 
+function displayMormiLine(line: string | undefined, fallback: string) {
+  const normalized = line?.trim();
+  return normalized && !/^[-–—−]+$/.test(normalized) ? normalized : fallback;
+}
+
 function CafeDialogueControls({
   conversation,
   inputText,
@@ -694,7 +699,7 @@ export function CafeJourney({ onBack, onComplete }: Props) {
 
       {step === "change" && (
         <main className="figma-cafe-panel figma-cafe-change" data-figma-node="74:10">
-          <div className="figma-cafe-mission-title"><span>MISSION 4</span><h1>거스름돈 받기</h1><p>{mormiLines.change || "모르미가 메뉴 하나를 골랐어요. 10,000원을 내면 얼마를 받아야 할까요?"}</p></div>
+          <div className="figma-cafe-mission-title"><span>MISSION 4</span><h1>거스름돈 받기</h1><p>{displayMormiLine(mormiLines.change, "모르미가 메뉴 하나를 골랐어요. 10,000원을 내면 얼마를 받아야 할까요?")}</p></div>
           <section className="cafe-change-order"><Image src="/morami/bright-cutout.png" alt="메뉴를 고른 모르미" width={220} height={240} unoptimized /><div><span>모르미의 주문</span><Image src={changeMenu.image} alt={changeMenu.name} width={170} height={105} unoptimized /><strong>{changeMenu.name} · {changeMenu.price.toLocaleString("ko-KR")}원</strong></div></section>
           <div className="figma-cafe-change__equation">가진 돈 10,000원&nbsp; − &nbsp;{changeMenu.name} {changeMenu.price.toLocaleString("ko-KR")}원&nbsp; = &nbsp;?</div>
           <p>받을 돈을 눌러 담아요</p>

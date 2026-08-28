@@ -109,6 +109,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /checkSum/);
   assert.match(cafe, /changeChangeMoney/);
   assert.match(cafe, /가진 돈 10,000원/);
+  assert.match(cafe, /function displayMormiLine/);
+  assert.match(cafe, /displayMormiLine\(mormiLines\.change/);
   assert.match(app, /다른 개념 더보기/);
   assert.match(app, /카페에 필요한 개념부터 배워요/);
   assert.match(journey, /cafe-money\/100\.png/);
