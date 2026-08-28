@@ -126,6 +126,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /return Math\.random\(\) < 0\.5 \? \{ left: 2, right: 1 \} : \{ left: 1, right: 2 \}/);
   assert.match(stageVisual, /className=\{left < right \? "is-mirrored" : ""\}\s*\n\s*src="\/cafe-stages\/queue-v2\.png"/);
   assert.match(stageVisual, /카페 대기줄: 왼쪽 줄 \$\{left\}명, 오른쪽 줄 \$\{right\}명/);
+  assert.match(stageVisual, /\{!subtraction && <b aria-hidden="true">＋<\/b>\}/);
+  assert.doesNotMatch(stageVisual, /\{subtraction \? "−" : "＋"\}/);
   assert.doesNotMatch(cafe, /className="queue-story-lines"/);
   // 스테이지 질문은 화면에 적어 두지 않고 모르미가 그때그때 건넨다.
   assert.match(cafe, /queue: "모르미의 질문을 불러오는 중이에요\."/);

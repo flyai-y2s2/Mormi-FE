@@ -127,7 +127,7 @@ export function CafeStageVisual({
           : leftItem
             ? <MenuCard item={leftItem} badge={`${characterName}가 고른 메뉴`} />
             : <PriceCard label={`${characterName} 메뉴`} amount={data.left} />}
-        <b aria-hidden="true">{subtraction ? "−" : "＋"}</b>
+        {!subtraction && <b aria-hidden="true">＋</b>}
         {rightItem
           ? <MenuCard item={rightItem} badge={subtraction ? `${characterName}가 주문한 메뉴` : "내가 고른 메뉴"} />
           : <PriceCard label={subtraction ? "메뉴 값" : "내 메뉴"} amount={data.right} />}
