@@ -29,3 +29,18 @@ export function variedMoneyVisualAmounts(
 
   return amounts.map((amount, index) => amount + 100 * (((seed + index) % 3 + 3) % 3));
 }
+
+type MoneyPracticeFact = { label: string; value: string };
+
+/**
+ * AI 문제는 물건마다 가격·개수를 각각 fact로 보낼 수 있다. 가격 카드가 fact의
+ * 단순 배열 위치를 쓰면 두 번째 물건부터 개수와 가격이 어긋나므로, 가격 fact만
+ * 먼저 골라 물건 순서대로 대응한다. 예산은 상품 가격이 아니어서 제외한다.
+ */
+export function moneyPracticeItemPrices(facts: MoneyPracticeFact[], itemCount: number) {
+  return facts
+    .filter((fact) => !/예산|가진 돈|준비한 돈|가지고 있는 돈/.test(fact.label))
+    .map((fact) => fact.value.match(/\d[\d,]*원/)?.[0])
+    .filter((amount): amount is string => Boolean(amount))
+    .slice(0, itemCount);
+}

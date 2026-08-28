@@ -57,7 +57,8 @@ test("놀이동산 준비 문제는 질문과 물건 그림만 남긴 간결한 
   const visual = app.slice(app.indexOf("function MoneyPracticeVisual"), app.indexOf("function LearningVisual"));
   assert.match(visual, /<figure className="money-practice-visual"/);
   assert.match(app, /function moneyPracticeItemPrice/);
-  assert.match(app, /visual\.facts\[index\]/);
+  assert.match(app, /moneyPracticeItemPrices\(visual\.facts, visual\.items\?\.length \?\? 0\)/);
+  assert.doesNotMatch(app, /visual\.facts\[index\]/);
   assert.match(visual, /money-practice-item-price/);
   assert.match(visual, /<small>\{item\.count\}개<\/small>/);
   assert.doesNotMatch(visual, /item\.count > 1/);

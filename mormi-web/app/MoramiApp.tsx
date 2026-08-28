@@ -56,7 +56,7 @@ import {
 } from "./mormi-dialogue";
 import { MormiChoiceContent, MormiHelpCard } from "./MormiDialogueUi";
 import { visibleHelpCard } from "./help-card";
-import { variedMoneyVisualAmounts } from "./money-visual";
+import { moneyPracticeItemPrices, variedMoneyVisualAmounts } from "./money-visual";
 import { StarNote } from "./StarNote";
 import { StarNoteArchiveModal } from "./StarNoteArchiveModal";
 import { TeacherReportEntry } from "./TeacherReportEntry";
@@ -285,21 +285,22 @@ function CalendarVisual({ month, highlight, note }: { month: number; highlight: 
   return <div className="calendar-visual"><strong>{month}월</strong><div>{Array.from({ length: days }, (_, index) => <i key={index} className={index + 1 === highlight ? "is-highlight" : ""}>{index + 1}</i>)}</div>{note && <small>{note}</small>}</div>;
 }
 
-function moneyPracticeItemPrice(visual: Extract<Visual, { type: "money-practice" }>, index: number) {
-  const amount = visual.facts[index]?.value.match(/\d[\d,]*원/)?.[0];
+function moneyPracticeItemPrice(amount: string | undefined, hasMultipleItems: boolean) {
   if (!amount) return undefined;
 
-  return (visual.items?.length ?? 0) > 1 ? `개당 ${amount}` : amount;
+  return hasMultipleItems ? `개당 ${amount}` : amount;
 }
 
 function MoneyPracticeVisual({ visual }: { visual: Extract<Visual, { type: "money-practice" }> }) {
+  const itemPrices = moneyPracticeItemPrices(visual.facts, visual.items?.length ?? 0);
+  const hasMultipleItems = (visual.items?.length ?? 0) > 1;
 
   return (
     <figure className="money-practice-visual" aria-label={visual.imageAlt}>
       {visual.items?.length ? (
         <div className="money-practice-items">
           {visual.items.map((item, index) => {
-            const itemPrice = moneyPracticeItemPrice(visual, index);
+            const itemPrice = moneyPracticeItemPrice(itemPrices[index], hasMultipleItems);
             return (
               <div key={`${item.image}-${item.label}-${item.count}`}>
                 <Image src={item.image} alt="" width={210} height={160} unoptimized />

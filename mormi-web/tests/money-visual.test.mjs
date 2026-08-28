@@ -5,6 +5,7 @@ import { sessions } from "../app/morami-content.ts";
 import {
   currencyVisualDenominations,
   isCurrencyVisualDenomination,
+  moneyPracticeItemPrices,
   variedMoneyVisualAmounts,
 } from "../app/money-visual.ts";
 
@@ -32,4 +33,18 @@ test("문제를 변형해도 화폐 그림은 실제 단위에서 벗어나지 �
 test("상품 사진에 표시되는 가격은 화폐 단위와 별도로 변형할 수 있다", () => {
   assert.deepEqual(variedMoneyVisualAmounts([1200, 800], true, 1), [1300, 1000]);
   assert.equal(isCurrencyVisualDenomination(1200), false);
+});
+
+test("가격과 개수가 번갈아 오는 가르치기 문제도 모든 상품 가격을 순서대로 표시한다", () => {
+  const facts = [
+    { label: "표 한 장 가격", value: "2,500원" },
+    { label: "표 개수", value: "2장" },
+    { label: "주스 한 잔 가격", value: "1,500원" },
+    { label: "주스 개수", value: "2잔" },
+    { label: "스티커 한 장 가격", value: "3,000원" },
+    { label: "스티커 개수", value: "1장" },
+    { label: "예산", value: "10,000원" },
+  ];
+
+  assert.deepEqual(moneyPracticeItemPrices(facts, 3), ["2,500원", "1,500원", "3,000원"]);
 });
