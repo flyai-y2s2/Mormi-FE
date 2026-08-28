@@ -26,6 +26,11 @@ export type CafeDialogueResponse = {
 /** 아이에게 답을 묻는 대화 중에는 궁금해하는 표정을 한결같이 보여 준다. */
 const chatImage = "/morami/confused-cutout.png";
 
+function displayMormiLine(line: string | undefined, fallbackLine: string) {
+  const normalized = line?.trim();
+  return normalized && !/^[-–—−]+$/.test(normalized) ? normalized : fallbackLine;
+}
+
 export function CafeTalkStage({
   conversation,
   line,
@@ -75,7 +80,7 @@ export function CafeTalkStage({
             <Image className="cafe-talk-morami" src={chatImage} alt={`궁금해하는 ${displayName}`} width={300} height={360} unoptimized />
             <div className="cafe-talk-bubble__text">
               <b>{displayName}</b>
-              <p>{rename(line || fallbackLine)}</p>
+              <p>{rename(displayMormiLine(line, fallbackLine))}</p>
               {helpLoading && <div className="cafe-help-loading" role="status"><i aria-hidden="true" /><span>{displayName}가 도움 카드를 찾고 있어요…</span></div>}
               <MormiHelpCard card={helpCard} />
               {canRequestHelp && (

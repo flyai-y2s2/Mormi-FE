@@ -134,6 +134,8 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]*cafe-talk-dont-know[\s\S]*cafe-talk-stage[\s\S]*cafe-talk-answer/);
   assert.match(talkStage, /궁금해 사전/);
+  assert.match(talkStage, /function displayMormiLine/);
+  assert.match(talkStage, /rename\(displayMormiLine\(line, fallbackLine\)\)/);
   // 카페 툴바도 집 학습과 같은 시각 언어를 쓴다. 사전은 원형 책 아이콘,
   // 이전 버튼은 흰색 바탕의 초록 테두리 버튼이다.
   assert.match(talkStage, /className="cafe-talk-note"[\s\S]{0,220}ui-icon--book/);
