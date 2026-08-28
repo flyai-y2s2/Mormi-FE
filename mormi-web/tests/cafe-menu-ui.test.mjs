@@ -110,7 +110,7 @@ test("rejects menu price, duplicate, and visual drift before rendering", () => {
 });
 
 test("keeps calculation and change visuals on the canonical menu prices", () => {
-  const context = { cafe_context: { menu_items: menu, mormi_menu_id: "sandwich" } };
+  const context = { cafe_context: { menu_items: menu, mormi_menu_id: "sandwich", child_menu_id: "cookie" } };
   const exactCalculation = {
     type: "cafe_calculation",
     data: {
@@ -157,7 +157,7 @@ test("lets queue learners answer before revealing server choices", () => {
   assert.equal(choiceIdForTypedAnswer("9,000원 아니면 10,000원", moneyChoices), null);
 });
 
-test("keeps help gated and central menu cards as the only menu choice UI", async () => {
+test("uses a local child menu pick to construct one server-owned calculation problem", async () => {
   const [journey, visual, talk, home, css] = await Promise.all([
     readFile(new URL("../app/CafeJourney.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CafeStageVisual.tsx", import.meta.url), "utf8"),
@@ -169,14 +169,17 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
   assert.match(visual, /menuChoiceForItem\(item, conversation\.turn\.input\.choices\)/);
   assert.match(visual, /onMenuChoice\?\.\(item\.id, choice\.id\)/);
   assert.match(journey, /choice_ids: \[choice\.id\]/);
-  assert.match(journey, /validateMenuSelectionContext\(context, conversation\.turn\.visual\.data, menuId\)/);
-  assert.match(journey, /validation\.total > validation\.budget[\s\S]{0,500}setBudgetModalOpen\(true\)/);
+  assert.match(journey, /setMormeyMenuId\(randomItem\(menu\)\.id\)/);
+  assert.match(journey, /menu\.filter\(\(item\) => item\.id !== mormeyMenuId\)/);
+  assert.match(journey, /onClick=\{\(\) => setChildMenuId\(item\.id\)\}/);
+  assert.match(journey, /scenario_id: cafeScenarioByStation\[1\][\s\S]{0,260}mormi_menu_id: mormeyMenuId,[\s\S]{0,100}child_menu_id: childMenuId/);
+  assert.match(journey, /disabled=\{!childMenuId\}>이 메뉴로 계산하기/);
+  assert.doesNotMatch(journey, /cafe_budget_menu|validateMenuSelectionContext|setBudgetModalOpen|const budgets/);
   assert.match(journey, /cafeProblemContextMatches\(stage, conversation\.scenario_context, conversation\.turn\.visual\)/);
   assert.match(journey, /isCafeProblemContractError\(error\)/);
   assert.match(journey, /retryCafeProblem\(problemContextError\)/);
   assert.match(journey, /문제 다시 불러오기/);
-  assert.match(journey, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
-  assert.match(journey, /const budgets = \[7000, 8000\] as const/);
+  assert.match(journey, /cafeScenarioByStation = \["cafe_queue", "cafe_menu_total", "cafe_change"\]/);
 
   assert.match(talk, /const centralMenuPicker = inputKind === "choices" && turn\.input\.config\.component === "cafe_menu_picker"/);
   assert.doesNotMatch(talk, /delayedChoices|deferChoices|choiceFallbackVisible|choiceIdForTypedAnswer/);
@@ -197,6 +200,7 @@ test("keeps help gated and central menu cards as the only menu choice UI", async
 
   assert.match(css, /\.cafe-help-loading\{margin:2px 0 0/);
   assert.match(css, /\.cafe-talk-menu__grid \{ grid-template-columns:repeat\(3,minmax\(140px,1fr\)\)/);
+  assert.match(css, /\.cafe-sum-menu-picker\{/);
   assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(visual, /disabled=\{mormiSelected \|\| !choice \|\| sending\}/);
 });

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { captureMormeyEvent } from "./analytics";
 import { api, ApiError } from "./api-client";
-import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuItemsForAi, validateMenuSelectionContext } from "./cafe-menu";
+import { cafeProblemContextMatches, calculationDialogueLine, menu, menuChoiceById, menuItemsForAi } from "./cafe-menu";
 import { CafeStageComplete } from "./CafeStageComplete";
 import { CafeStageThanks } from "./CafeStageThanks";
 import { CafeStageVisual, QueueVisual } from "./CafeStageVisual";
@@ -44,11 +44,10 @@ type Props = {
 };
 
 /** 스테이션 순서대로의 AI 시나리오. 화면이 뽑은 문제를 함께 보내야 시작된다. */
-const cafeScenarioByStation = ["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"] as const;
+const cafeScenarioByStation = ["cafe_queue", "cafe_menu_total", "cafe_change"] as const;
 type QueueScene = "dialogue" | "note" | "thanks" | "clear";
 type CalculationScene = "dialogue" | "thanks" | "clear";
 type ChangeScene = "dialogue" | "thanks" | "clear";
-const budgets = [7000, 8000] as const;
 const cafeProblemContractErrorCodes = new Set([
   "queue_count_range",
   "queue_count_equal",
@@ -95,17 +94,15 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   const [queueCounts, setQueueCounts] = useState({ left: 3, right: 2 });
   const [calculationScene, setCalculationScene] = useState<CalculationScene>("dialogue");
   const [changeScene, setChangeScene] = useState<ChangeScene>("dialogue");
-  const [, setMenuBudget] = useState<number>(8000);
-  const [, setMormeyMenuId] = useState<string>("strawberry-juice");
-  // 메뉴 고르기에서 아이가 고른 메뉴. 대화가 검증한 사실에서만 받아 축하 장면에 쓴다.
-  // 거스름돈은 완료 화면의 분석 이벤트가 주문 금액을 알아야 해서 화면도 함께 기억한다.
-  // 계산 스테이지는 문제 전체를 turn.visual 이 들고 오므로 따로 둘 필요가 없다.
+  // 2단계의 메뉴 선택은 학습 스테이지가 아니라 합산 문제를 만드는 준비 동작이다.
+  // 모르미 메뉴와 아이 메뉴를 화면에서 정한 뒤 그 두 값을 AI 대화에 함께 고정한다.
+  const [mormeyMenuId, setMormeyMenuId] = useState<string>("strawberry-juice");
+  const [childMenuId, setChildMenuId] = useState<string | null>(null);
   const [changeMenuId, setChangeMenuId] = useState<string>("americano");
   const [dialogueInputs, setDialogueInputs] = useState<Partial<Record<CafeStage, string>>>({});
   const [dialogueError, setDialogueError] = useState("");
   const [dialogueSending, setDialogueSending] = useState(false);
   const [helpLoadingStage, setHelpLoadingStage] = useState<CafeStage | null>(null);
-  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [problemContextError, setProblemContextError] = useState<CafeStage | null>(null);
   const dialogueRequestInFlight = useRef(false);
   const reloadDialogueStageRef = useRef<CafeStage | null>(reloadDialogueStage ?? null);
@@ -123,7 +120,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     input: {
       scenario_id: (typeof cafeScenarioByStation)[number];
       queue_context?: { left_count: number; right_count: number };
-      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; budget?: number };
+      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; child_menu_id?: string; budget?: number };
     };
     intent: ReturnType<typeof createDialogueStartIntent>;
   }>>>({});
@@ -135,8 +132,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   // 서버 방문 id. 스테이지 시도는 전부 여기에 기록된다.
   const visitId = useRef<string | null>(null);
   const visitPromise = useRef<Promise<string> | null>(null);
-  // 화면은 메뉴 선택과 합계 계산을 하나의 2단계로 묶지만, Spring BE는 두 저장
-  // 단계를 구분한다. 복구할 때 어느 대화부터 이어야 하는지 서버 단계를 기억한다.
+  // 옛 배포의 menu 값도 읽되, 신규 흐름은 queue → calculate → change만 저장한다.
   const visitStage = useRef<CafeStage | "complete">("queue");
 
   useEffect(() => {
@@ -166,7 +162,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       if (visit.stage === "menu" || visit.stage === "calculate") setJourneyProgress((progress) => Math.max(progress, 1));
       if (visit.stage === "change") setJourneyProgress((progress) => Math.max(progress, 2));
       if (visit.stage === "complete") setJourneyProgress(3);
-      setMenuBudget(visit.target_amount);
       return visit.cafe_visit_id;
     }).catch((error: unknown) => {
       setDialogueError(error instanceof Error ? error.message : "카페를 불러오지 못했어요.");
@@ -196,9 +191,9 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     }
     const restoredCafe = conversation.scenario_context?.cafe_context;
     if (restoredCafe && menu.some((item) => item.id === restoredCafe.mormi_menu_id)) {
-      if (stage === "menu") {
+      if (stage === "calculate") {
         setMormeyMenuId(restoredCafe.mormi_menu_id);
-        if (typeof restoredCafe.budget === "number") setMenuBudget(restoredCafe.budget);
+        if (restoredCafe.child_menu_id) setChildMenuId(restoredCafe.child_menu_id);
       } else if (stage === "change") {
         setChangeMenuId(restoredCafe.mormi_menu_id);
       }
@@ -231,7 +226,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     input: {
       scenario_id: (typeof cafeScenarioByStation)[number];
       queue_context?: { left_count: number; right_count: number };
-      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; budget?: number };
+      cafe_context?: { menu_items: typeof menuItemsForAi; mormi_menu_id: string; child_menu_id?: string; budget?: number };
     },
     startMode: DialogueStartMode,
   ) {
@@ -325,21 +320,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         if (!replaying) setJourneyProgress((progress) => Math.max(progress, 1));
         setQueueScene("thanks");
       }
-    } else if (stage === "menu") {
-      const conversation = cafeTalks.current.menu;
-      const context = conversation?.scenario_context?.cafe_context;
-      const picked = conversation?.turn.completion?.verified_facts?.child_menu_id;
-      const mormeyPick = context?.menu_items.find((item) => item.id === context.mormi_menu_id);
-      const childMenu = context?.menu_items.find((item) => item.id === picked);
-      if (context && typeof context.budget === "number" && mormeyPick && childMenu) {
-        captureMormeyEvent("cafe_menu_selected", {
-          menu_ids: [mormeyPick.id, childMenu.id].join(","),
-          total: mormeyPick.price + childMenu.price,
-          budget: context.budget,
-          over_budget: false,
-        });
-      }
-      finishMenuStory();
     } else if (stage === "calculate") {
       if (!replaying) setJourneyProgress((progress) => Math.max(progress, 2));
       setCalculationScene("thanks");
@@ -356,7 +336,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
   const allStationsCleared = journeyProgress >= stationCopy.length;
   // 대화 화면인지. 축하·노트 장면은 입력이 없어 100svh 세로 배분을 쓰지 않는다.
   const isTalk = (step === "queue" && queueScene === "dialogue")
-    || step === "menu"
     || (step === "sum" && calculationScene === "dialogue")
     || (step === "change" && changeScene === "dialogue");
 
@@ -395,35 +374,17 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       setStep("queue");
     }
     if (index === 1) {
-      // 새 방문이 이미 서버의 calculate 단계까지 왔다면 메뉴 선택을 다시 시키지
-      // 않고 합계 질문부터 복구한다. 완료된 2단계의 재연습은 두 과정을 모두 푼다.
-      if (!isReplay && visitStage.current === "calculate") {
-        const nextSumMenu = randomItem(menu);
-        replayStages.current.calculate = false;
-        openCafeDialogue("calculate", {
-          scenario_id: cafeScenarioByStation[2],
-          cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-        }, reloadDialogueStageRef.current === "calculate" ? "restart" : "resume");
-        setStep("sum");
-      } else {
-        const nextMormeyMenu = randomItem(menu);
-        const nextBudget = randomItem(budgets);
-        replayStages.current.menu = isReplay;
-        setMenuBudget(nextBudget);
-        setMormeyMenuId(nextMormeyMenu.id);
-        openCafeDialogue("menu", {
-          scenario_id: cafeScenarioByStation[1],
-          cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
-        }, isReplay || reloadDialogueStageRef.current === "menu" ? "restart" : "resume");
-        setStep("menu");
-      }
+      replayStages.current.calculate = isReplay;
+      setMormeyMenuId(randomItem(menu).id);
+      setChildMenuId(null);
+      setStep("menu");
     }
     if (index === 2) {
       const nextChangeMenu = randomItem(menu);
       replayStages.current.change = isReplay;
       setChangeMenuId(nextChangeMenu.id);
       openCafeDialogue("change", {
-        scenario_id: cafeScenarioByStation[3],
+        scenario_id: cafeScenarioByStation[2],
         cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
       }, isReplay || reloadDialogueStageRef.current === "change" ? "restart" : "resume");
       setStep("change");
@@ -442,21 +403,22 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     if (stage === "change") setChangeScene("clear");
   }
 
-  function finishMenuStory() {
-    // 화면의 2단계는 메뉴 고르기와 값 계산을 한 흐름으로 묶는다. 서버는 두 단계를
-    // 따로 저장하므로 메뉴 검증이 끝난 직후 기존 계산 대화를 그대로 연다.
-    // 이걸 빼면 대화가 없어 turn.status 가 "completed" 가 되지 않고,
-    // 합계를 맞혀도 스테이지가 끝나지 않는다.
-    const nextSumMenu = randomItem(menu);
-    const calculationReplay = replayStages.current.menu === true;
-    replayStages.current.calculate = calculationReplay;
+  function startCalculationStory() {
+    if (!childMenuId || childMenuId === mormeyMenuId) return;
     openCafeDialogue("calculate", {
-      scenario_id: cafeScenarioByStation[2],
-      cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextSumMenu.id },
-    }, calculationReplay ? "restart" : "resume");
+      scenario_id: cafeScenarioByStation[1],
+      cafe_context: {
+        menu_items: menuItemsForAi,
+        mormi_menu_id: mormeyMenuId,
+        child_menu_id: childMenuId,
+      },
+    }, replayStages.current.calculate ? "restart" : "resume");
     setStep("sum");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    captureMormeyEvent("cafe_station_started", { station_index: 2, station: cafeStations[1] });
+    captureMormeyEvent("cafe_menu_selected", {
+      menu_ids: [mormeyMenuId, childMenuId].join(","),
+      over_budget: false,
+    });
   }
 
   function finishCalculationStory() {
@@ -476,7 +438,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setDialogueInputs((current) => ({ ...current, [stage]: value }));
   }
 
-  /** 답을 보내고 입력칸을 비운다. 네 스테이지가 모두 이 경로 하나만 쓴다. */
+  /** 답을 보내고 입력칸을 비운다. 세 가르치기 스테이지가 이 경로 하나만 쓴다. */
   async function answerMormi(stage: CafeStage, response: CafeDialogueResponse) {
     const requestsHelp = response.type === "no_response";
     if (requestsHelp) setHelpLoadingStage(stage);
@@ -492,37 +454,13 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     })).size;
   }
 
-  /** 중앙 사진 카드의 메뉴 ID를 검증하고 서버의 opaque 선택지 ID를 제출한다. */
-  function answerMenuChoice(stage: "menu" | "calculate", menuId: string, choiceId: string) {
+  /** 계산 대화가 L2 메뉴형 보기를 내린 경우 서버의 opaque 선택지 ID를 제출한다. */
+  function answerMenuChoice(stage: "calculate", choiceId: string) {
     const conversation = cafeTalks.current[stage];
     const choice = conversation && menuChoiceById(choiceId, conversation.turn.input.choices);
     if (!choice) {
       setDialogueError("지금 선택할 수 있는 메뉴가 아니에요. 다시 골라 주세요.");
       return;
-    }
-
-    if (stage === "menu") {
-      const context = conversation.scenario_context?.cafe_context;
-      const validation = validateMenuSelectionContext(context, conversation.turn.visual.data, menuId);
-      if (!validation.valid) {
-        if (validation.reason === "duplicate") {
-          setDialogueError("모르미가 고른 메뉴 말고 다른 메뉴를 골라 주세요.");
-        } else {
-          setDialogueError("");
-          setProblemContextError("menu");
-        }
-        return;
-      }
-      if (validation.total > validation.budget) {
-        captureMormeyEvent("cafe_menu_selected", {
-          menu_ids: [validation.mormiMenuId, validation.childMenuId].join(","),
-          total: validation.total,
-          budget: validation.budget,
-          over_budget: true,
-        });
-        setBudgetModalOpen(true);
-        return;
-      }
     }
 
     void answerMormi(stage, { type: "choice", choice_ids: [choice.id] });
@@ -543,13 +481,8 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
 
     const nextMormeyMenu = randomItem(menu);
     if (stage === "menu") {
-      const nextBudget = randomItem(budgets);
       setMormeyMenuId(nextMormeyMenu.id);
-      setMenuBudget(nextBudget);
-      openCafeDialogue("menu", {
-        scenario_id: cafeScenarioByStation[1],
-        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id, budget: nextBudget },
-      }, "restart");
+      setChildMenuId(null);
       setStep("menu");
       return;
     }
@@ -557,8 +490,12 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     if (stage === "calculate") {
       setCalculationScene("dialogue");
       openCafeDialogue("calculate", {
-        scenario_id: cafeScenarioByStation[2],
-        cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id },
+        scenario_id: cafeScenarioByStation[1],
+        cafe_context: {
+          menu_items: menuItemsForAi,
+          mormi_menu_id: nextMormeyMenu.id,
+          child_menu_id: randomItem(menu, nextMormeyMenu).id,
+        },
       }, "restart");
       setStep("sum");
       return;
@@ -567,7 +504,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     setChangeMenuId(nextMormeyMenu.id);
     setChangeScene("dialogue");
     openCafeDialogue("change", {
-      scenario_id: cafeScenarioByStation[3],
+      scenario_id: cafeScenarioByStation[2],
       cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextMormeyMenu.id },
     }, "restart");
     setStep("change");
@@ -680,23 +617,26 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       )}
 
       {step === "menu" && (
-        <CafeTalkStage
-          conversation={cafeConversations.menu}
-          line={mormiLines.menu}
-          fallbackLine={fallbackLines.menu}
-          inputText={dialogueInputs.menu ?? ""}
-          sending={dialogueSending}
-          helpLoading={helpLoadingStage === "menu"}
-          onInput={(value) => setDialogueInput("menu", value)}
-          onSubmit={(response) => { void answerMormi("menu", response); }}
-          onBack={returnToMap}
-        >
-          <CafeStageVisual
-            conversation={cafeConversations.menu}
-            sending={dialogueSending}
-            onMenuChoice={(menuId, choiceId) => answerMenuChoice("menu", menuId, choiceId)}
-          />
-        </CafeTalkStage>
+        <main className="figma-cafe-panel figma-cafe-sum" data-figma-node="74:8">
+          <div className="figma-cafe-panel__heading">
+            <div><span>MISSION 2</span><h1>합산할 메뉴 고르기</h1><p>모르미가 고른 메뉴와 값을 더해 볼 메뉴를 하나 골라 봐!</p></div>
+          </div>
+          <section className="cafe-sum-menu-picker" aria-label="합산할 메뉴 고르기">
+            {(() => {
+              const mormiMenu = menu.find((item) => item.id === mormeyMenuId) ?? menu[0];
+              return <div><Image src={mormiMenu.image} alt={mormiMenu.name} width={160} height={105} unoptimized /><span>모르미가 고른 메뉴</span><strong>{mormiMenu.name} · {mormiMenu.price.toLocaleString("ko-KR")}원</strong></div>;
+            })()}
+            <div className="cafe-sum-menu-picker__choices">
+              {menu.filter((item) => item.id !== mormeyMenuId).map((item) => (
+                <button key={item.id} className={childMenuId === item.id ? "is-selected" : ""} onClick={() => setChildMenuId(item.id)}>
+                  <Image src={item.image} alt={item.name} width={110} height={75} unoptimized />
+                  <span>{item.name}</span><b>{item.price.toLocaleString("ko-KR")}원</b>
+                </button>
+              ))}
+            </div>
+          </section>
+          <button className="figma-cafe-action" onClick={startCalculationStory} disabled={!childMenuId}>이 메뉴로 계산하기</button>
+        </main>
       )}
 
       {step === "sum" && calculationScene === "dialogue" && (
@@ -714,7 +654,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           <CafeStageVisual
             conversation={cafeConversations.calculate}
             sending={dialogueSending}
-            onMenuChoice={(menuId, choiceId) => answerMenuChoice("calculate", menuId, choiceId)}
+            onMenuChoice={(_menuId, choiceId) => answerMenuChoice("calculate", choiceId)}
           />
         </CafeTalkStage>
       )}
@@ -724,7 +664,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           stageNumber={2}
           title="두 메뉴의 값을"
           highlight="정확히 더했어요!"
-          noteCount={noteCount("menu", "calculate")}
+          noteCount={noteCount("calculate")}
           currentMoney={coinBalance}
           actionLabel="지도에서 확인하기"
           onAction={finishCalculationStory}
@@ -781,7 +721,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
           eyebrow="카페 외출 완료"
           title="우리 힘으로"
           highlight="주문했어!"
-          noteCount={noteCount("queue", "menu", "calculate", "change")}
+          noteCount={noteCount("queue", "calculate", "change")}
           currentMoney={coinBalance}
           actionLabel={`${displayName}와 집으로`}
           onAction={() => { void goHomeWithMormi(); }}
@@ -791,13 +731,6 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       )}
       {dialogueError && <p className="figma-cafe-feedback is-error" role="alert">{rename(dialogueError)}</p>}
       {problemContextError && <div className="cafe-problem-recovery" role="alert"><p>화면과 문제 정보가 달라졌어요. 새 문제를 불러와 주세요.</p><button type="button" onClick={() => retryCafeProblem(problemContextError)}>문제 다시 불러오기</button></div>}
-      {budgetModalOpen && <div className="modal-backdrop cafe-budget-backdrop" role="dialog" aria-modal="true" aria-label="예산 초과 안내">
-        <div className="cafe-budget-modal">
-          <Image src="/morami/confused-cutout.png" alt={`다시 골라 달라고 부탁하는 ${displayName}`} width={150} height={150} unoptimized />
-          <h2>예산을 넘었어요. 다른 메뉴를 골라 봐!</h2>
-          <button type="button" onClick={() => setBudgetModalOpen(false)}>확인</button>
-        </div>
-      </div>}
     </section>
   );
 }

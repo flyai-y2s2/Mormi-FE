@@ -9,7 +9,7 @@ import { visibleHelpCard } from "./help-card";
 import { useCharacterName } from "./CharacterName";
 
 /**
- * 카페의 네 스테이지가 함께 쓰는 대화 화면.
+ * 카페의 세 가르치기 스테이지가 함께 쓰는 대화 화면.
  *
  * 아이는 위에서 아래로 한 줄기로 읽는다: ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
  * 세 덩이를 한 화면(100svh) 안에 담아, 답을 쓰려고 아래로 스크롤할 일이 없게 한다.

@@ -26,6 +26,7 @@ type MenuContractItem = { id: string; price: number };
 type MenuContractContext = {
   menu_items: readonly MenuContractItem[];
   mormi_menu_id: string;
+  child_menu_id?: string;
   budget?: number;
 };
 type CafeProblemStage = "queue" | "menu" | "calculate" | "change";
@@ -104,7 +105,7 @@ export function cafeProblemContextMatches(
     const mormiMenu = objectValue(visual.data.mormi_menu);
     if (mormiMenu && !visualMenuMatches(mormiMenu, board, context.mormi_menu_id)) return false;
     const childMenu = objectValue(visual.data.child_menu);
-    if (childMenu && !visualMenuMatches(childMenu, board)) return false;
+    if (childMenu && !visualMenuMatches(childMenu, board, context.child_menu_id)) return false;
     if (visual.type === "cafe_calculation" && stage === "calculate") {
       if (visual.data.operation !== "addition" || !mormiMenu || !childMenu
         || visual.data.left !== mormiMenu.price || visual.data.right !== childMenu.price) return false;

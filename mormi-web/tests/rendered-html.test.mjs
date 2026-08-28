@@ -133,7 +133,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /queue: "모르미의 질문을 불러오는 중이에요\."/);
   assert.doesNotMatch(cafe, /주문하려면 줄을 서야 하나 봐|각각 사람들이 몇 명씩 있어|더 짧은 줄에는 몇 명이 있어/);
   // 아이는 위에서 아래로 한 줄기로 읽는다: 모르미의 질문 → 문제 그림 → 알려주기.
-  // 네 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
+  // 세 가르치기 스테이지가 같은 대화 셸을 쓰므로 이 순서는 CafeTalkStage 한 곳에서만 정해진다.
   assert.match(talkStage, /cafe-talk-bubble[\s\S]*cafe-talk-dont-know[\s\S]*cafe-talk-stage[\s\S]*cafe-talk-answer/);
   assert.match(talkStage, /궁금해 사전/);
   assert.match(talkStage, /function displayMormiLine/);
@@ -161,18 +161,17 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /가르쳐 준 내용은 잊지 않게 별노트에 적어 둬야겠다/);
   assert.doesNotMatch(cafe, /가 알려줌|빠뜨빼똘 손글씨로|다음으로 ▶/);
   assert.match(cafe, /learnerName/);
-  assert.match(cafe, /budgets = \[7000, 8000\]/);
   assert.match(cafe, /randomQueueCounts/);
   assert.match(cafe, /conversation\.scenario_context\?\.queue_context/);
-  assert.match(cafe, /randomItem\(menu\)/);
-  assert.match(cafe, /예산을 넘었어요\. 다른 메뉴를 골라 봐!/);
-  assert.match(cafe, /finishMenuStory[\s\S]{0,900}setStep\("sum"\)/);
-  assert.match(cafe, /const calculationReplay = replayStages\.current\.menu === true;[\s\S]{0,400}\}, calculationReplay \? "restart" : "resume"\);/);
-  // 지도에는 줄 서기·메뉴 값 계산·거스름돈 세 단계만 보인다. Spring BE의
-  // menu → calculate 저장 순서는 2단계 안에서 이어져 기존 계약을 건너뛰지 않는다.
+  assert.match(cafe, /setMormeyMenuId\(randomItem\(menu\)\.id\)/);
+  assert.match(cafe, /menu\.filter\(\(item\) => item\.id !== mormeyMenuId\)/);
+  assert.match(cafe, /onClick=\{\(\) => setChildMenuId\(item\.id\)\}/);
+  assert.match(cafe, /child_menu_id: childMenuId/);
+  // 지도에는 줄 서기·메뉴 값 계산·거스름돈 세 단계만 보인다. 메뉴 선택은
+  // 2단계 문제를 만들기 위한 로컬 준비 동작이며 별도 대화 스테이지가 아니다.
   assert.match(journey, /cafeStations = \["줄 서기", "메뉴 값 계산하기", "거스름돈 받기"\]/);
   assert.doesNotMatch(cafe, /\{ title: "메뉴 고르기"/);
-  assert.match(cafe, /cafeScenarioByStation = \["cafe_queue", "cafe_budget_menu", "cafe_menu_total", "cafe_change"\]/);
+  assert.match(cafe, /cafeScenarioByStation = \["cafe_queue", "cafe_menu_total", "cafe_change"\]/);
   assert.match(cafe, /stageNumber=\{1\}[\s\S]*stageNumber=\{2\}[\s\S]*stageNumber=\{3\}/);
   assert.doesNotMatch(cafe, /stageNumber=\{4\}/);
   assert.equal((cafe.match(/<CafeStageComplete\b/g) || []).length, 4);
@@ -184,7 +183,7 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(stageComplete, /cafe-stage-complete__actions/);
   assert.match(stageComplete, /secondaryActionLabel/);
   assert.match(cafe, /eyebrow="카페 외출 완료"/);
-  assert.match(cafe, /noteCount=\{noteCount\("queue", "menu", "calculate", "change"\)\}/);
+  assert.match(cafe, /noteCount=\{noteCount\("queue", "calculate", "change"\)\}/);
   assert.match(cafe, /secondaryActionLabel="스테이지 더 연습하기"/);
   assert.doesNotMatch(cafe, /figma-cafe-done/);
   assert.doesNotMatch(css, /figma-cafe-done/);
@@ -228,13 +227,15 @@ test("keeps four official areas and 36 playable sessions in the curriculum", asy
   assert.match(cafe, /setChangeScene\("thanks"\)/);
   assert.match(cafe, /showStageSummary[\s\S]*setCalculationScene\("clear"\)[\s\S]*setChangeScene\("clear"\)/);
   assert.doesNotMatch(cafe, /setTimeout\(returnToMap, 500\)/);
-  // 카페의 네 스테이지는 모두 모르미와의 대화로만 답한다.
-  // 화면이 따로 채점하는 폼(합계 입력칸·장바구니·지폐 스테퍼)을 되살리지 않는다.
-  assert.equal((cafe.match(/<CafeTalkStage\b/g) || []).length, 4);
+  // 카페의 세 가르치기 스테이지는 모르미와 대화한다. 2단계 메뉴 선택은
+  // 채점하지 않고 아이가 합산할 두 번째 메뉴를 직접 고르는 준비 화면이다.
+  assert.equal((cafe.match(/<CafeTalkStage\b/g) || []).length, 3);
   assert.doesNotMatch(cafe, /checkSum|checkChange|orderMenu|changeChangeMoney|toggleMenu/);
-  assert.doesNotMatch(cafe, /cafe-sum-menu-picker|figma-cafe-sum__|figma-cafe-change__|cafe-change-order|우리 장바구니/);
+  assert.match(cafe, /cafe-sum-menu-picker/);
+  assert.doesNotMatch(cafe, /figma-cafe-sum__|figma-cafe-change__|cafe-change-order|우리 장바구니/);
   assert.doesNotMatch(cafe, /두 메뉴 가격의 합계|가진 돈 10,000원|받을 돈을 눌러 담아요/);
-  assert.doesNotMatch(css, /\.cafe-sum-menu-picker|\.figma-cafe-sum__|\.figma-cafe-change__|\.cafe-change-order/);
+  assert.match(css, /\.cafe-sum-menu-picker\{/);
+  assert.doesNotMatch(css, /\.figma-cafe-sum__|\.figma-cafe-change__|\.cafe-change-order/);
   // 입력창은 스테이지마다 하나뿐이다. 패널 밖에 같은 컨트롤을 또 붙이면 어디에 답할지 흐려진다.
   assert.doesNotMatch(cafe, /activeDialogueStage/);
   assert.equal((cafe.match(/<CafeDialogueControls\b/g) || []).length, 0);

@@ -32,6 +32,7 @@ export type MormiPracticeSummary = {
 export type MormiCafeContext = {
   menu_items: MormiMenuItem[];
   mormi_menu_id: string;
+  child_menu_id?: string;
   budget?: number;
 };
 

@@ -2163,7 +2163,7 @@ export function MoramiApp() {
       {stage === "outside" && <OutsideHub unlocked={isCafeUnlocked(completedSessionIds)} cafeTheme={cafeTheme} amusementParkTheme={amusementParkTheme} cafeVisited={activeCafeVisitId !== null} onCafe={() => setStage("cafe")} onAmusementPark={() => setStage("amusement")} />}
 
       {/* 완료 뒤에도 activeCafeVisitId 를 비우지 않는다. 같은 방문으로 다시 들어가야
-          네 스테이지가 모두 열린 연습 모드로 돌아온다. */}
+          세 스테이지가 모두 열린 연습 모드로 돌아온다. */}
       {stage === "cafe" && <CafeJourney
         learnerName={childName}
         learnerId={learner.id}

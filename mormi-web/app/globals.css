@@ -1870,6 +1870,34 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 @media(max-width:760px){.figma-cafe__bar{grid-template-columns:78px 1fr}.figma-cafe__place{display:none}.figma-cafe__bar .figma-cafe__steps{justify-content:center}.figma-cafe-panel{padding:25px 17px}.figma-cafe-queue__choice{gap:10px}.figma-cafe-queue__choice .queue-lane{height:330px;padding:15px 12px}.queue-lane__people{gap:3px!important}.queue-lane__people>i{transform:scale(.75);margin:0 -6px}.figma-cafe-menu aside{min-height:280px}}
 @media(max-width:430px){.figma-cafe__bar .figma-cafe__steps{display:flex}.figma-cafe-panel{border-radius:24px}.figma-cafe-panel__heading h1{font-size:25px}.figma-cafe-queue__choice{grid-template-columns:1fr}.figma-cafe-queue__choice .queue-lane{height:260px}.queue-lane__people{margin:8px 0}}
 
+/* Mission 2 setup: Mormi picks one menu, then the child picks the other.
+   This screen only fixes the two givens; the AI dialogue judges the sum. */
+.cafe-sum-menu-picker{
+  width:min(980px,100%);margin:28px auto 24px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;
+}
+.cafe-sum-menu-picker>div:first-child{
+  min-height:310px;padding:24px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  border:4px solid #fff;border-radius:28px;background:#fff3d9;box-shadow:0 9px 0 #dfc492,0 18px 30px rgba(91,61,35,.12);text-align:center;
+}
+.cafe-sum-menu-picker>div:first-child img{width:170px;height:125px;object-fit:contain}
+.cafe-sum-menu-picker>div:first-child span{color:#8e6549;font-size:13px;font-weight:900}
+.cafe-sum-menu-picker>div:first-child strong{color:#533a2d;font-size:18px;line-height:1.5}
+.cafe-sum-menu-picker__choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cafe-sum-menu-picker__choices button{
+  min-width:0;min-height:145px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:4px solid #fff;border-radius:22px;color:#533a2d;background:#fffaf0;box-shadow:0 7px 0 #ded0b8;cursor:pointer;
+}
+.cafe-sum-menu-picker__choices button:hover{transform:translateY(-2px)}
+.cafe-sum-menu-picker__choices button.is-selected{border-color:#73c99f;background:#eaf8ef;box-shadow:0 7px 0 #9fcdb0}
+.cafe-sum-menu-picker__choices img{width:105px;height:72px;object-fit:contain}
+.cafe-sum-menu-picker__choices span{font-size:14px;font-weight:900}
+.cafe-sum-menu-picker__choices b{color:#a46a43;font-size:14px}
+
+@media(max-width:760px){
+  .cafe-sum-menu-picker{grid-template-columns:1fr}.cafe-sum-menu-picker>div:first-child{min-height:205px}
+  .cafe-sum-menu-picker__choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 /* Mission 3: selected food photos + tactile money picker */
 
 
@@ -2193,7 +2221,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
   min-height:100svh;padding:18px 24px 34px;
   display:flex;flex-direction:column;
 }
-/* 상단 바의 4단계는 아래 카드가 이미 같은 내용을 보여 준다. 중복을 지운다. */
+/* 상단 진행 장식은 아래 카드가 이미 같은 내용을 보여 준다. 중복을 지운다. */
 .figma-cafe--overview .figma-cafe__bar{grid-template-columns:auto auto;justify-content:start;margin-bottom:14px}
 .figma-cafe--overview .figma-cafe__steps{display:none}
 .figma-cafe--overview .figma-cafe-map{margin:auto}
@@ -2286,7 +2314,7 @@ button.complete-report-link { width:100%; border:0; cursor:pointer; }
 }
 
 
-/* ── 카페 대화 화면: 네 스테이지가 공유하는 세로 흐름 ──────────────────
+/* ── 카페 대화 화면: 세 가르치기 스테이지가 공유하는 세로 흐름 ────────
    ① 모르미의 질문 → ② 문제 그림 → ③ 내가 알려주기.
    세 덩이가 100svh 안에서 끝나야 아이가 답을 쓰러 아래로 스크롤하지 않는다.
    높이는 vh 를 섞은 clamp 로 잡아, 노트북처럼 낮은 화면에서 먼저 줄어든다.

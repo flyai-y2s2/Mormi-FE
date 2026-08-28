@@ -79,11 +79,14 @@ AI `develop`의 strict schema 변환 적용 이후 후속 자유 발화가 동�
 ## 주요 경로
 
 - `mormi-web/app/MoramiApp.tsx`: 온보딩, 집, 커리큘럼, 반복 학습, 가르치기, 완료 상태
-- `mormi-web/app/CafeJourney.tsx`: 카페 스테이지, 줄 비교, 예산 메뉴 선택, 선택 메뉴 사진·합계 입력, 실제 화폐 PNG의 `− / ＋` 거스름돈 조합
+- `mormi-web/app/CafeJourney.tsx`: 카페 3개 스테이지, 줄 비교, 모르미·아이의 메뉴 선택 후 합계 입력, 실제 화폐 PNG의 `− / ＋` 거스름돈 조합
 - `mormi-web/app/journey-config.ts`: 카페 해금에 필요한 과정과 화폐 정의
 - `mormi-web/public/figma/cafe/`: Figma에서 내려받은 카페 메뉴와 스테이지 원본 PNG
 - `mormi-web/public/cafe-stages/`: 통일된 단순 3D 클레이 스타일의 카페 스테이지 카드 이미지
-- 카페는 Figma의 학습 순서와 제공된 화면별 문구를 유지하고 시각 디자인은 모르미의 크림·민트 게임 UI로 통일합니다. 스테이지 화면은 `줄 서기 → 메뉴 고르기 → 계산하기 → 거스름돈 받기` 네 카드가 순서대로 열리며, 줄 서기는 대화·자유 입력·선택·별노트·성공 화면의 5단계로 진행됩니다.
+- 카페는 Figma의 화면별 문구와 크림·민트 게임 UI를 유지합니다. 제품 스테이지는
+  `줄 서기 → 메뉴값 합산 → 거스름돈 받기` 세 카드입니다. 메뉴값 합산을 시작하면
+  모르미가 하나를 무작위로 고르고 아이가 다른 하나를 직접 고른 뒤, 그 두 메뉴로
+  하나의 AI 합산 문제를 엽니다. 메뉴 선택 자체는 별도 채점 스테이지가 아닙니다.
 - `mormi-web/app/mormi-dialogue.ts`: 집·카페가 함께 사용하는 Mormi-AI `TurnContract` 타입과 대화 클라이언트
 - `mormi-web/app/api/be/[...path]/route.ts`: 브라우저의 `/api/be/*`를 서버 전용
   `BACKEND_ORIGIN`에 등록된 배포 Spring BE로 전달하는 운영 프록시
