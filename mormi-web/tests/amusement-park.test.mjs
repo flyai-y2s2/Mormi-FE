@@ -89,10 +89,11 @@ test("이전·궁금해 사전 버튼은 놀이동산과 카페의 가운데 학
   assert.match(parkToolbar, /z-index:\s*10/);
 });
 
-test("완료한 놀이동산 스테이지도 카페처럼 새 회차로 다시 연습한다", () => {
+test("놀이동산 지도에서 스테이지를 열 때마다 새 회차로 시작한다", () => {
   assert.match(component, /onOpen\(stageId, cleared\)/);
   assert.match(component, /cleared \? "다시 연습"/);
-  assert.match(component, /openDialogue\(replay \? "restart" : "resume"\)/);
+  assert.match(component, /openDialogue\("restart"\)/);
+  assert.doesNotMatch(component, /openDialogue\(replay \? "restart" : "resume"\)/);
   assert.doesNotMatch(component, /if \(alreadyCompleted/);
 });
 

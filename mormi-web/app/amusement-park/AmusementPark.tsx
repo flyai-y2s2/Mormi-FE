@@ -133,10 +133,9 @@ function ParkProblemVisual({ stage, conversation }: {
   </div>;
 }
 
-function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
+function MissionScene({ visit, stage, onBack, onVisitChanged }: {
   visit: AmusementParkVisitView;
   stage: AmusementStageView;
-  replay: boolean;
   onBack: () => void;
   onVisitChanged: (visit: AmusementParkVisitView) => void;
 }) {
@@ -195,9 +194,11 @@ function MissionScene({ visit, stage, replay, onBack, onVisitChanged }: {
   }, [applyConversation, stage.stage_id, visit.visit_id]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { void openDialogue(replay ? "restart" : "resume"); }, 0);
+    // 지도에서 스테이지를 여는 것은 항상 새 시도다. 같은 request_id의 전송 재시도는
+    // BE가 멱등 처리하지만, 이전에 끝났거나 중단한 회차를 화면에 되살리지는 않는다.
+    const timer = window.setTimeout(() => { void openDialogue("restart"); }, 0);
     return () => window.clearTimeout(timer);
-  }, [openDialogue, replay]);
+  }, [openDialogue]);
 
   const answerMormi = async (response: CafeDialogueResponse) => {
     if (!conversation || requestInFlight.current) return;
@@ -327,7 +328,6 @@ export function AmusementPark({ onExit }: { onExit: () => void }) {
     key={`${visit.visit_id}:${stage.stage_id}:${screen.replay ? "replay" : "progress"}`}
     visit={visit}
     stage={stage}
-    replay={screen.replay}
     onBack={returnToMap}
     onVisitChanged={setVisit}
   />;

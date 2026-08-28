@@ -150,7 +150,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
     // 진행 중 방문 id 를 이미 알고 있으면 조회만 한다. POST 는 없을 때 새로 만드는
     // 부수효과가 있어, 단순 복구에는 쓰지 않는다. 조회가 실패하면(만료·소유자 불일치)
     // 그때 POST 로 넘어간다.
-    // 완료된 방문도 버리지 않고 그대로 이어받는다. 네 돌다리가 모두 열린 연습 모드가
+    // 완료된 방문도 버리지 않고 그대로 이어받는다. 세 돌다리가 모두 열린 연습 모드가
     // 되어, 아이가 원하는 스테이지를 골라 몇 번이든 다시 풀 수 있다.
     const load = activeVisitId
       ? api.getCafeVisit(activeVisitId).catch(() => api.startCafeVisit())
@@ -370,7 +370,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       openCafeDialogue("queue", {
         scenario_id: cafeScenarioByStation[0],
         queue_context: { left_count: counts.left, right_count: counts.right },
-      }, isReplay || reloadDialogueStageRef.current === "queue" ? "restart" : "resume");
+      }, "restart");
       setStep("queue");
     }
     if (index === 1) {
@@ -386,7 +386,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
       openCafeDialogue("change", {
         scenario_id: cafeScenarioByStation[2],
         cafe_context: { menu_items: menuItemsForAi, mormi_menu_id: nextChangeMenu.id },
-      }, isReplay || reloadDialogueStageRef.current === "change" ? "restart" : "resume");
+      }, "restart");
       setStep("change");
     }
     captureMormeyEvent("cafe_station_started", { station_index: index + 1, station: cafeStations[index] });
@@ -412,7 +412,7 @@ export function CafeJourney({ learnerName, coinBalance, activeVisitId, reloadDia
         mormi_menu_id: mormeyMenuId,
         child_menu_id: childMenuId,
       },
-    }, replayStages.current.calculate ? "restart" : "resume");
+    }, "restart");
     setStep("sum");
     window.scrollTo({ top: 0, behavior: "smooth" });
     captureMormeyEvent("cafe_menu_selected", {

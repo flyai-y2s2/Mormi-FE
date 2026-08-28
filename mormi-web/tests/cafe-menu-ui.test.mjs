@@ -180,6 +180,10 @@ test("uses a local child menu pick to construct one server-owned calculation pro
   assert.match(journey, /retryCafeProblem\(problemContextError\)/);
   assert.match(journey, /문제 다시 불러오기/);
   assert.match(journey, /cafeScenarioByStation = \["cafe_queue", "cafe_menu_total", "cafe_change"\]/);
+  assert.match(journey, /openCafeDialogue\("queue",[\s\S]{0,220}, "restart"\)/);
+  assert.match(journey, /openCafeDialogue\("calculate",[\s\S]{0,320}, "restart"\)/);
+  assert.match(journey, /openCafeDialogue\("change",[\s\S]{0,220}, "restart"\)/);
+  assert.doesNotMatch(journey, /replayStages\.current\.calculate \? "restart" : "resume"/);
 
   assert.match(talk, /const centralMenuPicker = inputKind === "choices" && turn\.input\.config\.component === "cafe_menu_picker"/);
   assert.doesNotMatch(talk, /delayedChoices|deferChoices|choiceFallbackVisible|choiceIdForTypedAnswer/);
