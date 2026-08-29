@@ -90,11 +90,11 @@ export function CharacterNameModal({ initialName, onSave, onClose }: {
       <form className={`character-name-modal character-name-modal--${step}`} role="dialog" aria-modal="true" aria-labelledby="character-name-title" onSubmit={submit}>
         <button className="character-name-close" type="button" aria-label="닫기" onClick={onClose}>×</button>
         {step === "introduction" ? <>
-          <Image src="/morami/confused-cutout.png" alt="배우고 싶어 하는 캐릭터" width={190} height={210} unoptimized />
+          <Image src="/morami/happy-cutout.png" alt="반갑게 인사하는 캐릭터" width={190} height={210} unoptimized />
           <div className="character-name-introduction">
             <p>처음 만난 우리</p>
             <h2 id="character-name-title">안녕! 만나서 반가워.</h2>
-            <div className="character-name-speech">나 배우고 싶은데 어떻게 해야 할지 모르겠어.<br />내 이름부터 정해 줄래?</div>
+            <div className="character-name-speech">나 아직 모르는 게 너무 많은데, 나를 도와줄 수 있어?<br />먼저 내 이름부터 정해주라!</div>
             <button className="primary-button" type="button" onClick={() => setStep("name")}>좋아, 이름 지어 줄게 <span className="button-arrow" /></button>
           </div>
         </> : <>

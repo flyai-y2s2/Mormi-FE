@@ -44,8 +44,9 @@ test("이름이 없는 학습자는 로그인 직후 캐릭터 소개 뒤 이름
   assert.match(app, /setCharacterNameOpen\(!storedCharacterName\)/);
   assert.match(app, /if \(!restoredCharacterName\) setCharacterNameOpen\(true\)/);
   assert.match(names, /useState<"introduction" \| "name">\(initialName \? "name" : "introduction"\)/);
-  assert.match(names, /나 배우고 싶은데 어떻게 해야 할지 모르겠어/);
-  assert.match(names, /내 이름부터 정해 줄래\?/);
+  assert.match(names, /나 아직 모르는 게 너무 많은데, 나를 도와줄 수 있어\?/);
+  assert.match(names, /먼저 내 이름부터 정해주라!/);
+  assert.match(names, /src="\/morami\/happy-cutout\.png" alt="반갑게 인사하는 캐릭터"/);
   assert.match(names, />좋아, 이름 지어 줄게/);
   assert.match(names, /onClick=\{\(\) => setStep\("name"\)\}/);
   assert.match(names, />나를 뭐라고 부를까\?</);
