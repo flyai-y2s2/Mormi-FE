@@ -94,7 +94,7 @@ export function CharacterNameModal({ initialName, onSave, onClose }: {
           <div className="character-name-introduction">
             <p>처음 만난 우리</p>
             <h2 id="character-name-title">안녕! 만나서 반가워.</h2>
-            <div className="character-name-speech">나 아직 모르는 게 너무 많은데, 나를 도와줄 수 있어?<br />먼저 내 이름부터 정해주라!</div>
+            <div className="character-name-speech">나 모르는 게 너무 많은데, 도와줄 수 있어?<br />먼저 내 이름부터 정해주라!</div>
             <button className="primary-button" type="button" onClick={() => setStep("name")}>좋아, 이름 지어 줄게 <span className="button-arrow" /></button>
           </div>
         </> : <>
