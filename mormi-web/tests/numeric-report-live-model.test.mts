@@ -179,9 +179,42 @@ test("recognizes the BE 반복학습 and 모르미 가르치기 labels without d
   assert.deepEqual(money.metrics, [
     ["정답률", "70%", "90%"],
     ["정답까지 평균", "—", "—"],
-    ["모르미 가르치기", "40%", "80%"],
+    ["모르미 가르치기", "1회 완료", "1회 완료"],
   ]);
   assert.equal(money.ladderStart, "L2");
+});
+
+test("reports completed Mormi teaching counts instead of averaging independence scores", () => {
+  const completedTeachingReport: DiagnosticReportDto = {
+    ...report,
+    modes: [
+      {
+        mode: "HOME",
+        domains: [
+          { ...report.modes[0]!.domains[0]!, label: "돈 세기 · 반복학습" },
+          {
+            ...report.modes[0]!.domains[0]!,
+            label: "돈 세기 · 모르미 가르치기",
+            total_count: 3,
+            recent_count: 3,
+            points: [0, 0, 0].map((score, index) => ({
+              evidence_id: `completed-teach-${index}`,
+              label: "모르미 가르치기",
+              occurred_at: `2026-08-${String(index + 18).padStart(2, "0")}T18:00:00Z`,
+              independent_score: score,
+              supported_score: 100,
+              recent: true,
+            })),
+          },
+        ],
+      },
+      { mode: "LIFE", domains: [] },
+    ],
+  };
+
+  const money = buildNumericLiveReport(completedTeachingReport).domains.HOME[0]!;
+
+  assert.deepEqual(money.metrics[2], ["모르미 가르치기", "2회 완료", "1회 완료"]);
 });
 
 test("calculates attempts-to-correct and recent L4-L0 shares from backend evidence", () => {

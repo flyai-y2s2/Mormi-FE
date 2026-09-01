@@ -104,6 +104,10 @@ function average(points: DiagnosticDomainTrendDto["points"]): string {
   return `${Math.round(Math.max(0, Math.min(100, result)))}%`;
 }
 
+function completedTeachingCount(points: DiagnosticDomainTrendDto["points"]): string {
+  return points.length > 0 ? `${points.length}회 완료` : "—";
+}
+
 function directionForWindows(windows: ComparisonWindows): DiagnosticDirection {
   const past = averageScore(windows.past);
   const latest = averageScore(windows.latest);
@@ -240,8 +244,8 @@ function buildMode(
     const ladderWindows = comparisonWindows(ladderPoints);
     const historyAccuracy = accuracy ? average(accuracyWindows.past) : "—";
     const recentAccuracy = accuracy ? average(accuracyWindows.latest) : "—";
-    const historySpeech = speech ? average(speechWindows.past) : "—";
-    const recentSpeech = speech ? average(speechWindows.latest) : "—";
+    const historySpeech = speech ? completedTeachingCount(speechWindows.past) : "—";
+    const recentSpeech = speech ? completedTeachingCount(speechWindows.latest) : "—";
     const historyAttempts = accuracy ? attemptsToCorrect(accuracyWindows.past) : "—";
     const recentAttempts = accuracy ? attemptsToCorrect(accuracyWindows.latest) : "—";
     const [historyLadder] = ladderShares(ladderWindows.past);
