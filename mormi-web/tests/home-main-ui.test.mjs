@@ -28,7 +28,7 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.match(home, /<div className="player-stat player-stat--level"/);
   assert.match(home, /<div className="player-wallet">/);
   assert.match(home, /<button type="button" className="player-stat player-stat--star"[\s\S]{0,240}aria-haspopup="dialog"/);
-  assert.match(home, /<small>별노트<\/small><b>모은 별 \{stars\}개<\/b>/);
+  assert.match(home, /<small>학습 성취<\/small><b>모은 별 \{stars\}개<\/b>/);
   assert.doesNotMatch(home, /<button[^>]*player-stat--level|<button[^>]*player-wallet/);
   assert.match(home, /<div className="home-room-character-column">\s*<div className="home-room-morami">/);
   assert.match(home, /<div className="home-main-actions">\s*<button className="home-action-card home-action-card--study" onClick=\{onCurriculum\}>[\s\S]*?<button className="home-action-card home-action-card--outside" onClick=\{onOutside\}>/);
@@ -41,6 +41,8 @@ test("메인 홈은 핵심 동선과 성장 정보만 표시한다", async () =>
   assert.doesNotMatch(app, /효과음 끄기|효과음 켜기/);
   assert.doesNotMatch(app, /className="star-note-archive-link"/);
   assert.match(collectedStarsModal, />별노트 모아보기<\/button>/);
+  assert.match(collectedStarsModal, /아래 문장은 완료한 개념의 요약이에요/);
+  assert.match(collectedStarsModal, /직접 알려 준 말은 별노트에서 확인할 수 있어요/);
   assert.match(outside, /<h2>카페 가기<\/h2>/);
   assert.match(outside, /<h2>놀이동산 가기<\/h2>/);
   assert.doesNotMatch(outside, /displayName|rename\(|와 생활 수학|와 출발하기|와 들어가기/);

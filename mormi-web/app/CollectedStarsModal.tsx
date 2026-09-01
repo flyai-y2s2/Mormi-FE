@@ -62,7 +62,7 @@ export function CollectedStarsModal({ completedSessionIds, onClose, onOpenStarNo
           <Image src="/ui/mormi-star.png" alt="" width={90} height={90} unoptimized />
           <div>
             <p>내가 해낸 생활 수학</p>
-            <h2 id="collected-stars-title">모은 별</h2>
+            <h2 id="collected-stars-title">완료한 개념</h2>
             <span id="collected-stars-description">완료한 개념 {concepts.length}개 · 별 {totalStars}개</span>
           </div>
         </header>
@@ -74,19 +74,24 @@ export function CollectedStarsModal({ completedSessionIds, onClose, onOpenStarNo
             <p>첫 개념을 완료하면 배운 내용과 별 3개가 여기에 모여요!</p>
           </div>
         ) : (
-          <div className="collected-stars-grid" role="list" aria-label="완료한 학습 개념">
-            {concepts.map((concept) => (
-              <article key={concept.id} role="listitem" className="collected-stars-card">
-                <div className="collected-stars-card__stars" aria-label={`${concept.title}에서 얻은 별 3개`}>
-                  {Array.from({ length: concept.stars }, (_, index) => (
-                    <Image key={index} src="/ui/mormi-star.png" alt="" width={42} height={42} unoptimized />
-                  ))}
-                </div>
-                <h3>{concept.title}</h3>
-                <p>{concept.concept}</p>
-              </article>
-            ))}
-          </div>
+          <>
+            <p className="collected-stars-summary-note">
+              아래 문장은 완료한 개념의 요약이에요. 내가 {displayName}에게 직접 알려 준 말은 별노트에서 확인할 수 있어요.
+            </p>
+            <div className="collected-stars-grid" role="list" aria-label="완료한 학습 개념">
+              {concepts.map((concept) => (
+                <article key={concept.id} role="listitem" className="collected-stars-card">
+                  <div className="collected-stars-card__stars" aria-label={`${concept.title}에서 얻은 별 3개`}>
+                    {Array.from({ length: concept.stars }, (_, index) => (
+                      <Image key={index} src="/ui/mormi-star.png" alt="" width={42} height={42} unoptimized />
+                    ))}
+                  </div>
+                  <h3>{concept.title}</h3>
+                  <p><span className="sr-only">완료한 개념 요약: </span>{concept.concept}</p>
+                </article>
+              ))}
+            </div>
+          </>
         )}
 
         <div className="collected-stars-actions">
