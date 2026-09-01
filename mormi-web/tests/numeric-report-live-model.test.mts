@@ -36,13 +36,52 @@ const report: DiagnosticReportDto = {
   narrative_fallback: true,
 };
 
+test("compares non-overlapping previous and latest five-question sessions", () => {
+  const cases = [
+    { scores: [80], expected: ["—", "80%"], labels: ["이전 기록 없음", "최신 5문항"] },
+    { scores: [20, 80], expected: ["20%", "80%"], labels: ["이전 5문항", "최신 5문항"] },
+    { scores: [20, 40, 80], expected: ["30%", "80%"], labels: ["이전 10문항", "최신 5문항"] },
+    { scores: [20, 40, 60, 80], expected: ["30%", "70%"], labels: ["이전 10문항", "최신 10문항"] },
+    { scores: [100, 20, 40, 60, 80], expected: ["30%", "70%"], labels: ["이전 10문항", "최신 10문항"] },
+  ] as const;
+
+  for (const { scores, expected, labels } of cases) {
+    const windowReport: DiagnosticReportDto = {
+      ...report,
+      modes: [{
+        mode: "HOME",
+        domains: [{
+          ...report.modes[0]!.domains[0]!,
+          total_count: scores.length,
+          recent_count: Math.min(2, scores.length),
+          points: scores.map((score, index) => ({
+            evidence_id: `window-${scores.length}-${index}`,
+            label: "drill",
+            occurred_at: `2026-08-${String(10 + index).padStart(2, "0")}T10:00:00Z`,
+            independent_score: score,
+            supported_score: score,
+            attempt_count: 5,
+            question_count: 5,
+            recent: true,
+          })),
+        }],
+      }, { mode: "LIFE", domains: [] }],
+    };
+
+    const money = buildNumericLiveReport(windowReport).domains.HOME[0]!;
+    assert.deepEqual(money.metrics[0].slice(1), expected, `${scores.length}회 정답률 구간`);
+    assert.deepEqual(money.comparisonLabels, labels, `${scores.length}회 문항 수 라벨`);
+    if (scores.length === 4) assert.match(money.changeReason, /좋아지고/, "표시 구간과 변화 설명이 일치해야 한다");
+  }
+});
+
 test("maps live evidence without inventing attempts or speech metrics", () => {
   const model = buildNumericLiveReport(report);
   assert.equal(model.learnerName, "리포트 검증 아동");
   const money = model.domains.HOME[0];
   assert.equal(money.id, "money-count");
   assert.deepEqual(money.metrics, [
-    ["정답률", "84%", "72%"],
+    ["정답률", "70%", "90%"],
     ["정답까지 평균", "—", "—"],
     ["모르미 가르치기", "—", "—"],
   ]);
@@ -52,7 +91,7 @@ test("maps live evidence without inventing attempts or speech metrics", () => {
   assert.equal(money.dominantStage, "—");
   assert.equal(money.repeatCount, 3);
   assert.equal(money.ladderStart, "기록 필요");
-  assert.match(money.changeReason, /72%/);
+  assert.match(money.changeReason, /90%/);
   assert.match(money.thinkingChange, /발화 근거가 부족/);
 });
 
@@ -138,9 +177,9 @@ test("recognizes the BE 반복학습 and 모르미 가르치기 labels without d
   const model = buildNumericLiveReport(actualLabels);
   const money = model.domains.HOME[0]!;
   assert.deepEqual(money.metrics, [
-    ["정답률", "84%", "72%"],
+    ["정답률", "70%", "90%"],
     ["정답까지 평균", "—", "—"],
-    ["모르미 가르치기", "60%", "60%"],
+    ["모르미 가르치기", "40%", "80%"],
   ]);
   assert.equal(money.ladderStart, "L2");
 });
@@ -180,9 +219,9 @@ test("calculates attempts-to-correct and recent L4-L0 shares from backend eviden
   const money = model.domains.HOME[0]!;
 
   assert.equal(model.learnerName, "이재용");
-  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
-  assert.deepEqual(money.sessionRows.at(-1), ["발화 단계 사용 비율 (L4/L3/L2/L0)", "67/0/33/0%", "67/0/33/0%"]);
-  assert.equal(money.dominantStage, "L4");
+  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.5회", "2.0회"]);
+  assert.deepEqual(money.sessionRows.at(-1), ["발화 단계 사용 비율 (L4/L3/L2/L0)", "100/0/0/0%", "0/0/100/0%"]);
+  assert.equal(money.dominantStage, "L2");
 });
 
 test("keeps rounded ladder shares at exactly one hundred percent", () => {
@@ -204,7 +243,7 @@ test("keeps rounded ladder shares at exactly one hundred percent", () => {
   };
 
   assert.deepEqual(buildNumericLiveReport(equalLevels).domains.HOME[0]!.sessionRows.at(-1), [
-    "발화 단계 사용 비율 (L4/L3/L2/L0)", "34/33/33/0%", "34/33/33/0%",
+    "발화 단계 사용 비율 (L4/L3/L2/L0)", "50/50/0/0%", "0/0/100/0%",
   ]);
 });
 
@@ -234,9 +273,9 @@ test("falls back to deployed session history when diagnostic points lack new met
   })) satisfies ReportSummaryDto[];
 
   const money = buildNumericLiveReport(legacyReport, history).domains.HOME[0]!;
-  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.8회", "2.0회"]);
+  assert.deepEqual(money.metrics[1], ["정답까지 평균", "1.5회", "2.0회"]);
   assert.deepEqual(money.sessionRows.at(-1), [
-    "발화 단계 사용 비율 (L4/L3/L2/L0)", "50/0/50/0%", "0/0/100/0%",
+    "발화 단계 사용 비율 (L4/L3/L2/L0)", "100/0/0/0%", "0/0/100/0%",
   ]);
   assert.equal(money.dominantStage, "L2");
 });

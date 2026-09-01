@@ -29,6 +29,7 @@ export type NumericPreviewDomain = {
   status: NumericPreviewStatus;
   metrics: readonly NumericComparisonRow[];
   sessionRows: readonly NumericComparisonRow[];
+  comparisonLabels?: readonly [past: string, latest: string];
   historyCount: number;
   recentCount: number;
   headline: string;
@@ -62,27 +63,66 @@ const statusPriority: Record<DiagnosticDomainStatusDto["status"], number> = {
   OBSERVING: 3,
 };
 
-function average(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): string {
-  const values = points
-    .filter((point) => !recentOnly || point.recent)
-    .map((point) => point.independent_score)
-    .filter(Number.isFinite);
-  if (values.length === 0) return "—";
-  const result = values.reduce((sum, value) => sum + value, 0) / values.length;
+type ComparisonWindows = {
+  past: DiagnosticDomainTrendDto["points"];
+  latest: DiagnosticDomainTrendDto["points"];
+};
+
+function comparisonWindows(points: DiagnosticDomainTrendDto["points"]): ComparisonWindows {
+  const ordered = [...points].sort((left, right) =>
+    left.occurred_at.localeCompare(right.occurred_at) || left.evidence_id.localeCompare(right.evidence_id));
+  if (ordered.length === 0) return { past: [], latest: [] };
+  const latestSize = ordered.length >= 4 ? 2 : 1;
+  const pastSize = Math.min(2, ordered.length - latestSize);
+  const latest = ordered.slice(-latestSize);
+  const pastEnd = ordered.length - latestSize;
+  const past = ordered.slice(Math.max(0, pastEnd - pastSize), pastEnd);
+  return { past, latest };
+}
+
+function questionCount(points: DiagnosticDomainTrendDto["points"]): number {
+  return points.reduce((sum, point) => sum + (point.question_count && point.question_count > 0 ? point.question_count : 5), 0);
+}
+
+function comparisonLabels(windows: ComparisonWindows): readonly [string, string] {
+  const pastCount = questionCount(windows.past);
+  const latestCount = questionCount(windows.latest);
+  return [pastCount > 0 ? `이전 ${pastCount}문항` : "이전 기록 없음", `최신 ${latestCount}문항`];
+}
+
+function averageScore(points: DiagnosticDomainTrendDto["points"]): number | null {
+  const values = points.filter((point) => Number.isFinite(point.independent_score));
+  if (values.length === 0) return null;
+  const weights = values.map((point) => point.question_count && point.question_count > 0 ? point.question_count : 1);
+  const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+  return values.reduce((sum, point, index) => sum + point.independent_score * weights[index]!, 0) / weightTotal;
+}
+
+function average(points: DiagnosticDomainTrendDto["points"]): string {
+  const result = averageScore(points);
+  if (result === null) return "—";
   return `${Math.round(Math.max(0, Math.min(100, result)))}%`;
 }
 
-function attemptsToCorrect(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): string {
-  const selected = points.filter((point) => !recentOnly || point.recent);
-  const attemptCount = selected.reduce((sum, point) => sum + (point.attempt_count ?? 0), 0);
-  const questionCount = selected.reduce((sum, point) => sum + (point.question_count ?? 0), 0);
-  return questionCount > 0 ? `${(attemptCount / questionCount).toFixed(1)}회` : "—";
+function directionForWindows(windows: ComparisonWindows): DiagnosticDirection {
+  const past = averageScore(windows.past);
+  const latest = averageScore(windows.latest);
+  if (past === null || latest === null) return "INSUFFICIENT_HISTORY";
+  const difference = latest - past;
+  if (difference >= 5) return "IMPROVING";
+  if (difference <= -5) return "DECLINING";
+  return "MAINTAINING";
 }
 
-function ladderShares(points: DiagnosticDomainTrendDto["points"], recentOnly: boolean): readonly [string, string] {
+function attemptsToCorrect(points: DiagnosticDomainTrendDto["points"]): string {
+  const attemptCount = points.reduce((sum, point) => sum + (point.attempt_count ?? 0), 0);
+  const totalQuestions = points.reduce((sum, point) => sum + (point.question_count ?? 0), 0);
+  return totalQuestions > 0 ? `${(attemptCount / totalQuestions).toFixed(1)}회` : "—";
+}
+
+function ladderShares(points: DiagnosticDomainTrendDto["points"]): readonly [string, string] {
   const levels = ACTIVE_EXPRESSION_LEVELS;
   const selected = points
-    .filter((point) => !recentOnly || point.recent)
     .map((point) => canonicalExpressionLevel(point.expression_level))
     .filter((level): level is typeof levels[number] => Boolean(level));
   if (selected.length === 0) return ["—", "—"];
@@ -195,14 +235,17 @@ function buildMode(
     const speechPoints = speech?.points ?? [];
     const historyLadderPoints = pointsWithHistory(accuracy?.points ?? [], historyBySession);
     const ladderPoints = speechPoints.some((point) => point.expression_level) ? speechPoints : historyLadderPoints;
-    const historyAccuracy = accuracy ? average(accuracyPoints, false) : "—";
-    const recentAccuracy = accuracy ? average(accuracyPoints, true) : "—";
-    const historySpeech = speech ? average(speech.points, false) : "—";
-    const recentSpeech = speech ? average(speech.points, true) : "—";
-    const historyAttempts = accuracy ? attemptsToCorrect(accuracyPoints, false) : "—";
-    const recentAttempts = accuracy ? attemptsToCorrect(accuracyPoints, true) : "—";
-    const [historyLadder] = ladderShares(ladderPoints, false);
-    const [recentLadder, dominantStage] = ladderShares(ladderPoints, true);
+    const accuracyWindows = comparisonWindows(accuracyPoints);
+    const speechWindows = comparisonWindows(speechPoints);
+    const ladderWindows = comparisonWindows(ladderPoints);
+    const historyAccuracy = accuracy ? average(accuracyWindows.past) : "—";
+    const recentAccuracy = accuracy ? average(accuracyWindows.latest) : "—";
+    const historySpeech = speech ? average(speechWindows.past) : "—";
+    const recentSpeech = speech ? average(speechWindows.latest) : "—";
+    const historyAttempts = accuracy ? attemptsToCorrect(accuracyWindows.past) : "—";
+    const recentAttempts = accuracy ? attemptsToCorrect(accuracyWindows.latest) : "—";
+    const [historyLadder] = ladderShares(ladderWindows.past);
+    const [recentLadder, dominantStage] = ladderShares(ladderWindows.latest);
     const advice = recommendation(status, label, Boolean(speech) || dominantStage !== "—");
     const ladderRecommendation = mode === "HOME"
       ? report.ladder_recommendations?.find((item) => item.skill_id === domainId)
@@ -219,11 +262,12 @@ function buildMode(
       status,
       metrics,
       sessionRows: [...metrics, ["발화 단계 사용 비율 (L4/L3/L2/L0)", historyLadder, recentLadder]],
+      comparisonLabels: comparisonLabels(accuracyWindows),
       historyCount: accuracy?.total_count ?? 0,
       recentCount: accuracy?.recent_count ?? 0,
       headline: headline(label, status),
       dominantStage,
-      changeReason: changeReason(recentAccuracy, accuracy?.points.length ?? 0, selectedStatus?.direction),
+      changeReason: changeReason(recentAccuracy, accuracyWindows.past.length + accuracyWindows.latest.length, directionForWindows(accuracyWindows)),
       thinkingChange: (mode === "LIFE" ? report.current_summary.life_transfer : report.current_summary.explanation_change).text,
       nextCheck: advice.nextCheck,
       pastUtterance: "비교 가능한 과거 발화 기록이 없습니다.",

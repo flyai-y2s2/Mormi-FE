@@ -137,6 +137,7 @@ export function NumericReportPreview({
   }
 
   const recentMetrics = Object.fromEntries(selectedDomain.metrics.map(([label, , recent]) => [label, recent]));
+  const comparisonLabels = selectedDomain.comparisonLabels ?? ["이전 기록", "최신 기록"];
   const summaryValues = liveModel
     ? [
       ["완료 단원", liveModel.weeklySummary.completedUnits, "이번 주 완료"],
@@ -208,7 +209,7 @@ export function NumericReportPreview({
         {previewDomains.HOME.length === 0 && previewDomains.LIFE.length > 0 && <p className="numeric-home-empty">집 학습에서 이번 주에 완료한 단원이 없습니다.</p>}
         <div className="numeric-status-selector" aria-label="결과를 볼 단원 선택">{domains.map((domain) => <button key={domain.id} type="button" className={`numeric-status--${domain.status} ${selectedDomain.id === domain.id ? "is-active" : ""}`} aria-pressed={selectedDomain.id === domain.id} onClick={() => setSelectedDomainId(domain.id)}><span>{domain.label}</span><small>{statusLabels[domain.status]}</small></button>)}</div>
         <div className="numeric-current-story numeric-current-story--unit"><div className="numeric-current-story__mark" aria-hidden="true">↗</div><div><span>{selectedDomain.label} · {statusLabels[selectedDomain.status]}</span><strong>{selectedDomain.headline}</strong><p>{selectedDomain.changeReason}</p></div></div>
-        <div className="numeric-session-comparison" aria-label={`${modeLabels[activeMode]} · ${selectedDomain.label} 이번 주 전체와 최근 비교`}>{selectedDomain.sessionRows.slice(0, 3).map(([label, past, recent]) => <article key={label}><span>{label.replace("반복학습 ", "").replace("실생활 ", "").replace("혼자 말하기", "모르미 가르치기")}</span><div><small>{past}</small><i aria-hidden="true">→</i><strong>{recent}</strong></div></article>)}</div>
+        <div className="numeric-session-comparison" aria-label={`${modeLabels[activeMode]} · ${selectedDomain.label} ${comparisonLabels.join("과 ")} 비교`}>{selectedDomain.sessionRows.slice(0, 3).map(([label, past, recent]) => <article key={label}><span>{label.replace("반복학습 ", "").replace("실생활 ", "").replace("혼자 말하기", "모르미 가르치기")}</span><div><div className="numeric-comparison-value"><em>{comparisonLabels[0]}</em><small>{past}</small></div><i aria-hidden="true">→</i><div className="numeric-comparison-value"><em>{comparisonLabels[1]}</em><strong>{recent}</strong></div></div></article>)}</div>
         <div className="numeric-ladder-summary"><div><span>발화 사다리</span><strong>최근 사용 비율</strong></div>{ladderValues.length > 0 ? <div className="numeric-ladder-bars" aria-label={`L4, L3, L2, L0 순서로 ${ladderValues.join(", ")}`}>{ladderValues.map((value, index) => {
           const share = Number.parseInt(value) || 0;
           return <span className={share === 0 ? "is-empty" : undefined} key={`${value}-${index}`} style={{ "--bar-height": `${Math.round(share * .34)}px`, flexGrow: 1, flexShrink: 1, flexBasis: 0 } as CSSProperties}><i>{ACTIVE_EXPRESSION_LEVELS[index]}</i><b>{value}</b></span>;
