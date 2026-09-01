@@ -691,6 +691,7 @@ test("production dialogue flows through deployed Spring BE while the AI BFF stay
   assert.doesNotMatch(apiClient, /NEXT_PUBLIC_API_BASE_URL/);
   assert.match(backendProxy, /process\.env\.BACKEND_ORIGIN/);
   assert.match(backendProxy, /authorization/);
+  assert.match(backendProxy, /x-mormi-service-key/);
   assert.match(backendProxy, /backend_not_configured/);
   assert.match(upstream, /process\.env\.MORMI_AI_BASE_URL/);
   assert.match(upstream, /X-Mormi-Service-Key/);

@@ -1215,7 +1215,7 @@ function HomeHub({ characterName, completedSessionIds, coinBalance, onNameCharac
               </div>
               <div className="player-wallet"><Image src="/ui/mormi-coin.png" alt="새싹 코인" width={220} height={220} unoptimized /><span><small>모은 돈</small><strong>{coinBalance.toLocaleString("ko-KR")}원</strong></span></div>
             </div>
-            <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>별노트</small><b>모은 별 {stars}개</b></span></button>
+            <button type="button" className="player-stat player-stat--star" onClick={() => setStarsOpen(true)} aria-haspopup="dialog" aria-label={`모은 별 ${stars}개, 완료한 개념 보기`}><UiIcon name="star" size="large" /><span><small>학습 성취</small><b>모은 별 {stars}개</b></span></button>
           </div>
           <div className="home-room-copy">
             <h1>오늘은 어떤 걸 할까?</h1>
