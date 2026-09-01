@@ -43,7 +43,13 @@ async function forward(request: Request, context: BackendRouteContext) {
   target.search = incomingUrl.search;
 
   const headers = new Headers();
-  for (const name of ["authorization", "content-type", "accept", "idempotency-key"]) {
+  for (const name of [
+    "authorization",
+    "content-type",
+    "accept",
+    "idempotency-key",
+    "x-mormi-service-key",
+  ]) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
